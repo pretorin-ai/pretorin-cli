@@ -14,6 +14,7 @@ from rich.markdown import Markdown
 from pretorin.client import PretorianClient
 from pretorin.client.api import AuthenticationError, NotFoundError, PretorianClientError
 from pretorin.mcp.analysis_prompts import get_available_controls, get_control_summary
+from pretorin.cli.animations import animated_status, AnimationTheme
 
 app = typer.Typer()
 console = Console()
@@ -41,7 +42,7 @@ def frameworks_list() -> None:
             require_auth(client)
 
             try:
-                with console.status("[#EAB536][°~°][/#EAB536] [dim]Consulting the compliance archives...[/dim]"):
+                with animated_status("Consulting the compliance archives...", AnimationTheme.SEARCHING):
                     result = await client.list_frameworks()
 
                 if not result.frameworks:
@@ -102,7 +103,7 @@ def framework_get(
             require_auth(client)
 
             try:
-                with console.status("[#EAB536][°~°][/#EAB536] [dim]Gathering framework details...[/dim]"):
+                with animated_status("Gathering framework details...", AnimationTheme.MARCHING):
                     framework = await client.get_framework(framework_id)
 
                 rprint(
@@ -147,7 +148,7 @@ def framework_families(
             require_auth(client)
 
             try:
-                with console.status("[#EAB536][°~°][/#EAB536] [dim]Gathering control families...[/dim]"):
+                with animated_status("Gathering control families...", AnimationTheme.MARCHING):
                     families = await client.list_control_families(framework_id)
 
                 if not families:
@@ -205,7 +206,7 @@ def framework_controls(
             require_auth(client)
 
             try:
-                with console.status("[#EAB536][°~°][/#EAB536] [dim]Gathering controls...[/dim]"):
+                with animated_status("Searching for controls...", AnimationTheme.SEARCHING):
                     controls = await client.list_controls(framework_id, family_id)
 
                 if not controls:
@@ -269,7 +270,7 @@ def control_get(
             require_auth(client)
 
             try:
-                with console.status("[#EAB536][°~°][/#EAB536] [dim]Looking up control details...[/dim]"):
+                with animated_status("Looking up control details...", AnimationTheme.SEARCHING):
                     control = await client.get_control(framework_id, control_id)
 
                     refs = None
@@ -355,7 +356,7 @@ def framework_documents(
             require_auth(client)
 
             try:
-                with console.status("[#EAB536][°~°][/#EAB536] [dim]Gathering document requirements...[/dim]"):
+                with animated_status("Gathering document requirements...", AnimationTheme.MARCHING):
                     docs = await client.get_document_requirements(framework_id)
 
                 rprint(f"\n[bold]Document Requirements for {docs.framework_title}[/bold]\n")
@@ -450,7 +451,7 @@ def analyze(
 
             # Validate framework exists
             try:
-                with console.status("[#EAB536][°~°][/#EAB536] [dim]Validating framework...[/dim]"):
+                with animated_status("Validating framework...", AnimationTheme.THINKING):
                     framework = await client.get_framework(framework_id)
             except NotFoundError:
                 rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find framework: {framework_id}")

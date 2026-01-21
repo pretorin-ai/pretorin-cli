@@ -10,6 +10,7 @@ from rich.panel import Panel
 from pretorin.client import PretorianClient, clear_credentials, store_credentials
 from pretorin.client.api import AuthenticationError, PretorianClientError
 from pretorin.client.config import Config
+from pretorin.cli.animations import animated_status, AnimationTheme
 
 app = typer.Typer()
 console = Console()
@@ -49,7 +50,7 @@ def login(
     async def validate_and_store() -> None:
         client = PretorianClient(api_key=api_key, api_base_url=api_base_url)
         try:
-            with console.status("[#EAB536][°~°][/#EAB536] [dim]Verifying your credentials...[/dim]"):
+            with animated_status("Verifying your credentials...", AnimationTheme.MARCHING):
                 await client.validate_api_key()
 
             # Store credentials after successful validation
@@ -104,7 +105,7 @@ def whoami() -> None:
     async def check_auth() -> None:
         async with PretorianClient() as client:
             try:
-                with console.status("[dim]Checking your session...[/dim]"):
+                with animated_status("Checking your session...", AnimationTheme.THINKING):
                     await client.validate_api_key()
                     frameworks = await client.list_frameworks()
 
