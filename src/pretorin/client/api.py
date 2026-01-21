@@ -1,26 +1,34 @@
-"""Async API client for Pretorin Compliance API."""
+"""Async API client for Pretorin API."""
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 import httpx
 
-from pretorin.client.config import Config, DEFAULT_API_BASE_URL
+from pretorin.client.config import Config
 from pretorin.client.models import (
-    APIError,
-    ComplianceCheck,
-    ComplianceReport,
-    ReportListItem,
-    UserInfo,
+    ControlDetail,
+    ControlFamilyDetail,
+    ControlFamilySummary,
+    ControlMetadata,
+    ControlReferences,
+    ControlSummary,
+    DocumentRequirementList,
+    FrameworkList,
+    FrameworkMetadata,
 )
 
 
 class PretorianClientError(Exception):
     """Base exception for Pretorian client errors."""
 
-    def __init__(self, message: str, status_code: int | None = None, details: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        message: str,
+        status_code: int | None = None,
+        details: dict[str, Any] | None = None,
+    ):
         super().__init__(message)
         self.message = message
         self.status_code = status_code
@@ -40,7 +48,7 @@ class NotFoundError(PretorianClientError):
 
 
 class PretorianClient:
-    """Async client for the Pretorin Compliance API."""
+    """Async client for the Pretorin API."""
 
     def __init__(
         self,
@@ -102,15 +110,22 @@ class PretorianClient:
         """Handle error responses from the API."""
         try:
             data = response.json()
-            error = APIError(**data)
-            message = error.message
-            details = error.details
+            # FastAPI returns {"detail": "message"} for errors
+            if isinstance(data, dict):
+                message = data.get("detail") or data.get("message") or str(data)
+            else:
+                message = str(data)
+            details = data if isinstance(data, dict) else {}
         except Exception:
             message = response.text or f"HTTP {response.status_code}"
             details = {}
 
         if response.status_code == 401:
             raise AuthenticationError(message, response.status_code, details)
+        elif response.status_code == 403:
+            raise AuthenticationError(
+                f"Access denied: {message}", response.status_code, details
+            )
         elif response.status_code == 404:
             raise NotFoundError(message, response.status_code, details)
         else:
@@ -121,12 +136,12 @@ class PretorianClient:
         method: str,
         path: str,
         **kwargs: Any,
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any] | list[Any]:
         """Make an API request.
 
         Args:
             method: HTTP method.
-            path: API path.
+            path: API path (relative to base URL).
             **kwargs: Additional arguments to pass to httpx.
 
         Returns:
@@ -146,7 +161,9 @@ class PretorianClient:
 
         return response.json()
 
-    # Auth endpoints
+    # =========================================================================
+    # Auth / Validation
+    # =========================================================================
 
     async def validate_api_key(self) -> bool:
         """Validate the API key by making a test request.
@@ -160,171 +177,164 @@ class PretorianClient:
         if not self._api_key:
             raise AuthenticationError("No API key configured")
 
-        await self._request("GET", "/v1/auth/validate")
+        # Use frameworks endpoint as a lightweight validation check
+        await self._request("GET", "/frameworks")
         return True
 
-    async def get_user_info(self) -> UserInfo:
-        """Get information about the authenticated user.
+    # =========================================================================
+    # Framework Endpoints
+    # =========================================================================
+
+    async def list_frameworks(self) -> FrameworkList:
+        """List all available compliance frameworks.
 
         Returns:
-            UserInfo with details about the current user/organization.
+            FrameworkList containing all frameworks with summary info.
         """
-        data = await self._request("GET", "/v1/auth/me")
-        return UserInfo(**data)
+        data = await self._request("GET", "/frameworks")
+        return FrameworkList(**data)
 
-    # Compliance check endpoints
-
-    async def check_file(
-        self,
-        file_path: str | Path,
-        rules: list[str] | None = None,
-    ) -> ComplianceCheck:
-        """Run a compliance check on a file.
+    async def get_framework(self, framework_id: str) -> FrameworkMetadata:
+        """Get detailed metadata about a specific framework.
 
         Args:
-            file_path: Path to the file to check.
-            rules: Optional list of rule IDs to check against.
+            framework_id: ID of the framework (e.g., nist-800-53-r5, fedramp-moderate)
 
         Returns:
-            ComplianceCheck with the results.
+            FrameworkMetadata with full framework details.
         """
-        file_path = Path(file_path)
-        if not file_path.exists():
-            raise PretorianClientError(f"File not found: {file_path}")
+        data = await self._request("GET", f"/frameworks/{framework_id}")
+        return FrameworkMetadata(**data)
 
-        with open(file_path, "rb") as f:
-            content = f.read()
+    # =========================================================================
+    # Control Family Endpoints
+    # =========================================================================
 
-        client = await self._get_client()
-
-        files = {"file": (file_path.name, content)}
-        data: dict[str, Any] = {}
-        if rules:
-            data["rules"] = rules
-
-        response = await client.post(
-            "/v1/compliance/check",
-            files=files,
-            data=data,
-        )
-
-        if not response.is_success:
-            self._handle_error(response)
-
-        return ComplianceCheck(**response.json())
-
-    async def check_content(
-        self,
-        content: str,
-        filename: str = "document.txt",
-        rules: list[str] | None = None,
-    ) -> ComplianceCheck:
-        """Run a compliance check on content.
+    async def list_control_families(
+        self, framework_id: str
+    ) -> list[ControlFamilySummary]:
+        """List all control families for a framework.
 
         Args:
-            content: The content to check.
-            filename: Name to associate with the content.
-            rules: Optional list of rule IDs to check against.
+            framework_id: ID of the framework.
 
         Returns:
-            ComplianceCheck with the results.
+            List of control family summaries.
         """
-        client = await self._get_client()
+        data = await self._request("GET", f"/frameworks/{framework_id}/families")
+        return [ControlFamilySummary(**item) for item in data]
 
-        files = {"file": (filename, content.encode())}
-        data: dict[str, Any] = {}
-        if rules:
-            data["rules"] = rules
-
-        response = await client.post(
-            "/v1/compliance/check",
-            files=files,
-            data=data,
-        )
-
-        if not response.is_success:
-            self._handle_error(response)
-
-        return ComplianceCheck(**response.json())
-
-    async def get_check(self, check_id: str) -> ComplianceCheck:
-        """Get a compliance check by ID.
+    async def get_control_family(
+        self, framework_id: str, family_id: str
+    ) -> ControlFamilyDetail:
+        """Get detailed information about a control family.
 
         Args:
-            check_id: The ID of the check.
+            framework_id: ID of the framework.
+            family_id: ID of the control family (e.g., ac, au, cm).
 
         Returns:
-            ComplianceCheck with the results.
-        """
-        data = await self._request("GET", f"/v1/compliance/checks/{check_id}")
-        return ComplianceCheck(**data)
-
-    # Report endpoints
-
-    async def list_reports(
-        self,
-        limit: int = 20,
-        offset: int = 0,
-    ) -> list[ReportListItem]:
-        """List compliance reports.
-
-        Args:
-            limit: Maximum number of reports to return.
-            offset: Number of reports to skip.
-
-        Returns:
-            List of report summaries.
+            ControlFamilyDetail with family info and controls list.
         """
         data = await self._request(
-            "GET",
-            "/v1/reports",
-            params={"limit": limit, "offset": offset},
+            "GET", f"/frameworks/{framework_id}/families/{family_id}"
         )
-        return [ReportListItem(**item) for item in data.get("reports", [])]
+        return ControlFamilyDetail(**data)
 
-    async def get_report(self, report_id: str) -> ComplianceReport:
-        """Get a compliance report by ID.
+    # =========================================================================
+    # Control Endpoints
+    # =========================================================================
 
-        Args:
-            report_id: The ID of the report.
-
-        Returns:
-            The full compliance report.
-        """
-        data = await self._request("GET", f"/v1/reports/{report_id}")
-        return ComplianceReport(**data)
-
-    async def create_report(
+    async def list_controls(
         self,
-        name: str,
-        file_paths: list[str | Path],
-    ) -> ComplianceReport:
-        """Create a new compliance report from multiple files.
+        framework_id: str,
+        family_id: str | None = None,
+    ) -> list[ControlSummary]:
+        """List controls for a framework.
 
         Args:
-            name: Name for the report.
-            file_paths: List of file paths to include.
+            framework_id: ID of the framework.
+            family_id: Optional filter by control family.
 
         Returns:
-            The created report.
+            List of control summaries.
         """
-        client = await self._get_client()
+        params = {}
+        if family_id:
+            params["family_id"] = family_id
 
-        files = []
-        for path in file_paths:
-            path = Path(path)
-            if not path.exists():
-                raise PretorianClientError(f"File not found: {path}")
-            with open(path, "rb") as f:
-                files.append(("files", (path.name, f.read())))
-
-        response = await client.post(
-            "/v1/reports",
-            files=files,
-            data={"name": name},
+        data = await self._request(
+            "GET", f"/frameworks/{framework_id}/controls", params=params
         )
+        return [ControlSummary(**item) for item in data]
 
-        if not response.is_success:
-            self._handle_error(response)
+    async def get_control(self, framework_id: str, control_id: str) -> ControlDetail:
+        """Get detailed information about a specific control.
 
-        return ComplianceReport(**response.json())
+        Args:
+            framework_id: ID of the framework.
+            control_id: ID of the control (e.g., ac-1, ac-2).
+
+        Returns:
+            ControlDetail with full control information.
+        """
+        data = await self._request(
+            "GET", f"/frameworks/{framework_id}/controls/{control_id}"
+        )
+        return ControlDetail(**data)
+
+    async def get_control_references(
+        self, framework_id: str, control_id: str
+    ) -> ControlReferences:
+        """Get reference data for a control including guidance and objectives.
+
+        Args:
+            framework_id: ID of the framework.
+            control_id: ID of the control.
+
+        Returns:
+            ControlReferences with statement, guidance, objectives, etc.
+        """
+        data = await self._request(
+            "GET", f"/frameworks/{framework_id}/controls/{control_id}/references"
+        )
+        return ControlReferences(**data)
+
+    async def get_controls_metadata(
+        self, framework_id: str | None = None
+    ) -> dict[str, ControlMetadata]:
+        """Get metadata for controls.
+
+        Args:
+            framework_id: Optional framework ID. If provided, returns metadata
+                         for controls in that framework only. Otherwise returns
+                         metadata for all controls across all frameworks.
+
+        Returns:
+            Dictionary mapping control IDs to their metadata.
+        """
+        if framework_id:
+            path = f"/frameworks/{framework_id}/controls/metadata"
+        else:
+            path = "/frameworks/controls/metadata"
+
+        data = await self._request("GET", path)
+        return {k: ControlMetadata(**v) for k, v in data.items()}
+
+    # =========================================================================
+    # Document Requirements
+    # =========================================================================
+
+    async def get_document_requirements(
+        self, framework_id: str
+    ) -> DocumentRequirementList:
+        """Get document requirements for a framework.
+
+        Args:
+            framework_id: ID of the framework.
+
+        Returns:
+            DocumentRequirementList with explicit and implicit requirements.
+        """
+        data = await self._request("GET", f"/frameworks/{framework_id}/documents")
+        return DocumentRequirementList(**data)

@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-DEFAULT_API_BASE_URL = "https://api.pretorin.com"
+DEFAULT_API_BASE_URL = "https://platform.pretorin.com/api/v1"
 CONFIG_DIR = Path.home() / ".pretorin"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 

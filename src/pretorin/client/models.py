@@ -2,93 +2,175 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class ComplianceStatus(str, Enum):
-    """Status of a compliance check."""
-
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
+# =============================================================================
+# Framework Models
+# =============================================================================
 
 
-class Severity(str, Enum):
-    """Severity level for compliance issues."""
-
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
-
-
-class UserInfo(BaseModel):
-    """Information about the authenticated user."""
+class FrameworkSummary(BaseModel):
+    """Summary information about a framework."""
 
     id: str
-    email: str
-    name: str | None = None
-    organization: str | None = None
-    organization_id: str | None = None
-    created_at: datetime | None = None
+    external_id: str
+    title: str
+    version: str
+    description: str | None = None
+    tier: str | None = None
+    category: str | None = None
+    catalog_format: str | None = None
+    families_count: int = 0
+    controls_count: int = 0
 
 
-class ComplianceIssue(BaseModel):
-    """A single compliance issue found during a check."""
+class FrameworkList(BaseModel):
+    """List of available frameworks."""
 
-    id: str
-    rule_id: str
-    rule_name: str
-    severity: Severity
-    message: str
-    location: str | None = None
-    suggestion: str | None = None
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    frameworks: list[FrameworkSummary]
+    total: int
 
 
-class ComplianceCheck(BaseModel):
-    """A compliance check request."""
+class FrameworkMetadata(BaseModel):
+    """Detailed framework metadata."""
 
     id: str
-    status: ComplianceStatus
-    file_name: str | None = None
-    created_at: datetime
-    completed_at: datetime | None = None
-    issues: list[ComplianceIssue] = Field(default_factory=list)
-    summary: dict[str, Any] = Field(default_factory=dict)
+    external_id: str
+    title: str
+    version: str
+    oscal_version: str | None = Field(default=None, alias="oscal-version")
+    last_modified: str | None = Field(default=None, alias="last-modified")
+    published: str | None = None
+    description: str | None = None
+    tier: str | None = None
+    category: str | None = None
+    catalog_format: str | None = None
 
 
-class ComplianceReport(BaseModel):
-    """A compliance report."""
-
-    id: str
-    name: str
-    status: ComplianceStatus
-    created_at: datetime
-    completed_at: datetime | None = None
-    checks: list[ComplianceCheck] = Field(default_factory=list)
-    total_issues: int = 0
-    issues_by_severity: dict[str, int] = Field(default_factory=dict)
+# =============================================================================
+# Control Family Models
+# =============================================================================
 
 
-class ReportListItem(BaseModel):
-    """Summary item for listing reports."""
+class ControlFamilySummary(BaseModel):
+    """Summary of a control family."""
 
     id: str
-    name: str
-    status: ComplianceStatus
-    created_at: datetime
-    total_issues: int = 0
+    title: str
+    class_type: str = Field(alias="class")
+    controls_count: int = 0
+
+
+class ControlInFamily(BaseModel):
+    """Control summary within a family."""
+
+    id: str
+    title: str
+    class_type: str | None = Field(default=None, alias="class")
+
+
+class ControlFamilyDetail(BaseModel):
+    """Detailed control family information."""
+
+    id: str
+    title: str
+    class_type: str = Field(alias="class")
+    controls: list[ControlInFamily] = Field(default_factory=list)
+
+
+# =============================================================================
+# Control Models
+# =============================================================================
+
+
+class ControlSummary(BaseModel):
+    """Summary of a control."""
+
+    id: str
+    title: str
+    family_id: str
+
+
+class ControlDetail(BaseModel):
+    """Detailed control information."""
+
+    id: str
+    title: str
+    class_type: str | None = Field(default=None, alias="class")
+    control_type: str | None = None  # organizational, system, or hybrid
+    props: list[dict[str, Any]] | None = None
+    params: list[dict[str, Any]] | None = None
+    parts: list[dict[str, Any]] | None = None
+    controls: list[dict[str, Any]] | None = None  # control enhancements
+    ai_guidance: dict[str, Any] | None = None
+
+
+class ControlMetadata(BaseModel):
+    """Control metadata for display."""
+
+    title: str
+    family: str
+    type: str  # organizational, system, or hybrid
+
+
+class RelatedControl(BaseModel):
+    """Related control summary."""
+
+    id: str
+    title: str
+    family_id: str
+
+
+class ControlReferences(BaseModel):
+    """Reference data for a control."""
+
+    control_id: str
+    title: str | None = None
+    statement: str | None = None
+    guidance: str | None = None
+    objectives: list[str] = Field(default_factory=list)
+    parameters: list[dict[str, Any]] | None = None
+    related_controls: list[RelatedControl] = Field(default_factory=list)
+
+
+# =============================================================================
+# Document Requirement Models
+# =============================================================================
+
+
+class DocumentRequirement(BaseModel):
+    """Document requirement for a framework."""
+
+    id: str
+    document_name: str
+    description: str | None = None
+    requirement_type: str  # explicit or implicit
+    is_required: bool
+    control_references: list[str] | None = None
+    format_guidance: str | None = None
+
+
+class DocumentRequirementList(BaseModel):
+    """List of document requirements for a framework."""
+
+    framework_id: str
+    framework_title: str
+    explicit_documents: list[DocumentRequirement] = Field(default_factory=list)
+    implicit_documents: list[DocumentRequirement] = Field(default_factory=list)
+    total: int = 0
+
+
+# =============================================================================
+# Error Models
+# =============================================================================
 
 
 class APIError(BaseModel):
     """API error response."""
 
-    error: str
-    message: str
-    details: dict[str, Any] = Field(default_factory=dict)
+    detail: str
+    error: str | None = None
+    message: str | None = None

@@ -1,6 +1,8 @@
 # Pretorin CLI
 
-CLI and MCP server for the Pretorin Compliance API.
+CLI and MCP server for the Pretorin Compliance Platform API.
+
+Access compliance frameworks, control families, and control details from NIST 800-53, NIST 800-171, FedRAMP, SOC 2, ISO 27001, and more.
 
 ## Installation
 
@@ -20,7 +22,7 @@ pip install -e .
 
 ### Authentication
 
-Get your API key from [https://app.pretorin.com/settings/api](https://app.pretorin.com/settings/api), then:
+Get your API key from [https://platform.pretorin.com/settings/developer](https://platform.pretorin.com/settings/developer), then:
 
 ```bash
 pretorin login
@@ -32,26 +34,60 @@ Verify your authentication:
 pretorin whoami
 ```
 
-### Running Compliance Checks
+### Browse Frameworks
 
-Check a file for compliance issues:
+List all available compliance frameworks:
 
 ```bash
-pretorin check document.pdf
+pretorin frameworks list
 ```
 
-### Managing Reports
-
-List your compliance reports:
+Get details about a specific framework:
 
 ```bash
-pretorin reports list
+pretorin frameworks get nist-800-53-r5
 ```
 
-Get details of a specific report:
+### Browse Control Families
+
+List control families for a framework:
 
 ```bash
-pretorin reports get <report-id>
+pretorin frameworks families nist-800-53-r5
+```
+
+### Browse Controls
+
+List all controls for a framework:
+
+```bash
+pretorin frameworks controls nist-800-53-r5
+```
+
+Filter by control family:
+
+```bash
+pretorin frameworks controls nist-800-53-r5 --family ac
+```
+
+Get details of a specific control:
+
+```bash
+pretorin frameworks control nist-800-53-r5 ac-1
+```
+
+Include guidance and references:
+
+```bash
+pretorin frameworks control nist-800-53-r5 ac-1 --references
+```
+
+### Document Requirements
+
+Get document requirements for a framework:
+
+```bash
+pretorin frameworks documents fedramp-moderate
 ```
 
 ## CLI Commands
@@ -62,7 +98,7 @@ pretorin reports get <report-id>
 |---------|-------------|
 | `pretorin login` | Authenticate with the Pretorin API |
 | `pretorin logout` | Clear stored credentials |
-| `pretorin whoami` | Display current user info |
+| `pretorin whoami` | Display current authentication status |
 
 ### Configuration
 
@@ -73,14 +109,16 @@ pretorin reports get <report-id>
 | `pretorin config set <key> <value>` | Set a config value |
 | `pretorin config path` | Show config file path |
 
-### Compliance
+### Frameworks
 
 | Command | Description |
 |---------|-------------|
-| `pretorin check <file>` | Run compliance check on a file |
-| `pretorin reports list` | List compliance reports |
-| `pretorin reports get <id>` | Get report details |
-| `pretorin reports create -n <name> <files...>` | Create a new report |
+| `pretorin frameworks list` | List all compliance frameworks |
+| `pretorin frameworks get <id>` | Get framework details |
+| `pretorin frameworks families <id>` | List control families |
+| `pretorin frameworks controls <id>` | List controls |
+| `pretorin frameworks control <framework> <control>` | Get control details |
+| `pretorin frameworks documents <id>` | Get document requirements |
 
 ### MCP Server
 
@@ -111,11 +149,13 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 
 The MCP server exposes the following tools:
 
-- **pretorin_whoami** - Get current user information
-- **pretorin_check_content** - Check text content for compliance issues
-- **pretorin_check_file** - Check a file for compliance issues
-- **pretorin_list_reports** - List compliance reports
-- **pretorin_get_report** - Get details of a specific report
+- **pretorin_list_frameworks** - List all compliance frameworks
+- **pretorin_get_framework** - Get framework metadata
+- **pretorin_list_control_families** - List control families for a framework
+- **pretorin_list_controls** - List controls (with optional family filter)
+- **pretorin_get_control** - Get detailed control information
+- **pretorin_get_control_references** - Get control guidance and references
+- **pretorin_get_document_requirements** - Get document requirements for a framework
 
 ## Configuration
 
@@ -126,7 +166,18 @@ Credentials are stored in `~/.pretorin/config.json`.
 | Variable | Description |
 |----------|-------------|
 | `PRETORIN_API_KEY` | API key (overrides stored config) |
-| `PRETORIN_API_BASE_URL` | Custom API URL (for self-hosted) |
+| `PRETORIN_API_BASE_URL` | Custom API URL (default: https://platform.pretorin.com/api/v1) |
+
+## Supported Frameworks
+
+The API provides access to various compliance frameworks including:
+
+- NIST SP 800-53 Rev 5
+- NIST SP 800-171 Rev 2
+- FedRAMP (Low, Moderate, High)
+- SOC 2
+- ISO 27001
+- And more...
 
 ## Development
 
@@ -158,4 +209,4 @@ ruff check src/pretorin
 
 ## License
 
-MIT
+Proprietary - Pretorin, Inc.

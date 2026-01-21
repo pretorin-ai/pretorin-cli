@@ -32,11 +32,13 @@ def login(
 ) -> None:
     """Authenticate with the Pretorin API.
 
-    Get your API key from the Pretorin dashboard at https://app.pretorin.com/settings/api
+    Get your API key from the Pretorin platform at https://platform.pretorin.com/settings/developer
     """
     if api_key is None:
         rprint("\n[bold]Pretorin CLI Login[/bold]")
-        rprint("Get your API key from: [link=https://app.pretorin.com/settings/api]https://app.pretorin.com/settings/api[/link]\n")
+        rprint(
+            "Get your API key from: [link=https://platform.pretorin.com/settings/developer]https://platform.pretorin.com/settings/developer[/link]\n"
+        )
         api_key = typer.prompt("Enter your API key", hide_input=True)
 
     if not api_key:
@@ -48,18 +50,19 @@ def login(
         try:
             with console.status("Validating API key..."):
                 await client.validate_api_key()
-                user_info = await client.get_user_info()
 
             # Store credentials after successful validation
             store_credentials(api_key, api_base_url)
 
             rprint("\n[green]Successfully authenticated![/green]")
-            rprint(Panel(
-                f"[bold]User:[/bold] {user_info.email}\n"
-                f"[bold]Organization:[/bold] {user_info.organization or 'Personal'}",
-                title="Logged in",
-                border_style="green",
-            ))
+            rprint(
+                Panel(
+                    "[bold]Status:[/bold] Connected\n"
+                    f"[bold]API URL:[/bold] {client._api_base_url}",
+                    title="Logged in",
+                    border_style="green",
+                )
+            )
 
         except AuthenticationError as e:
             rprint(f"\n[red]Authentication failed:[/red] {e.message}")
@@ -88,35 +91,45 @@ def logout() -> None:
 
 @app.command()
 def whoami() -> None:
-    """Display current authenticated user information."""
+    """Display current authentication status and configuration."""
     config = Config()
 
     if not config.is_configured:
         rprint("[yellow]Not logged in.[/yellow] Run 'pretorin login' to authenticate.")
         raise typer.Exit(1)
 
-    async def fetch_user_info() -> None:
+    async def check_auth() -> None:
         async with PretorianClient() as client:
             try:
-                with console.status("Fetching user info..."):
-                    user_info = await client.get_user_info()
+                with console.status("Checking authentication..."):
+                    await client.validate_api_key()
+                    frameworks = await client.list_frameworks()
 
-                rprint(Panel(
-                    f"[bold]User ID:[/bold] {user_info.id}\n"
-                    f"[bold]Email:[/bold] {user_info.email}\n"
-                    f"[bold]Name:[/bold] {user_info.name or '-'}\n"
-                    f"[bold]Organization:[/bold] {user_info.organization or 'Personal'}\n"
-                    f"[bold]Organization ID:[/bold] {user_info.organization_id or '-'}",
-                    title="Current User",
-                    border_style="blue",
-                ))
+                # Mask the API key for display
+                api_key = config.api_key or ""
+                masked_key = (
+                    f"{api_key[:8]}...{api_key[-4:]}" if len(api_key) > 12 else "***"
+                )
+
+                rprint(
+                    Panel(
+                        f"[bold]Status:[/bold] [green]Authenticated[/green]\n"
+                        f"[bold]API Key:[/bold] {masked_key}\n"
+                        f"[bold]API URL:[/bold] {client._api_base_url}\n"
+                        f"[bold]Frameworks Available:[/bold] {frameworks.total}",
+                        title="Current Session",
+                        border_style="blue",
+                    )
+                )
 
             except AuthenticationError as e:
                 rprint(f"[red]Authentication error:[/red] {e.message}")
-                rprint("[dim]Your API key may have been revoked. Run 'pretorin login' to re-authenticate.[/dim]")
+                rprint(
+                    "[dim]Your API key may have been revoked. Run 'pretorin login' to re-authenticate.[/dim]"
+                )
                 raise typer.Exit(1)
             except PretorianClientError as e:
                 rprint(f"[red]Error:[/red] {e.message}")
                 raise typer.Exit(1)
 
-    asyncio.run(fetch_user_info())
+    asyncio.run(check_auth())
