@@ -8,6 +8,7 @@ import httpx
 
 from pretorin.client.config import Config
 from pretorin.client.models import (
+    ComplianceArtifact,
     ControlDetail,
     ControlFamilyDetail,
     ControlFamilySummary,
@@ -338,3 +339,28 @@ class PretorianClient:
         """
         data = await self._request("GET", f"/frameworks/{framework_id}/documents")
         return DocumentRequirementList(**data)
+
+    # =========================================================================
+    # Compliance Artifacts
+    # =========================================================================
+
+    async def submit_artifact(
+        self, artifact: ComplianceArtifact
+    ) -> dict[str, Any]:
+        """Submit a compliance artifact to the Pretorin platform.
+
+        Args:
+            artifact: The compliance artifact to submit.
+
+        Returns:
+            Dictionary containing artifact_id and URL.
+
+        Raises:
+            PretorianClientError: If the submission fails.
+        """
+        data = await self._request(
+            "POST",
+            "/artifacts",
+            json=artifact.model_dump(),
+        )
+        return data

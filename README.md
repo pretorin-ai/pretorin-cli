@@ -6,16 +6,32 @@ Access compliance frameworks, control families, and control details from NIST 80
 
 ## Installation
 
+### Stable (PyPI)
+
 ```bash
 pip install pretorin
 ```
 
-Or install from source:
+We recommend using [pipx](https://pipx.pypa.io/) for isolated installation:
 
 ```bash
-git clone https://github.com/pretorin/pretorin-cli.git
-cd pretorin-cli
-pip install -e .
+pipx install pretorin
+```
+
+### Latest (GitHub)
+
+Install the latest development version directly from GitHub:
+
+```bash
+pip install git+https://github.com/pretorin/pretorin-cli.git
+```
+
+### Updating
+
+Check for updates and upgrade:
+
+```bash
+pretorin update
 ```
 
 ## Quick Start
@@ -120,10 +136,12 @@ pretorin frameworks documents fedramp-moderate
 | `pretorin frameworks control <framework> <control>` | Get control details |
 | `pretorin frameworks documents <id>` | Get document requirements |
 
-### MCP Server
+### Utilities
 
 | Command | Description |
 |---------|-------------|
+| `pretorin version` | Show CLI version |
+| `pretorin update` | Update to latest version |
 | `pretorin mcp-serve` | Start the MCP server |
 
 ## MCP Server

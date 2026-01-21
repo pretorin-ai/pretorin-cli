@@ -1,6 +1,8 @@
 """Framework commands for Pretorin CLI."""
 
 import asyncio
+import json
+from pathlib import Path
 
 import typer
 from rich import print as rprint
@@ -11,6 +13,7 @@ from rich.markdown import Markdown
 
 from pretorin.client import PretorianClient
 from pretorin.client.api import AuthenticationError, NotFoundError, PretorianClientError
+from pretorin.mcp.analysis_prompts import get_available_controls, get_control_summary
 
 app = typer.Typer()
 console = Console()
@@ -19,7 +22,8 @@ console = Console()
 def require_auth(client: PretorianClient) -> None:
     """Check that the client is authenticated."""
     if not client.is_configured:
-        rprint("[red]Error:[/red] Not logged in. Run 'pretorin login' first.")
+        rprint("[#EAB536][°~°][/#EAB536] Not logged in yet.")
+        rprint("[dim]Run [bold]pretorin login[/bold] to get started.[/dim]")
         raise typer.Exit(1)
 
 
@@ -37,11 +41,11 @@ def frameworks_list() -> None:
             require_auth(client)
 
             try:
-                with console.status("Fetching frameworks..."):
+                with console.status("[#EAB536][°~°][/#EAB536] [dim]Consulting the compliance archives...[/dim]"):
                     result = await client.list_frameworks()
 
                 if not result.frameworks:
-                    rprint("[yellow]No frameworks found.[/yellow]")
+                    rprint("[dim]No frameworks found yet.[/dim]")
                     return
 
                 table = Table(
@@ -57,9 +61,9 @@ def frameworks_list() -> None:
                 table.add_column("Controls", justify="right")
 
                 tier_colors = {
-                    "foundational": "green",
-                    "operational": "yellow",
-                    "strategic": "blue",
+                    "foundational": "#95D7E0",  # Light Turquoise
+                    "operational": "#EAB536",    # Gold
+                    "strategic": "#FF9010",      # Warm Orange
                 }
 
                 for fw in result.frameworks:
@@ -77,10 +81,11 @@ def frameworks_list() -> None:
                 rprint(f"\n[dim]Total: {result.total} framework(s)[/dim]")
 
             except AuthenticationError as e:
-                rprint(f"[red]Authentication error:[/red] {e.message}")
+                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
+                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
                 raise typer.Exit(1)
             except PretorianClientError as e:
-                rprint(f"[red]Error:[/red] {e.message}")
+                rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
 
     asyncio.run(fetch_frameworks())
@@ -97,7 +102,7 @@ def framework_get(
             require_auth(client)
 
             try:
-                with console.status("Fetching framework..."):
+                with console.status("[#EAB536][°~°][/#EAB536] [dim]Gathering framework details...[/dim]"):
                     framework = await client.get_framework(framework_id)
 
                 rprint(
@@ -112,18 +117,20 @@ def framework_get(
                         f"[bold]Last Modified:[/bold] {framework.last_modified or '-'}\n\n"
                         f"[bold]Description:[/bold]\n{framework.description or 'No description available.'}",
                         title=f"Framework: {framework.title}",
-                        border_style="blue",
+                        border_style="#EAB536",
                     )
                 )
 
             except NotFoundError:
-                rprint(f"[red]Error:[/red] Framework not found: {framework_id}")
+                rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find framework: {framework_id}")
+                rprint("[dim]Try [bold]pretorin frameworks list[/bold] to see what's available.[/dim]")
                 raise typer.Exit(1)
             except AuthenticationError as e:
-                rprint(f"[red]Authentication error:[/red] {e.message}")
+                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
+                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
                 raise typer.Exit(1)
             except PretorianClientError as e:
-                rprint(f"[red]Error:[/red] {e.message}")
+                rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
 
     asyncio.run(fetch_framework())
@@ -140,11 +147,11 @@ def framework_families(
             require_auth(client)
 
             try:
-                with console.status("Fetching control families..."):
+                with console.status("[#EAB536][°~°][/#EAB536] [dim]Gathering control families...[/dim]"):
                     families = await client.list_control_families(framework_id)
 
                 if not families:
-                    rprint("[yellow]No control families found.[/yellow]")
+                    rprint("[dim]No control families found for this framework.[/dim]")
                     return
 
                 table = Table(
@@ -169,13 +176,15 @@ def framework_families(
                 rprint(f"\n[dim]Total: {len(families)} family(ies)[/dim]")
 
             except NotFoundError:
-                rprint(f"[red]Error:[/red] Framework not found: {framework_id}")
+                rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find framework: {framework_id}")
+                rprint("[dim]Try [bold]pretorin frameworks list[/bold] to see what's available.[/dim]")
                 raise typer.Exit(1)
             except AuthenticationError as e:
-                rprint(f"[red]Authentication error:[/red] {e.message}")
+                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
+                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
                 raise typer.Exit(1)
             except PretorianClientError as e:
-                rprint(f"[red]Error:[/red] {e.message}")
+                rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
 
     asyncio.run(fetch_families())
@@ -196,11 +205,11 @@ def framework_controls(
             require_auth(client)
 
             try:
-                with console.status("Fetching controls..."):
+                with console.status("[#EAB536][°~°][/#EAB536] [dim]Gathering controls...[/dim]"):
                     controls = await client.list_controls(framework_id, family_id)
 
                 if not controls:
-                    rprint("[yellow]No controls found.[/yellow]")
+                    rprint("[dim]No controls found for this selection.[/dim]")
                     return
 
                 # Apply limit
@@ -231,13 +240,15 @@ def framework_controls(
                     rprint(f"\n[dim]Total: {total} control(s)[/dim]")
 
             except NotFoundError:
-                rprint(f"[red]Error:[/red] Framework not found: {framework_id}")
+                rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find framework: {framework_id}")
+                rprint("[dim]Try [bold]pretorin frameworks list[/bold] to see what's available.[/dim]")
                 raise typer.Exit(1)
             except AuthenticationError as e:
-                rprint(f"[red]Authentication error:[/red] {e.message}")
+                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
+                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
                 raise typer.Exit(1)
             except PretorianClientError as e:
-                rprint(f"[red]Error:[/red] {e.message}")
+                rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
 
     asyncio.run(fetch_controls())
@@ -258,7 +269,7 @@ def control_get(
             require_auth(client)
 
             try:
-                with console.status("Fetching control..."):
+                with console.status("[#EAB536][°~°][/#EAB536] [dim]Looking up control details...[/dim]"):
                     control = await client.get_control(framework_id, control_id)
 
                     refs = None
@@ -280,7 +291,7 @@ def control_get(
                     Panel(
                         "\n".join(info_lines),
                         title=f"Control: {control.id.upper()}",
-                        border_style="blue",
+                        border_style="#EAB536",
                     )
                 )
 
@@ -319,13 +330,15 @@ def control_get(
                     rprint(f"\n[bold]Enhancements:[/bold] {len(control.controls)} available")
 
             except NotFoundError:
-                rprint(f"[red]Error:[/red] Control not found: {control_id} in {framework_id}")
+                rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find control [bold]{control_id}[/bold] in {framework_id}")
+                rprint(f"[dim]Try [bold]pretorin frameworks controls {framework_id}[/bold] to see available controls.[/dim]")
                 raise typer.Exit(1)
             except AuthenticationError as e:
-                rprint(f"[red]Authentication error:[/red] {e.message}")
+                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
+                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
                 raise typer.Exit(1)
             except PretorianClientError as e:
-                rprint(f"[red]Error:[/red] {e.message}")
+                rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
 
     asyncio.run(fetch_control())
@@ -342,7 +355,7 @@ def framework_documents(
             require_auth(client)
 
             try:
-                with console.status("Fetching document requirements..."):
+                with console.status("[#EAB536][°~°][/#EAB536] [dim]Gathering document requirements...[/dim]"):
                     docs = await client.get_document_requirements(framework_id)
 
                 rprint(f"\n[bold]Document Requirements for {docs.framework_title}[/bold]\n")
@@ -358,7 +371,7 @@ def framework_documents(
                         table.add_row(
                             doc.document_name,
                             (doc.description or "-")[:50] + "..." if doc.description and len(doc.description) > 50 else (doc.description or "-"),
-                            "[green]Yes[/green]" if doc.is_required else "[yellow]Optional[/yellow]",
+                            "[#95D7E0]Yes[/#95D7E0]" if doc.is_required else "[#EAB536]Optional[/#EAB536]",
                         )
                     console.print(table)
 
@@ -372,13 +385,169 @@ def framework_documents(
                 rprint(f"\n[dim]Total: {docs.total} document requirement(s)[/dim]")
 
             except NotFoundError:
-                rprint(f"[red]Error:[/red] Framework not found or has no document requirements: {framework_id}")
+                rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find document requirements for: {framework_id}")
+                rprint("[dim]This framework may not have document requirements, or check the ID with [bold]pretorin frameworks list[/bold].[/dim]")
                 raise typer.Exit(1)
             except AuthenticationError as e:
-                rprint(f"[red]Authentication error:[/red] {e.message}")
+                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
+                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
                 raise typer.Exit(1)
             except PretorianClientError as e:
-                rprint(f"[red]Error:[/red] {e.message}")
+                rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
 
     asyncio.run(fetch_documents())
+
+
+# =============================================================================
+# Analyze Command
+# =============================================================================
+
+
+@app.command("analyze")
+def analyze(
+    framework_id: str = typer.Option(
+        "fedramp-moderate",
+        "--framework",
+        "-f",
+        help="Framework ID (e.g., fedramp-moderate, nist-800-53-r5)",
+    ),
+    controls: str = typer.Option(
+        None,
+        "--controls",
+        "-c",
+        help="Comma-separated control IDs (e.g., ac-2,au-2,ia-2). Defaults to all available.",
+    ),
+    path: str = typer.Option(
+        ".",
+        "--path",
+        "-p",
+        help="Path to code directory to analyze",
+    ),
+    output: str = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Save artifacts to local JSON file instead of API",
+    ),
+) -> None:
+    """Start a compliance analysis session.
+
+    This command prepares your environment for AI-assisted compliance analysis.
+    It validates the framework and controls, then prints instructions for
+    using the Pretorin MCP tools to analyze your code.
+    """
+
+    async def run_analyze() -> None:
+        async with PretorianClient() as client:
+            require_auth(client)
+
+            # Parse controls
+            if controls:
+                control_list = [c.strip().lower() for c in controls.split(",")]
+            else:
+                control_list = get_available_controls()
+
+            # Validate framework exists
+            try:
+                with console.status("[#EAB536][°~°][/#EAB536] [dim]Validating framework...[/dim]"):
+                    framework = await client.get_framework(framework_id)
+            except NotFoundError:
+                rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find framework: {framework_id}")
+                rprint("[dim]Try [bold]pretorin frameworks list[/bold] to see what's available.[/dim]")
+                raise typer.Exit(1)
+
+            # Resolve path
+            code_path = Path(path).resolve()
+            if not code_path.exists():
+                rprint(f"[#EAB536][°︵°][/#EAB536] Path not found: {path}")
+                raise typer.Exit(1)
+
+            # Show analysis session info
+            rprint()
+            rprint(
+                Panel(
+                    f"[bold]Framework:[/bold] {framework.title} ({framework_id})\n"
+                    f"[bold]Controls:[/bold] {', '.join(c.upper() for c in control_list)}\n"
+                    f"[bold]Code Path:[/bold] {code_path}\n"
+                    f"[bold]Output:[/bold] {'Local file: ' + output if output else 'Pretorin API'}",
+                    title="[#EAB536]Compliance Analysis Session[/#EAB536]",
+                    border_style="#EAB536",
+                )
+            )
+
+            # Show controls with available guidance
+            rprint("\n[bold]Controls to Analyze:[/bold]")
+            available = get_available_controls()
+
+            table = Table(show_header=True, header_style="bold")
+            table.add_column("Control", style="cyan")
+            table.add_column("Description")
+            table.add_column("Guidance")
+
+            for control_id in control_list:
+                summary = get_control_summary(control_id)
+                has_guidance = control_id.lower() in available
+                table.add_row(
+                    control_id.upper(),
+                    summary or "Unknown control",
+                    "[#95D7E0]Available[/#95D7E0]" if has_guidance else "[dim]Generic[/dim]",
+                )
+
+            console.print(table)
+
+            # Print instructions
+            rprint()
+            rprint(
+                Panel(
+                    """[bold]How to use with your AI assistant:[/bold]
+
+1. [#FF9010]Read the schema:[/#FF9010]
+   Ask your AI to read the MCP resource: [cyan]analysis://schema[/cyan]
+
+2. [#FF9010]Read control guidance:[/#FF9010]
+   For each control, read: [cyan]analysis://control/{framework_id}/{control_id}[/cyan]
+   Example: [cyan]analysis://control/fedramp-moderate/ac-2[/cyan]
+
+3. [#FF9010]Analyze your code:[/#FF9010]
+   Have your AI search and read relevant files in your codebase
+
+4. [#FF9010]Validate artifact:[/#FF9010]
+   Use [cyan]pretorin_validate_artifact[/cyan] to check your artifact
+
+5. [#FF9010]Submit artifact:[/#FF9010]
+   Use [cyan]pretorin_submit_artifact[/cyan] to submit for review
+
+[bold]Example prompt for your AI:[/bold]
+"Analyze my code at {path} for {framework} compliance, focusing on
+control {control}. Read the analysis guidance from the Pretorin MCP
+resources, then examine my code and create a compliance artifact."
+""".format(
+                        path=code_path,
+                        framework=framework_id,
+                        control=control_list[0].upper() if control_list else "AC-2",
+                    ),
+                    title="[#95D7E0]Next Steps[/#95D7E0]",
+                    border_style="#95D7E0",
+                )
+            )
+
+            # If output file specified, create a session file
+            if output:
+                session_data = {
+                    "framework_id": framework_id,
+                    "framework_title": framework.title,
+                    "controls": control_list,
+                    "code_path": str(code_path),
+                    "output_file": output,
+                    "artifacts": [],
+                }
+                output_path = Path(output)
+                output_path.write_text(json.dumps(session_data, indent=2))
+                rprint(f"\n[#95D7E0]✓[/#95D7E0] Session file created: {output}")
+                rprint("[dim]Your AI can append artifacts to this file instead of calling the API.[/dim]")
+
+            rprint()
+            rprint("[#EAB536][°◡°][/#EAB536] Ready for analysis! Ask your AI assistant to get started.")
+
+    asyncio.run(run_analyze())

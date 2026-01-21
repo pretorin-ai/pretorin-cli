@@ -18,7 +18,7 @@ def config_get(
     value = config.get(key)
 
     if value is None:
-        rprint(f"[yellow]Key '{key}' is not set[/yellow]")
+        rprint(f"[dim]Key '{key}' is not set.[/dim]")
         raise typer.Exit(1)
 
     # Mask API key for display
@@ -37,12 +37,12 @@ def config_set(
     """Set a configuration value."""
     # Prevent setting reserved keys that should use login command
     if key == "api_key":
-        rprint("[yellow]Use 'pretorin login' to set your API key[/yellow]")
+        rprint("[#FF9010]→[/#FF9010] Use [bold]pretorin login[/bold] to set your API key.")
         raise typer.Exit(1)
 
     config = Config()
     config.set(key, value)
-    rprint(f"[green]Set {key} = {value}[/green]")
+    rprint(f"[#95D7E0]✓[/#95D7E0] Set {key} = {value}")
 
 
 @app.command("list")
@@ -73,7 +73,8 @@ def config_list() -> None:
         table.add_row("api_base_url", os.environ[ENV_API_BASE_URL], f"env ({ENV_API_BASE_URL})")
 
     if not stored and not os.environ.get(ENV_API_KEY):
-        rprint("[yellow]No configuration set.[/yellow] Run 'pretorin login' to authenticate.")
+        rprint("[dim]No configuration set yet.[/dim]")
+        rprint("[dim]Run [bold]pretorin login[/bold] to get started.[/dim]")
         return
 
     rprint(table)

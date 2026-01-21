@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -174,3 +174,87 @@ class APIError(BaseModel):
     detail: str
     error: str | None = None
     message: str | None = None
+
+
+# =============================================================================
+# Compliance Artifact Models (for Analysis Feature)
+# =============================================================================
+
+
+class Evidence(BaseModel):
+    """Evidence supporting a control implementation."""
+
+    description: str = Field(..., description="Narrative evidence statement")
+    file_path: str | None = Field(default=None, description="Path to file containing evidence")
+    line_numbers: str | None = Field(default=None, description="Line range (e.g., '10-25')")
+    code_snippet: str | None = Field(default=None, description="Relevant code excerpt")
+
+
+class ImplementationStatement(BaseModel):
+    """Implementation statement for a specific control."""
+
+    control_id: str = Field(..., description="Control ID (e.g., ac-2, au-2)")
+    description: str = Field(
+        ...,
+        description="2-3 sentence narrative of how control is implemented",
+    )
+    implementation_status: Literal["implemented", "partial", "planned", "not-applicable"] = Field(
+        ...,
+        description="Current implementation status",
+    )
+    responsible_roles: list[str] = Field(
+        default=["System Administrator"],
+        description="Roles responsible for this control",
+    )
+    evidence: list[Evidence] = Field(
+        default_factory=list,
+        description="Evidence supporting this implementation",
+    )
+    remarks: str | None = Field(default=None, description="Additional notes")
+
+
+class ComponentDefinition(BaseModel):
+    """Definition of a system component for compliance."""
+
+    component_id: str = Field(
+        ...,
+        description="Source identifier (e.g., repository name, system ID)",
+    )
+    title: str = Field(..., description="Component name")
+    description: str = Field(..., description="What this component does")
+    type: Literal["software", "hardware", "service", "policy", "process"] = Field(
+        default="software",
+        description="Component type",
+    )
+    control_implementations: list[ImplementationStatement] = Field(
+        default_factory=list,
+        description="Control implementations for this component",
+    )
+
+
+class ComplianceArtifact(BaseModel):
+    """A compliance artifact containing implementation evidence for a control."""
+
+    framework_id: str = Field(..., description="Framework ID (e.g., fedramp-moderate)")
+    control_id: str = Field(..., description="Control ID (e.g., ac-2)")
+    component: ComponentDefinition = Field(..., description="Component definition")
+    confidence: Literal["high", "medium", "low"] = Field(
+        default="medium",
+        description="Confidence level in the analysis",
+    )
+
+
+class ArtifactValidationResult(BaseModel):
+    """Result of artifact validation."""
+
+    valid: bool = Field(..., description="Whether the artifact is valid")
+    errors: list[str] = Field(default_factory=list, description="Validation errors")
+    warnings: list[str] = Field(default_factory=list, description="Validation warnings")
+
+
+class ArtifactSubmissionResult(BaseModel):
+    """Result of artifact submission to the Pretorin API."""
+
+    artifact_id: str = Field(..., description="Created artifact ID")
+    url: str | None = Field(default=None, description="URL to view artifact")
+    message: str = Field(default="Artifact submitted successfully")

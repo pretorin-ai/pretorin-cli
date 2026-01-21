@@ -5,16 +5,26 @@ from __future__ import annotations
 import asyncio
 import json
 from typing import Any
+from urllib.parse import urlparse
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import (
+    Resource,
     TextContent,
     Tool,
 )
 
 from pretorin.client import PretorianClient
 from pretorin.client.api import AuthenticationError, NotFoundError, PretorianClientError
+from pretorin.client.models import ComplianceArtifact, ArtifactValidationResult
+from pretorin.mcp.analysis_prompts import (
+    get_artifact_schema,
+    get_framework_guide,
+    format_control_analysis_prompt,
+    get_available_controls,
+    get_control_summary,
+)
 
 # Create the MCP server instance
 server = Server("pretorin")
@@ -28,6 +38,98 @@ def _format_error(message: str) -> list[TextContent]:
 def _format_json(data: Any) -> list[TextContent]:
     """Format data as JSON for MCP response."""
     return [TextContent(type="text", text=json.dumps(data, indent=2, default=str))]
+
+
+# =============================================================================
+# MCP Resources for Analysis
+# =============================================================================
+
+
+@server.list_resources()
+async def list_resources() -> list[Resource]:
+    """List available MCP resources for compliance analysis."""
+    resources = [
+        Resource(
+            uri="analysis://schema",
+            name="Compliance Artifact Schema",
+            description="JSON schema for compliance artifacts that AI should produce during analysis",
+            mimeType="text/markdown",
+        ),
+    ]
+
+    # Add framework guides for common frameworks
+    framework_guides = [
+        ("fedramp-moderate", "FedRAMP Moderate"),
+        ("nist-800-53-r5", "NIST 800-53 Rev 5"),
+        ("nist-800-171-r3", "NIST 800-171 Rev 3"),
+    ]
+
+    for framework_id, title in framework_guides:
+        resources.append(
+            Resource(
+                uri=f"analysis://guide/{framework_id}",
+                name=f"{title} Analysis Guide",
+                description=f"Analysis guidance for {title} framework",
+                mimeType="text/markdown",
+            )
+        )
+
+    # Add control analysis prompts for available controls
+    for control_id in get_available_controls():
+        summary = get_control_summary(control_id)
+        resources.append(
+            Resource(
+                uri=f"analysis://control/{control_id}",
+                name=f"Control {control_id.upper()} Analysis",
+                description=f"Analysis guidance for {summary}",
+                mimeType="text/markdown",
+            )
+        )
+
+    return resources
+
+
+@server.read_resource()
+async def read_resource(uri: str) -> str:
+    """Read an analysis resource."""
+    parsed = urlparse(uri)
+
+    if parsed.scheme != "analysis":
+        raise ValueError(f"Unknown resource scheme: {parsed.scheme}")
+
+    # Parse the path (netloc + path for analysis:// URIs)
+    # For "analysis://schema", netloc is "schema" and path is ""
+    # For "analysis://guide/fedramp-moderate", netloc is "guide" and path is "/fedramp-moderate"
+    resource_type = parsed.netloc
+    path_parts = [p for p in parsed.path.split("/") if p]
+
+    if resource_type == "schema":
+        return get_artifact_schema()
+
+    elif resource_type == "guide":
+        if not path_parts:
+            raise ValueError("Framework ID required for guide resource")
+        framework_id = path_parts[0]
+        guide = get_framework_guide(framework_id)
+        if guide:
+            return guide
+        raise ValueError(f"No analysis guide available for framework: {framework_id}")
+
+    elif resource_type == "control":
+        if not path_parts:
+            raise ValueError("Control ID required for control resource")
+        # Support both analysis://control/ac-2 and analysis://control/fedramp-moderate/ac-2
+        if len(path_parts) == 1:
+            control_id = path_parts[0]
+            framework_id = "fedramp-moderate"  # Default framework
+        else:
+            framework_id = path_parts[0]
+            control_id = path_parts[1]
+
+        return format_control_analysis_prompt(framework_id, control_id)
+
+    else:
+        raise ValueError(f"Unknown resource type: {resource_type}")
 
 
 @server.list_tools()
@@ -139,6 +241,65 @@ async def list_tools() -> list[Tool]:
                 "required": ["framework_id"],
             },
         ),
+        # Analysis Tools
+        Tool(
+            name="pretorin_validate_artifact",
+            description="Validate a compliance artifact before submission. Returns validation errors and warnings.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "artifact": {
+                        "type": "object",
+                        "description": "The compliance artifact JSON to validate (must follow the schema from analysis://schema)",
+                        "properties": {
+                            "framework_id": {"type": "string"},
+                            "control_id": {"type": "string"},
+                            "component": {
+                                "type": "object",
+                                "properties": {
+                                    "component_id": {"type": "string"},
+                                    "title": {"type": "string"},
+                                    "description": {"type": "string"},
+                                    "type": {"type": "string"},
+                                    "control_implementations": {"type": "array"},
+                                },
+                            },
+                            "confidence": {"type": "string"},
+                        },
+                    },
+                },
+                "required": ["artifact"],
+            },
+        ),
+        Tool(
+            name="pretorin_submit_artifact",
+            description="Submit a validated compliance artifact to the Pretorin platform for review",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "artifact": {
+                        "type": "object",
+                        "description": "The compliance artifact JSON to submit (should be validated first)",
+                        "properties": {
+                            "framework_id": {"type": "string"},
+                            "control_id": {"type": "string"},
+                            "component": {
+                                "type": "object",
+                                "properties": {
+                                    "component_id": {"type": "string"},
+                                    "title": {"type": "string"},
+                                    "description": {"type": "string"},
+                                    "type": {"type": "string"},
+                                    "control_implementations": {"type": "array"},
+                                },
+                            },
+                            "confidence": {"type": "string"},
+                        },
+                    },
+                },
+                "required": ["artifact"],
+            },
+        ),
     ]
 
 
@@ -166,6 +327,10 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
                 return await _handle_get_control_references(client, arguments)
             elif name == "pretorin_get_document_requirements":
                 return await _handle_get_document_requirements(client, arguments)
+            elif name == "pretorin_validate_artifact":
+                return await _handle_validate_artifact(arguments)
+            elif name == "pretorin_submit_artifact":
+                return await _handle_submit_artifact(client, arguments)
             else:
                 return _format_error(f"Unknown tool: {name}")
 
@@ -337,6 +502,139 @@ async def _handle_get_document_requirements(
             for d in docs.implicit_documents
         ],
     })
+
+
+# =============================================================================
+# Analysis Tool Handlers
+# =============================================================================
+
+
+def _validate_artifact_data(artifact_data: dict[str, Any]) -> ArtifactValidationResult:
+    """Validate artifact data and return validation result."""
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # Required top-level fields
+    if not artifact_data.get("framework_id"):
+        errors.append("Missing required field: framework_id")
+    if not artifact_data.get("control_id"):
+        errors.append("Missing required field: control_id")
+    if not artifact_data.get("component"):
+        errors.append("Missing required field: component")
+
+    # Validate component if present
+    component = artifact_data.get("component", {})
+    if component:
+        if not component.get("component_id"):
+            errors.append("Missing required field: component.component_id")
+        if not component.get("title"):
+            errors.append("Missing required field: component.title")
+        if not component.get("description"):
+            errors.append("Missing required field: component.description")
+
+        # Validate component type
+        valid_types = ["software", "hardware", "service", "policy", "process"]
+        comp_type = component.get("type", "software")
+        if comp_type not in valid_types:
+            errors.append(f"Invalid component type: {comp_type}. Must be one of: {valid_types}")
+
+        # Validate control implementations
+        implementations = component.get("control_implementations", [])
+        if not implementations:
+            warnings.append("No control implementations provided")
+
+        for i, impl in enumerate(implementations):
+            if not impl.get("control_id"):
+                errors.append(f"Implementation {i}: Missing control_id")
+            if not impl.get("description"):
+                errors.append(f"Implementation {i}: Missing description")
+
+            # Validate implementation status
+            valid_statuses = ["implemented", "partial", "planned", "not-applicable"]
+            status = impl.get("implementation_status")
+            if not status:
+                errors.append(f"Implementation {i}: Missing implementation_status")
+            elif status not in valid_statuses:
+                errors.append(f"Implementation {i}: Invalid status '{status}'. Must be one of: {valid_statuses}")
+
+            # Check evidence
+            evidence = impl.get("evidence", [])
+            if not evidence:
+                warnings.append(f"Implementation {i}: No evidence provided")
+            for j, ev in enumerate(evidence):
+                if not ev.get("description"):
+                    errors.append(f"Implementation {i}, Evidence {j}: Missing description")
+
+    # Validate confidence
+    valid_confidence = ["high", "medium", "low"]
+    confidence = artifact_data.get("confidence", "medium")
+    if confidence not in valid_confidence:
+        errors.append(f"Invalid confidence: {confidence}. Must be one of: {valid_confidence}")
+
+    return ArtifactValidationResult(
+        valid=len(errors) == 0,
+        errors=errors,
+        warnings=warnings,
+    )
+
+
+async def _handle_validate_artifact(
+    arguments: dict[str, Any],
+) -> list[TextContent]:
+    """Handle the validate_artifact tool."""
+    artifact_data = arguments.get("artifact", {})
+
+    if not artifact_data:
+        return _format_error("No artifact data provided")
+
+    result = _validate_artifact_data(artifact_data)
+
+    return _format_json({
+        "valid": result.valid,
+        "errors": result.errors,
+        "warnings": result.warnings,
+        "message": "Artifact is valid" if result.valid else f"Validation failed with {len(result.errors)} error(s)",
+    })
+
+
+async def _handle_submit_artifact(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent]:
+    """Handle the submit_artifact tool."""
+    artifact_data = arguments.get("artifact", {})
+
+    if not artifact_data:
+        return _format_error("No artifact data provided")
+
+    # Validate first
+    validation = _validate_artifact_data(artifact_data)
+    if not validation.valid:
+        return _format_json({
+            "success": False,
+            "message": "Artifact validation failed. Please fix errors before submitting.",
+            "errors": validation.errors,
+        })
+
+    try:
+        # Parse into model for type safety
+        artifact = ComplianceArtifact(**artifact_data)
+
+        # Submit to API
+        result = await client.submit_artifact(artifact)
+
+        return _format_json({
+            "success": True,
+            "artifact_id": result.get("artifact_id", "unknown"),
+            "url": result.get("url"),
+            "message": "Artifact submitted successfully",
+        })
+
+    except Exception as e:
+        return _format_json({
+            "success": False,
+            "message": f"Failed to submit artifact: {str(e)}",
+        })
 
 
 async def _run_server() -> None:
