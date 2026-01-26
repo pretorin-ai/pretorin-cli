@@ -124,6 +124,19 @@ def mcp_serve() -> None:
     run_server()
 
 
+@app.command("assess")
+def assess() -> None:
+    """Run compliance assessment for JMCP (Joint Mission Command Platform).
+
+    Analyzes the Joint Mission Command Platform codebase for DoD RMF and
+    NIST 800-53 compliance, scanning for evidence across key security controls
+    and submitting artifacts to the Pretorin platform.
+    """
+    from pretorin.cli.demo import run_demo
+
+    run_demo()
+
+
 @app.command("analyze")
 def analyze(
     framework_id: str = typer.Option(
