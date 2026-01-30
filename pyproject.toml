@@ -40,7 +40,7 @@ pretorin = "pretorin.cli.main:app"
 [project.urls]
 Homepage = "https://pretorin.com"
 Documentation = "https://docs.pretorin.com"
-Repository = "https://github.com/pretorin/pretorin-cli"
+Repository = "https://github.com/pretorin-ai/pretorin-cli"
 
 [build-system]
 requires = ["hatchling"]

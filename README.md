@@ -23,7 +23,7 @@ pipx install pretorin
 Install the latest development version directly from GitHub:
 
 ```bash
-pip install git+https://github.com/pretorin/pretorin-cli.git
+pip install git+https://github.com/pretorin-ai/pretorin-cli.git
 ```
 
 ### Updating
@@ -202,7 +202,7 @@ The API provides access to various compliance frameworks including:
 ### Setup
 
 ```bash
-git clone https://github.com/pretorin/pretorin-cli.git
+git clone https://github.com/pretorin-ai/pretorin-cli.git
 cd pretorin-cli
 pip install -e ".[dev]"
 ```
