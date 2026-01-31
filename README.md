@@ -1,8 +1,13 @@
 # Pretorin CLI
 
+[![PyPI version](https://badge.fury.io/py/pretorin.svg)](https://pypi.org/project/pretorin/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 CLI and MCP server for the Pretorin Compliance Platform API.
 
-Access compliance frameworks, control families, and control details from NIST 800-53, NIST 800-171, FedRAMP, SOC 2, ISO 27001, and more.
+Access compliance frameworks, control families, and control details from NIST 800-53, NIST 800-171, FedRAMP, CMMC, and more.
+
+**Documentation**: [https://docs.pretorin.com](https://docs.pretorin.com)
 
 ## Installation
 
@@ -188,14 +193,14 @@ Credentials are stored in `~/.pretorin/config.json`.
 
 ## Supported Frameworks
 
-The API provides access to various compliance frameworks including:
+The initial public release includes these Government Core frameworks:
 
 - NIST SP 800-53 Rev 5
 - NIST SP 800-171 Rev 2
 - FedRAMP (Low, Moderate, High)
-- SOC 2
-- ISO 27001
-- And more...
+- CMMC Level 1, 2, and 3
+
+Additional frameworks are available on the platform. See [docs.pretorin.com](https://docs.pretorin.com) for the full list.
 
 ## Development
 
@@ -225,6 +230,10 @@ mypy src/pretorin
 ruff check src/pretorin
 ```
 
+## Contributing
+
+Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
 ## License
 
-Proprietary - Pretorin, Inc.
+MIT License - see [LICENSE](LICENSE) for details.
