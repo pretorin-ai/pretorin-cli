@@ -1,5 +1,6 @@
 # Claude context file (users can create their own)
 CLAUDE.md
+.claude/
 
 # Python
 __pycache__/
@@ -22,6 +23,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+pip-log.txt
 
 # Virtual environments
 .env
@@ -35,14 +37,20 @@ ENV/
 .vscode/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
 
 # Testing
 .tox/
+.nox/
 .coverage
 .coverage.*
 htmlcov/
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
 coverage/
 coverage.xml
 
@@ -56,3 +64,5 @@ coverage.xml
 # OS
 .DS_Store
 Thumbs.db
+*~
+.directory
