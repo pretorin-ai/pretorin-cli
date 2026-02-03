@@ -89,7 +89,7 @@ class PretorianClient:
             self._client = httpx.AsyncClient(
                 base_url=self._api_base_url,
                 headers=self._get_headers(),
-                timeout=30.0,
+                timeout=60.0,
             )
         return self._client
 
