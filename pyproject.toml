@@ -58,7 +58,7 @@ pretorin = "pretorin.cli.main:app"
 
 [project.urls]
 Homepage = "https://pretorin.com"
-Documentation = "https://docs.pretorin.com"
+Documentation = "https://platform.pretorin.com/api/docs"
 Repository = "https://github.com/pretorin-ai/pretorin-cli"
 Changelog = "https://github.com/pretorin-ai/pretorin-cli/blob/main/CHANGELOG.md"
 Issues = "https://github.com/pretorin-ai/pretorin-cli/issues"

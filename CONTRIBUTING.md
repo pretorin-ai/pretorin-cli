@@ -61,4 +61,4 @@ Please use GitHub Issues to report bugs or request features. Include:
 
 ## Questions?
 
-For questions about the API or platform, see [docs.pretorin.com](https://docs.pretorin.com).
+For questions about the API or platform, see [platform.pretorin.com/api/docs](https://platform.pretorin.com/api/docs).

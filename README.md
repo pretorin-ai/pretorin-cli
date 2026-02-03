@@ -20,7 +20,7 @@ CLI and MCP server for the Pretorin Compliance Platform API.
 
 Access compliance frameworks, control families, and control details from NIST 800-53, NIST 800-171, FedRAMP, CMMC, and more.
 
-**Documentation**: [https://docs.pretorin.com](https://docs.pretorin.com)
+**Documentation**: [https://platform.pretorin.com/api/docs](https://platform.pretorin.com/api/docs)
 
 ## Installation
 
@@ -54,9 +54,7 @@ pretorin update
 
 ## Quick Start
 
-### Authentication
-
-Get your API key from [https://platform.pretorin.com/settings/developer](https://platform.pretorin.com/settings/developer), then:
+Get your API key from [https://platform.pretorin.com/](https://platform.pretorin.com/), then authenticate:
 
 ```bash
 pretorin login
@@ -68,140 +66,126 @@ Verify your authentication:
 pretorin whoami
 ```
 
-### Browse Frameworks
-
-List all available compliance frameworks:
-
-```bash
-pretorin frameworks list
-```
-
-Get details about a specific framework:
-
-```bash
-pretorin frameworks get nist-800-53-r5
-```
-
-### Browse Control Families
-
-List control families for a framework:
-
-```bash
-pretorin frameworks families nist-800-53-r5
-```
-
-### Browse Controls
-
-List all controls for a framework:
-
-```bash
-pretorin frameworks controls nist-800-53-r5
-```
-
-Filter by control family:
-
-```bash
-pretorin frameworks controls nist-800-53-r5 --family ac
-```
-
-Get details of a specific control:
-
-```bash
-pretorin frameworks control nist-800-53-r5 ac-1
-```
-
-Include guidance and references:
-
-```bash
-pretorin frameworks control nist-800-53-r5 ac-1 --references
-```
-
-### Document Requirements
-
-Get document requirements for a framework:
-
-```bash
-pretorin frameworks documents fedramp-moderate
-```
-
-## CLI Commands
-
-### Authentication
-
-| Command | Description |
-|---------|-------------|
-| `pretorin login` | Authenticate with the Pretorin API |
-| `pretorin logout` | Clear stored credentials |
-| `pretorin whoami` | Display current authentication status |
-
-### Configuration
-
-| Command | Description |
-|---------|-------------|
-| `pretorin config list` | List all configuration |
-| `pretorin config get <key>` | Get a config value |
-| `pretorin config set <key> <value>` | Set a config value |
-| `pretorin config path` | Show config file path |
-
-### Frameworks
-
-| Command | Description |
-|---------|-------------|
-| `pretorin frameworks list` | List all compliance frameworks |
-| `pretorin frameworks get <id>` | Get framework details |
-| `pretorin frameworks families <id>` | List control families |
-| `pretorin frameworks controls <id>` | List controls |
-| `pretorin frameworks control <framework> <control>` | Get control details |
-| `pretorin frameworks documents <id>` | Get document requirements |
-
-### Utilities
-
-| Command | Description |
-|---------|-------------|
-| `pretorin version` | Show CLI version |
-| `pretorin update` | Update to latest version |
-| `pretorin mcp-serve` | Start the MCP server |
-
-## MCP Server
+## MCP Integration
 
 <img src="Rome-bot_Basic-1.png" alt="Rome-bot" width="120" align="right">
 
-The Pretorin CLI includes an MCP (Model Context Protocol) server that enables AI assistants like Claude to access compliance framework data directly during conversations.
+The Pretorin CLI includes an MCP (Model Context Protocol) server that enables AI assistants to access compliance framework data directly during conversations.
 
 **Why MCP?**
 
-- **Real-time data** - Query the latest compliance frameworks and controls
-- **Reduce hallucination** - Work with authoritative compliance data
-- **Streamline workflows** - No copy-pasting between tools
+- **Real-time data** — Query the latest compliance frameworks and controls
+- **Reduce hallucination** — Work with authoritative compliance data instead of training knowledge
+- **Streamline workflows** — No copy-pasting between tools
 
-### Quick Setup
+### Setup
 
-1. **Install and authenticate:**
-   ```bash
-   pip install pretorin
-   pretorin login
-   ```
+Install and authenticate first:
 
-2. **Add to Claude Desktop config:**
+```bash
+pip install pretorin
+pretorin login
+```
 
-   **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+Then add Pretorin to your AI tool of choice:
 
-   **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+<details>
+<summary><strong>Claude Desktop</strong></summary>
 
-   **Linux**: `~/.config/Claude/claude_desktop_config.json`
+Add to your Claude Desktop configuration file:
 
-   ```json
-   {
-     "mcpServers": {
-       "pretorin": {
-         "command": "pretorin",
-         "args": ["mcp-serve"]
-       }
-     }
-   }
-   ```
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+**Linux**: `~/.config/Claude/claude_desktop_config.json`
 
-3. **Restart Claude Desktop**
+```json
+{
+  "mcpServers": {
+    "pretorin": {
+      "command": "pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+```
+
+Restart Claude Desktop after saving.
+
+</details>
+
+<details>
+<summary><strong>Claude Code</strong></summary>
+
+Add a `.mcp.json` file to your project root:
+
+```json
+{
+  "mcpServers": {
+    "pretorin": {
+      "type": "stdio",
+      "command": "pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+```
+
+Claude Code will detect the file automatically.
+
+</details>
+
+<details>
+<summary><strong>Cursor</strong></summary>
+
+Add to `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "pretorin": {
+      "command": "pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+```
+
+Restart Cursor after saving.
+
+</details>
+
+<details>
+<summary><strong>OpenAI Codex CLI</strong></summary>
+
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.pretorin]
+command = "pretorin"
+args = ["mcp-serve"]
+```
+
+</details>
+
+<details>
+<summary><strong>Windsurf</strong></summary>
+
+Add to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "pretorin": {
+      "command": "pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+```
+
+Restart Windsurf after saving.
+
+</details>
 
 ### Available Tools
 
@@ -225,14 +209,52 @@ The Pretorin CLI includes an MCP (Model Context Protocol) server that enables AI
 
 ### Example Prompts
 
-Try asking Claude:
+Try asking your AI assistant:
 
 - "What compliance frameworks are available for government systems?"
-- "Explain AC-2 (Account Management) requirements for FedRAMP Moderate"
+- "What are the Account Management requirements for FedRAMP Moderate?"
 - "What documents do I need for NIST 800-171 compliance?"
 - "Show me all Audit controls in NIST 800-53"
 
 For comprehensive MCP documentation, see [docs/MCP.md](docs/MCP.md).
+
+## CLI Reference
+
+### Authentication
+
+| Command | Description |
+|---------|-------------|
+| `pretorin login` | Authenticate with the Pretorin API |
+| `pretorin logout` | Clear stored credentials |
+| `pretorin whoami` | Display current authentication status |
+
+### Frameworks
+
+| Command | Description |
+|---------|-------------|
+| `pretorin frameworks list` | List all compliance frameworks |
+| `pretorin frameworks get <id>` | Get framework details |
+| `pretorin frameworks families <id>` | List control families |
+| `pretorin frameworks controls <id>` | List controls (use `--family` to filter) |
+| `pretorin frameworks control <framework> <control>` | Get control details (use `--references` for guidance) |
+| `pretorin frameworks documents <id>` | Get document requirements |
+
+### Configuration
+
+| Command | Description |
+|---------|-------------|
+| `pretorin config list` | List all configuration |
+| `pretorin config get <key>` | Get a config value |
+| `pretorin config set <key> <value>` | Set a config value |
+| `pretorin config path` | Show config file path |
+
+### Utilities
+
+| Command | Description |
+|---------|-------------|
+| `pretorin version` | Show CLI version |
+| `pretorin update` | Update to latest version |
+| `pretorin mcp-serve` | Start the MCP server |
 
 ## Configuration
 
@@ -254,7 +276,7 @@ The initial public release includes these Government Core frameworks:
 - FedRAMP (Low, Moderate, High)
 - CMMC Level 1, 2, and 3
 
-Additional frameworks are available on the platform. See [docs.pretorin.com](https://docs.pretorin.com) for the full list.
+Additional frameworks are available on the platform. See [platform.pretorin.com/api/docs](https://platform.pretorin.com/api/docs) for the full list.
 
 ## Development
 

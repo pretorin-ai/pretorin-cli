@@ -160,7 +160,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_list_control_families",
-            description="List all control families for a specific framework (e.g., AC, AU, CM for NIST)",
+            description="List all control families for a specific framework",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -184,7 +184,7 @@ async def list_tools() -> list[Tool]:
                     },
                     "family_id": {
                         "type": "string",
-                        "description": "Optional: Filter by control family ID (e.g., ac, au, cm)",
+                        "description": "Optional: Filter by control family ID",
                     },
                 },
                 "required": ["framework_id"],
@@ -202,7 +202,7 @@ async def list_tools() -> list[Tool]:
                     },
                     "control_id": {
                         "type": "string",
-                        "description": "The control ID (e.g., ac-1, ac-2, au-2)",
+                        "description": "The control ID",
                     },
                 },
                 "required": ["framework_id", "control_id"],
@@ -220,7 +220,7 @@ async def list_tools() -> list[Tool]:
                     },
                     "control_id": {
                         "type": "string",
-                        "description": "The control ID (e.g., ac-1, ac-2)",
+                        "description": "The control ID",
                     },
                 },
                 "required": ["framework_id", "control_id"],

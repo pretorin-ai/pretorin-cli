@@ -33,14 +33,12 @@ def login(
 ) -> None:
     """Authenticate with the Pretorin API.
 
-    Get your API key from the Pretorin platform at https://platform.pretorin.com/settings/developer
+    Get your API key from the Pretorin platform at https://platform.pretorin.com/
     """
     if api_key is None:
         rprint("\n[bold #FF9010]Welcome to Pretorin[/bold #FF9010]")
         rprint("[dim]Making compliance the best part of your day.[/dim]\n")
-        rprint(
-            "Get your API key from: [link=https://platform.pretorin.com/settings/developer]https://platform.pretorin.com/settings/developer[/link]\n"
-        )
+        rprint("Get your API key from: [link=https://platform.pretorin.com/]https://platform.pretorin.com/[/link]\n")
         api_key = typer.prompt("Enter your API key", hide_input=True)
 
     if not api_key:
