@@ -25,7 +25,10 @@ pip install pretorin
 pretorin login
 ```
 
-### 3. Configure Claude Desktop
+### 3. Configure Your AI Tool
+
+<details open>
+<summary><strong>Claude Desktop</strong></summary>
 
 Add to your Claude Desktop configuration file:
 
@@ -46,9 +49,87 @@ Add to your Claude Desktop configuration file:
 }
 ```
 
-### 4. Restart Claude Desktop
+Restart Claude Desktop after saving.
 
-Restart the Claude Desktop application to load the new MCP server.
+</details>
+
+<details>
+<summary><strong>Claude Code</strong></summary>
+
+Add a `.mcp.json` file to your project root:
+
+```json
+{
+  "mcpServers": {
+    "pretorin": {
+      "type": "stdio",
+      "command": "pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+```
+
+Claude Code will detect the file automatically.
+
+</details>
+
+<details>
+<summary><strong>Cursor</strong></summary>
+
+Add to `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "pretorin": {
+      "command": "pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+```
+
+Restart Cursor after saving.
+
+</details>
+
+<details>
+<summary><strong>OpenAI Codex CLI</strong></summary>
+
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.pretorin]
+command = "pretorin"
+args = ["mcp-serve"]
+```
+
+</details>
+
+<details>
+<summary><strong>Windsurf</strong></summary>
+
+Add to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "pretorin": {
+      "command": "pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+```
+
+Restart Windsurf after saving.
+
+</details>
+
+### 4. Restart Your AI Tool
+
+Restart the application to load the new MCP server.
 
 ## Available Tools
 
@@ -58,7 +139,7 @@ The MCP server provides 7 tools for accessing compliance data:
 |------|-------------|
 | `pretorin_list_frameworks` | List all available compliance frameworks |
 | `pretorin_get_framework` | Get detailed metadata about a specific framework |
-| `pretorin_list_control_families` | List control families for a framework (AC, AU, CM, etc.) |
+| `pretorin_list_control_families` | List control families for a framework |
 | `pretorin_list_controls` | List controls, optionally filtered by family |
 | `pretorin_get_control` | Get detailed control information including parameters |
 | `pretorin_get_control_references` | Get control guidance, objectives, and related controls |
@@ -110,11 +191,11 @@ List controls for a framework, optionally filtered by family.
 
 **Parameters:**
 - `framework_id` (required): The framework ID
-- `family_id` (optional): Filter by control family ID (e.g., `ac`, `au`)
+- `family_id` (optional): Filter by control family ID (use `pretorin frameworks families <id>` to discover valid family IDs)
 
 **Returns:** List of controls with ID, title, and family.
 
-**Example prompt:** "Show me all Access Control (AC) controls in NIST 800-53"
+**Example prompt:** "Show me all Access Control controls in NIST 800-53"
 
 ---
 
@@ -124,11 +205,11 @@ Get detailed information about a specific control.
 
 **Parameters:**
 - `framework_id` (required): The framework ID
-- `control_id` (required): The control ID (e.g., `ac-1`, `au-2`)
+- `control_id` (required): The control ID (use `pretorin frameworks controls <id>` to discover valid control IDs)
 
 **Returns:** Control details including parameters, parts, and enhancement count.
 
-**Example prompt:** "Explain control AC-2 from NIST 800-53"
+**Example prompt:** "Explain the Account Management control from NIST 800-53"
 
 ---
 
@@ -142,7 +223,7 @@ Get reference information for a control including guidance and related controls.
 
 **Returns:** Statement, guidance, objectives, parameters, and related controls.
 
-**Example prompt:** "What is the guidance for implementing AC-2?"
+**Example prompt:** "What is the guidance for implementing Account Management?"
 
 ---
 
@@ -177,9 +258,9 @@ The MCP server also exposes resources for analysis guidance:
 
 ### Understanding a Control
 
-> **You:** I need to implement AC-2 (Account Management) for our FedRAMP Moderate system. What does it require?
+> **You:** I need to implement Account Management for our FedRAMP Moderate system. What does it require?
 >
-> **Claude:** *Uses pretorin_get_control and pretorin_get_control_references* AC-2 requires organizations to manage system accounts including identifying account types, establishing conditions for membership, and specifying authorized users...
+> **Claude:** *Uses pretorin_get_control and pretorin_get_control_references* Account Management requires organizations to manage system accounts including identifying account types, establishing conditions for membership, and specifying authorized users...
 
 ### Planning Documentation
 
@@ -191,7 +272,7 @@ The MCP server also exposes resources for analysis guidance:
 
 > **You:** Give me an overview of the Audit controls in NIST 800-53
 >
-> **Claude:** *Uses pretorin_list_controls with family filter* The Audit and Accountability (AU) family contains controls for audit events, content, storage, review, and reporting...
+> **Claude:** *Uses pretorin_list_controls with family filter* The Audit and Accountability family contains controls for audit events, content, storage, review, and reporting...
 
 ## Troubleshooting
 
@@ -247,7 +328,6 @@ pretorin whoami
 
 - Verify the framework ID exists: `pretorin frameworks list`
 - Verify the control ID exists: `pretorin frameworks controls <framework_id>`
-- Control IDs are case-insensitive (both `AC-1` and `ac-1` work)
 
 ## Using with Other MCP Clients
 
@@ -263,6 +343,6 @@ The server accepts JSON-RPC messages on stdin and responds on stdout.
 
 ## Support
 
-- Documentation: [docs.pretorin.com](https://docs.pretorin.com)
+- Documentation: [platform.pretorin.com/api/docs](https://platform.pretorin.com/api/docs)
 - Issues: [github.com/pretorin-ai/pretorin-cli/issues](https://github.com/pretorin-ai/pretorin-cli/issues)
 - Platform: [platform.pretorin.com](https://platform.pretorin.com)

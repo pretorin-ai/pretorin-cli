@@ -226,7 +226,7 @@ class PretorianClient:
 
         Args:
             framework_id: ID of the framework.
-            family_id: ID of the control family (e.g., ac, au, cm).
+            family_id: ID of the control family.
 
         Returns:
             ControlFamilyDetail with family info and controls list.
@@ -264,7 +264,7 @@ class PretorianClient:
 
         Args:
             framework_id: ID of the framework.
-            control_id: ID of the control (e.g., ac-1, ac-2).
+            control_id: ID of the control.
 
         Returns:
             ControlDetail with full control information.

@@ -190,7 +190,7 @@ def framework_families(
 @app.command("controls")
 def framework_controls(
     framework_id: str = typer.Argument(..., help="Framework ID (e.g., nist-800-53-r5)"),
-    family_id: str | None = typer.Option(None, "--family", "-f", help="Filter by control family ID (e.g., ac, au)"),
+    family_id: str | None = typer.Option(None, "--family", "-f", help="Filter by control family ID"),
     limit: int = typer.Option(50, "--limit", "-n", help="Maximum number of controls to show"),
 ) -> None:
     """List controls for a framework."""
@@ -252,7 +252,7 @@ def framework_controls(
 @app.command("control")
 def control_get(
     framework_id: str = typer.Argument(..., help="Framework ID (e.g., nist-800-53-r5)"),
-    control_id: str = typer.Argument(..., help="Control ID (e.g., ac-1, ac-2)"),
+    control_id: str = typer.Argument(..., help="Control ID"),
     references: bool = typer.Option(False, "--references", "-r", help="Include guidance and references"),
 ) -> None:
     """Get details of a specific control."""
