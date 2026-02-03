@@ -8,14 +8,33 @@ license = {text = "MIT"}
 authors = [
     {name = "Pretorin", email = "support@pretorin.com"}
 ]
+keywords = [
+    "compliance",
+    "security",
+    "nist",
+    "fedramp",
+    "cmmc",
+    "soc2",
+    "iso27001",
+    "mcp",
+    "cli",
+    "oscal",
+]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: System :: Systems Administration",
+    "Typing :: Typed",
 ]
 dependencies = [
     "typer>=0.9.0",
@@ -41,6 +60,8 @@ pretorin = "pretorin.cli.main:app"
 Homepage = "https://pretorin.com"
 Documentation = "https://docs.pretorin.com"
 Repository = "https://github.com/pretorin-ai/pretorin-cli"
+Changelog = "https://github.com/pretorin-ai/pretorin-cli/blob/main/CHANGELOG.md"
+Issues = "https://github.com/pretorin-ai/pretorin-cli/issues"
 
 [build-system]
 requires = ["hatchling"]
@@ -50,16 +71,48 @@ build-backend = "hatchling.build"
 packages = ["src/pretorin"]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
+[tool.ruff.lint.per-file-ignores]
+# Code examples in prompts have long lines
+"src/pretorin/mcp/analysis_prompts.py" = ["E501"]
+# ASCII art banner has long lines
+"src/pretorin/cli/main.py" = ["E501"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true
 
+[[tool.mypy.overrides]]
+# MCP library doesn't have complete type stubs
+module = "pretorin.mcp.server"
+disallow_untyped_decorators = false
+disallow_untyped_calls = false
+disable_error_code = ["arg-type"]
+
+[[tool.mypy.overrides]]
+# API client has dynamic JSON responses
+module = "pretorin.client.api"
+warn_return_any = false
+disable_error_code = ["arg-type", "union-attr", "return-value"]
+
+[[tool.mypy.overrides]]
+# Config uses JSON with dynamic types
+module = "pretorin.client.config"
+warn_return_any = false
+
+[[tool.mypy.overrides]]
+# Version check parses external API responses
+module = "pretorin.cli.version_check"
+warn_return_any = false
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "integration: mark test as integration test (requires API key)",
+]

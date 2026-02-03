@@ -797,18 +797,18 @@ Use the schema from `analysis://schema` to format your artifact.
 """
 
     return f"""
-# Control Analysis: {control_id.upper()} - {prompt_data['title']}
+# Control Analysis: {control_id.upper()} - {prompt_data["title"]}
 
-**Family:** {prompt_data['family']}
+**Family:** {prompt_data["family"]}
 
 ## Overview
-{prompt_data['summary']}
+{prompt_data["summary"]}
 
-{prompt_data['what_to_look_for']}
+{prompt_data["what_to_look_for"]}
 
-{prompt_data['evidence_examples']}
+{prompt_data["evidence_examples"]}
 
-{prompt_data['implementation_status_guidance']}
+{prompt_data["implementation_status_guidance"]}
 
 ## Output Format
 

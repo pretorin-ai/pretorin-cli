@@ -6,8 +6,8 @@ from rich.console import Console
 
 from pretorin import __version__
 from pretorin.cli.auth import app as auth_app
-from pretorin.cli.config import app as config_app
 from pretorin.cli.commands import app as frameworks_app
+from pretorin.cli.config import app as config_app
 
 console = Console()
 
@@ -60,6 +60,7 @@ def main(ctx: typer.Context) -> None:
         show_banner()
         # Show the help text after the banner
         rprint(ctx.get_help())
+
 
 # Add sub-command groups
 app.add_typer(config_app, name="config", help="Manage configuration")
@@ -122,50 +123,6 @@ def mcp_serve() -> None:
     from pretorin.mcp.server import run_server
 
     run_server()
-
-
-@app.command("analyze")
-def analyze(
-    framework_id: str = typer.Option(
-        "fedramp-moderate",
-        "--framework",
-        "-f",
-        help="Framework ID (e.g., fedramp-moderate, nist-800-53-r5)",
-    ),
-    controls: str = typer.Option(
-        None,
-        "--controls",
-        "-c",
-        help="Comma-separated control IDs (e.g., ac-2,au-2,ia-2). Defaults to all available.",
-    ),
-    path: str = typer.Option(
-        ".",
-        "--path",
-        "-p",
-        help="Path to code directory to analyze",
-    ),
-    output: str = typer.Option(
-        None,
-        "--output",
-        "-o",
-        help="Save artifacts to local JSON file instead of API",
-    ),
-) -> None:
-    """Start a compliance analysis session.
-
-    This command prepares your environment for AI-assisted compliance analysis.
-    It validates the framework and controls, then prints instructions for
-    using the Pretorin MCP tools to analyze your code.
-    """
-    from pretorin.cli.commands import analyze as _analyze
-
-    # Delegate to the full implementation in commands.py
-    _analyze(
-        framework_id=framework_id,
-        controls=controls,
-        path=path,
-        output=output,
-    )
 
 
 if __name__ == "__main__":

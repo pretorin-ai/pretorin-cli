@@ -1,19 +1,16 @@
 """Framework commands for Pretorin CLI."""
 
 import asyncio
-import json
-from pathlib import Path
 
 import typer
 from rich import print as rprint
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.markdown import Markdown
 
+from pretorin.cli.animations import AnimationTheme, animated_status
 from pretorin.client import PretorianClient
 from pretorin.client.api import AuthenticationError, NotFoundError, PretorianClientError
-from pretorin.cli.animations import animated_status, AnimationTheme
 
 app = typer.Typer()
 console = Console()
@@ -62,8 +59,8 @@ def frameworks_list() -> None:
 
                 tier_colors = {
                     "foundational": "#95D7E0",  # Light Turquoise
-                    "operational": "#EAB536",    # Gold
-                    "strategic": "#FF9010",      # Warm Orange
+                    "operational": "#EAB536",  # Gold
+                    "strategic": "#FF9010",  # Warm Orange
                 }
 
                 for fw in result.frameworks:
@@ -193,9 +190,7 @@ def framework_families(
 @app.command("controls")
 def framework_controls(
     framework_id: str = typer.Argument(..., help="Framework ID (e.g., nist-800-53-r5)"),
-    family_id: str | None = typer.Option(
-        None, "--family", "-f", help="Filter by control family ID (e.g., ac, au)"
-    ),
+    family_id: str | None = typer.Option(None, "--family", "-f", help="Filter by control family ID (e.g., ac, au)"),
     limit: int = typer.Option(50, "--limit", "-n", help="Maximum number of controls to show"),
 ) -> None:
     """List controls for a framework."""
@@ -258,9 +253,7 @@ def framework_controls(
 def control_get(
     framework_id: str = typer.Argument(..., help="Framework ID (e.g., nist-800-53-r5)"),
     control_id: str = typer.Argument(..., help="Control ID (e.g., ac-1, ac-2)"),
-    references: bool = typer.Option(
-        False, "--references", "-r", help="Include guidance and references"
-    ),
+    references: bool = typer.Option(False, "--references", "-r", help="Include guidance and references"),
 ) -> None:
     """Get details of a specific control."""
 
@@ -285,7 +278,7 @@ def control_get(
                 ]
 
                 if control.ai_guidance:
-                    info_lines.append(f"\n[bold]AI Guidance:[/bold] Available")
+                    info_lines.append("\n[bold]AI Guidance:[/bold] Available")
 
                 rprint(
                     Panel(
@@ -331,7 +324,10 @@ def control_get(
 
             except NotFoundError:
                 rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find control [bold]{control_id}[/bold] in {framework_id}")
-                rprint(f"[dim]Try [bold]pretorin frameworks controls {framework_id}[/bold] to see available controls.[/dim]")
+                rprint(
+                    f"[dim]Try [bold]pretorin frameworks controls {framework_id}[/bold] "
+                    "to see available controls.[/dim]"
+                )
                 raise typer.Exit(1)
             except AuthenticationError as e:
                 rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
@@ -368,11 +364,10 @@ def framework_documents(
                     table.add_column("Required")
 
                     for doc in docs.explicit_documents:
-                        table.add_row(
-                            doc.document_name,
-                            (doc.description or "-")[:50] + "..." if doc.description and len(doc.description) > 50 else (doc.description or "-"),
-                            "[#95D7E0]Yes[/#95D7E0]" if doc.is_required else "[#EAB536]Optional[/#EAB536]",
-                        )
+                        desc = doc.description or "-"
+                        desc_display = f"{desc[:50]}..." if len(desc) > 50 else desc
+                        required = "[#95D7E0]Yes[/#95D7E0]" if doc.is_required else "[#EAB536]Optional[/#EAB536]"
+                        table.add_row(doc.document_name, desc_display, required)
                     console.print(table)
 
                 if docs.implicit_documents:
@@ -386,7 +381,10 @@ def framework_documents(
 
             except NotFoundError:
                 rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find document requirements for: {framework_id}")
-                rprint("[dim]This framework may not have document requirements, or check the ID with [bold]pretorin frameworks list[/bold].[/dim]")
+                rprint(
+                    "[dim]This framework may not have document requirements, "
+                    "or check the ID with [bold]pretorin frameworks list[/bold].[/dim]"
+                )
                 raise typer.Exit(1)
             except AuthenticationError as e:
                 rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")

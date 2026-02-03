@@ -1,7 +1,20 @@
-# Pretorin CLI
+<p align="center">
+  <img src="Logo_White+Orange.png" alt="Pretorin" width="400">
+</p>
 
-[![PyPI version](https://badge.fury.io/py/pretorin.svg)](https://pypi.org/project/pretorin/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <strong>Making compliance the best part of your day.</strong>
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/pretorin/"><img src="https://badge.fury.io/py/pretorin.svg" alt="PyPI version"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://github.com/pretorin-ai/pretorin-cli/actions"><img src="https://github.com/pretorin-ai/pretorin-cli/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
+  <a href="https://modelcontextprotocol.io"><img src="https://img.shields.io/badge/MCP-Compatible-green" alt="MCP Compatible"></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+"></a>
+</p>
+
+---
 
 CLI and MCP server for the Pretorin Compliance Platform API.
 
@@ -151,34 +164,75 @@ pretorin frameworks documents fedramp-moderate
 
 ## MCP Server
 
-The Pretorin CLI includes an MCP (Model Context Protocol) server for integration with AI assistants like Claude.
+<img src="Rome-bot_Basic-1.png" alt="Rome-bot" width="120" align="right">
 
-### Setup with Claude Desktop
+The Pretorin CLI includes an MCP (Model Context Protocol) server that enables AI assistants like Claude to access compliance framework data directly during conversations.
 
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+**Why MCP?**
 
-```json
-{
-  "mcpServers": {
-    "pretorin": {
-      "command": "pretorin",
-      "args": ["mcp-serve"]
-    }
-  }
-}
-```
+- **Real-time data** - Query the latest compliance frameworks and controls
+- **Reduce hallucination** - Work with authoritative compliance data
+- **Streamline workflows** - No copy-pasting between tools
+
+### Quick Setup
+
+1. **Install and authenticate:**
+   ```bash
+   pip install pretorin
+   pretorin login
+   ```
+
+2. **Add to Claude Desktop config:**
+
+   **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+   **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+   **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+   ```json
+   {
+     "mcpServers": {
+       "pretorin": {
+         "command": "pretorin",
+         "args": ["mcp-serve"]
+       }
+     }
+   }
+   ```
+
+3. **Restart Claude Desktop**
 
 ### Available Tools
 
-The MCP server exposes the following tools:
+| Tool | Description |
+|------|-------------|
+| `pretorin_list_frameworks` | List all compliance frameworks |
+| `pretorin_get_framework` | Get framework metadata |
+| `pretorin_list_control_families` | List control families for a framework |
+| `pretorin_list_controls` | List controls (with optional family filter) |
+| `pretorin_get_control` | Get detailed control information |
+| `pretorin_get_control_references` | Get control guidance and references |
+| `pretorin_get_document_requirements` | Get document requirements for a framework |
 
-- **pretorin_list_frameworks** - List all compliance frameworks
-- **pretorin_get_framework** - Get framework metadata
-- **pretorin_list_control_families** - List control families for a framework
-- **pretorin_list_controls** - List controls (with optional family filter)
-- **pretorin_get_control** - Get detailed control information
-- **pretorin_get_control_references** - Get control guidance and references
-- **pretorin_get_document_requirements** - Get document requirements for a framework
+### Resources
+
+| Resource URI | Description |
+|--------------|-------------|
+| `analysis://schema` | Compliance artifact JSON schema |
+| `analysis://guide/{framework_id}` | Framework analysis guide |
+| `analysis://control/{control_id}` | Control analysis guidance |
+
+### Example Prompts
+
+Try asking Claude:
+
+- "What compliance frameworks are available for government systems?"
+- "Explain AC-2 (Account Management) requirements for FedRAMP Moderate"
+- "What documents do I need for NIST 800-171 compliance?"
+- "Show me all Audit controls in NIST 800-53"
+
+For comprehensive MCP documentation, see [docs/MCP.md](docs/MCP.md).
 
 ## Configuration
 
@@ -218,6 +272,28 @@ pip install -e ".[dev]"
 pytest
 ```
 
+With coverage:
+
+```bash
+pytest --cov=pretorin --cov-report=term-missing
+```
+
+### Docker Testing
+
+```bash
+# Run all tests
+docker-compose run --rm test
+
+# Run linter
+docker-compose run --rm lint
+
+# Run type checker
+docker-compose run --rm typecheck
+
+# Or use the convenience script
+./scripts/docker-test.sh all
+```
+
 ### Type Checking
 
 ```bash
@@ -228,6 +304,7 @@ mypy src/pretorin
 
 ```bash
 ruff check src/pretorin
+ruff format --check src/pretorin
 ```
 
 ## Contributing

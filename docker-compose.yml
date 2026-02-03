@@ -1,0 +1,58 @@
+# Docker Compose configuration for Pretorin CLI development
+# Usage:
+#   docker-compose run --rm test          # Run tests
+#   docker-compose run --rm lint          # Run linter
+#   docker-compose run --rm typecheck     # Run type checker
+#   docker-compose run --rm test-coverage # Run tests with coverage
+
+services:
+  # Run pytest
+  test:
+    build:
+      context: .
+      target: test
+    command: pytest -v
+    volumes:
+      - ./tests:/app/tests:ro
+      - ./src:/app/src:ro
+
+  # Run pytest with coverage
+  test-coverage:
+    build:
+      context: .
+      target: test
+    command: pytest -v --cov=pretorin --cov-report=term-missing --cov-report=xml
+    volumes:
+      - ./tests:/app/tests:ro
+      - ./src:/app/src:ro
+      - ./coverage:/app/coverage
+
+  # Run ruff linter and formatter check
+  lint:
+    build:
+      context: .
+      target: lint
+    command: sh -c "ruff check src/pretorin && ruff format --check src/pretorin"
+    volumes:
+      - ./src:/app/src:ro
+
+  # Run mypy type checker
+  typecheck:
+    build:
+      context: .
+      target: lint
+    command: mypy src/pretorin
+    volumes:
+      - ./src:/app/src:ro
+
+  # Run integration tests (requires API key)
+  integration:
+    build:
+      context: .
+      target: test
+    command: pytest tests/integration/ -v -m integration
+    environment:
+      - PRETORIN_API_KEY=${PRETORIN_API_KEY}
+    volumes:
+      - ./tests:/app/tests:ro
+      - ./src:/app/src:ro
