@@ -1,7 +1,7 @@
 """Fixtures for integration tests."""
 
 import os
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 import pytest
 import pytest_asyncio
@@ -31,7 +31,5 @@ async def authenticated_client(api_key: str) -> AsyncIterator[PretorianClient]:
         yield client
 
 
-# Common test data
+# Common test data - framework ID is stable
 KNOWN_FRAMEWORK_ID = "nist-800-53-r5"
-KNOWN_CONTROL_ID = "ac-1"
-KNOWN_FAMILY_ID = "ac"
