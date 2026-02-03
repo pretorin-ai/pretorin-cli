@@ -87,6 +87,29 @@ select = ["E", "F", "I", "N", "W", "UP"]
 python_version = "3.11"
 strict = true
 
+[[tool.mypy.overrides]]
+# MCP library doesn't have complete type stubs
+module = "pretorin.mcp.server"
+disallow_untyped_decorators = false
+disallow_untyped_calls = false
+disable_error_code = ["arg-type"]
+
+[[tool.mypy.overrides]]
+# API client has dynamic JSON responses
+module = "pretorin.client.api"
+warn_return_any = false
+disable_error_code = ["arg-type", "union-attr", "return-value"]
+
+[[tool.mypy.overrides]]
+# Config uses JSON with dynamic types
+module = "pretorin.client.config"
+warn_return_any = false
+
+[[tool.mypy.overrides]]
+# Version check parses external API responses
+module = "pretorin.cli.version_check"
+warn_return_any = false
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
