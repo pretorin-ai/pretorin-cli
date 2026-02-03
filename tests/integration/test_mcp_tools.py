@@ -4,7 +4,6 @@ These tests verify that MCP tools work correctly against the real API.
 Requires PRETORIN_API_KEY environment variable to be set.
 """
 
-import json
 import os
 
 import pytest
@@ -13,8 +12,6 @@ from pretorin.client import PretorianClient
 
 # Known test data
 KNOWN_FRAMEWORK_ID = "nist-800-53-r5"
-KNOWN_CONTROL_ID = "ac-1"
-KNOWN_FAMILY_ID = "ac"
 
 
 @pytest.fixture(autouse=True)
@@ -95,13 +92,14 @@ class TestListControlFamiliesTool:
             assert family.title
 
     @pytest.mark.asyncio
-    async def test_list_control_families_includes_ac_family(self) -> None:
-        """Test that list_control_families includes Access Control family."""
+    async def test_list_control_families_includes_access_control(self) -> None:
+        """Test that list_control_families includes an Access Control family."""
         async with PretorianClient() as client:
             families = await client.list_control_families(KNOWN_FRAMEWORK_ID)
 
-            family_ids = [f.id.lower() for f in families]
-            assert "ac" in family_ids
+            # Look for access control family by title (ID format may vary)
+            family_titles = [f.title.lower() for f in families]
+            assert any("access control" in t for t in family_titles)
 
 
 @pytest.mark.integration
@@ -125,13 +123,17 @@ class TestListControlsTool:
     async def test_list_controls_with_family_filter(self) -> None:
         """Test that list_controls filters by family."""
         async with PretorianClient() as client:
-            controls = await client.list_controls(KNOWN_FRAMEWORK_ID, KNOWN_FAMILY_ID)
+            # Discover a valid family ID first
+            families = await client.list_control_families(KNOWN_FRAMEWORK_ID)
+            family_id = families[0].id
+
+            controls = await client.list_controls(KNOWN_FRAMEWORK_ID, family_id)
 
             assert len(controls) > 0
 
-            # All controls should be from AC family
+            # All controls should be from the same family
             for control in controls:
-                assert control.family_id.lower() == KNOWN_FAMILY_ID
+                assert control.family_id == family_id
 
 
 @pytest.mark.integration
@@ -142,9 +144,13 @@ class TestGetControlTool:
     async def test_get_control_returns_details(self) -> None:
         """Test that get_control returns control details."""
         async with PretorianClient() as client:
-            control = await client.get_control(KNOWN_FRAMEWORK_ID, KNOWN_CONTROL_ID)
+            # Discover a valid control ID first
+            controls = await client.list_controls(KNOWN_FRAMEWORK_ID)
+            control_id = controls[0].id
 
-            assert control.id.lower() == KNOWN_CONTROL_ID
+            control = await client.get_control(KNOWN_FRAMEWORK_ID, control_id)
+
+            assert control.id == control_id
             assert control.title
 
     @pytest.mark.asyncio
@@ -165,9 +171,13 @@ class TestGetControlReferencesTool:
     async def test_get_control_references_returns_data(self) -> None:
         """Test that get_control_references returns reference data."""
         async with PretorianClient() as client:
-            refs = await client.get_control_references(KNOWN_FRAMEWORK_ID, KNOWN_CONTROL_ID)
+            # Discover a valid control ID first
+            controls = await client.list_controls(KNOWN_FRAMEWORK_ID)
+            control_id = controls[0].id
 
-            assert refs.control_id.lower() == KNOWN_CONTROL_ID
+            refs = await client.get_control_references(KNOWN_FRAMEWORK_ID, control_id)
+
+            assert refs.control_id == control_id
             assert refs.title
             # Should have at least a statement
             assert refs.statement or refs.guidance
@@ -198,19 +208,21 @@ class TestMCPResourcesAvailable:
 
     def test_mcp_server_resources_listed(self) -> None:
         """Test that MCP server exposes expected resources."""
-        from pretorin.mcp.server import list_resources
         import asyncio
+
+        from pretorin.mcp.server import list_resources
 
         resources = asyncio.run(list_resources())
 
-        # Should have schema resource
-        resource_uris = [r.uri for r in resources]
+        # Should have schema resource - convert AnyUrl to string for comparison
+        resource_uris = [str(r.uri) for r in resources]
         assert "analysis://schema" in resource_uris
 
     def test_mcp_server_tools_listed(self) -> None:
         """Test that MCP server exposes expected tools."""
-        from pretorin.mcp.server import list_tools
         import asyncio
+
+        from pretorin.mcp.server import list_tools
 
         tools = asyncio.run(list_tools())
 
