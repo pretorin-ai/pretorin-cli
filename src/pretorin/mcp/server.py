@@ -18,11 +18,11 @@ from mcp.types import (
 from pretorin.client import PretorianClient
 from pretorin.client.api import AuthenticationError, NotFoundError, PretorianClientError
 from pretorin.mcp.analysis_prompts import (
-    get_artifact_schema,
-    get_framework_guide,
     format_control_analysis_prompt,
+    get_artifact_schema,
     get_available_controls,
     get_control_summary,
+    get_framework_guide,
 )
 
 # Create the MCP server instance
@@ -210,7 +210,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_get_control_references",
-            description="Get reference information for a control including statement, guidance, objectives, and related controls",
+            description="Get control references: statement, guidance, objectives, and related controls",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -228,7 +228,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_get_document_requirements",
-            description="Get document requirements for a framework - both explicit requirements and those implied by controls",
+            description="Get document requirements for a framework (explicit and control-implied)",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -249,9 +249,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
     try:
         async with PretorianClient() as client:
             if not client.is_configured:
-                return _format_error(
-                    "Not authenticated. Please run 'pretorin login' in the terminal first."
-                )
+                return _format_error("Not authenticated. Please run 'pretorin login' in the terminal first.")
 
             if name == "pretorin_list_frameworks":
                 return await _handle_list_frameworks(client)
@@ -283,21 +281,23 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
 async def _handle_list_frameworks(client: PretorianClient) -> list[TextContent]:
     """Handle the list_frameworks tool."""
     result = await client.list_frameworks()
-    return _format_json({
-        "total": result.total,
-        "frameworks": [
-            {
-                "id": fw.external_id,
-                "title": fw.title,
-                "version": fw.version,
-                "tier": fw.tier,
-                "category": fw.category,
-                "families_count": fw.families_count,
-                "controls_count": fw.controls_count,
-            }
-            for fw in result.frameworks
-        ],
-    })
+    return _format_json(
+        {
+            "total": result.total,
+            "frameworks": [
+                {
+                    "id": fw.external_id,
+                    "title": fw.title,
+                    "version": fw.version,
+                    "tier": fw.tier,
+                    "category": fw.category,
+                    "families_count": fw.families_count,
+                    "controls_count": fw.controls_count,
+                }
+                for fw in result.frameworks
+            ],
+        }
+    )
 
 
 async def _handle_get_framework(
@@ -307,17 +307,19 @@ async def _handle_get_framework(
     """Handle the get_framework tool."""
     framework_id = arguments.get("framework_id", "")
     framework = await client.get_framework(framework_id)
-    return _format_json({
-        "id": framework.external_id,
-        "title": framework.title,
-        "version": framework.version,
-        "oscal_version": framework.oscal_version,
-        "description": framework.description,
-        "tier": framework.tier,
-        "category": framework.category,
-        "published": framework.published,
-        "last_modified": framework.last_modified,
-    })
+    return _format_json(
+        {
+            "id": framework.external_id,
+            "title": framework.title,
+            "version": framework.version,
+            "oscal_version": framework.oscal_version,
+            "description": framework.description,
+            "tier": framework.tier,
+            "category": framework.category,
+            "published": framework.published,
+            "last_modified": framework.last_modified,
+        }
+    )
 
 
 async def _handle_list_control_families(
@@ -327,19 +329,21 @@ async def _handle_list_control_families(
     """Handle the list_control_families tool."""
     framework_id = arguments.get("framework_id", "")
     families = await client.list_control_families(framework_id)
-    return _format_json({
-        "framework_id": framework_id,
-        "total": len(families),
-        "families": [
-            {
-                "id": f.id,
-                "title": f.title,
-                "class": f.class_type,
-                "controls_count": f.controls_count,
-            }
-            for f in families
-        ],
-    })
+    return _format_json(
+        {
+            "framework_id": framework_id,
+            "total": len(families),
+            "families": [
+                {
+                    "id": f.id,
+                    "title": f.title,
+                    "class": f.class_type,
+                    "controls_count": f.controls_count,
+                }
+                for f in families
+            ],
+        }
+    )
 
 
 async def _handle_list_controls(
@@ -350,19 +354,21 @@ async def _handle_list_controls(
     framework_id = arguments.get("framework_id", "")
     family_id = arguments.get("family_id")
     controls = await client.list_controls(framework_id, family_id)
-    return _format_json({
-        "framework_id": framework_id,
-        "family_id": family_id,
-        "total": len(controls),
-        "controls": [
-            {
-                "id": c.id,
-                "title": c.title,
-                "family_id": c.family_id,
-            }
-            for c in controls
-        ],
-    })
+    return _format_json(
+        {
+            "framework_id": framework_id,
+            "family_id": family_id,
+            "total": len(controls),
+            "controls": [
+                {
+                    "id": c.id,
+                    "title": c.title,
+                    "family_id": c.family_id,
+                }
+                for c in controls
+            ],
+        }
+    )
 
 
 async def _handle_get_control(
@@ -373,16 +379,18 @@ async def _handle_get_control(
     framework_id = arguments.get("framework_id", "")
     control_id = arguments.get("control_id", "")
     control = await client.get_control(framework_id, control_id)
-    return _format_json({
-        "id": control.id,
-        "title": control.title,
-        "class": control.class_type,
-        "control_type": control.control_type,
-        "parameters": control.params,
-        "parts": control.parts,
-        "enhancements_count": len(control.controls) if control.controls else 0,
-        "has_ai_guidance": control.ai_guidance is not None,
-    })
+    return _format_json(
+        {
+            "id": control.id,
+            "title": control.title,
+            "class": control.class_type,
+            "control_type": control.control_type,
+            "parameters": control.params,
+            "parts": control.parts,
+            "enhancements_count": len(control.controls) if control.controls else 0,
+            "has_ai_guidance": control.ai_guidance is not None,
+        }
+    )
 
 
 async def _handle_get_control_references(
@@ -393,18 +401,19 @@ async def _handle_get_control_references(
     framework_id = arguments.get("framework_id", "")
     control_id = arguments.get("control_id", "")
     refs = await client.get_control_references(framework_id, control_id)
-    return _format_json({
-        "control_id": refs.control_id,
-        "title": refs.title,
-        "statement": refs.statement,
-        "guidance": refs.guidance,
-        "objectives": refs.objectives,
-        "parameters": refs.parameters,
-        "related_controls": [
-            {"id": rc.id, "title": rc.title, "family_id": rc.family_id}
-            for rc in refs.related_controls
-        ],
-    })
+    return _format_json(
+        {
+            "control_id": refs.control_id,
+            "title": refs.title,
+            "statement": refs.statement,
+            "guidance": refs.guidance,
+            "objectives": refs.objectives,
+            "parameters": refs.parameters,
+            "related_controls": [
+                {"id": rc.id, "title": rc.title, "family_id": rc.family_id} for rc in refs.related_controls
+            ],
+        }
+    )
 
 
 async def _handle_get_document_requirements(
@@ -414,30 +423,32 @@ async def _handle_get_document_requirements(
     """Handle the get_document_requirements tool."""
     framework_id = arguments.get("framework_id", "")
     docs = await client.get_document_requirements(framework_id)
-    return _format_json({
-        "framework_id": docs.framework_id,
-        "framework_title": docs.framework_title,
-        "total": docs.total,
-        "explicit_documents": [
-            {
-                "id": d.id,
-                "document_name": d.document_name,
-                "description": d.description,
-                "is_required": d.is_required,
-                "control_references": d.control_references,
-            }
-            for d in docs.explicit_documents
-        ],
-        "implicit_documents": [
-            {
-                "id": d.id,
-                "document_name": d.document_name,
-                "description": d.description,
-                "control_references": d.control_references,
-            }
-            for d in docs.implicit_documents
-        ],
-    })
+    return _format_json(
+        {
+            "framework_id": docs.framework_id,
+            "framework_title": docs.framework_title,
+            "total": docs.total,
+            "explicit_documents": [
+                {
+                    "id": d.id,
+                    "document_name": d.document_name,
+                    "description": d.description,
+                    "is_required": d.is_required,
+                    "control_references": d.control_references,
+                }
+                for d in docs.explicit_documents
+            ],
+            "implicit_documents": [
+                {
+                    "id": d.id,
+                    "document_name": d.document_name,
+                    "description": d.description,
+                    "control_references": d.control_references,
+                }
+                for d in docs.implicit_documents
+            ],
+        }
+    )
 
 
 async def _run_server() -> None:

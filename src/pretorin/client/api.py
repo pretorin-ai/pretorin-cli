@@ -99,7 +99,7 @@ class PretorianClient:
             await self._client.aclose()
             self._client = None
 
-    async def __aenter__(self) -> "PretorianClient":
+    async def __aenter__(self) -> PretorianClient:
         """Async context manager entry."""
         return self
 
@@ -124,9 +124,7 @@ class PretorianClient:
         if response.status_code == 401:
             raise AuthenticationError(message, response.status_code, details)
         elif response.status_code == 403:
-            raise AuthenticationError(
-                f"Access denied: {message}", response.status_code, details
-            )
+            raise AuthenticationError(f"Access denied: {message}", response.status_code, details)
         elif response.status_code == 404:
             raise NotFoundError(message, response.status_code, details)
         else:
@@ -211,9 +209,7 @@ class PretorianClient:
     # Control Family Endpoints
     # =========================================================================
 
-    async def list_control_families(
-        self, framework_id: str
-    ) -> list[ControlFamilySummary]:
+    async def list_control_families(self, framework_id: str) -> list[ControlFamilySummary]:
         """List all control families for a framework.
 
         Args:
@@ -225,9 +221,7 @@ class PretorianClient:
         data = await self._request("GET", f"/frameworks/{framework_id}/families")
         return [ControlFamilySummary(**item) for item in data]
 
-    async def get_control_family(
-        self, framework_id: str, family_id: str
-    ) -> ControlFamilyDetail:
+    async def get_control_family(self, framework_id: str, family_id: str) -> ControlFamilyDetail:
         """Get detailed information about a control family.
 
         Args:
@@ -237,9 +231,7 @@ class PretorianClient:
         Returns:
             ControlFamilyDetail with family info and controls list.
         """
-        data = await self._request(
-            "GET", f"/frameworks/{framework_id}/families/{family_id}"
-        )
+        data = await self._request("GET", f"/frameworks/{framework_id}/families/{family_id}")
         return ControlFamilyDetail(**data)
 
     # =========================================================================
@@ -264,9 +256,7 @@ class PretorianClient:
         if family_id:
             params["family_id"] = family_id
 
-        data = await self._request(
-            "GET", f"/frameworks/{framework_id}/controls", params=params
-        )
+        data = await self._request("GET", f"/frameworks/{framework_id}/controls", params=params)
         return [ControlSummary(**item) for item in data]
 
     async def get_control(self, framework_id: str, control_id: str) -> ControlDetail:
@@ -279,14 +269,10 @@ class PretorianClient:
         Returns:
             ControlDetail with full control information.
         """
-        data = await self._request(
-            "GET", f"/frameworks/{framework_id}/controls/{control_id}"
-        )
+        data = await self._request("GET", f"/frameworks/{framework_id}/controls/{control_id}")
         return ControlDetail(**data)
 
-    async def get_control_references(
-        self, framework_id: str, control_id: str
-    ) -> ControlReferences:
+    async def get_control_references(self, framework_id: str, control_id: str) -> ControlReferences:
         """Get reference data for a control including guidance and objectives.
 
         Args:
@@ -296,14 +282,10 @@ class PretorianClient:
         Returns:
             ControlReferences with statement, guidance, objectives, etc.
         """
-        data = await self._request(
-            "GET", f"/frameworks/{framework_id}/controls/{control_id}/references"
-        )
+        data = await self._request("GET", f"/frameworks/{framework_id}/controls/{control_id}/references")
         return ControlReferences(**data)
 
-    async def get_controls_metadata(
-        self, framework_id: str | None = None
-    ) -> dict[str, ControlMetadata]:
+    async def get_controls_metadata(self, framework_id: str | None = None) -> dict[str, ControlMetadata]:
         """Get metadata for controls.
 
         Args:
@@ -326,9 +308,7 @@ class PretorianClient:
     # Document Requirements
     # =========================================================================
 
-    async def get_document_requirements(
-        self, framework_id: str
-    ) -> DocumentRequirementList:
+    async def get_document_requirements(self, framework_id: str) -> DocumentRequirementList:
         """Get document requirements for a framework.
 
         Args:
@@ -344,9 +324,7 @@ class PretorianClient:
     # Compliance Artifacts
     # =========================================================================
 
-    async def submit_artifact(
-        self, artifact: ComplianceArtifact
-    ) -> dict[str, Any]:
+    async def submit_artifact(self, artifact: ComplianceArtifact) -> dict[str, Any]:
         """Submit a compliance artifact to the Pretorin platform.
 
         Args:

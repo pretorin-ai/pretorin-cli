@@ -4,7 +4,7 @@ import typer
 from rich import print as rprint
 from rich.table import Table
 
-from pretorin.client.config import Config, CONFIG_FILE, ENV_API_KEY, ENV_API_BASE_URL
+from pretorin.client.config import CONFIG_FILE, ENV_API_BASE_URL, ENV_API_KEY, Config
 
 app = typer.Typer()
 

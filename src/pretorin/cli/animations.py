@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import sys
 import threading
-import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterator
+from types import TracebackType
 
 from rich.console import Console
 from rich.live import Live
@@ -45,84 +45,108 @@ class AnimationTheme(Enum):
 
 # Animation frames for each theme
 MARCHING_FRAMES = [
-    AnimationFrame([
-        "   \u222b   ",
-        " [\u00b0~\u00b0] ",
-        "  /|\\  ",
-        "  / \\  ",
-    ]),
-    AnimationFrame([
-        "   \u222b   ",
-        " [\u00b0~\u00b0] ",
-        "  \\|/  ",
-        "  / \\  ",
-    ]),
-    AnimationFrame([
-        "   \u222b   ",
-        " [\u00b0~\u00b0] ",
-        "  /|\\  ",
-        " /  \\  ",
-    ]),
-    AnimationFrame([
-        "   \u222b   ",
-        " [\u00b0~\u00b0] ",
-        "  \\|/  ",
-        " \\  /  ",
-    ]),
+    AnimationFrame(
+        [
+            "   \u222b   ",
+            " [\u00b0~\u00b0] ",
+            "  /|\\  ",
+            "  / \\  ",
+        ]
+    ),
+    AnimationFrame(
+        [
+            "   \u222b   ",
+            " [\u00b0~\u00b0] ",
+            "  \\|/  ",
+            "  / \\  ",
+        ]
+    ),
+    AnimationFrame(
+        [
+            "   \u222b   ",
+            " [\u00b0~\u00b0] ",
+            "  /|\\  ",
+            " /  \\  ",
+        ]
+    ),
+    AnimationFrame(
+        [
+            "   \u222b   ",
+            " [\u00b0~\u00b0] ",
+            "  \\|/  ",
+            " \\  /  ",
+        ]
+    ),
 ]
 
 SEARCHING_FRAMES = [
-    AnimationFrame([
-        "   \u222b     ",
-        " [\u00b0~\u00b0]o  ",
-        "  /|    ",
-        "  / \\   ",
-    ]),
-    AnimationFrame([
-        "   \u222b      ",
-        " [\u00b0~\u00b0] o ",
-        "  /|     ",
-        "  / \\    ",
-    ]),
-    AnimationFrame([
-        "   \u222b       ",
-        " [\u00b0~\u00b0]  o",
-        "  /|      ",
-        "  / \\     ",
-    ]),
-    AnimationFrame([
-        "   \u222b      ",
-        " [\u00b0~\u00b0] o ",
-        "  /|     ",
-        "  / \\    ",
-    ]),
+    AnimationFrame(
+        [
+            "   \u222b     ",
+            " [\u00b0~\u00b0]o  ",
+            "  /|    ",
+            "  / \\   ",
+        ]
+    ),
+    AnimationFrame(
+        [
+            "   \u222b      ",
+            " [\u00b0~\u00b0] o ",
+            "  /|     ",
+            "  / \\    ",
+        ]
+    ),
+    AnimationFrame(
+        [
+            "   \u222b       ",
+            " [\u00b0~\u00b0]  o",
+            "  /|      ",
+            "  / \\     ",
+        ]
+    ),
+    AnimationFrame(
+        [
+            "   \u222b      ",
+            " [\u00b0~\u00b0] o ",
+            "  /|     ",
+            "  / \\    ",
+        ]
+    ),
 ]
 
 THINKING_FRAMES = [
-    AnimationFrame([
-        "   \u222b   ",
-        " [\u00b0~\u00b0] ",
-        "  /|\\  ",
-        "  / \\  ",
-    ]),
-    AnimationFrame([
-        "   \u222b ?  ",
-        " [\u00b0~\u00b0]  ",
-        "  /|\\   ",
-        "  / \\   ",
-    ]),
-    AnimationFrame([
-        "   \u222b ? ",
-        " [\u00b0~\u00b0] ",
-        "  /|\\  ",
-        "  / \\  ",
-    ]),
-    AnimationFrame([
-        "   \u222b   ",
-        " [\u00b0~\u00b0] ",
-        "  /|\\  ",
-        "  / \\  ",
-    ]),
+    AnimationFrame(
+        [
+            "   \u222b   ",
+            " [\u00b0~\u00b0] ",
+            "  /|\\  ",
+            "  / \\  ",
+        ]
+    ),
+    AnimationFrame(
+        [
+            "   \u222b ?  ",
+            " [\u00b0~\u00b0]  ",
+            "  /|\\   ",
+            "  / \\   ",
+        ]
+    ),
+    AnimationFrame(
+        [
+            "   \u222b ? ",
+            " [\u00b0~\u00b0] ",
+            "  /|\\  ",
+            "  / \\  ",
+        ]
+    ),
+    AnimationFrame(
+        [
+            "   \u222b   ",
+            " [\u00b0~\u00b0] ",
+            "  /|\\  ",
+            "  / \\  ",
+        ]
+    ),
 ]
 
 # Map themes to their frames
@@ -176,13 +200,11 @@ class RomebotSpinner:
                 self.current_frame = (self.current_frame + 1) % len(self.frames)
             self._stop_event.wait(self.frame_rate)
 
-    def __enter__(self) -> "RomebotSpinner":
+    def __enter__(self) -> RomebotSpinner:
         """Start the animation."""
         if not supports_animation():
             # Fallback: just print the static thinking face
-            self.console.print(
-                f"[{ROMEBOT_COLOR}][\u00b0~\u00b0][/{ROMEBOT_COLOR}] [dim]{self.message}[/dim]"
-            )
+            self.console.print(f"[{ROMEBOT_COLOR}][\u00b0~\u00b0][/{ROMEBOT_COLOR}] [dim]{self.message}[/dim]")
             return self
 
         # Start Live display
@@ -201,7 +223,12 @@ class RomebotSpinner:
 
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:  # noqa: ANN001
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Stop the animation."""
         self._stop_event.set()
 

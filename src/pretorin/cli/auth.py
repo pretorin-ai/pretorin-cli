@@ -7,10 +7,10 @@ from rich import print as rprint
 from rich.console import Console
 from rich.panel import Panel
 
+from pretorin.cli.animations import AnimationTheme, animated_status
 from pretorin.client import PretorianClient, clear_credentials, store_credentials
 from pretorin.client.api import AuthenticationError, PretorianClientError
 from pretorin.client.config import Config
-from pretorin.cli.animations import animated_status, AnimationTheme
 
 app = typer.Typer()
 console = Console()
@@ -56,11 +56,12 @@ def login(
             # Store credentials after successful validation
             store_credentials(api_key, api_base_url)
 
-            rprint("\n[#EAB536]\\[°◡°]/[/#EAB536] [bold]You're in![/bold] Let's make compliance the best part of your day.")
+            rprint(
+                "\n[#EAB536]\\[°◡°]/[/#EAB536] [bold]You're in![/bold] Let's make compliance the best part of your day."
+            )
             rprint(
                 Panel(
-                    "[bold]Status:[/bold] [#95D7E0]Connected[/#95D7E0]\n"
-                    f"[bold]API URL:[/bold] {client._api_base_url}",
+                    f"[bold]Status:[/bold] [#95D7E0]Connected[/#95D7E0]\n[bold]API URL:[/bold] {client._api_base_url}",
                     title="Ready to go",
                     border_style="#95D7E0",
                 )
@@ -111,9 +112,7 @@ def whoami() -> None:
 
                 # Mask the API key for display
                 api_key = config.api_key or ""
-                masked_key = (
-                    f"{api_key[:8]}...{api_key[-4:]}" if len(api_key) > 12 else "***"
-                )
+                masked_key = f"{api_key[:8]}...{api_key[-4:]}" if len(api_key) > 12 else "***"
 
                 rprint(
                     Panel(
