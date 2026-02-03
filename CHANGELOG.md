@@ -7,18 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Docker support with multi-stage Dockerfile
-- Docker Compose configuration for containerized testing
-- GitHub Actions CI/CD workflows for testing and PyPI publishing
-- Integration test suite for CLI commands and MCP tools
-- Comprehensive MCP documentation in `docs/MCP.md`
-
-### Changed
-- Updated README with MCP badges and expanded documentation
-- Added Python 3.10 support to test matrix
-
-## [0.1.0] - 2024-01-15
+## [0.1.0] - 2025-02-03
 
 ### Added
 - Initial public release
@@ -41,10 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MCP (Model Context Protocol) server for AI assistant integration
   - 7 tools for accessing compliance data
   - Resources for analysis guidance
+  - Setup instructions for Claude Desktop, Claude Code, Cursor, Codex CLI, and Windsurf
 - Self-update functionality via `pretorin update`
 - Version checking with PyPI update notifications
 - Rich terminal output with branded styling
 - Rome-bot ASCII mascot with expressive animations
+- Docker support with multi-stage Dockerfile
+- Docker Compose configuration for containerized testing
+- GitHub Actions CI/CD workflows for testing and PyPI publishing
+- Integration test suite for CLI commands and MCP tools
+- Comprehensive MCP documentation in `docs/MCP.md`
 
 ### Supported Frameworks
 - NIST SP 800-53 Rev 5
