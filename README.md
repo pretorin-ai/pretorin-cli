@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Logo_White+Orange.png" alt="Pretorin" width="400">
+  <img src="assets/Logo_White+Orange.png" alt="Pretorin" width="400">
 </p>
 
 <p align="center">
@@ -68,7 +68,7 @@ pretorin whoami
 
 ## MCP Integration
 
-<img src="Rome-bot_Basic-1.png" alt="Rome-bot" width="120" align="right">
+<img src="assets/Rome-bot_Basic-1.png" alt="Rome-bot" width="120" align="right">
 
 The Pretorin CLI includes an MCP (Model Context Protocol) server that enables AI assistants to access compliance framework data directly during conversations.
 
