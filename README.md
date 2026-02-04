@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>Compliance tools for developers.</strong>
+  <strong>AI Compliance tools for developers.</strong>
 </p>
 
 <p align="center">
@@ -16,9 +16,7 @@
 
 ---
 
-We believe that compliance should be easy for developers, to that end this is a CLI and MCP server for the Pretorin Compliance Platform API.
-
-Access enriched compliance framework data, control families, and control details from NIST 800-53, NIST 800-171, FedRAMP, CMMC, and more.
+We believe that compliance should be easy for developers. We now have AI machines the can write the detailed security documents that used to rob developers of their time and focus. We are building the tool kit to make this a reality. To that end, this is a CLI and MCP server for the Pretorin Compliance Platform API. It makes it easy to bring high quality compliance context into your favorite AI tool. Access enriched compliance framework data, control families, and control details from NIST 800-53, NIST 800-171, FedRAMP, CMMC, and many more to come
 
 ## Installation
 
