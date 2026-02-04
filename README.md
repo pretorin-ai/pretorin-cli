@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>Making compliance the best part of your day.</strong>
+  <strong>Compliance tools for developers.</strong>
 </p>
 
 <p align="center">
