@@ -16,11 +16,9 @@
 
 ---
 
-CLI and MCP server for the Pretorin Compliance Platform API.
+We believe that compliance should be easy for developers, to that end this is a CLI and MCP server for the Pretorin Compliance Platform API.
 
-Access compliance frameworks, control families, and control details from NIST 800-53, NIST 800-171, FedRAMP, CMMC, and more.
-
-**Documentation**: [https://platform.pretorin.com/api/docs](https://platform.pretorin.com/api/docs)
+Access enriched compliance framework data, control families, and control details from NIST 800-53, NIST 800-171, FedRAMP, CMMC, and more.
 
 ## Installation
 
