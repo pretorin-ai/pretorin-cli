@@ -56,7 +56,15 @@ Restart Claude Desktop after saving.
 <details>
 <summary><strong>Claude Code</strong></summary>
 
-Add a `.mcp.json` file to your project root:
+**Quick setup** — run a single command:
+
+```bash
+claude mcp add --transport stdio pretorin -- pretorin mcp-serve
+```
+
+This registers the server for your current project. To make it available across all your projects, add `--scope user`.
+
+**Team setup** — add a `.mcp.json` file to your project root so every team member gets the server automatically:
 
 ```json
 {
