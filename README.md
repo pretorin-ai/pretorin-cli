@@ -220,38 +220,47 @@ For comprehensive MCP documentation, see [docs/MCP.md](docs/MCP.md).
 
 ## CLI Reference
 
-### Authentication
+For comprehensive documentation with real terminal output examples, see [docs/CLI.md](docs/CLI.md).
+
+### Quick Examples
+
+```bash
+# List all frameworks
+pretorin frameworks list
+
+# Get framework details
+pretorin frameworks get fedramp-moderate
+
+# List control families (IDs are slugs like "access-control", not "ac")
+pretorin frameworks families nist-800-53-r5
+
+# List controls filtered by family
+pretorin frameworks controls nist-800-53-r5 --family access-control --limit 10
+
+# Get control details (IDs are zero-padded: "ac-01", not "ac-1")
+pretorin frameworks control nist-800-53-r5 ac-02
+
+# Get full control details with statement, guidance, and related controls
+pretorin frameworks control nist-800-53-r5 ac-02 --references
+```
+
+### All Commands
 
 | Command | Description |
 |---------|-------------|
 | `pretorin login` | Authenticate with the Pretorin API |
 | `pretorin logout` | Clear stored credentials |
 | `pretorin whoami` | Display current authentication status |
-
-### Frameworks
-
-| Command | Description |
-|---------|-------------|
 | `pretorin frameworks list` | List all compliance frameworks |
 | `pretorin frameworks get <id>` | Get framework details |
 | `pretorin frameworks families <id>` | List control families |
-| `pretorin frameworks controls <id>` | List controls (use `--family` to filter) |
-| `pretorin frameworks control <framework> <control>` | Get control details (use `--references` for guidance) |
+| `pretorin frameworks controls <id>` | List controls (`--family`, `--limit`) |
+| `pretorin frameworks control <framework> <control>` | Get control details (`--references`) |
 | `pretorin frameworks documents <id>` | Get document requirements |
-
-### Configuration
-
-| Command | Description |
-|---------|-------------|
 | `pretorin config list` | List all configuration |
 | `pretorin config get <key>` | Get a config value |
 | `pretorin config set <key> <value>` | Set a config value |
 | `pretorin config path` | Show config file path |
-
-### Utilities
-
-| Command | Description |
-|---------|-------------|
 | `pretorin version` | Show CLI version |
 | `pretorin update` | Update to latest version |
 | `pretorin mcp-serve` | Start the MCP server |

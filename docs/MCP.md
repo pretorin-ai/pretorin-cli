@@ -191,7 +191,7 @@ List controls for a framework, optionally filtered by family.
 
 **Parameters:**
 - `framework_id` (required): The framework ID
-- `family_id` (optional): Filter by control family ID (use `pretorin frameworks families <id>` to discover valid family IDs)
+- `family_id` (optional): Filter by control family ID. Family IDs are slugs like `access-control` or `audit-and-accountability`, not short codes like `ac` or `au`. CMMC families include a level suffix (e.g., `access-control-level-2`). Use `pretorin frameworks families <id>` to discover valid family IDs.
 
 **Returns:** List of controls with ID, title, and family.
 
@@ -205,7 +205,7 @@ Get detailed information about a specific control.
 
 **Parameters:**
 - `framework_id` (required): The framework ID
-- `control_id` (required): The control ID (use `pretorin frameworks controls <id>` to discover valid control IDs)
+- `control_id` (required): The control ID. NIST/FedRAMP controls are zero-padded (e.g., `ac-01`, not `ac-1`). CMMC controls use dotted notation (e.g., `AC.L2-3.1.1`). Use `pretorin frameworks controls <id>` to discover valid control IDs.
 
 **Returns:** Control details including parameters, parts, and enhancement count.
 
@@ -219,7 +219,7 @@ Get reference information for a control including guidance and related controls.
 
 **Parameters:**
 - `framework_id` (required): The framework ID
-- `control_id` (required): The control ID
+- `control_id` (required): The control ID (zero-padded for NIST/FedRAMP, e.g., `ac-01`)
 
 **Returns:** Statement, guidance, objectives, parameters, and related controls.
 
