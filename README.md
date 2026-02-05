@@ -26,7 +26,11 @@ We believe that compliance should be easy for developers. We now have AI machine
 pip install pretorin
 ```
 
-We recommend using [pipx](https://pipx.pypa.io/) for isolated installation:
+We recommend using [uv](https://docs.astral.sh/uv/) or [pipx](https://pipx.pypa.io/) for isolated installation:
+
+```bash
+uv tool install pretorin
+```
 
 ```bash
 pipx install pretorin
@@ -38,6 +42,12 @@ Install the latest development version directly from GitHub:
 
 ```bash
 pip install git+https://github.com/pretorin-ai/pretorin-cli.git
+```
+
+Or with uv:
+
+```bash
+uv tool install git+https://github.com/pretorin-ai/pretorin-cli.git
 ```
 
 ### Updating
@@ -79,7 +89,7 @@ The Pretorin CLI includes an MCP (Model Context Protocol) server that enables AI
 Install and authenticate first:
 
 ```bash
-pip install pretorin
+uv tool install pretorin
 pretorin login
 ```
 
@@ -298,6 +308,12 @@ Additional frameworks are available on the platform. See [platform.pretorin.com/
 ```bash
 git clone https://github.com/pretorin-ai/pretorin-cli.git
 cd pretorin-cli
+uv pip install -e ".[dev]"
+```
+
+Or with pip:
+
+```bash
 pip install -e ".[dev]"
 ```
 
