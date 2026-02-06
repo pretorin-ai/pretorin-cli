@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pretorin": {
+      "command": "pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}

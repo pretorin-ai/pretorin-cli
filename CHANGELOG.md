@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-02-06
+
+### Added
+- `--json` flag for machine-readable output across all commands (for scripting and AI agents)
+- `pretorin frameworks family <framework> <family>` command to get control family details
+- `pretorin frameworks metadata <framework>` command to get control metadata for a framework
+- `pretorin frameworks submit-artifact <file>` command to submit compliance artifacts
+- Positional `FAMILY_ID` argument on `controls` command (`pretorin frameworks controls fedramp-low access-control`)
+- Full AI Guidance content rendering on control detail view
+- `.mcp.json` for Claude Code MCP auto-discovery
+- Usage examples in all command docstrings and error messages
+
+### Changed
+- Control references (statement, guidance, objectives) now shown by default on `control` command
+- `--references/-r` flag replaced by `--brief/-b` to skip references (old flag kept as hidden deprecated no-op)
+- Default controls limit changed from 50 to 0 (show all) to prevent truncated results
+- Improved error messages with example command syntax
+
 ## [0.1.0] - 2025-02-03
 
 ### Added
@@ -48,5 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CMMC Level 1, 2, and 3
 - Additional frameworks available on the platform
 
-[Unreleased]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/pretorin-ai/pretorin-cli/releases/tag/v0.1.0

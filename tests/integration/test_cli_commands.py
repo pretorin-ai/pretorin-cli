@@ -5,12 +5,14 @@ Requires PRETORIN_API_KEY environment variable to be set.
 """
 
 import asyncio
+import json
 import os
 
 import pytest
 from typer.testing import CliRunner
 
 from pretorin.cli.main import app
+from pretorin.cli.output import set_json_mode
 from pretorin.client import PretorianClient
 
 runner = CliRunner()
@@ -40,6 +42,13 @@ def setup_api_key() -> None:
         pytest.skip("PRETORIN_API_KEY environment variable not set")
 
 
+@pytest.fixture(autouse=True)
+def reset_json_mode() -> None:
+    """Reset JSON mode after each test."""
+    yield  # type: ignore[misc]
+    set_json_mode(False)
+
+
 @pytest.fixture(scope="module")
 def discovered_ids() -> tuple[str, str]:
     """Discover valid family and control IDs from the API."""
@@ -58,6 +67,13 @@ class TestAuthCommands:
         # Should not fail if authenticated
         assert result.exit_code == 0 or "Not logged in" in result.output
 
+    def test_whoami_json(self) -> None:
+        """Test whoami in JSON mode."""
+        result = runner.invoke(app, ["--json", "whoami"])
+        if result.exit_code == 0:
+            data = json.loads(result.output)
+            assert "authenticated" in data
+
 
 @pytest.mark.integration
 class TestFrameworkListCommand:
@@ -71,6 +87,15 @@ class TestFrameworkListCommand:
         assert "Compliance Frameworks" in result.output or "frameworks" in result.output.lower()
         # Should contain at least one known framework
         assert "nist" in result.output.lower() or "NIST" in result.output
+
+    def test_list_frameworks_json(self) -> None:
+        """Test listing frameworks in JSON mode."""
+        result = runner.invoke(app, ["--json", "frameworks", "list"])
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "frameworks" in data
+        assert "total" in data
 
 
 @pytest.mark.integration
@@ -91,6 +116,14 @@ class TestFrameworkGetCommand:
         assert result.exit_code != 0
         assert "couldn't find" in result.output.lower() or "not found" in result.output.lower()
 
+    def test_get_framework_json(self) -> None:
+        """Test getting a framework in JSON mode."""
+        result = runner.invoke(app, ["--json", "frameworks", "get", KNOWN_FRAMEWORK_ID])
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "title" in data
+
 
 @pytest.mark.integration
 class TestFrameworkFamiliesCommand:
@@ -110,19 +143,30 @@ class TestFrameworkControlsCommand:
     """Test the frameworks controls command."""
 
     def test_list_controls(self) -> None:
-        """Test listing controls for a framework."""
+        """Test listing controls for a framework (default shows all)."""
         result = runner.invoke(app, ["frameworks", "controls", KNOWN_FRAMEWORK_ID])
 
         assert result.exit_code == 0
         # Should show some controls
         assert "control" in result.output.lower()
 
-    def test_list_controls_with_family_filter(self, discovered_ids: tuple[str, str]) -> None:
-        """Test listing controls filtered by family."""
+    def test_list_controls_with_family_option(self, discovered_ids: tuple[str, str]) -> None:
+        """Test listing controls filtered by family using --family option."""
         family_id, _ = discovered_ids
         result = runner.invoke(
             app,
             ["frameworks", "controls", KNOWN_FRAMEWORK_ID, "--family", family_id],
+        )
+
+        assert result.exit_code == 0
+        assert "control" in result.output.lower()
+
+    def test_list_controls_with_family_positional(self, discovered_ids: tuple[str, str]) -> None:
+        """Test listing controls filtered by family using positional argument."""
+        family_id, _ = discovered_ids
+        result = runner.invoke(
+            app,
+            ["frameworks", "controls", KNOWN_FRAMEWORK_ID, family_id],
         )
 
         assert result.exit_code == 0
@@ -143,7 +187,7 @@ class TestControlGetCommand:
     """Test the frameworks control command."""
 
     def test_get_control(self, discovered_ids: tuple[str, str]) -> None:
-        """Test getting a specific control."""
+        """Test getting a specific control (references shown by default)."""
         _, control_id = discovered_ids
         result = runner.invoke(
             app,
@@ -153,8 +197,19 @@ class TestControlGetCommand:
         assert result.exit_code == 0
         assert "Control" in result.output
 
-    def test_get_control_with_references(self, discovered_ids: tuple[str, str]) -> None:
-        """Test getting a control with references."""
+    def test_get_control_brief(self, discovered_ids: tuple[str, str]) -> None:
+        """Test getting a control with --brief (skip references)."""
+        _, control_id = discovered_ids
+        result = runner.invoke(
+            app,
+            ["frameworks", "control", KNOWN_FRAMEWORK_ID, control_id, "--brief"],
+        )
+
+        assert result.exit_code == 0
+        assert "Control" in result.output
+
+    def test_get_control_with_references_deprecated(self, discovered_ids: tuple[str, str]) -> None:
+        """Test that --references still works (deprecated, hidden)."""
         _, control_id = discovered_ids
         result = runner.invoke(
             app,
@@ -173,6 +228,19 @@ class TestControlGetCommand:
         assert result.exit_code != 0
         assert "couldn't find" in result.output.lower() or "not found" in result.output.lower()
 
+    def test_get_control_json(self, discovered_ids: tuple[str, str]) -> None:
+        """Test getting a control in JSON mode."""
+        _, control_id = discovered_ids
+        result = runner.invoke(
+            app,
+            ["--json", "frameworks", "control", KNOWN_FRAMEWORK_ID, control_id],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "id" in data
+        assert "title" in data
+
 
 @pytest.mark.integration
 class TestDocumentsCommand:
@@ -185,6 +253,74 @@ class TestDocumentsCommand:
         # This may succeed or fail depending on framework availability
         # but should not crash
         assert result.exit_code in (0, 1)
+
+
+@pytest.mark.integration
+class TestFamilyCommand:
+    """Test the frameworks family command."""
+
+    def test_get_family(self, discovered_ids: tuple[str, str]) -> None:
+        """Test getting a specific control family."""
+        family_id, _ = discovered_ids
+        result = runner.invoke(
+            app,
+            ["frameworks", "family", KNOWN_FRAMEWORK_ID, family_id],
+        )
+
+        assert result.exit_code == 0
+        assert "Family" in result.output or family_id in result.output.lower()
+
+    def test_get_family_json(self, discovered_ids: tuple[str, str]) -> None:
+        """Test getting a family in JSON mode."""
+        family_id, _ = discovered_ids
+        result = runner.invoke(
+            app,
+            ["--json", "frameworks", "family", KNOWN_FRAMEWORK_ID, family_id],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "title" in data
+
+
+@pytest.mark.integration
+class TestMetadataCommand:
+    """Test the frameworks metadata command."""
+
+    def test_get_metadata(self) -> None:
+        """Test getting control metadata for a framework."""
+        result = runner.invoke(
+            app,
+            ["frameworks", "metadata", KNOWN_FRAMEWORK_ID],
+        )
+
+        assert result.exit_code == 0
+        assert "metadata" in result.output.lower() or "control" in result.output.lower()
+
+    def test_get_metadata_json(self) -> None:
+        """Test getting metadata in JSON mode."""
+        result = runner.invoke(
+            app,
+            ["--json", "frameworks", "metadata", KNOWN_FRAMEWORK_ID],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert isinstance(data, dict)
+        assert len(data) > 0
+
+
+@pytest.mark.integration
+class TestJsonFlag:
+    """Test that the --json flag produces valid JSON across commands."""
+
+    def test_bare_json(self) -> None:
+        """Test bare pretorin --json outputs version JSON."""
+        result = runner.invoke(app, ["--json"])
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "version" in data
 
 
 @pytest.mark.integration
