@@ -1,3 +1,3 @@
 """Pretorin CLI and MCP server for Pretorin Compliance API."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

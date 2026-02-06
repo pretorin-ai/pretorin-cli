@@ -1,5 +1,7 @@
 """Main CLI application setup for Pretorin."""
 
+import json
+
 import typer
 from rich import print as rprint
 from rich.console import Console
@@ -8,6 +10,7 @@ from pretorin import __version__
 from pretorin.cli.auth import app as auth_app
 from pretorin.cli.commands import app as frameworks_app
 from pretorin.cli.config import app as config_app
+from pretorin.cli.output import set_json_mode
 
 console = Console()
 
@@ -50,16 +53,25 @@ app = typer.Typer(
 
 
 @app.callback(invoke_without_command=True)
-def main(ctx: typer.Context) -> None:
+def main(
+    ctx: typer.Context,
+    json_output: bool = typer.Option(False, "--json", help="Output results as JSON (for scripting and AI agents)"),
+) -> None:
     """CLI for the Pretorin Compliance Platform.
 
     Making compliance the best part of your day.
     """
+    if json_output:
+        set_json_mode(True)
+
     # Show banner and help when no subcommand is provided
     if ctx.invoked_subcommand is None:
-        show_banner()
-        # Show the help text after the banner
-        rprint(ctx.get_help())
+        if json_output:
+            print(json.dumps({"version": __version__}))
+        else:
+            show_banner()
+            # Show the help text after the banner
+            rprint(ctx.get_help())
 
 
 # Add sub-command groups

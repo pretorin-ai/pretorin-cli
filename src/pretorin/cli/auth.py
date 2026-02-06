@@ -8,6 +8,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from pretorin.cli.animations import AnimationTheme, animated_status
+from pretorin.cli.output import is_json_mode, print_json
 from pretorin.client import PretorianClient, clear_credentials, store_credentials
 from pretorin.client.api import AuthenticationError, PretorianClientError
 from pretorin.client.config import Config
@@ -93,10 +94,18 @@ def logout() -> None:
 
 @app.command()
 def whoami() -> None:
-    """Display current authentication status and configuration."""
+    """Display current authentication status and configuration.
+
+    Examples:
+        pretorin whoami
+        pretorin --json whoami
+    """
     config = Config()
 
     if not config.is_configured:
+        if is_json_mode():
+            print_json({"authenticated": False})
+            raise typer.Exit(1)
         rprint("[#FF9010]→[/#FF9010] Not logged in yet.")
         rprint("[dim]Run [bold]pretorin login[/bold] to get started.[/dim]")
         raise typer.Exit(1)
@@ -104,6 +113,21 @@ def whoami() -> None:
     async def check_auth() -> None:
         async with PretorianClient() as client:
             try:
+                if is_json_mode():
+                    await client.validate_api_key()
+                    frameworks = await client.list_frameworks()
+                    api_key = config.api_key or ""
+                    masked_key = f"{api_key[:8]}...{api_key[-4:]}" if len(api_key) > 12 else "***"
+                    print_json(
+                        {
+                            "authenticated": True,
+                            "api_key": masked_key,
+                            "api_url": client._api_base_url,
+                            "frameworks_available": frameworks.total,
+                        }
+                    )
+                    return
+
                 with animated_status("Checking your session...", AnimationTheme.THINKING):
                     await client.validate_api_key()
                     frameworks = await client.list_frameworks()
