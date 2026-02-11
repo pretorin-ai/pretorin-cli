@@ -3,126 +3,38 @@
 </p>
 
 <p align="center">
-  <strong>AI Compliance tools for developers.</strong>
+  <strong>MCP server for compliance framework data. NIST 800-53, FedRAMP, CMMC, and more.</strong>
 </p>
 
 <p align="center">
   <a href="https://pypi.org/project/pretorin/"><img src="https://img.shields.io/pypi/v/pretorin" alt="PyPI version"></a>
+  <a href="https://registry.modelcontextprotocol.io/"><img src="https://img.shields.io/badge/MCP_Registry-Listed-green" alt="MCP Registry"></a>
+  <a href="https://modelcontextprotocol.io"><img src="https://img.shields.io/badge/MCP-Compatible-green" alt="MCP Compatible"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://github.com/pretorin-ai/pretorin-cli/actions"><img src="https://github.com/pretorin-ai/pretorin-cli/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
-  <a href="https://modelcontextprotocol.io"><img src="https://img.shields.io/badge/MCP-Compatible-green" alt="MCP Compatible"></a>
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+"></a>
 </p>
 
 ---
 
-We believe that compliance should be easy for developers. We now have AI machines the can write the detailed security documents that used to rob developers of their time and focus. We are building the tool kit to make this a reality. To that end, this is a CLI and MCP server for the Pretorin Compliance Platform API. It makes it easy to bring high quality compliance context into your favorite AI tool. Access enriched compliance framework data, control families, and control details from NIST 800-53, NIST 800-171, FedRAMP, CMMC, and many more to come
-
-## Installation
-
-### Stable (PyPI)
-
-```bash
-pip install pretorin
-```
-
-We recommend using [uv](https://docs.astral.sh/uv/) or [pipx](https://pipx.pypa.io/) for isolated installation:
-
-```bash
-uv tool install pretorin
-```
-
-```bash
-pipx install pretorin
-```
-
-### Latest (GitHub)
-
-Install the latest development version directly from GitHub:
-
-```bash
-pip install git+https://github.com/pretorin-ai/pretorin-cli.git
-```
-
-Or with uv:
-
-```bash
-uv tool install git+https://github.com/pretorin-ai/pretorin-cli.git
-```
-
-### Updating
-
-Check for updates and upgrade:
-
-```bash
-pretorin update
-```
+An MCP server and CLI that gives AI assistants direct access to authoritative compliance data. Stop hallucinating control requirements — query the real thing. Access enriched framework data, control families, control details, and document requirements from NIST 800-53, NIST 800-171, FedRAMP, CMMC, and more.
 
 ## Quick Start
 
-Get your API key from [https://platform.pretorin.com/](https://platform.pretorin.com/), then authenticate:
-
-```bash
-pretorin login
-```
-
-Verify your authentication:
-
-```bash
-pretorin whoami
-```
-
-## MCP Integration
-
-<img src="assets/Rome-bot_Basic-1.png" alt="Rome-bot" width="120" align="right">
-
-The Pretorin CLI includes an MCP (Model Context Protocol) server that enables AI assistants to access compliance framework data directly during conversations.
-
-**Why MCP?**
-
-- **Real-time data** — Query the latest compliance frameworks and controls
-- **Reduce hallucination** — Work with authoritative compliance data instead of training knowledge
-- **Streamline workflows** — No copy-pasting between tools
-
-### Setup
-
-Install and authenticate first:
+Get your API key from [platform.pretorin.com](https://platform.pretorin.com/), then:
 
 ```bash
 uv tool install pretorin
 pretorin login
 ```
 
-Then add Pretorin to your AI tool of choice:
+That's it. Now add Pretorin to your AI tool below.
 
-<details>
-<summary><strong>Claude Desktop</strong></summary>
+## Add to Your AI Tool
 
-Add to your Claude Desktop configuration file:
+<img src="assets/Rome-bot_Basic-1.png" alt="Rome-bot" width="120" align="right">
 
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-**Linux**: `~/.config/Claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "pretorin": {
-      "command": "pretorin",
-      "args": ["mcp-serve"]
-    }
-  }
-}
-```
-
-Restart Claude Desktop after saving.
-
-</details>
-
-<details>
-<summary><strong>Claude Code</strong></summary>
-
-**Quick setup** — run a single command:
+### Claude Code
 
 ```bash
 claude mcp add --transport stdio pretorin -- pretorin mcp-serve
@@ -144,12 +56,28 @@ This registers the server for your current project. To make it available across 
 }
 ```
 
-Claude Code will detect the file automatically.
+### Claude Desktop
 
-</details>
+Add to your Claude Desktop configuration file:
 
-<details>
-<summary><strong>Cursor</strong></summary>
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+**Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "pretorin": {
+      "command": "pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+```
+
+Restart Claude Desktop after saving.
+
+### Cursor
 
 Add to `~/.cursor/mcp.json`:
 
@@ -166,23 +94,7 @@ Add to `~/.cursor/mcp.json`:
 
 Restart Cursor after saving.
 
-</details>
-
-<details>
-<summary><strong>OpenAI Codex CLI</strong></summary>
-
-Add to `~/.codex/config.toml`:
-
-```toml
-[mcp_servers.pretorin]
-command = "pretorin"
-args = ["mcp-serve"]
-```
-
-</details>
-
-<details>
-<summary><strong>Windsurf</strong></summary>
+### Windsurf
 
 Add to `~/.codeium/windsurf/mcp_config.json`:
 
@@ -199,9 +111,17 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 Restart Windsurf after saving.
 
-</details>
+### OpenAI Codex CLI
 
-### Available Tools
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.pretorin]
+command = "pretorin"
+args = ["mcp-serve"]
+```
+
+## Available Tools
 
 | Tool | Description |
 |------|-------------|
@@ -213,7 +133,7 @@ Restart Windsurf after saving.
 | `pretorin_get_control_references` | Get control guidance and references |
 | `pretorin_get_document_requirements` | Get document requirements for a framework |
 
-### Resources
+## Resources
 
 | Resource URI | Description |
 |--------------|-------------|
@@ -221,7 +141,7 @@ Restart Windsurf after saving.
 | `analysis://guide/{framework_id}` | Framework analysis guide |
 | `analysis://control/{control_id}` | Control analysis guidance |
 
-### Example Prompts
+## Example Prompts
 
 Try asking your AI assistant:
 
@@ -232,9 +152,20 @@ Try asking your AI assistant:
 
 For comprehensive MCP documentation, see [docs/MCP.md](docs/MCP.md).
 
+## Supported Frameworks
+
+The initial public release includes these Government Core frameworks:
+
+- NIST SP 800-53 Rev 5
+- NIST SP 800-171 Rev 2
+- FedRAMP (Low, Moderate, High)
+- CMMC Level 1, 2, and 3
+
+Additional frameworks are available on the platform. See [platform.pretorin.com/api/docs](https://platform.pretorin.com/api/docs) for the full list.
+
 ## CLI Reference
 
-For comprehensive documentation with real terminal output examples, see [docs/CLI.md](docs/CLI.md).
+Pretorin also includes a full CLI for working with compliance data directly in the terminal. For comprehensive documentation with real terminal output examples, see [docs/CLI.md](docs/CLI.md).
 
 ### Quick Examples
 
@@ -279,6 +210,40 @@ pretorin frameworks control nist-800-53-r5 ac-02 --references
 | `pretorin update` | Update to latest version |
 | `pretorin mcp-serve` | Start the MCP server |
 
+## Installation
+
+### Stable (PyPI)
+
+We recommend using [uv](https://docs.astral.sh/uv/) or [pipx](https://pipx.pypa.io/) for isolated installation:
+
+```bash
+uv tool install pretorin
+```
+
+```bash
+pipx install pretorin
+```
+
+Or with pip:
+
+```bash
+pip install pretorin
+```
+
+### Latest (GitHub)
+
+Install the latest development version directly from GitHub:
+
+```bash
+uv tool install git+https://github.com/pretorin-ai/pretorin-cli.git
+```
+
+### Updating
+
+```bash
+pretorin update
+```
+
 ## Configuration
 
 Credentials are stored in `~/.pretorin/config.json`.
@@ -289,17 +254,6 @@ Credentials are stored in `~/.pretorin/config.json`.
 |----------|-------------|
 | `PRETORIN_API_KEY` | API key (overrides stored config) |
 | `PRETORIN_API_BASE_URL` | Custom API URL (default: https://platform.pretorin.com/api/v1) |
-
-## Supported Frameworks
-
-The initial public release includes these Government Core frameworks:
-
-- NIST SP 800-53 Rev 5
-- NIST SP 800-171 Rev 2
-- FedRAMP (Low, Moderate, High)
-- CMMC Level 1, 2, and 3
-
-Additional frameworks are available on the platform. See [platform.pretorin.com/api/docs](https://platform.pretorin.com/api/docs) for the full list.
 
 ## Development
 
