@@ -1,0 +1,37 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.pretorin-ai/pretorin",
+  "description": "Access NIST 800-53, FedRAMP, CMMC, and NIST 800-171 compliance data from your AI tools",
+  "title": "Pretorin Compliance",
+  "websiteUrl": "https://pretorin.com",
+  "repository": {
+    "url": "https://github.com/pretorin-ai/pretorin-cli.git",
+    "source": "github"
+  },
+  "version": "0.2.1",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "pretorin",
+      "version": "0.2.1",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp-serve"
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "PRETORIN_API_KEY",
+          "description": "Your Pretorin API key from https://platform.pretorin.com/",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}

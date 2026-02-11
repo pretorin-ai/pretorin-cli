@@ -362,6 +362,12 @@ ruff format --check src/pretorin
 
 Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
+## MCP Registry
+
+This server is listed on the official [MCP Registry](https://registry.modelcontextprotocol.io/).
+
+<!-- mcp-name: io.github.pretorin-ai/pretorin -->
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.

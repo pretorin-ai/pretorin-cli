@@ -61,6 +61,12 @@ coverage.xml
 *.manifest
 *.spec
 
+# MCP Publisher
+.mcp_publisher_token
+.mcpregistry_github_token
+.mcpregistry_registry_token
+mcp-publisher
+
 # OS
 .DS_Store
 Thumbs.db
