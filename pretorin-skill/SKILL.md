@@ -54,12 +54,12 @@ When unsure of an ID, discover it first with `pretorin_list_control_families` or
 
 ### Browsing Frameworks
 - **`pretorin_list_frameworks`** — List all available frameworks. No parameters. Start here when the user hasn't specified a framework.
-- **`pretorin_get_framework`** — Get framework metadata (description, version, dates). Pass `framework_id`.
-- **`pretorin_list_control_families`** — List control families within a framework. Pass `framework_id`. Returns family IDs, titles, and control counts.
+- **`pretorin_get_framework`** — Get framework metadata and AI context (purpose, target audience, regulatory context, scope, key concepts). Pass `framework_id`.
+- **`pretorin_list_control_families`** — List control families with AI context (domain summary, risk context, implementation priority). Pass `framework_id`.
 
 ### Querying Controls
 - **`pretorin_list_controls`** — List controls for a framework. Pass `framework_id` and optionally `family_id` to filter by family.
-- **`pretorin_get_control`** — Get full control details (parameters, parts, enhancements). Pass `framework_id` and `control_id`.
+- **`pretorin_get_control`** — Get full control details including AI guidance (summary, control intent, evidence expectations, implementation considerations, common failures, complexity). Pass `framework_id` and `control_id`. The `ai_guidance` field provides the richest context for generating narratives and analyzing gaps.
 - **`pretorin_get_control_references`** — Get implementation guidance, objectives, and related controls. Pass `framework_id` and `control_id`. This is the most detailed view — use it to understand how to implement a control.
 
 ### Documentation

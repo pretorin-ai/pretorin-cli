@@ -125,13 +125,13 @@ args = ["mcp-serve"]
 
 | Tool | Description |
 |------|-------------|
-| `pretorin_list_frameworks` | List all compliance frameworks |
-| `pretorin_get_framework` | Get framework metadata |
-| `pretorin_list_control_families` | List control families for a framework |
-| `pretorin_list_controls` | List controls (with optional family filter) |
-| `pretorin_get_control` | Get detailed control information |
-| `pretorin_get_control_references` | Get control guidance and references |
-| `pretorin_get_document_requirements` | Get document requirements for a framework |
+| `pretorin_list_frameworks` | List all compliance frameworks with tier and category info |
+| `pretorin_get_framework` | Get framework metadata including AI context (purpose, target audience, regulatory context, scope, key concepts) |
+| `pretorin_list_control_families` | List control families with AI context (domain summary, risk context, implementation priority) |
+| `pretorin_list_controls` | List controls with optional family filter |
+| `pretorin_get_control` | Get detailed control info including AI guidance (summary, intent, evidence expectations, implementation considerations, common failures) |
+| `pretorin_get_control_references` | Get control statement, guidance, objectives, parameters, and related controls |
+| `pretorin_get_document_requirements` | Get explicit and implicit document requirements for a framework |
 
 ## Resources
 

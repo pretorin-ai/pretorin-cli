@@ -47,6 +47,7 @@ class FrameworkMetadata(BaseModel):
     tier: str | None = None
     category: str | None = None
     catalog_format: str | None = None
+    ai_context: dict[str, Any] | None = None
 
 
 # =============================================================================
@@ -61,6 +62,7 @@ class ControlFamilySummary(BaseModel):
     title: str
     class_type: str = Field(alias="class")
     controls_count: int = 0
+    ai_context: dict[str, Any] | None = None
 
 
 class ControlInFamily(BaseModel):
@@ -78,6 +80,7 @@ class ControlFamilyDetail(BaseModel):
     title: str
     class_type: str = Field(alias="class")
     controls: list[ControlInFamily] = Field(default_factory=list)
+    ai_context: dict[str, Any] | None = None
 
 
 # =============================================================================

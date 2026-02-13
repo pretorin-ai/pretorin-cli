@@ -146,7 +146,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_get_framework",
-            description="Get detailed metadata about a specific compliance framework",
+            description="Get detailed metadata about a specific compliance framework including AI context (purpose, target audience, regulatory context, scope, key concepts)",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -160,7 +160,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_list_control_families",
-            description="List all control families for a specific framework",
+            description="List all control families for a specific framework with AI context (domain summary, risk context, implementation priority)",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -192,7 +192,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_get_control",
-            description="Get detailed information about a specific control including parameters and enhancements",
+            description="Get detailed information about a specific control including parameters, enhancements, and AI guidance (summary, intent, evidence expectations, implementation considerations, common failures)",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -318,6 +318,7 @@ async def _handle_get_framework(
             "category": framework.category,
             "published": framework.published,
             "last_modified": framework.last_modified,
+            "ai_context": framework.ai_context,
         }
     )
 
@@ -339,6 +340,7 @@ async def _handle_list_control_families(
                     "title": f.title,
                     "class": f.class_type,
                     "controls_count": f.controls_count,
+                    "ai_context": f.ai_context,
                 }
                 for f in families
             ],
@@ -388,7 +390,7 @@ async def _handle_get_control(
             "parameters": control.params,
             "parts": control.parts,
             "enhancements_count": len(control.controls) if control.controls else 0,
-            "has_ai_guidance": control.ai_guidance is not None,
+            "ai_guidance": control.ai_guidance,
         }
     )
 
