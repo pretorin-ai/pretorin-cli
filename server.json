@@ -8,12 +8,12 @@
     "url": "https://github.com/pretorin-ai/pretorin-cli.git",
     "source": "github"
   },
-  "version": "0.3.0",
+  "version": "0.3.1",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "pretorin",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"
