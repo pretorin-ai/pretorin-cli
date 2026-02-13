@@ -17,7 +17,7 @@
 
 ---
 
-Pretorin brings compliance into your development workflow. Use the **MCP server** to give AI agents direct access to authoritative control data — no more hallucinated requirements. Use the **CLI** to query frameworks, controls, and document requirements from your terminal or CI pipeline. Both connect to the same API with enriched data for NIST 800-53, NIST 800-171, FedRAMP, CMMC, and more.
+Pretorin brings compliance into your development workflow. Use the **MCP server** to give AI agents direct access to authoritative control data, not hallucinated requirements. Use the **CLI** to query frameworks, controls, and document requirements from your terminal or CI pipeline. Both connect to the same API with enriched data for NIST 800-53, NIST 800-171, FedRAMP, CMMC, and more.
 
 ## Quick Start
 
@@ -42,7 +42,7 @@ claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 
 This registers the server for your current project. To make it available across all your projects, add `--scope user`.
 
-**Team setup** — add a `.mcp.json` file to your project root so every team member gets the server automatically:
+**Team setup** - add a `.mcp.json` file to your project root so every team member gets the server automatically:
 
 ```json
 {
