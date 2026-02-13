@@ -2,6 +2,10 @@
 
 Use this decision tree to help users identify the right compliance framework for their situation.
 
+## Using AI Context for Selection
+
+Call `pretorin_get_framework` with a candidate framework ID to get the `ai_context` field, which includes purpose, target audience, regulatory context, scope, and key concepts. This helps confirm whether a framework is the right fit for the user's situation.
+
 ## Decision Tree
 
 ### 1. Federal Agency (US Government)

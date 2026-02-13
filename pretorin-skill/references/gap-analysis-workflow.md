@@ -49,8 +49,10 @@ These families are primarily documentation-based and unlikely to have code evide
 For each high-priority family:
 
 1. Call `pretorin_list_controls` filtered by the family
-2. For each relevant control, call `pretorin_get_control_references` to understand requirements
-3. Search the codebase using these patterns:
+2. For each relevant control:
+   - Call `pretorin_get_control` to get the `ai_guidance` field — this provides evidence expectations, implementation considerations, common failures, and a control-intent summary that directly informs what to search for
+   - Call `pretorin_get_control_references` for the full statement, objectives, and related controls
+3. Search the codebase using the `ai_guidance.evidence_expectations` as your primary search guide, supplemented by these general patterns:
 
 **File patterns:**
 ```
@@ -74,7 +76,7 @@ password, credential, hash, mfa, token
 
 ## Step 4: Assess Implementation Status
 
-For each control, assign a status:
+For each control, assign a status. Use `ai_guidance.common_failures` to calibrate your assessment — if the codebase exhibits a known failure pattern, it's likely a gap or partial implementation.
 
 | Status | Criteria |
 |---|---|
@@ -116,7 +118,9 @@ For each assessed control:
 ## Tips
 
 - Start broad (family level) and drill into specific controls where evidence exists
-- Use `pretorin_get_control_references` liberally — the guidance and objectives fields explain what assessors look for
+- Use `pretorin_get_control` first for the `ai_guidance` field — it provides the richest context for understanding what to look for, including evidence expectations, implementation considerations, and common failure patterns
+- Use `pretorin_get_control_references` for the formal statement, objectives, and related controls — the guidance and objectives explain what assessors look for
+- Use `pretorin_list_control_families` to get family-level `ai_context` with domain summaries, risk context, and implementation priorities to help with family-level scoping
 - Check related controls to identify dependencies between controls
 - For infrastructure evidence, look at Terraform, CloudFormation, Dockerfiles, Helm charts, and CI/CD configs
 - For application evidence, focus on auth, logging, crypto, and configuration code

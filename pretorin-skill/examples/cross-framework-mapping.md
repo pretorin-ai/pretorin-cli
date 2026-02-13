@@ -26,7 +26,7 @@ The `related_controls` field in the response reveals connections to other contro
 
 ### Step 3: Compare Requirements
 
-Call `pretorin_get_control_references` for each framework's version of the control to compare:
+Call `pretorin_get_control` for each framework's version of the control to get the `ai_guidance` field (summary, intent, evidence expectations, implementation considerations). Then call `pretorin_get_control_references` for the formal statement and objectives. Compare:
 
 **NIST 800-53 (ac-02)** — Full control with 13 enhancements. Covers account types, conditions for group membership, authorized users, account managers, account creation/modification/disabling/removal, monitoring, and atypical usage.
 
@@ -63,8 +63,9 @@ NIST 800-171 03.01.01
 
 ## Workflow
 
-1. Call `pretorin_get_control_references` for the source control
-2. Note the `related_controls` in the response
-3. For each related control in a target framework, call `pretorin_get_control_references` to compare
-4. Document the mapping with any differences in parameters, enhancements, or scope
-5. Identify controls in the target framework that have no mapping (these are the gaps)
+1. Call `pretorin_get_control` for the source control to get `ai_guidance` (summary, intent, evidence expectations)
+2. Call `pretorin_get_control_references` for the source control and note the `related_controls`
+3. For each related control in a target framework, call `pretorin_get_control` and `pretorin_get_control_references` to compare
+4. Use `ai_guidance.control_intent` to compare what each framework emphasizes for the same logical control
+5. Document the mapping with any differences in parameters, enhancements, or scope
+6. Identify controls in the target framework that have no mapping (these are the gaps)

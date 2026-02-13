@@ -98,6 +98,8 @@ Good evidence shows HOW a control is implemented with specifics. Weak evidence m
 **Weak**: "Has a User class in the models file."
 
 When collecting evidence:
+- Call `pretorin_get_control` first — the `ai_guidance.evidence_expectations` field describes exactly what kinds of evidence assessors expect for each control
+- Use `ai_guidance.implementation_considerations` to understand common implementation approaches and what to look for
 - Include specific file paths and line numbers
 - Keep code snippets brief (under 10 lines)
 - Focus on the most relevant evidence, not exhaustive listing
