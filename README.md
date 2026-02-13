@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>MCP server for compliance framework data. NIST 800-53, FedRAMP, CMMC, and more.</strong>
+  <strong>Compliance tools for developers. Integrate with AI agents or your CI pipeline.</strong>
 </p>
 
 <p align="center">
@@ -17,7 +17,7 @@
 
 ---
 
-An MCP server and CLI that gives AI assistants direct access to authoritative compliance data. Stop hallucinating control requirements — query the real thing. Access enriched framework data, control families, control details, and document requirements from NIST 800-53, NIST 800-171, FedRAMP, CMMC, and more.
+Pretorin brings compliance into your development workflow. Use the **MCP server** to give AI agents direct access to authoritative control data — no more hallucinated requirements. Use the **CLI** to query frameworks, controls, and document requirements from your terminal or CI pipeline. Both connect to the same API with enriched data for NIST 800-53, NIST 800-171, FedRAMP, CMMC, and more.
 
 ## Quick Start
 
