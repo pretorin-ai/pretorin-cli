@@ -146,7 +146,10 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_get_framework",
-            description="Get detailed metadata about a specific compliance framework including AI context (purpose, target audience, regulatory context, scope, key concepts)",
+            description=(
+                "Get detailed metadata about a specific compliance framework including"
+                " AI context (purpose, target audience, regulatory context, scope, key concepts)"
+            ),
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -160,7 +163,10 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_list_control_families",
-            description="List all control families for a specific framework with AI context (domain summary, risk context, implementation priority)",
+            description=(
+                "List all control families for a specific framework with"
+                " AI context (domain summary, risk context, implementation priority)"
+            ),
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -192,7 +198,11 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_get_control",
-            description="Get detailed information about a specific control including parameters, enhancements, and AI guidance (summary, intent, evidence expectations, implementation considerations, common failures)",
+            description=(
+                "Get detailed information about a specific control including parameters,"
+                " enhancements, and AI guidance (summary, intent, evidence expectations,"
+                " implementation considerations, common failures)"
+            ),
             inputSchema={
                 "type": "object",
                 "properties": {
