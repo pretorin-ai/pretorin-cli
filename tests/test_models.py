@@ -4,11 +4,11 @@ import pytest
 from pydantic import ValidationError
 
 from pretorin.client.models import (
+    ArtifactValidationResult,
     ComplianceArtifact,
     ComponentDefinition,
     Evidence,
     ImplementationStatement,
-    ArtifactValidationResult,
 )
 
 

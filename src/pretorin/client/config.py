@@ -14,6 +14,9 @@ CONFIG_FILE = CONFIG_DIR / "config.json"
 # Environment variable names
 ENV_API_KEY = "PRETORIN_API_KEY"
 ENV_API_BASE_URL = "PRETORIN_API_BASE_URL"
+ENV_OPENAI_API_KEY = "OPENAI_API_KEY"
+ENV_OPENAI_BASE_URL = "OPENAI_BASE_URL"
+ENV_OPENAI_MODEL = "OPENAI_MODEL"
 
 
 class Config:
@@ -102,6 +105,24 @@ class Config:
     def is_configured(self) -> bool:
         """Check if the CLI is configured with an API key."""
         return self.api_key is not None
+
+    @property
+    def openai_api_key(self) -> str | None:
+        """Get the OpenAI API key (env var takes precedence)."""
+        env = os.environ.get(ENV_OPENAI_API_KEY)
+        return env if env else self.get("openai_api_key")
+
+    @property
+    def openai_base_url(self) -> str | None:
+        """Get the OpenAI base URL (env var takes precedence)."""
+        env = os.environ.get(ENV_OPENAI_BASE_URL)
+        return env if env else self.get("openai_base_url")
+
+    @property
+    def openai_model(self) -> str:
+        """Get the OpenAI model (env var takes precedence)."""
+        env = os.environ.get(ENV_OPENAI_MODEL)
+        return env if env else self.get("openai_model", "gpt-4o")
 
     def to_dict(self) -> dict[str, Any]:
         """Return all stored config as a dictionary."""

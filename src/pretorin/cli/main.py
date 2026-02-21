@@ -7,9 +7,13 @@ from rich import print as rprint
 from rich.console import Console
 
 from pretorin import __version__
+from pretorin.cli.agent import app as agent_app
 from pretorin.cli.auth import app as auth_app
 from pretorin.cli.commands import app as frameworks_app
 from pretorin.cli.config import app as config_app
+from pretorin.cli.evidence import app as evidence_app
+from pretorin.cli.monitoring import app as monitoring_app
+from pretorin.cli.narrative import app as narrative_app
 from pretorin.cli.output import set_json_mode
 
 console = Console()
@@ -77,6 +81,10 @@ def main(
 # Add sub-command groups
 app.add_typer(config_app, name="config", help="Manage configuration")
 app.add_typer(frameworks_app, name="frameworks", help="Browse compliance frameworks and controls")
+app.add_typer(monitoring_app, name="monitoring", help="Monitoring events and compliance tracking")
+app.add_typer(evidence_app, name="evidence", help="Local evidence management and platform sync")
+app.add_typer(narrative_app, name="narrative", help="AI narrative generation and management")
+app.add_typer(agent_app, name="agent", help="Autonomous compliance agent")
 
 # Add auth commands directly to root
 for command in auth_app.registered_commands:

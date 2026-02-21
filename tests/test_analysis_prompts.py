@@ -1,16 +1,15 @@
 """Tests for analysis prompts and templates."""
 
-import pytest
 
 from pretorin.mcp.analysis_prompts import (
-    get_artifact_schema,
-    get_framework_guide,
-    get_control_prompt,
-    format_control_analysis_prompt,
-    get_available_controls,
-    get_control_summary,
     CONTROL_ANALYSIS_PROMPTS,
     FRAMEWORK_GUIDES,
+    format_control_analysis_prompt,
+    get_artifact_schema,
+    get_available_controls,
+    get_control_prompt,
+    get_control_summary,
+    get_framework_guide,
 )
 
 
