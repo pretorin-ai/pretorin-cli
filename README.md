@@ -145,6 +145,9 @@ pretorin harness run "Assess AC-2 implementation gaps"
 | `pretorin_get_control` | Get detailed control info including AI guidance (summary, intent, evidence expectations, implementation considerations, common failures) |
 | `pretorin_get_control_references` | Get control statement, guidance, objectives, parameters, and related controls |
 | `pretorin_get_document_requirements` | Get explicit and implicit document requirements for a framework |
+| `pretorin_get_control_context` | Get rich control context: AI guidance, statement, objectives, and implementation details for a system |
+| `pretorin_get_scope` | Get system scope/policy information including excluded controls |
+| `pretorin_update_narrative` | Push a narrative text update for a control implementation |
 
 ## Resources
 
@@ -215,6 +218,12 @@ pretorin frameworks control nist-800-53-r5 ac-02 --references
 | `pretorin frameworks controls <id>` | List controls (`--family`, `--limit`) |
 | `pretorin frameworks control <framework> <control>` | Get control details (`--references`) |
 | `pretorin frameworks documents <id>` | Get document requirements |
+| `pretorin context list` | List available systems and frameworks with progress |
+| `pretorin context set` | Set active system/framework context (`--system`, `--framework`) |
+| `pretorin context show` | Display current active context |
+| `pretorin context clear` | Clear active system/framework context |
+| `pretorin review run` | Review code against a control (`--control-id`, `--framework-id`, `--path`) |
+| `pretorin review status` | Check implementation status (`--control-id`) |
 | `pretorin config list` | List all configuration |
 | `pretorin config get <key>` | Get a config value |
 | `pretorin config set <key> <value>` | Set a config value |
@@ -269,7 +278,7 @@ Credentials are stored in `~/.pretorin/config.json`.
 | Variable | Description |
 |----------|-------------|
 | `PRETORIN_API_KEY` | API key (overrides stored config) |
-| `PRETORIN_PLATFORM_API_BASE_URL` | Platform REST API URL for framework/evidence/narrative endpoints (default: https://platform.pretorin.com/api/v1) |
+| `PRETORIN_PLATFORM_API_BASE_URL` | Platform REST API URL for framework/system/evidence/narrative endpoints (default: https://platform.pretorin.com/api/v1/public) |
 | `PRETORIN_API_BASE_URL` | Backward-compatible alias for `PRETORIN_PLATFORM_API_BASE_URL` |
 | `PRETORIN_MODEL_API_BASE_URL` | Model provider URL used by `pretorin harness init` (default: https://platform.pretorin.com/v1) |
 

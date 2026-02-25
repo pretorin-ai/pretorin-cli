@@ -463,6 +463,77 @@ async def list_tools() -> list[Tool]:
                 "required": ["system_id", "title"],
             },
         ),
+        # === Control Context Tools ===
+        Tool(
+            name="pretorin_get_control_context",
+            description=(
+                "Get rich context for a control including AI guidance, statement,"
+                " objectives, scope status, and implementation details"
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": {
+                        "type": "string",
+                        "description": "The system ID",
+                    },
+                    "control_id": {
+                        "type": "string",
+                        "description": "The control ID (e.g., ac-2)",
+                    },
+                    "framework_id": {
+                        "type": "string",
+                        "description": "The framework ID (e.g., nist-800-53-r5)",
+                    },
+                },
+                "required": ["system_id", "control_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_scope",
+            description="Get system scope/policy information including excluded controls and Q&A",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": {
+                        "type": "string",
+                        "description": "The system ID",
+                    },
+                },
+                "required": ["system_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_update_narrative",
+            description="Push a narrative text update for a control implementation",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": {
+                        "type": "string",
+                        "description": "The system ID",
+                    },
+                    "control_id": {
+                        "type": "string",
+                        "description": "The control ID",
+                    },
+                    "framework_id": {
+                        "type": "string",
+                        "description": "The framework ID",
+                    },
+                    "narrative": {
+                        "type": "string",
+                        "description": "The narrative text to set",
+                    },
+                    "is_ai_generated": {
+                        "type": "boolean",
+                        "description": "Whether the narrative was AI-generated",
+                        "default": False,
+                    },
+                },
+                "required": ["system_id", "control_id", "framework_id", "narrative"],
+            },
+        ),
         # === Control Implementation Tools ===
         Tool(
             name="pretorin_update_control_status",
@@ -885,6 +956,45 @@ async def _handle_push_monitoring_event(
     return _format_json(result)
 
 
+async def _handle_get_control_context(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent]:
+    """Handle the get_control_context tool."""
+    ctx = await client.get_control_context(
+        system_id=arguments.get("system_id", ""),
+        control_id=arguments.get("control_id", ""),
+        framework_id=arguments.get("framework_id", ""),
+    )
+    return _format_json(ctx.model_dump())
+
+
+async def _handle_get_scope(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent]:
+    """Handle the get_scope tool."""
+    scope = await client.get_scope(
+        system_id=arguments.get("system_id", ""),
+    )
+    return _format_json(scope.model_dump())
+
+
+async def _handle_update_narrative(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent]:
+    """Handle the update_narrative tool."""
+    result = await client.update_narrative(
+        system_id=arguments.get("system_id", ""),
+        control_id=arguments.get("control_id", ""),
+        framework_id=arguments.get("framework_id", ""),
+        narrative=arguments.get("narrative", ""),
+        is_ai_generated=arguments.get("is_ai_generated", False),
+    )
+    return _format_json(result)
+
+
 async def _handle_update_control_status(
     client: PretorianClient,
     arguments: dict[str, Any],
@@ -940,6 +1050,9 @@ _TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pretorin_push_monitoring_event": _handle_push_monitoring_event,
     "pretorin_update_control_status": _handle_update_control_status,
     "pretorin_get_control_implementation": _handle_get_control_implementation,
+    "pretorin_get_control_context": _handle_get_control_context,
+    "pretorin_get_scope": _handle_get_scope,
+    "pretorin_update_narrative": _handle_update_narrative,
 }
 
 

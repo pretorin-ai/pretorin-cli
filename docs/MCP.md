@@ -141,7 +141,7 @@ Restart the application to load the new MCP server.
 
 ## Available Tools
 
-The MCP server provides 7 tools for accessing compliance data:
+The MCP server provides 10 tools for accessing and managing compliance data:
 
 | Tool | Description |
 |------|-------------|
@@ -152,6 +152,9 @@ The MCP server provides 7 tools for accessing compliance data:
 | `pretorin_get_control` | Get detailed control information including parameters |
 | `pretorin_get_control_references` | Get control guidance, objectives, and related controls |
 | `pretorin_get_document_requirements` | Get document requirements for a framework |
+| `pretorin_get_control_context` | Get rich control context: AI guidance, statement, objectives, and implementation details |
+| `pretorin_get_scope` | Get system scope/policy information including excluded controls |
+| `pretorin_update_narrative` | Push a narrative text update for a control implementation |
 
 ### Tool Reference
 
@@ -245,6 +248,51 @@ Get document requirements for a framework.
 **Returns:** List of explicit and implicit document requirements.
 
 **Example prompt:** "What documents do I need for FedRAMP Moderate?"
+
+---
+
+#### pretorin_get_control_context
+
+Get rich context for a control including AI guidance, control statement, assessment objectives, scope status, and current implementation details.
+
+**Parameters:**
+- `system_id` (required): The system ID
+- `control_id` (required): The control ID (zero-padded for NIST/FedRAMP, e.g., `ac-01`)
+- `framework_id` (required): The framework ID
+
+**Returns:** Combined control metadata and implementation details: AI guidance, statement, objectives, scope status, narrative, user context.
+
+**Example prompt:** "What's the full context for AC-2 in my FedRAMP Moderate system?"
+
+---
+
+#### pretorin_get_scope
+
+Get system scope and policy information including excluded controls and Q&A responses.
+
+**Parameters:**
+- `system_id` (required): The system ID
+
+**Returns:** Scope narrative, list of excluded controls, Q&A responses, and scope status.
+
+**Example prompt:** "Which controls are excluded from scope for my system?"
+
+---
+
+#### pretorin_update_narrative
+
+Push a narrative text update for a control implementation on the platform.
+
+**Parameters:**
+- `system_id` (required): The system ID
+- `control_id` (required): The control ID
+- `framework_id` (required): The framework ID
+- `narrative` (required): The narrative text to set
+- `is_ai_generated` (optional): Whether the narrative was AI-generated (default: false)
+
+**Returns:** Confirmation of the update.
+
+**Example prompt:** "Update the narrative for AC-2 with the implementation details I just described"
 
 ## Resources
 

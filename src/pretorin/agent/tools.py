@@ -332,4 +332,79 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         handler=get_control_implementation,
     ))
 
+    # --- Control Context ---
+
+    async def get_control_context(
+        system_id: str,
+        control_id: str,
+        framework_id: str,
+    ) -> str:
+        ctx = await client.get_control_context(system_id, control_id, framework_id)
+        return json.dumps(ctx.model_dump(), default=str)
+
+    tools.append(ToolDefinition(
+        name="get_control_context",
+        description="Get rich context for a control: AI guidance, statement, objectives, and implementation",
+        parameters={
+            "type": "object",
+            "properties": {
+                "system_id": {"type": "string", "description": "System ID"},
+                "control_id": {"type": "string", "description": "Control ID"},
+                "framework_id": {"type": "string", "description": "Framework ID"},
+            },
+            "required": ["system_id", "control_id", "framework_id"],
+        },
+        handler=get_control_context,
+    ))
+
+    # --- Scope ---
+
+    async def get_scope(system_id: str) -> str:
+        scope = await client.get_scope(system_id)
+        return json.dumps(scope.model_dump(), default=str)
+
+    tools.append(ToolDefinition(
+        name="get_scope",
+        description="Get system scope/policy information including excluded controls",
+        parameters={
+            "type": "object",
+            "properties": {
+                "system_id": {"type": "string", "description": "System ID"},
+            },
+            "required": ["system_id"],
+        },
+        handler=get_scope,
+    ))
+
+    # --- Update Narrative ---
+
+    async def update_narrative(
+        system_id: str,
+        control_id: str,
+        framework_id: str,
+        narrative: str,
+        is_ai_generated: bool = False,
+    ) -> str:
+        result = await client.update_narrative(
+            system_id, control_id, narrative, framework_id, is_ai_generated,
+        )
+        return json.dumps(result, default=str)
+
+    tools.append(ToolDefinition(
+        name="update_narrative",
+        description="Push a narrative text update for a control implementation",
+        parameters={
+            "type": "object",
+            "properties": {
+                "system_id": {"type": "string", "description": "System ID"},
+                "control_id": {"type": "string", "description": "Control ID"},
+                "framework_id": {"type": "string", "description": "Framework ID"},
+                "narrative": {"type": "string", "description": "Narrative text"},
+                "is_ai_generated": {"type": "boolean", "description": "AI-generated flag"},
+            },
+            "required": ["system_id", "control_id", "framework_id", "narrative"],
+        },
+        handler=update_narrative,
+    ))
+
     return tools

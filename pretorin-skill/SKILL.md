@@ -65,6 +65,11 @@ When unsure of an ID, discover it first with `pretorin_list_control_families` or
 ### Documentation
 - **`pretorin_get_document_requirements`** — Get required and implied documents for a framework. Pass `framework_id`. Returns explicit (required) and implicit (control-implied) documents with their control references.
 
+### System & Implementation Context
+- **`pretorin_get_control_context`** — Get rich context for a control including AI guidance, statement, objectives, scope status, and current implementation details. Pass `system_id`, `control_id`, and `framework_id`. This is the most comprehensive view for understanding both what a control requires and how it's currently implemented.
+- **`pretorin_get_scope`** — Get system scope/policy information including excluded controls and Q&A responses. Pass `system_id`. Useful for understanding what's in/out of scope before generating narratives.
+- **`pretorin_update_narrative`** — Push a narrative text update for a control implementation. Pass `system_id`, `control_id`, `framework_id`, and `narrative`. Use this after generating a narrative to save it to the platform.
+
 ## Workflows
 
 ### Framework Selection

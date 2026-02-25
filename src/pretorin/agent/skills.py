@@ -28,13 +28,13 @@ SKILLS: dict[str, Skill] = {
             "4. Prioritize gaps by risk level (controls in higher-impact families first)\n"
             "5. Provide actionable recommendations for closing each gap\n\n"
             "Always start by listing systems, then check compliance status. "
-            "Use get_control to understand what each gap requires. "
+            "Use get_control_context to understand what each gap requires. "
             "Format your output as a structured report with sections for each framework."
         ),
         tool_names=[
             "list_systems", "get_system", "get_compliance_status",
             "list_frameworks", "get_control", "get_control_implementation",
-            "search_evidence",
+            "get_control_context", "get_scope", "search_evidence",
         ],
         max_turns=20,
     ),
@@ -44,17 +44,19 @@ SKILLS: dict[str, Skill] = {
         system_prompt=(
             "You are a compliance documentation specialist. Your task is to:\n"
             "1. Identify the target system and control(s)\n"
-            "2. Review existing evidence and implementation details\n"
+            "2. Review existing evidence and implementation details using get_control_context\n"
             "3. Generate clear, specific implementation narratives\n"
             "4. Each narrative should explain HOW the control is implemented, "
-            "not just WHAT the control requires\n\n"
-            "Use search_evidence and get_control_implementation to gather context before "
+            "not just WHAT the control requires\n"
+            "5. Push the narrative to the platform using update_narrative\n\n"
+            "Use search_evidence and get_control_context to gather context before "
             "generating narratives. Reference specific evidence items in the narrative."
         ),
         tool_names=[
             "list_systems", "get_system", "get_control",
-            "get_control_implementation", "search_evidence",
-            "generate_narrative", "get_narrative",
+            "get_control_implementation", "get_control_context", "get_scope",
+            "search_evidence", "generate_narrative", "get_narrative",
+            "update_narrative",
         ],
         max_turns=15,
     ),
@@ -73,6 +75,7 @@ SKILLS: dict[str, Skill] = {
         ),
         tool_names=[
             "list_systems", "get_system", "list_frameworks", "get_control",
+            "get_control_context", "get_scope",
             "search_evidence", "create_evidence",
         ],
         max_turns=20,
@@ -86,7 +89,7 @@ SKILLS: dict[str, Skill] = {
             "2. Map findings to compliance framework controls\n"
             "3. Identify strengths and weaknesses in the security posture\n"
             "4. Push monitoring events for any notable findings\n"
-            "5. Update control statuses based on your findings\n\n"
+            "5. Update control statuses and narratives based on your findings\n\n"
             "Use external MCP tools (if available) to access the codebase, "
             "then use platform tools to record your findings. "
             "Push monitoring events for critical or high-severity findings."
@@ -94,8 +97,9 @@ SKILLS: dict[str, Skill] = {
         tool_names=[
             "list_systems", "get_system", "get_compliance_status",
             "get_control", "get_control_implementation",
+            "get_control_context", "get_scope",
             "push_monitoring_event", "update_control_status",
-            "create_evidence", "search_evidence",
+            "update_narrative", "create_evidence", "search_evidence",
         ],
         max_turns=25,
     ),

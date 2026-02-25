@@ -9,6 +9,7 @@ import httpx
 from pretorin.client.config import Config
 from pretorin.client.models import (
     ComplianceArtifact,
+    ControlContext,
     ControlDetail,
     ControlFamilyDetail,
     ControlFamilySummary,
@@ -23,6 +24,7 @@ from pretorin.client.models import (
     FrameworkMetadata,
     MonitoringEventCreate,
     NarrativeResponse,
+    ScopeResponse,
     SystemDetail,
 )
 
@@ -395,15 +397,15 @@ class PretorianClient:
 
     async def list_evidence(
         self,
-        organization_id: str | None = None,
+        system_id: str | None = None,
         control_id: str | None = None,
         framework_id: str | None = None,
         limit: int = 20,
     ) -> list[EvidenceItemResponse]:
-        """Search/list evidence items.
+        """Search/list evidence items for a system.
 
         Args:
-            organization_id: Optional organization filter.
+            system_id: System ID (required for system-scoped queries).
             control_id: Optional control filter.
             framework_id: Optional framework filter.
             limit: Maximum results to return.
@@ -412,14 +414,13 @@ class PretorianClient:
             List of evidence items.
         """
         params: dict[str, Any] = {"limit": limit}
-        if organization_id:
-            params["organization_id"] = organization_id
         if control_id:
             params["control_id"] = control_id
         if framework_id:
             params["framework_id"] = framework_id
 
-        data = await self._request("GET", "/evidence", params=params)
+        path = f"/systems/{system_id}/evidence" if system_id else "/evidence"
+        data = await self._request("GET", path, params=params)
         items = data if isinstance(data, list) else data.get("items", data.get("evidence", []))
         return [EvidenceItemResponse(**item) for item in items]
 
@@ -435,25 +436,33 @@ class PretorianClient:
         data = await self._request("GET", f"/evidence/{evidence_id}")
         return EvidenceItemResponse(**data)
 
-    async def create_evidence(self, organization_id: str, evidence: EvidenceCreate) -> dict[str, Any]:
-        """Create a new evidence item.
+    async def create_evidence(
+        self,
+        system_id: str,
+        evidence: EvidenceCreate,
+    ) -> dict[str, Any]:
+        """Create a new evidence item for a system.
 
         Args:
-            organization_id: Organization to create evidence in.
+            system_id: System ID to associate evidence with.
             evidence: Evidence data.
 
         Returns:
             Created evidence response.
         """
         payload = evidence.model_dump(exclude_none=True)
-        payload["organization_id"] = organization_id
-        data = await self._request("POST", "/evidence", json=payload)
+        data = await self._request(
+            "POST",
+            f"/systems/{system_id}/evidence",
+            json=payload,
+        )
         return data
 
     async def link_evidence_to_control(
         self,
         evidence_id: str,
         control_id: str,
+        system_id: str | None = None,
         framework_id: str | None = None,
     ) -> dict[str, Any]:
         """Link an evidence item to a control.
@@ -461,6 +470,7 @@ class PretorianClient:
         Args:
             evidence_id: ID of the evidence item.
             control_id: ID of the control to link to.
+            system_id: System ID for routing.
             framework_id: Optional framework context.
 
         Returns:
@@ -469,7 +479,8 @@ class PretorianClient:
         payload: dict[str, Any] = {"control_id": control_id}
         if framework_id:
             payload["framework_id"] = framework_id
-        data = await self._request("POST", f"/evidence/{evidence_id}/link", json=payload)
+        path = f"/systems/{system_id}/evidence/{evidence_id}/link" if system_id else f"/evidence/{evidence_id}/link"
+        data = await self._request("POST", path, json=payload)
         return data
 
     # =========================================================================
@@ -565,10 +576,73 @@ class PretorianClient:
             params["framework_id"] = framework_id
         data = await self._request(
             "GET",
-            f"/systems/{system_id}/controls/{control_id}/implementation",
+            f"/systems/{system_id}/controls/{control_id}",
             params=params,
         )
         return ControlImplementationResponse(**data)
+
+    async def get_control_context(
+        self,
+        system_id: str,
+        control_id: str,
+        framework_id: str,
+    ) -> ControlContext:
+        """Get rich context for a control including AI guidance and implementation.
+
+        Args:
+            system_id: ID of the system.
+            control_id: ID of the control.
+            framework_id: Framework ID.
+
+        Returns:
+            ControlContext with combined OSCAL + implementation data.
+        """
+        data = await self._request(
+            "GET",
+            f"/systems/{system_id}/controls/{control_id}/context",
+            params={"framework_id": framework_id},
+        )
+        return ControlContext(**data)
+
+    async def update_narrative(
+        self,
+        system_id: str,
+        control_id: str,
+        narrative: str,
+        framework_id: str,
+        is_ai_generated: bool = False,
+    ) -> dict[str, Any]:
+        """Push a narrative update for a control.
+
+        Args:
+            system_id: ID of the system.
+            control_id: ID of the control.
+            narrative: Narrative text.
+            framework_id: Framework ID.
+            is_ai_generated: Whether the narrative was AI-generated.
+
+        Returns:
+            Updated control implementation data.
+        """
+        data = await self._request(
+            "POST",
+            f"/systems/{system_id}/controls/{control_id}/narrative",
+            params={"framework_id": framework_id},
+            json={"narrative": narrative, "is_ai_generated": is_ai_generated},
+        )
+        return data
+
+    async def get_scope(self, system_id: str) -> ScopeResponse:
+        """Get system scope/policy information.
+
+        Args:
+            system_id: ID of the system.
+
+        Returns:
+            ScopeResponse with scope details.
+        """
+        data = await self._request("GET", f"/systems/{system_id}/scope")
+        return ScopeResponse(**data)
 
     async def add_control_note(
         self,
@@ -614,13 +688,14 @@ class PretorianClient:
         Returns:
             Updated control response.
         """
-        payload: dict[str, Any] = {"status": status}
+        params: dict[str, Any] = {}
         if framework_id:
-            payload["framework_id"] = framework_id
+            params["framework_id"] = framework_id
         data = await self._request(
-            "PATCH",
+            "POST",
             f"/systems/{system_id}/controls/{control_id}/status",
-            json=payload,
+            params=params,
+            json={"status": status},
         )
         return data
 

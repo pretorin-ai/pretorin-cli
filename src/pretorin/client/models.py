@@ -357,6 +357,31 @@ class ControlImplementationResponse(BaseModel):
 # =============================================================================
 
 
+class ControlContext(BaseModel):
+    """Rich context combining OSCAL control data with implementation details."""
+
+    control_id: str
+    title: str | None = None
+    statement: str | None = None
+    guidance: str | None = None
+    objectives: list[str] = Field(default_factory=list)
+    ai_guidance: dict[str, Any] | None = None
+    control_type: str | None = None
+    status: str | None = None
+    implementation_narrative: str | None = None
+    user_context: str | None = None
+
+
+class ScopeResponse(BaseModel):
+    """System scope/policy information."""
+
+    system_id: str | None = None
+    scope_narrative: str | None = None
+    excluded_controls: list[str] = Field(default_factory=list)
+    qa_responses: list[dict[str, Any]] = Field(default_factory=list)
+    status: str | None = None
+
+
 class MonitoringEventCreate(BaseModel):
     """Data for creating a monitoring event."""
 

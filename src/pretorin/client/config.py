@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-DEFAULT_PLATFORM_API_BASE_URL = "https://platform.pretorin.com/api/v1"
+DEFAULT_PLATFORM_API_BASE_URL = "https://platform.pretorin.com/api/v1/public"
 DEFAULT_MODEL_API_BASE_URL = "https://platform.pretorin.com/v1"
 CONFIG_DIR = Path.home() / ".pretorin"
 CONFIG_FILE = CONFIG_DIR / "config.json"
@@ -146,6 +146,32 @@ class Config:
     def model_api_base_url(self, value: str) -> None:
         """Set the model provider base URL used by harness integrations."""
         self.set("model_api_base_url", value)
+
+    @property
+    def active_system_id(self) -> str | None:
+        """Get the active system ID for context commands."""
+        return self.get("active_system_id")
+
+    @active_system_id.setter
+    def active_system_id(self, value: str | None) -> None:
+        """Set the active system ID."""
+        if value is None:
+            self.delete("active_system_id")
+        else:
+            self.set("active_system_id", value)
+
+    @property
+    def active_framework_id(self) -> str | None:
+        """Get the active framework ID for context commands."""
+        return self.get("active_framework_id")
+
+    @active_framework_id.setter
+    def active_framework_id(self, value: str | None) -> None:
+        """Set the active framework ID."""
+        if value is None:
+            self.delete("active_framework_id")
+        else:
+            self.set("active_framework_id", value)
 
     @property
     def is_configured(self) -> bool:

@@ -291,6 +291,80 @@ Total: 0 document requirement(s)
 
 > **Note:** Document requirements may not be populated for all frameworks yet. Check back as more data is added to the platform.
 
+## Context Management
+
+The `context` command group lets you set your active system and framework, similar to `kubectl config use-context`. All system-scoped commands use this context by default.
+
+### List Available Systems
+
+```bash
+$ pretorin context list
+[°~°] Fetching your systems...
+                              Your Systems
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━┓
+┃ System           ┃ Framework ID       ┃ Progress % ┃ Status    ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━┩
+│ My Application   │ nist-800-53-r5     │        42% │ in_progress │
+│ My Application   │ fedramp-moderate   │        28% │ in_progress │
+│ Internal Tool    │ cmmc-l2            │        75% │ implemented │
+└──────────────────┴────────────────────┴────────────┴───────────┘
+```
+
+### Set Active Context
+
+```bash
+# Interactive (prompts for selection)
+pretorin context set
+
+# Explicit
+pretorin context set --system "My Application" --framework nist-800-53-r5
+```
+
+### Show Current Context
+
+```bash
+$ pretorin context show
+╭──────────────────────── Active Context ─────────────────────────╮
+│ System: My Application                                          │
+│ Framework: NIST SP 800-53 Rev 5                                │
+│ Progress: 42% (136/324 implemented, 45 in progress)            │
+╰─────────────────────────────────────────────────────────────────╯
+```
+
+### Clear Context
+
+```bash
+pretorin context clear
+```
+
+## Review Commands
+
+The `review` command group helps you review local code against framework controls.
+
+### Run a Review
+
+```bash
+# Uses active context for system/framework
+pretorin review run --control-id ac-02 --path ./src
+
+# Explicit system/framework override
+pretorin review run --control-id ac-02 --framework-id nist-800-53-r5 --path ./src
+```
+
+If a system context is set (beta user), narratives and evidence are pushed to the platform. Otherwise, they're saved locally to `narratives/` and `evidence/` directories.
+
+### Check Implementation Status
+
+```bash
+$ pretorin review status --control-id ac-02
+╭─────────────────── Control AC-02 Status ───────────────────────╮
+│ Status: in_progress                                             │
+│ Evidence items: 3                                               │
+│ Narrative: This control is implemented through centralized     │
+│ account management using Azure AD...                           │
+╰─────────────────────────────────────────────────────────────────╯
+```
+
 ## Configuration
 
 ### List Configuration
@@ -326,7 +400,7 @@ $ pretorin config path
 | Variable | Description |
 |----------|-------------|
 | `PRETORIN_API_KEY` | API key (overrides stored config) |
-| `PRETORIN_API_BASE_URL` | Custom API URL (default: `https://platform.pretorin.com/api/v1`) |
+| `PRETORIN_API_BASE_URL` | Custom API URL (default: `https://platform.pretorin.com/api/v1/public`) |
 
 ## Utilities
 
@@ -410,6 +484,12 @@ Different frameworks use different ID conventions. Always use `pretorin framewor
 | `pretorin frameworks controls <id>` | List controls (`--family`, `--limit`) |
 | `pretorin frameworks control <framework> <control>` | Get control details (`--references`) |
 | `pretorin frameworks documents <id>` | Get document requirements |
+| `pretorin context list` | List available systems and frameworks with progress |
+| `pretorin context set` | Set active system/framework context (`--system`, `--framework`) |
+| `pretorin context show` | Display current active context |
+| `pretorin context clear` | Clear active system/framework context |
+| `pretorin review run` | Review code against a control (`--control-id`, `--framework-id`, `--path`) |
+| `pretorin review status` | Check implementation status for a control (`--control-id`) |
 | `pretorin config list` | List all configuration |
 | `pretorin config get <key>` | Get a config value |
 | `pretorin config set <key> <value>` | Set a config value |

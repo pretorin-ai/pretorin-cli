@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `pretorin context list` — List available systems and frameworks with compliance progress
+- `pretorin context set` — Set active system/framework context (interactive or via `--system`/`--framework` flags)
+- `pretorin context show` — Display current active context with live progress stats
+- `pretorin context clear` — Clear active system/framework context
+- `pretorin review run` — Review local code against framework controls with AI guidance
+- `pretorin review status` — Check implementation status for a specific control
+- `resolve_context()` helper for resolving system/framework from flags > stored config > error
+- Local-only mode: commands work without platform access, saving artifacts locally
+- 3 new MCP tools: `pretorin_get_control_context`, `pretorin_get_scope`, `pretorin_update_narrative`
+- 3 new agent tools: `get_control_context`, `get_scope`, `update_narrative`
+- Updated all agent skills with new tool lists
+- `ControlContext` and `ScopeResponse` client models
+
+### Changed
+- Default platform API base URL changed to `/api/v1/public` for public API routing
+- Client methods updated to match new public API path structure
+- `list_evidence()` and `create_evidence()` now scoped to system (not organization)
+- `update_control_status()` changed from PATCH to POST with body
+
 ## [0.2.0] - 2026-02-06
 
 ### Added
