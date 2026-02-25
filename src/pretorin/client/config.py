@@ -7,13 +7,17 @@ import os
 from pathlib import Path
 from typing import Any
 
-DEFAULT_API_BASE_URL = "https://platform.pretorin.com/api/v1"
+DEFAULT_PLATFORM_API_BASE_URL = "https://platform.pretorin.com/api/v1"
+DEFAULT_MODEL_API_BASE_URL = "https://platform.pretorin.com/v1"
 CONFIG_DIR = Path.home() / ".pretorin"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
 # Environment variable names
 ENV_API_KEY = "PRETORIN_API_KEY"
+# Backward-compatible alias for platform API URL
 ENV_API_BASE_URL = "PRETORIN_API_BASE_URL"
+ENV_PLATFORM_API_BASE_URL = "PRETORIN_PLATFORM_API_BASE_URL"
+ENV_MODEL_API_BASE_URL = "PRETORIN_MODEL_API_BASE_URL"
 ENV_OPENAI_API_KEY = "OPENAI_API_KEY"
 ENV_OPENAI_BASE_URL = "OPENAI_BASE_URL"
 ENV_OPENAI_MODEL = "OPENAI_MODEL"
@@ -55,8 +59,12 @@ class Config:
             env_value = os.environ.get(ENV_API_KEY)
             if env_value:
                 return env_value
-        elif key == "api_base_url":
-            env_value = os.environ.get(ENV_API_BASE_URL)
+        elif key in {"api_base_url", "platform_api_base_url"}:
+            env_value = os.environ.get(ENV_PLATFORM_API_BASE_URL) or os.environ.get(ENV_API_BASE_URL)
+            if env_value:
+                return env_value
+        elif key in {"model_api_base_url", "harness_base_url", "codex_base_url"}:
+            env_value = os.environ.get(ENV_MODEL_API_BASE_URL)
             if env_value:
                 return env_value
 
@@ -92,14 +100,52 @@ class Config:
         self.set("api_key", value)
 
     @property
+    def platform_api_base_url(self) -> str:
+        """Get the Pretorin platform REST API base URL."""
+        configured = self.get("platform_api_base_url")
+        if configured:
+            return str(configured)
+        legacy = self.get("api_base_url")
+        if legacy:
+            return str(legacy)
+        return DEFAULT_PLATFORM_API_BASE_URL
+
+    @platform_api_base_url.setter
+    def platform_api_base_url(self, value: str) -> None:
+        """Set the Pretorin platform REST API base URL."""
+        self.set("platform_api_base_url", value)
+        # Keep legacy key updated for compatibility with older installations.
+        self.set("api_base_url", value)
+
+    @property
     def api_base_url(self) -> str:
-        """Get the API base URL (env var takes precedence)."""
-        return self.get("api_base_url", DEFAULT_API_BASE_URL)
+        """Backward-compatible alias for platform_api_base_url."""
+        return self.platform_api_base_url
 
     @api_base_url.setter
     def api_base_url(self, value: str) -> None:
-        """Set the API base URL."""
-        self.set("api_base_url", value)
+        """Set the API base URL (backward-compatible alias)."""
+        self.platform_api_base_url = value
+
+    @property
+    def model_api_base_url(self) -> str:
+        """Get the model provider base URL used by harness integrations."""
+        configured = self.get("model_api_base_url")
+        if configured:
+            return str(configured)
+        # Backward-compatible keys used in previous harness prototypes.
+        legacy_harness = self.get("harness_base_url")
+        if legacy_harness:
+            return str(legacy_harness)
+        legacy_codex = self.get("codex_base_url")
+        if legacy_codex:
+            return str(legacy_codex)
+        return DEFAULT_MODEL_API_BASE_URL
+
+    @model_api_base_url.setter
+    def model_api_base_url(self, value: str) -> None:
+        """Set the model provider base URL used by harness integrations."""
+        self.set("model_api_base_url", value)
 
     @property
     def is_configured(self) -> bool:

@@ -111,14 +111,27 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 Restart Windsurf after saving.
 
-### OpenAI Codex CLI
+### Harness CLI
 
-Add to `~/.codex/config.toml`:
+If your harness uses the Codex-compatible config format, add to `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.pretorin]
 command = "pretorin"
 args = ["mcp-serve"]
+```
+
+Prefer using Pretorin's neutral wrapper command so you can swap harness backends later:
+
+```bash
+# Initialize harness policy defaults (Pretorin provider mode)
+pretorin harness init --provider-url https://your-pretorin-instance.example/v1
+
+# Validate local setup
+pretorin harness doctor
+
+# Run a compliance task through your configured harness backend
+pretorin harness run "Assess AC-2 implementation gaps"
 ```
 
 ## Available Tools
@@ -206,6 +219,9 @@ pretorin frameworks control nist-800-53-r5 ac-02 --references
 | `pretorin config get <key>` | Get a config value |
 | `pretorin config set <key> <value>` | Set a config value |
 | `pretorin config path` | Show config file path |
+| `pretorin harness init` | Initialize harness config with Pretorin policy defaults |
+| `pretorin harness doctor` | Validate harness/provider/MCP policy setup |
+| `pretorin harness run "<task>"` | Run a compliance task through the configured harness backend |
 | `pretorin version` | Show CLI version |
 | `pretorin update` | Update to latest version |
 | `pretorin mcp-serve` | Start the MCP server |
@@ -253,7 +269,9 @@ Credentials are stored in `~/.pretorin/config.json`.
 | Variable | Description |
 |----------|-------------|
 | `PRETORIN_API_KEY` | API key (overrides stored config) |
-| `PRETORIN_API_BASE_URL` | Custom API URL (default: https://platform.pretorin.com/api/v1) |
+| `PRETORIN_PLATFORM_API_BASE_URL` | Platform REST API URL for framework/evidence/narrative endpoints (default: https://platform.pretorin.com/api/v1) |
+| `PRETORIN_API_BASE_URL` | Backward-compatible alias for `PRETORIN_PLATFORM_API_BASE_URL` |
+| `PRETORIN_MODEL_API_BASE_URL` | Model provider URL used by `pretorin harness init` (default: https://platform.pretorin.com/v1) |
 
 ## Development
 
