@@ -111,14 +111,27 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 Restart Windsurf after saving.
 
-### OpenAI Codex CLI
+### Harness CLI
 
-Add to `~/.codex/config.toml`:
+If your harness uses the Codex-compatible config format, add to `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.pretorin]
 command = "pretorin"
 args = ["mcp-serve"]
+```
+
+Prefer using Pretorin's neutral wrapper command so you can swap harness backends later:
+
+```bash
+# Initialize harness policy defaults (Pretorin provider mode)
+pretorin harness init --provider-url https://your-pretorin-instance.example/v1
+
+# Validate local setup
+pretorin harness doctor
+
+# Run a compliance task through your configured harness backend
+pretorin harness run "Assess AC-2 implementation gaps"
 ```
 
 ## Available Tools
@@ -132,6 +145,9 @@ args = ["mcp-serve"]
 | `pretorin_get_control` | Get detailed control info including AI guidance (summary, intent, evidence expectations, implementation considerations, common failures) |
 | `pretorin_get_control_references` | Get control statement, guidance, objectives, parameters, and related controls |
 | `pretorin_get_document_requirements` | Get explicit and implicit document requirements for a framework |
+| `pretorin_get_control_context` | Get rich control context: AI guidance, statement, objectives, and implementation details for a system |
+| `pretorin_get_scope` | Get system scope/policy information including excluded controls |
+| `pretorin_update_narrative` | Push a narrative text update for a control implementation |
 
 ## Resources
 
@@ -202,10 +218,19 @@ pretorin frameworks control nist-800-53-r5 ac-02 --references
 | `pretorin frameworks controls <id>` | List controls (`--family`, `--limit`) |
 | `pretorin frameworks control <framework> <control>` | Get control details (`--references`) |
 | `pretorin frameworks documents <id>` | Get document requirements |
+| `pretorin context list` | List available systems and frameworks with progress |
+| `pretorin context set` | Set active system/framework context (`--system`, `--framework`) |
+| `pretorin context show` | Display current active context |
+| `pretorin context clear` | Clear active system/framework context |
+| `pretorin review run` | Review code against a control (`--control-id`, `--framework-id`, `--path`) |
+| `pretorin review status` | Check implementation status (`--control-id`) |
 | `pretorin config list` | List all configuration |
 | `pretorin config get <key>` | Get a config value |
 | `pretorin config set <key> <value>` | Set a config value |
 | `pretorin config path` | Show config file path |
+| `pretorin harness init` | Initialize harness config with Pretorin policy defaults |
+| `pretorin harness doctor` | Validate harness/provider/MCP policy setup |
+| `pretorin harness run "<task>"` | Run a compliance task through the configured harness backend |
 | `pretorin version` | Show CLI version |
 | `pretorin update` | Update to latest version |
 | `pretorin mcp-serve` | Start the MCP server |
@@ -253,7 +278,9 @@ Credentials are stored in `~/.pretorin/config.json`.
 | Variable | Description |
 |----------|-------------|
 | `PRETORIN_API_KEY` | API key (overrides stored config) |
-| `PRETORIN_API_BASE_URL` | Custom API URL (default: https://platform.pretorin.com/api/v1) |
+| `PRETORIN_PLATFORM_API_BASE_URL` | Platform REST API URL for framework/system/evidence/narrative endpoints (default: https://platform.pretorin.com/api/v1/public) |
+| `PRETORIN_API_BASE_URL` | Backward-compatible alias for `PRETORIN_PLATFORM_API_BASE_URL` |
+| `PRETORIN_MODEL_API_BASE_URL` | Model provider URL used by `pretorin harness init` (default: https://platform.pretorin.com/v1) |
 
 ## Development
 

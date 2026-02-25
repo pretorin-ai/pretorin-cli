@@ -1,21 +1,19 @@
 """Tests for Rome-bot ASCII animations module."""
 
-import pytest
-from unittest.mock import patch, MagicMock
-from io import StringIO
+from unittest.mock import MagicMock, patch
 
 from pretorin.cli.animations import (
+    ANIMATION_FRAMES,
+    FRAME_RATES,
+    MARCHING_FRAMES,
+    ROMEBOT_COLOR,
+    SEARCHING_FRAMES,
+    THINKING_FRAMES,
     AnimationFrame,
     AnimationTheme,
     RomebotSpinner,
     animated_status,
     supports_animation,
-    ANIMATION_FRAMES,
-    FRAME_RATES,
-    ROMEBOT_COLOR,
-    MARCHING_FRAMES,
-    SEARCHING_FRAMES,
-    THINKING_FRAMES,
 )
 
 

@@ -260,3 +260,147 @@ class ArtifactSubmissionResult(BaseModel):
     artifact_id: str = Field(..., description="Created artifact ID")
     url: str | None = Field(default=None, description="URL to view artifact")
     message: str = Field(default="Artifact submitted successfully")
+
+
+# =============================================================================
+# System Models
+# =============================================================================
+
+
+class SystemSummary(BaseModel):
+    """Summary information about a system."""
+
+    id: str
+    name: str
+    description: str | None = None
+    security_impact_level: str | None = None
+
+
+class SystemDetail(BaseModel):
+    """Detailed system information."""
+
+    id: str
+    name: str
+    description: str | None = None
+    frameworks: list[dict[str, Any]] = Field(default_factory=list)
+    security_impact_level: str | None = None
+
+
+class ComplianceStatusResponse(BaseModel):
+    """Compliance status for a system."""
+
+    system_id: str
+    system_name: str | None = None
+    frameworks: list[dict[str, Any]] = Field(default_factory=list)
+
+
+# =============================================================================
+# Evidence Models (Platform)
+# =============================================================================
+
+
+class EvidenceItemResponse(BaseModel):
+    """Evidence item from the platform."""
+
+    id: str
+    name: str
+    description: str | None = None
+    evidence_type: str | None = None
+    status: str | None = None
+    control_mappings: list[dict[str, Any]] = Field(default_factory=list)
+    collected_at: str | None = None
+
+
+class EvidenceCreate(BaseModel):
+    """Data for creating evidence on the platform."""
+
+    name: str = Field(..., description="Evidence name")
+    description: str = Field(..., description="Evidence description")
+    evidence_type: str = Field(default="documentation", description="Type of evidence")
+    source: str = Field(default="cli", description="Source of evidence")
+    control_id: str | None = Field(default=None, description="Associated control ID")
+    framework_id: str | None = Field(default=None, description="Associated framework ID")
+
+
+# =============================================================================
+# Narrative Models
+# =============================================================================
+
+
+class NarrativeResponse(BaseModel):
+    """AI-generated narrative response."""
+
+    control_id: str
+    framework_id: str | None = None
+    narrative: str | None = None
+    ai_confidence_score: float | None = None
+    status: str | None = None
+
+
+# =============================================================================
+# Control Implementation Models
+# =============================================================================
+
+
+class ControlImplementationResponse(BaseModel):
+    """Control implementation details for a system."""
+
+    control_id: str
+    status: str | None = None
+    narrative: str | None = None
+    evidence_count: int = 0
+    notes: list[dict[str, Any]] = Field(default_factory=list)
+
+
+# =============================================================================
+# Monitoring Models
+# =============================================================================
+
+
+class ControlContext(BaseModel):
+    """Rich context combining OSCAL control data with implementation details."""
+
+    control_id: str
+    title: str | None = None
+    statement: str | None = None
+    guidance: str | None = None
+    objectives: list[str] = Field(default_factory=list)
+    ai_guidance: dict[str, Any] | None = None
+    control_type: str | None = None
+    status: str | None = None
+    implementation_narrative: str | None = None
+    user_context: str | None = None
+
+
+class ScopeResponse(BaseModel):
+    """System scope/policy information."""
+
+    system_id: str | None = None
+    scope_narrative: str | None = None
+    excluded_controls: list[str] = Field(default_factory=list)
+    qa_responses: list[dict[str, Any]] = Field(default_factory=list)
+    status: str | None = None
+
+
+class MonitoringEventCreate(BaseModel):
+    """Data for creating a monitoring event."""
+
+    event_type: str = Field(default="security_scan", description="Event type")
+    title: str = Field(..., description="Event title")
+    description: str = Field(default="", description="Event description")
+    severity: str = Field(default="high", description="Event severity")
+    control_id: str | None = Field(default=None, description="Associated control ID")
+    event_data: dict[str, Any] = Field(default_factory=dict, description="Additional event data")
+
+
+class MonitoringEventResponse(BaseModel):
+    """Monitoring event response from the platform."""
+
+    id: str
+    event_type: str | None = None
+    title: str | None = None
+    description: str | None = None
+    severity: str | None = None
+    control_id: str | None = None
+    status: str | None = None
+    created_at: str | None = None

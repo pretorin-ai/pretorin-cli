@@ -9,15 +9,23 @@ import httpx
 from pretorin.client.config import Config
 from pretorin.client.models import (
     ComplianceArtifact,
+    ControlContext,
     ControlDetail,
     ControlFamilyDetail,
     ControlFamilySummary,
+    ControlImplementationResponse,
     ControlMetadata,
     ControlReferences,
     ControlSummary,
     DocumentRequirementList,
+    EvidenceCreate,
+    EvidenceItemResponse,
     FrameworkList,
     FrameworkMetadata,
+    MonitoringEventCreate,
+    NarrativeResponse,
+    ScopeResponse,
+    SystemDetail,
 )
 
 
@@ -340,5 +348,378 @@ class PretorianClient:
             "POST",
             "/artifacts",
             json=artifact.model_dump(),
+        )
+        return data
+
+    # =========================================================================
+    # System Endpoints
+    # =========================================================================
+
+    async def list_systems(self) -> list[dict[str, Any]]:
+        """List all systems for the current user/organization.
+
+        Returns:
+            List of system dictionaries.
+        """
+        data = await self._request("GET", "/systems")
+        if isinstance(data, list):
+            return data
+        # Handle paginated response
+        return data.get("systems", data.get("items", []))
+
+    async def get_system(self, system_id: str) -> SystemDetail:
+        """Get detailed information about a system.
+
+        Args:
+            system_id: ID of the system.
+
+        Returns:
+            SystemDetail with full system information.
+        """
+        data = await self._request("GET", f"/systems/{system_id}")
+        return SystemDetail(**data)
+
+    async def get_system_compliance_status(self, system_id: str) -> dict[str, Any]:
+        """Get compliance status for a system.
+
+        Args:
+            system_id: ID of the system.
+
+        Returns:
+            Dictionary with compliance status per framework.
+        """
+        data = await self._request("GET", f"/systems/{system_id}/compliance-status")
+        return data
+
+    # =========================================================================
+    # Evidence Endpoints
+    # =========================================================================
+
+    async def list_evidence(
+        self,
+        system_id: str | None = None,
+        control_id: str | None = None,
+        framework_id: str | None = None,
+        limit: int = 20,
+    ) -> list[EvidenceItemResponse]:
+        """Search/list evidence items for a system.
+
+        Args:
+            system_id: System ID (required for system-scoped queries).
+            control_id: Optional control filter.
+            framework_id: Optional framework filter.
+            limit: Maximum results to return.
+
+        Returns:
+            List of evidence items.
+        """
+        params: dict[str, Any] = {"limit": limit}
+        if control_id:
+            params["control_id"] = control_id
+        if framework_id:
+            params["framework_id"] = framework_id
+
+        path = f"/systems/{system_id}/evidence" if system_id else "/evidence"
+        data = await self._request("GET", path, params=params)
+        items = data if isinstance(data, list) else data.get("items", data.get("evidence", []))
+        return [EvidenceItemResponse(**item) for item in items]
+
+    async def get_evidence(self, evidence_id: str) -> EvidenceItemResponse:
+        """Get a specific evidence item.
+
+        Args:
+            evidence_id: ID of the evidence item.
+
+        Returns:
+            Evidence item details.
+        """
+        data = await self._request("GET", f"/evidence/{evidence_id}")
+        return EvidenceItemResponse(**data)
+
+    async def create_evidence(
+        self,
+        system_id: str,
+        evidence: EvidenceCreate,
+    ) -> dict[str, Any]:
+        """Create a new evidence item for a system.
+
+        Args:
+            system_id: System ID to associate evidence with.
+            evidence: Evidence data.
+
+        Returns:
+            Created evidence response.
+        """
+        payload = evidence.model_dump(exclude_none=True)
+        data = await self._request(
+            "POST",
+            f"/systems/{system_id}/evidence",
+            json=payload,
+        )
+        return data
+
+    async def link_evidence_to_control(
+        self,
+        evidence_id: str,
+        control_id: str,
+        system_id: str | None = None,
+        framework_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Link an evidence item to a control.
+
+        Args:
+            evidence_id: ID of the evidence item.
+            control_id: ID of the control to link to.
+            system_id: System ID for routing.
+            framework_id: Optional framework context.
+
+        Returns:
+            Link result.
+        """
+        payload: dict[str, Any] = {"control_id": control_id}
+        if framework_id:
+            payload["framework_id"] = framework_id
+        path = f"/systems/{system_id}/evidence/{evidence_id}/link" if system_id else f"/evidence/{evidence_id}/link"
+        data = await self._request("POST", path, json=payload)
+        return data
+
+    # =========================================================================
+    # Narrative Endpoints
+    # =========================================================================
+
+    async def generate_narrative(
+        self,
+        system_id: str,
+        control_id: str,
+        framework_id: str,
+        context: str | None = None,
+    ) -> dict[str, Any]:
+        """Generate an AI narrative for a control implementation.
+
+        Args:
+            system_id: ID of the system.
+            control_id: ID of the control.
+            framework_id: ID of the framework.
+            context: Optional additional context for generation.
+
+        Returns:
+            Generated narrative response.
+        """
+        payload: dict[str, Any] = {
+            "system_id": system_id,
+            "control_id": control_id,
+            "framework_id": framework_id,
+        }
+        if context:
+            payload["context"] = context
+
+        # Narrative generation can take 30-60s
+        client = await self._get_client()
+        response = await client.request(
+            "POST",
+            "/ai/narrative/generate",
+            json=payload,
+            timeout=120.0,
+        )
+        if not response.is_success:
+            self._handle_error(response)
+        return response.json()
+
+    async def get_narrative(
+        self,
+        system_id: str,
+        control_id: str,
+        framework_id: str | None = None,
+    ) -> NarrativeResponse:
+        """Get an existing narrative for a control.
+
+        Args:
+            system_id: ID of the system.
+            control_id: ID of the control.
+            framework_id: Optional framework filter.
+
+        Returns:
+            Narrative response.
+        """
+        params: dict[str, Any] = {}
+        if framework_id:
+            params["framework_id"] = framework_id
+        data = await self._request(
+            "GET",
+            f"/systems/{system_id}/controls/{control_id}/narrative",
+            params=params,
+        )
+        return NarrativeResponse(**data)
+
+    # =========================================================================
+    # Control Implementation Endpoints
+    # =========================================================================
+
+    async def get_control_implementation(
+        self,
+        system_id: str,
+        control_id: str,
+        framework_id: str | None = None,
+    ) -> ControlImplementationResponse:
+        """Get implementation details for a control in a system.
+
+        Args:
+            system_id: ID of the system.
+            control_id: ID of the control.
+            framework_id: Optional framework filter.
+
+        Returns:
+            Control implementation details.
+        """
+        params: dict[str, Any] = {}
+        if framework_id:
+            params["framework_id"] = framework_id
+        data = await self._request(
+            "GET",
+            f"/systems/{system_id}/controls/{control_id}",
+            params=params,
+        )
+        return ControlImplementationResponse(**data)
+
+    async def get_control_context(
+        self,
+        system_id: str,
+        control_id: str,
+        framework_id: str,
+    ) -> ControlContext:
+        """Get rich context for a control including AI guidance and implementation.
+
+        Args:
+            system_id: ID of the system.
+            control_id: ID of the control.
+            framework_id: Framework ID.
+
+        Returns:
+            ControlContext with combined OSCAL + implementation data.
+        """
+        data = await self._request(
+            "GET",
+            f"/systems/{system_id}/controls/{control_id}/context",
+            params={"framework_id": framework_id},
+        )
+        return ControlContext(**data)
+
+    async def update_narrative(
+        self,
+        system_id: str,
+        control_id: str,
+        narrative: str,
+        framework_id: str,
+        is_ai_generated: bool = False,
+    ) -> dict[str, Any]:
+        """Push a narrative update for a control.
+
+        Args:
+            system_id: ID of the system.
+            control_id: ID of the control.
+            narrative: Narrative text.
+            framework_id: Framework ID.
+            is_ai_generated: Whether the narrative was AI-generated.
+
+        Returns:
+            Updated control implementation data.
+        """
+        data = await self._request(
+            "POST",
+            f"/systems/{system_id}/controls/{control_id}/narrative",
+            params={"framework_id": framework_id},
+            json={"narrative": narrative, "is_ai_generated": is_ai_generated},
+        )
+        return data
+
+    async def get_scope(self, system_id: str) -> ScopeResponse:
+        """Get system scope/policy information.
+
+        Args:
+            system_id: ID of the system.
+
+        Returns:
+            ScopeResponse with scope details.
+        """
+        data = await self._request("GET", f"/systems/{system_id}/scope")
+        return ScopeResponse(**data)
+
+    async def add_control_note(
+        self,
+        system_id: str,
+        control_id: str,
+        content: str,
+        source: str = "cli",
+    ) -> dict[str, Any]:
+        """Add a note to a control implementation.
+
+        Args:
+            system_id: ID of the system.
+            control_id: ID of the control.
+            content: Note content.
+            source: Note source identifier.
+
+        Returns:
+            Created note response.
+        """
+        payload = {"content": content, "source": source}
+        data = await self._request(
+            "POST",
+            f"/systems/{system_id}/controls/{control_id}/notes",
+            json=payload,
+        )
+        return data
+
+    async def update_control_status(
+        self,
+        system_id: str,
+        control_id: str,
+        status: str,
+        framework_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Update the implementation status of a control.
+
+        Args:
+            system_id: ID of the system.
+            control_id: ID of the control.
+            status: New status value.
+            framework_id: Optional framework context.
+
+        Returns:
+            Updated control response.
+        """
+        params: dict[str, Any] = {}
+        if framework_id:
+            params["framework_id"] = framework_id
+        data = await self._request(
+            "POST",
+            f"/systems/{system_id}/controls/{control_id}/status",
+            params=params,
+            json={"status": status},
+        )
+        return data
+
+    # =========================================================================
+    # Monitoring Endpoints
+    # =========================================================================
+
+    async def create_monitoring_event(
+        self,
+        system_id: str,
+        event: MonitoringEventCreate,
+    ) -> dict[str, Any]:
+        """Create a monitoring event for a system.
+
+        Args:
+            system_id: ID of the system.
+            event: Event data.
+
+        Returns:
+            Created event response.
+        """
+        data = await self._request(
+            "POST",
+            f"/systems/{system_id}/monitoring/events",
+            json=event.model_dump(exclude_none=True),
         )
         return data

@@ -4,7 +4,14 @@ import typer
 from rich import print as rprint
 from rich.table import Table
 
-from pretorin.client.config import CONFIG_FILE, ENV_API_BASE_URL, ENV_API_KEY, Config
+from pretorin.client.config import (
+    CONFIG_FILE,
+    ENV_API_BASE_URL,
+    ENV_API_KEY,
+    ENV_MODEL_API_BASE_URL,
+    ENV_PLATFORM_API_BASE_URL,
+    Config,
+)
 
 app = typer.Typer()
 
@@ -71,8 +78,24 @@ def config_list() -> None:
         table.add_row("api_key", "****", f"env ({ENV_API_KEY})")
     if os.environ.get(ENV_API_BASE_URL):
         table.add_row("api_base_url", os.environ[ENV_API_BASE_URL], f"env ({ENV_API_BASE_URL})")
+    if os.environ.get(ENV_PLATFORM_API_BASE_URL):
+        table.add_row(
+            "platform_api_base_url",
+            os.environ[ENV_PLATFORM_API_BASE_URL],
+            f"env ({ENV_PLATFORM_API_BASE_URL})",
+        )
+    if os.environ.get(ENV_MODEL_API_BASE_URL):
+        table.add_row(
+            "model_api_base_url",
+            os.environ[ENV_MODEL_API_BASE_URL],
+            f"env ({ENV_MODEL_API_BASE_URL})",
+        )
 
-    if not stored and not os.environ.get(ENV_API_KEY):
+    has_env_config = any(
+        os.environ.get(env_key)
+        for env_key in (ENV_API_KEY, ENV_API_BASE_URL, ENV_PLATFORM_API_BASE_URL, ENV_MODEL_API_BASE_URL)
+    )
+    if not stored and not has_env_config:
         rprint("[dim]No configuration set yet.[/dim]")
         rprint("[dim]Run [bold]pretorin login[/bold] to get started.[/dim]")
         return

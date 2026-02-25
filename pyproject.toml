@@ -1,6 +1,6 @@
 [project]
 name = "pretorin"
-version = "0.3.1"
+version = "0.4.0"
 description = "CLI and MCP server for Pretorin Compliance API"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -45,6 +45,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+agent = [
+    "openai-agents>=0.2.9",
+    "openai>=1.0.0",
+]
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
@@ -109,6 +113,11 @@ warn_return_any = false
 # Version check parses external API responses
 module = "pretorin.cli.version_check"
 warn_return_any = false
+
+[[tool.mypy.overrides]]
+# Agent modules depend on optional openai-agents package and its dynamic stubs
+module = ["pretorin.agent.*", "pretorin.cli.agent"]
+disable_error_code = ["import-not-found"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
