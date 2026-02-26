@@ -1,6 +1,5 @@
 """Tests for analysis prompts and templates."""
 
-
 from pretorin.mcp.analysis_prompts import (
     CONTROL_ANALYSIS_PROMPTS,
     FRAMEWORK_GUIDES,
@@ -174,7 +173,7 @@ class TestGetAvailableControls:
     def test_contains_core_controls(self):
         """Test that all 5 core controls are available."""
         controls = get_available_controls()
-        expected = ["ac-2", "au-2", "ia-2", "sc-7", "cm-2"]
+        expected = ["ac-02", "au-02", "ia-02", "sc-07", "cm-02"]
         for control in expected:
             assert control in controls
 

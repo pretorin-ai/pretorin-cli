@@ -38,12 +38,14 @@ SEVERITY_COLORS = {
 def push(
     system: str = typer.Option(
         None,
-        "--system", "-s",
+        "--system",
+        "-s",
         help="System name or ID. Auto-selects if only one system exists.",
     ),
     title: str = typer.Option(
         ...,
-        "--title", "-t",
+        "--title",
+        "-t",
         help="Event title.",
     ),
     severity: str = typer.Option(
@@ -53,12 +55,14 @@ def push(
     ),
     control: str | None = typer.Option(
         None,
-        "--control", "-c",
+        "--control",
+        "-c",
         help="Control ID (e.g., sc-7, ac-2).",
     ),
     description: str = typer.Option(
         "",
-        "--description", "-d",
+        "--description",
+        "-d",
         help="Detailed event description.",
     ),
     event_type: str = typer.Option(
@@ -77,15 +81,17 @@ def push(
     Creates a new monitoring event and optionally updates the
     associated control's implementation status.
     """
-    asyncio.run(_push_event(
-        system=system,
-        title=title,
-        severity=severity,
-        control=control,
-        description=description,
-        event_type=event_type,
-        update_control_status=update_control_status,
-    ))
+    asyncio.run(
+        _push_event(
+            system=system,
+            title=title,
+            severity=severity,
+            control=control,
+            description=description,
+            event_type=event_type,
+            update_control_status=update_control_status,
+        )
+    )
 
 
 async def _push_event(
@@ -202,15 +208,19 @@ async def _push_event(
                 rprint(f"[yellow]Warning: Failed to update control status: {e.message}[/yellow]")
 
         if is_json_mode():
-            print(json_mod.dumps({
-                "event_id": event_id,
-                "system_id": system_id,
-                "system_name": system_name,
-                "title": title,
-                "severity": severity,
-                "control_id": control,
-                "control_status_updated": update_control_status and control is not None,
-            }))
+            print(
+                json_mod.dumps(
+                    {
+                        "event_id": event_id,
+                        "system_id": system_id,
+                        "system_name": system_name,
+                        "title": title,
+                        "severity": severity,
+                        "control_id": control,
+                        "control_status_updated": update_control_status and control is not None,
+                    }
+                )
+            )
         else:
             rprint()
             sev_color = SEVERITY_COLORS.get(severity, "#FF9010")
@@ -225,9 +235,11 @@ async def _push_event(
             if update_control_status and control:
                 panel_content += "  [bold]Status:[/bold]   Control updated to [yellow]in_progress[/yellow]\n"
 
-            rprint(Panel(
-                panel_content,
-                title=f"{ROMEBOT_DONE}  Event Created",
-                border_style="#95D7E0",
-                padding=(1, 2),
-            ))
+            rprint(
+                Panel(
+                    panel_content,
+                    title=f"{ROMEBOT_DONE}  Event Created",
+                    border_style="#95D7E0",
+                    padding=(1, 2),
+                )
+            )

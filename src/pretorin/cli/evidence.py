@@ -11,6 +11,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from pretorin.cli.output import is_json_mode, print_json
+from pretorin.utils import normalize_control_id
 
 console = Console()
 
@@ -28,13 +29,21 @@ def evidence_create(
     control_id: str = typer.Argument(..., help="Control ID (e.g., ac-2)"),
     framework_id: str = typer.Argument(..., help="Framework ID (e.g., fedramp-moderate)"),
     description: str = typer.Option(
-        ..., "--description", "-d", help="Evidence description",
+        ...,
+        "--description",
+        "-d",
+        help="Evidence description",
     ),
     name: str | None = typer.Option(
-        None, "--name", "-n", help="Evidence name (defaults to description summary)",
+        None,
+        "--name",
+        "-n",
+        help="Evidence name (defaults to description summary)",
     ),
     evidence_type: str = typer.Option(
-        "documentation", "--type", "-t",
+        "documentation",
+        "--type",
+        "-t",
         help="Evidence type: documentation, configuration, screenshot, log, code",
     ),
 ) -> None:
@@ -49,6 +58,7 @@ def evidence_create(
     """
     from pretorin.evidence.writer import EvidenceWriter, LocalEvidence
 
+    control_id = normalize_control_id(control_id)
     evidence_name = name or description[:60]
 
     evidence = LocalEvidence(
@@ -63,30 +73,37 @@ def evidence_create(
     path = writer.write(evidence)
 
     if is_json_mode():
-        print_json({
-            "path": str(path),
-            "control_id": control_id,
-            "framework_id": framework_id,
-            "name": evidence_name,
-        })
+        print_json(
+            {
+                "path": str(path),
+                "control_id": control_id,
+                "framework_id": framework_id,
+                "name": evidence_name,
+            }
+        )
         return
 
-    rprint(Panel(
-        f"  [bold]File:[/bold]      {path}\n"
-        f"  [bold]Control:[/bold]   {control_id.upper()}\n"
-        f"  [bold]Framework:[/bold] {framework_id}\n"
-        f"  [bold]Type:[/bold]      {evidence_type}",
-        title=f"{ROMEBOT_EVIDENCE}  Evidence Created",
-        border_style="#95D7E0",
-        padding=(1, 2),
-    ))
+    rprint(
+        Panel(
+            f"  [bold]File:[/bold]      {path}\n"
+            f"  [bold]Control:[/bold]   {control_id.upper()}\n"
+            f"  [bold]Framework:[/bold] {framework_id}\n"
+            f"  [bold]Type:[/bold]      {evidence_type}",
+            title=f"{ROMEBOT_EVIDENCE}  Evidence Created",
+            border_style="#95D7E0",
+            padding=(1, 2),
+        )
+    )
     rprint("[dim]Edit the file to add details, then push with: pretorin evidence push[/dim]")
 
 
 @app.command("list")
 def evidence_list(
     framework: str | None = typer.Option(
-        None, "--framework", "-f", help="Filter by framework ID",
+        None,
+        "--framework",
+        "-f",
+        help="Filter by framework ID",
     ),
 ) -> None:
     """List local evidence files.
@@ -101,22 +118,26 @@ def evidence_list(
     items = writer.list_local(framework)
 
     if is_json_mode():
-        print_json([{
-            "control_id": e.control_id,
-            "framework_id": e.framework_id,
-            "name": e.name,
-            "evidence_type": e.evidence_type,
-            "status": e.status,
-            "platform_id": e.platform_id,
-            "path": str(e.path),
-        } for e in items])
+        print_json(
+            [
+                {
+                    "control_id": e.control_id,
+                    "framework_id": e.framework_id,
+                    "name": e.name,
+                    "evidence_type": e.evidence_type,
+                    "status": e.status,
+                    "platform_id": e.platform_id,
+                    "path": str(e.path),
+                }
+                for e in items
+            ]
+        )
         return
 
     if not items:
         rprint("[dim]No local evidence found.[/dim]")
         rprint(
-            '[dim]Create one with: [bold]pretorin evidence create ac-2'
-            ' fedramp-moderate -d "description"[/bold][/dim]'
+            '[dim]Create one with: [bold]pretorin evidence create ac-2 fedramp-moderate -d "description"[/bold][/dim]'
         )
         return
 
@@ -180,17 +201,25 @@ async def _push_evidence(dry_run: bool) -> None:
             raise typer.Exit(1)
 
         if is_json_mode():
-            print_json({
-                "created": result.created,
-                "skipped": result.skipped,
-                "errors": result.errors,
-            })
+            print_json(
+                {
+                    "created": result.created,
+                    "skipped": result.skipped,
+                    "errors": result.errors,
+                    "events": result.events,
+                }
+            )
             return
 
         if result.created:
             rprint("[bold]Created:[/bold]")
             for item in result.created:
                 rprint(f"  [#95D7E0]+[/#95D7E0] {item}")
+
+        if result.events:
+            rprint("\n[bold yellow]Controls flagged for review:[/bold yellow]")
+            for ev in result.events:
+                rprint(f"  [yellow]![/yellow] {ev} → status set to partially_implemented")
 
         if result.skipped:
             rprint(f"\n[dim]Skipped {len(result.skipped)} already-synced item(s)[/dim]")

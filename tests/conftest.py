@@ -7,10 +7,7 @@ import pytest
 
 def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers",
-        "integration: mark test as integration test (requires API key)"
-    )
+    config.addinivalue_line("markers", "integration: mark test as integration test (requires API key)")
 
 
 def pytest_collection_modifyitems(
@@ -26,9 +23,7 @@ def pytest_collection_modifyitems(
     )
 
     if not run_integration:
-        skip_integration = pytest.mark.skip(
-            reason="Integration tests require PRETORIN_API_KEY or -m integration"
-        )
+        skip_integration = pytest.mark.skip(reason="Integration tests require PRETORIN_API_KEY or -m integration")
         for item in items:
             if "integration" in item.keywords:
                 item.add_marker(skip_integration)
