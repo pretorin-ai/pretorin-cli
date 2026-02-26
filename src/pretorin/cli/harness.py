@@ -32,8 +32,9 @@ DISALLOWED_ENDPOINT_SNIPPETS = ("chatgpt.com", "api.openai.com")
 
 app = typer.Typer(
     name="harness",
-    help="AI harness wrapper commands with Pretorin compliance defaults.",
+    help="[Deprecated] AI harness wrapper. Use 'pretorin agent' instead.",
     no_args_is_help=True,
+    deprecated=True,
 )
 
 
@@ -200,6 +201,12 @@ def _build_compliance_prompt(task: str) -> str:
     )
 
 
+def _deprecation_warning(command: str) -> None:
+    """Print deprecation warning for harness commands."""
+    if not is_json_mode():
+        rprint(f"[yellow]Warning: 'pretorin harness {command}' is deprecated. Use 'pretorin agent' instead.[/yellow]")
+
+
 @app.command("init")
 def harness_init(
     provider_url: str | None = typer.Option(
@@ -218,7 +225,11 @@ def harness_init(
         help="Executable name for the coding harness binary.",
     ),
 ) -> None:
-    """Create or update harness config with Pretorin policy defaults."""
+    """[Deprecated] Create or update harness config with Pretorin policy defaults.
+
+    Use 'pretorin agent install' and 'pretorin agent run' instead.
+    """
+    _deprecation_warning("init")
     config = Config()
     resolved_provider_url = provider_url or config.model_api_base_url
     if not allow_openai_api and not resolved_provider_url:
@@ -301,7 +312,8 @@ def harness_doctor(
         help="Executable name for the coding harness binary.",
     ),
 ) -> None:
-    """Validate harness integration policy and connectivity prerequisites."""
+    """[Deprecated] Validate harness integration. Use 'pretorin agent doctor' instead."""
+    _deprecation_warning("doctor")
     content = _read_harness_config_text()
     if not content:
         report = DoctorReport(
@@ -368,7 +380,8 @@ def harness_run(
         help="Print the command that would run without executing it.",
     ),
 ) -> None:
-    """Run the configured harness with Pretorin compliance prompt scaffolding."""
+    """[Deprecated] Run harness. Use 'pretorin agent run' instead."""
+    _deprecation_warning("run")
     content = _read_harness_config_text()
     report = _evaluate_setup(content, allow_openai_api=allow_openai_api, backend_command=backend_command)
     if not report.ok:
