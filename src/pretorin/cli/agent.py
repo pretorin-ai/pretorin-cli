@@ -39,7 +39,9 @@ def _check_agent_deps() -> None:
 def agent_run(
     message: str = typer.Argument(..., help="Task or question for the agent"),
     skill: str | None = typer.Option(
-        None, "--skill", "-s",
+        None,
+        "--skill",
+        "-s",
         help="Skill to use: gap-analysis, narrative-generation, evidence-collection, security-review",
     ),
     model: str = typer.Option("gpt-4o", "--model", "-m", help="Model to use"),
@@ -75,6 +77,7 @@ async def _run_agent(
 
     # Resolve OpenAI settings
     import os
+
     api_key = os.environ.get("OPENAI_API_KEY", config.get("openai_api_key"))
     base_url = os.environ.get("OPENAI_BASE_URL", config.get("openai_base_url"))
     model = os.environ.get("OPENAI_MODEL", model)
@@ -94,6 +97,7 @@ async def _run_agent(
         if not no_mcp:
             try:
                 from pretorin.agent.mcp_config import MCPConfigManager
+
                 mgr = MCPConfigManager()
                 if mgr.servers:
                     mcp_servers = mgr.to_sdk_servers()
@@ -151,7 +155,7 @@ def agent_skills() -> None:
         table.add_row(s.name, s.description, str(s.max_turns))
 
     console.print(table)
-    rprint("\n[dim]Use with: pretorin agent run \"your task\" --skill <name>[/dim]")
+    rprint('\n[dim]Use with: pretorin agent run "your task" --skill <name>[/dim]')
 
 
 @app.command("mcp-list")
@@ -163,10 +167,17 @@ def mcp_list() -> None:
     servers = mgr.servers
 
     if is_json_mode():
-        print_json([{
-            "name": s.name, "transport": s.transport,
-            "command": s.command, "url": s.url,
-        } for s in servers])
+        print_json(
+            [
+                {
+                    "name": s.name,
+                    "transport": s.transport,
+                    "command": s.command,
+                    "url": s.url,
+                }
+                for s in servers
+            ]
+        )
         return
 
     if not servers:

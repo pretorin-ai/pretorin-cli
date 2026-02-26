@@ -35,7 +35,7 @@ class TestListResources:
         """Test that control prompt resources are listed."""
         resources = await list_resources()
         uris = [str(r.uri) for r in resources]
-        expected_controls = ["ac-2", "au-2", "ia-2", "sc-7", "cm-2"]
+        expected_controls = ["ac-02", "au-02", "ia-02", "sc-07", "cm-02"]
         for control in expected_controls:
             assert f"analysis://control/{control}" in uris
 
@@ -134,50 +134,58 @@ class TestReadResourceControl:
 
     @pytest.mark.asyncio
     async def test_read_ac2_control(self):
-        """Test reading AC-2 control prompt."""
+        """Test reading AC-02 control prompt."""
+        content = await read_resource("analysis://control/ac-02")
+        assert isinstance(content, str)
+        assert "AC-02" in content
+        assert "Account Management" in content
+
+    @pytest.mark.asyncio
+    async def test_read_ac2_control_unpadded(self):
+        """Test reading AC-2 (unpadded) normalizes to AC-02."""
         content = await read_resource("analysis://control/ac-2")
         assert isinstance(content, str)
-        assert "AC-2" in content
+        assert "AC-02" in content
         assert "Account Management" in content
 
     @pytest.mark.asyncio
     async def test_read_au2_control(self):
-        """Test reading AU-2 control prompt."""
-        content = await read_resource("analysis://control/au-2")
+        """Test reading AU-02 control prompt."""
+        content = await read_resource("analysis://control/au-02")
         assert isinstance(content, str)
-        assert "AU-2" in content
+        assert "AU-02" in content
         assert "Audit" in content
 
     @pytest.mark.asyncio
     async def test_read_ia2_control(self):
-        """Test reading IA-2 control prompt."""
-        content = await read_resource("analysis://control/ia-2")
+        """Test reading IA-02 control prompt."""
+        content = await read_resource("analysis://control/ia-02")
         assert isinstance(content, str)
-        assert "IA-2" in content
+        assert "IA-02" in content
         assert "Authentication" in content
 
     @pytest.mark.asyncio
     async def test_read_sc7_control(self):
-        """Test reading SC-7 control prompt."""
-        content = await read_resource("analysis://control/sc-7")
+        """Test reading SC-07 control prompt."""
+        content = await read_resource("analysis://control/sc-07")
         assert isinstance(content, str)
-        assert "SC-7" in content
+        assert "SC-07" in content
         assert "Boundary" in content
 
     @pytest.mark.asyncio
     async def test_read_cm2_control(self):
-        """Test reading CM-2 control prompt."""
-        content = await read_resource("analysis://control/cm-2")
+        """Test reading CM-02 control prompt."""
+        content = await read_resource("analysis://control/cm-02")
         assert isinstance(content, str)
-        assert "CM-2" in content
+        assert "CM-02" in content
         assert "Configuration" in content
 
     @pytest.mark.asyncio
     async def test_read_control_with_framework(self):
         """Test reading control with framework prefix."""
-        content = await read_resource("analysis://control/fedramp-moderate/ac-2")
+        content = await read_resource("analysis://control/fedramp-moderate/ac-02")
         assert isinstance(content, str)
-        assert "AC-2" in content
+        assert "AC-02" in content
         assert "fedramp-moderate" in content
 
     @pytest.mark.asyncio
@@ -220,7 +228,7 @@ class TestResourceContentQuality:
     @pytest.mark.asyncio
     async def test_control_prompts_have_what_to_look_for(self):
         """Test that control prompts include what to look for."""
-        controls = ["ac-2", "au-2", "ia-2", "sc-7", "cm-2"]
+        controls = ["ac-02", "au-02", "ia-02", "sc-07", "cm-02"]
         for control in controls:
             content = await read_resource(f"analysis://control/{control}")
             assert "What to Look For" in content or "look for" in content.lower()
@@ -228,7 +236,7 @@ class TestResourceContentQuality:
     @pytest.mark.asyncio
     async def test_control_prompts_have_evidence_examples(self):
         """Test that control prompts include evidence examples."""
-        controls = ["ac-2", "au-2", "ia-2", "sc-7", "cm-2"]
+        controls = ["ac-02", "au-02", "ia-02", "sc-07", "cm-02"]
         for control in controls:
             content = await read_resource(f"analysis://control/{control}")
             assert "Evidence" in content
@@ -236,7 +244,7 @@ class TestResourceContentQuality:
     @pytest.mark.asyncio
     async def test_control_prompts_reference_schema(self):
         """Test that control prompts reference the schema resource."""
-        controls = ["ac-2", "au-2", "ia-2", "sc-7", "cm-2"]
+        controls = ["ac-02", "au-02", "ia-02", "sc-07", "cm-02"]
         for control in controls:
             content = await read_resource(f"analysis://control/{control}")
             assert "analysis://schema" in content

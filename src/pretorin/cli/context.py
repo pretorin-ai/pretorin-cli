@@ -94,29 +94,35 @@ async def _context_list() -> None:
                 frameworks = status.get("frameworks", [])
                 if frameworks:
                     for fw in frameworks:
-                        rows.append({
+                        rows.append(
+                            {
+                                "system_name": system_name,
+                                "system_id": system_id,
+                                "framework_id": fw.get("framework_id", "unknown"),
+                                "progress": fw.get("progress", 0),
+                                "status": fw.get("status", "not_started"),
+                            }
+                        )
+                else:
+                    rows.append(
+                        {
                             "system_name": system_name,
                             "system_id": system_id,
-                            "framework_id": fw.get("framework_id", "unknown"),
-                            "progress": fw.get("progress", 0),
-                            "status": fw.get("status", "not_started"),
-                        })
-                else:
-                    rows.append({
+                            "framework_id": "-",
+                            "progress": 0,
+                            "status": "no frameworks",
+                        }
+                    )
+            except PretorianClientError:
+                rows.append(
+                    {
                         "system_name": system_name,
                         "system_id": system_id,
                         "framework_id": "-",
                         "progress": 0,
-                        "status": "no frameworks",
-                    })
-            except PretorianClientError:
-                rows.append({
-                    "system_name": system_name,
-                    "system_id": system_id,
-                    "framework_id": "-",
-                    "progress": 0,
-                    "status": "error fetching status",
-                })
+                        "status": "error fetching status",
+                    }
+                )
 
         if is_json_mode():
             print_json(rows)
@@ -161,12 +167,14 @@ async def _context_list() -> None:
 def context_set(
     system: str | None = typer.Option(
         None,
-        "--system", "-s",
+        "--system",
+        "-s",
         help="System name or ID.",
     ),
     framework: str | None = typer.Option(
         None,
-        "--framework", "-f",
+        "--framework",
+        "-f",
         help="Framework ID (e.g., fedramp-moderate).",
     ),
 ) -> None:
@@ -289,20 +297,24 @@ async def _context_set(
         config.set("active_framework_id", target_framework_id)
 
         if is_json_mode():
-            print_json({
-                "system_id": system_id,
-                "system_name": system_name,
-                "framework_id": target_framework_id,
-            })
+            print_json(
+                {
+                    "system_id": system_id,
+                    "system_name": system_name,
+                    "framework_id": target_framework_id,
+                }
+            )
         else:
             rprint()
-            rprint(Panel(
-                f"  [bold]System:[/bold]    {system_name} ({system_id[:8]}...)\n"
-                f"  [bold]Framework:[/bold] {target_framework_id}",
-                title=f"{ROMEBOT_HAPPY}  Context Set",
-                border_style="#95D7E0",
-                padding=(1, 2),
-            ))
+            rprint(
+                Panel(
+                    f"  [bold]System:[/bold]    {system_name} ({system_id[:8]}...)\n"
+                    f"  [bold]Framework:[/bold] {target_framework_id}",
+                    title=f"{ROMEBOT_HAPPY}  Context Set",
+                    border_style="#95D7E0",
+                    padding=(1, 2),
+                )
+            )
 
 
 @app.command("show")
@@ -334,14 +346,16 @@ async def _context_show() -> None:
             if is_json_mode():
                 print_json({"active_system_id": system_id, "active_framework_id": framework_id})
             else:
-                rprint(Panel(
-                    f"  [bold]System ID:[/bold]  {system_id}\n"
-                    f"  [bold]Framework:[/bold]  {framework_id}\n\n"
-                    "  [dim]Not logged in — showing stored context only.[/dim]",
-                    title=f"{ROMEBOT_THINKING}  Active Context",
-                    border_style="#EAB536",
-                    padding=(1, 2),
-                ))
+                rprint(
+                    Panel(
+                        f"  [bold]System ID:[/bold]  {system_id}\n"
+                        f"  [bold]Framework:[/bold]  {framework_id}\n\n"
+                        "  [dim]Not logged in — showing stored context only.[/dim]",
+                        title=f"{ROMEBOT_THINKING}  Active Context",
+                        border_style="#EAB536",
+                        padding=(1, 2),
+                    )
+                )
             return
 
         # Fetch live info
@@ -366,24 +380,28 @@ async def _context_show() -> None:
             pass
 
         if is_json_mode():
-            print_json({
-                "active_system_id": system_id,
-                "active_system_name": system_name,
-                "active_framework_id": framework_id,
-                "progress": progress,
-                "status": status,
-            })
+            print_json(
+                {
+                    "active_system_id": system_id,
+                    "active_system_name": system_name,
+                    "active_framework_id": framework_id,
+                    "progress": progress,
+                    "status": status,
+                }
+            )
         else:
             rprint()
-            rprint(Panel(
-                f"  [bold]System:[/bold]    {system_name} ({system_id[:8]}...)\n"
-                f"  [bold]Framework:[/bold] {framework_id}\n"
-                f"  [bold]Progress:[/bold]  {progress}%\n"
-                f"  [bold]Status:[/bold]    {status}",
-                title=f"{ROMEBOT_HAPPY}  Active Context",
-                border_style="#95D7E0",
-                padding=(1, 2),
-            ))
+            rprint(
+                Panel(
+                    f"  [bold]System:[/bold]    {system_name} ({system_id[:8]}...)\n"
+                    f"  [bold]Framework:[/bold] {framework_id}\n"
+                    f"  [bold]Progress:[/bold]  {progress}%\n"
+                    f"  [bold]Status:[/bold]    {status}",
+                    title=f"{ROMEBOT_HAPPY}  Active Context",
+                    border_style="#95D7E0",
+                    padding=(1, 2),
+                )
+            )
 
 
 @app.command("clear")

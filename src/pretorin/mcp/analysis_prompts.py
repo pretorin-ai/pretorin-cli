@@ -1,11 +1,11 @@
 """Analysis prompts and templates for compliance control analysis.
 
 This module contains the analysis guidance for the 5 core controls used in demos:
-- ac-2: Access Control - Account Management
-- au-2: Audit & Accountability - Audit Events
-- ia-2: Identification & Authentication
-- sc-7: System & Communications Protection - Boundary Protection
-- cm-2: Configuration Management - Baseline Configuration
+- ac-02: Access Control - Account Management
+- au-02: Audit & Accountability - Audit Events
+- ia-02: Identification & Authentication
+- sc-07: System & Communications Protection - Boundary Protection
+- cm-02: Configuration Management - Baseline Configuration
 """
 
 from __future__ import annotations
@@ -292,7 +292,7 @@ CONTROL_ANALYSIS_PROMPTS: dict[str, dict[str, str]] = {
     # -------------------------------------------------------------------------
     # AC-2: Account Management
     # -------------------------------------------------------------------------
-    "ac-2": {
+    "ac-02": {
         "title": "Account Management",
         "family": "Access Control",
         "summary": """
@@ -382,7 +382,7 @@ not just that relevant code exists.
     # -------------------------------------------------------------------------
     # AU-2: Audit Events
     # -------------------------------------------------------------------------
-    "au-2": {
+    "au-02": {
         "title": "Audit Events",
         "family": "Audit and Accountability",
         "summary": """
@@ -466,7 +466,7 @@ log4j*.xml
     # -------------------------------------------------------------------------
     # IA-2: Identification and Authentication
     # -------------------------------------------------------------------------
-    "ia-2": {
+    "ia-02": {
         "title": "Identification and Authentication (Organizational Users)",
         "family": "Identification and Authentication",
         "summary": """
@@ -555,7 +555,7 @@ multi-factor authentication for various access types.
     # -------------------------------------------------------------------------
     # SC-7: Boundary Protection
     # -------------------------------------------------------------------------
-    "sc-7": {
+    "sc-07": {
         "title": "Boundary Protection",
         "family": "System and Communications Protection",
         "summary": """
@@ -646,7 +646,7 @@ interfaces with traffic control and enforcing network segmentation.
     # -------------------------------------------------------------------------
     # CM-2: Baseline Configuration
     # -------------------------------------------------------------------------
-    "cm-2": {
+    "cm-02": {
         "title": "Baseline Configuration",
         "family": "Configuration Management",
         "summary": """
@@ -769,8 +769,14 @@ def get_framework_guide(framework_id: str) -> str | None:
 
 def get_control_prompt(control_id: str) -> dict[str, str] | None:
     """Return the analysis prompt for a control."""
-    control_id_lower = control_id.lower()
-    return CONTROL_ANALYSIS_PROMPTS.get(control_id_lower)
+    from pretorin.utils import normalize_control_id
+
+    normalized = normalize_control_id(control_id)
+    # Try normalized form first, then fall back to un-padded for legacy keys
+    result = CONTROL_ANALYSIS_PROMPTS.get(normalized)
+    if result is None:
+        result = CONTROL_ANALYSIS_PROMPTS.get(control_id.lower())
+    return result
 
 
 def format_control_analysis_prompt(framework_id: str, control_id: str) -> str:

@@ -104,10 +104,7 @@ class TestAnimationFrames:
 
     def test_thinking_frames_have_question_mark(self):
         """Test at least some thinking frames have question mark."""
-        has_question = any(
-            "?" in "\n".join(frame.lines)
-            for frame in THINKING_FRAMES
-        )
+        has_question = any("?" in "\n".join(frame.lines) for frame in THINKING_FRAMES)
         assert has_question
 
 

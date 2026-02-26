@@ -15,7 +15,7 @@ from pretorin.mcp.server import call_tool, list_tools
 
 
 class TestToolListing:
-    """Verify all 18 tools are registered."""
+    """Verify all 21 tools are registered."""
 
     def test_all_tools_listed(self) -> None:
         tools = asyncio.run(list_tools())
@@ -30,21 +30,29 @@ class TestToolListing:
             "pretorin_get_control",
             "pretorin_get_control_references",
             "pretorin_get_document_requirements",
-            # New 11
+            # System & compliance 3
             "pretorin_list_systems",
             "pretorin_get_system",
             "pretorin_get_compliance_status",
+            # Evidence 3
             "pretorin_search_evidence",
             "pretorin_create_evidence",
             "pretorin_link_evidence",
+            # Narrative 2
             "pretorin_generate_narrative",
             "pretorin_get_narrative",
+            # Monitoring 1
             "pretorin_push_monitoring_event",
+            # Control context & scope 2
+            "pretorin_get_control_context",
+            "pretorin_get_scope",
+            # Control implementation 3
+            "pretorin_update_narrative",
             "pretorin_update_control_status",
             "pretorin_get_control_implementation",
         ]
 
-        assert len(tools) == 18
+        assert len(tools) == 21
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 
@@ -103,8 +111,11 @@ class TestSystemTools:
         from pretorin.client.models import SystemDetail
 
         system = SystemDetail(
-            id="sys-1", name="Test System", description="Desc",
-            frameworks=[{"id": "fedramp-moderate"}], security_impact_level="moderate",
+            id="sys-1",
+            name="Test System",
+            description="Desc",
+            frameworks=[{"id": "fedramp-moderate"}],
+            security_impact_level="moderate",
         )
         client = _make_mock_client(get_system=system)
         result = _run_tool("pretorin_get_system", {"system_id": "sys-1"}, client)
@@ -157,16 +168,22 @@ class TestNarrativeTools:
     """Test narrative-related MCP tools."""
 
     def test_generate_narrative(self) -> None:
-        client = _make_mock_client(generate_narrative={
-            "control_id": "ac-2",
-            "narrative": "This system implements AC-2 through...",
-            "ai_confidence_score": 0.85,
-        })
-        result = _run_tool("pretorin_generate_narrative", {
-            "system_id": "sys-1",
-            "control_id": "ac-2",
-            "framework_id": "fedramp-moderate",
-        }, client)
+        client = _make_mock_client(
+            generate_narrative={
+                "control_id": "ac-2",
+                "narrative": "This system implements AC-2 through...",
+                "ai_confidence_score": 0.85,
+            }
+        )
+        result = _run_tool(
+            "pretorin_generate_narrative",
+            {
+                "system_id": "sys-1",
+                "control_id": "ac-2",
+                "framework_id": "fedramp-moderate",
+            },
+            client,
+        )
         data = _parse_result(result)
         assert data["control_id"] == "ac-2"
         assert "narrative" in data
@@ -175,8 +192,11 @@ class TestNarrativeTools:
         from pretorin.client.models import NarrativeResponse
 
         narrative = NarrativeResponse(
-            control_id="ac-2", framework_id="fedramp-moderate",
-            narrative="Existing narrative", ai_confidence_score=0.9, status="approved",
+            control_id="ac-2",
+            framework_id="fedramp-moderate",
+            narrative="Existing narrative",
+            ai_confidence_score=0.9,
+            status="approved",
         )
         client = _make_mock_client(get_narrative=narrative)
         result = _run_tool("pretorin_get_narrative", {"system_id": "sys-1", "control_id": "ac-2"}, client)
@@ -188,14 +208,22 @@ class TestMonitoringTools:
     """Test monitoring-related MCP tools."""
 
     def test_push_monitoring_event(self) -> None:
-        client = _make_mock_client(create_monitoring_event={
-            "id": "evt-1", "title": "Scan Complete", "severity": "high",
-        })
-        result = _run_tool("pretorin_push_monitoring_event", {
-            "system_id": "sys-1",
-            "title": "Scan Complete",
-            "severity": "high",
-        }, client)
+        client = _make_mock_client(
+            create_monitoring_event={
+                "id": "evt-1",
+                "title": "Scan Complete",
+                "severity": "high",
+            }
+        )
+        result = _run_tool(
+            "pretorin_push_monitoring_event",
+            {
+                "system_id": "sys-1",
+                "title": "Scan Complete",
+                "severity": "high",
+            },
+            client,
+        )
         data = _parse_result(result)
         assert data["id"] == "evt-1"
 
@@ -204,14 +232,21 @@ class TestControlImplementationTools:
     """Test control implementation tools."""
 
     def test_update_control_status(self) -> None:
-        client = _make_mock_client(update_control_status={
-            "control_id": "ac-2", "status": "implemented",
-        })
-        result = _run_tool("pretorin_update_control_status", {
-            "system_id": "sys-1",
-            "control_id": "ac-2",
-            "status": "implemented",
-        }, client)
+        client = _make_mock_client(
+            update_control_status={
+                "control_id": "ac-2",
+                "status": "implemented",
+            }
+        )
+        result = _run_tool(
+            "pretorin_update_control_status",
+            {
+                "system_id": "sys-1",
+                "control_id": "ac-2",
+                "status": "implemented",
+            },
+            client,
+        )
         data = _parse_result(result)
         assert data["status"] == "implemented"
 
@@ -219,14 +254,21 @@ class TestControlImplementationTools:
         from pretorin.client.models import ControlImplementationResponse
 
         impl = ControlImplementationResponse(
-            control_id="ac-2", status="partial", narrative="In progress",
-            evidence_count=3, notes=[{"content": "Working on it"}],
+            control_id="ac-2",
+            status="partial",
+            narrative="In progress",
+            evidence_count=3,
+            notes=[{"content": "Working on it"}],
         )
         client = _make_mock_client(get_control_implementation=impl)
-        result = _run_tool("pretorin_get_control_implementation", {
-            "system_id": "sys-1",
-            "control_id": "ac-2",
-        }, client)
+        result = _run_tool(
+            "pretorin_get_control_implementation",
+            {
+                "system_id": "sys-1",
+                "control_id": "ac-2",
+            },
+            client,
+        )
         data = _parse_result(result)
         assert data["control_id"] == "ac-2"
         assert data["evidence_count"] == 3

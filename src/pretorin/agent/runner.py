@@ -65,10 +65,7 @@ class ComplianceAgent:
         try:
             from agents import Agent, RunConfig, Runner  # noqa: F401
         except ImportError:
-            raise ImportError(
-                "openai-agents is required for agent features. "
-                "Install with: pip install pretorin[agent]"
-            )
+            raise ImportError("openai-agents is required for agent features. Install with: pip install pretorin[agent]")
 
         from pretorin.agent.skills import get_skill
         from pretorin.agent.tools import create_platform_tools, to_function_tool

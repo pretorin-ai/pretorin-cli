@@ -29,15 +29,21 @@ def narrative_generate(
     control_id: str = typer.Argument(..., help="Control ID (e.g., ac-2)"),
     framework_id: str = typer.Argument(..., help="Framework ID (e.g., fedramp-moderate)"),
     system: str | None = typer.Option(
-        None, "--system", "-s",
+        None,
+        "--system",
+        "-s",
         help="System name or ID. Auto-selects if only one.",
     ),
     context: str | None = typer.Option(
-        None, "--context", "-c",
+        None,
+        "--context",
+        "-c",
         help="Additional context for narrative generation.",
     ),
     output: Path | None = typer.Option(
-        None, "--output", "-o",
+        None,
+        "--output",
+        "-o",
         help="Write narrative to a file.",
     ),
 ) -> None:
@@ -136,21 +142,25 @@ async def _generate_narrative(
                 rprint(f"[#95D7E0]Written to {output}[/#95D7E0]")
 
         if is_json_mode():
-            print_json({
-                "system_id": system_id,
-                "control_id": control_id,
-                "framework_id": framework_id,
-                "narrative": narrative_text,
-                "ai_confidence_score": confidence,
-            })
+            print_json(
+                {
+                    "system_id": system_id,
+                    "control_id": control_id,
+                    "framework_id": framework_id,
+                    "narrative": narrative_text,
+                    "ai_confidence_score": confidence,
+                }
+            )
             return
 
-        rprint(Panel(
-            narrative_text or "[dim]No narrative generated.[/dim]",
-            title=f"{control_id.upper()} Implementation Narrative",
-            border_style="#EAB536",
-            padding=(1, 2),
-        ))
+        rprint(
+            Panel(
+                narrative_text or "[dim]No narrative generated.[/dim]",
+                title=f"{control_id.upper()} Implementation Narrative",
+                border_style="#EAB536",
+                padding=(1, 2),
+            )
+        )
         if confidence:
             rprint(f"[dim]AI Confidence: {confidence:.0%}[/dim]")
 

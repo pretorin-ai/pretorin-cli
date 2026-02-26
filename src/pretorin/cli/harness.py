@@ -121,7 +121,7 @@ def _get_table_array(content: str, table_name: str, key: str) -> list[str] | Non
     if not section_match:
         return None
     section = section_match.group(1)
-    value_match = re.search(rf'(?m)^{re.escape(key)}\s*=\s*\[([^\]]*)\]\s*$', section)
+    value_match = re.search(rf"(?m)^{re.escape(key)}\s*=\s*\[([^\]]*)\]\s*$", section)
     if not value_match:
         return None
     raw_items = value_match.group(1).split(",")
@@ -144,7 +144,7 @@ def _evaluate_setup(content: str, allow_openai_api: bool, backend_command: str) 
 
     provider = _get_scalar_value(content, "model_provider")
     if not provider:
-        errors.append('`model_provider` is not set in ~/.codex/config.toml.')
+        errors.append("`model_provider` is not set in ~/.codex/config.toml.")
 
     expected_provider = OPENAI_PROVIDER_NAME if allow_openai_api else PRETORIN_PROVIDER_NAME
     if provider and provider != expected_provider:

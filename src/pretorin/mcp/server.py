@@ -25,6 +25,7 @@ from pretorin.mcp.analysis_prompts import (
     get_control_summary,
     get_framework_guide,
 )
+from pretorin.utils import normalize_control_id
 
 ToolHandler = Callable[[PretorianClient, dict[str, Any]], Awaitable[list[TextContent]]]
 
@@ -122,11 +123,11 @@ async def read_resource(uri: str) -> str:
             raise ValueError("Control ID required for control resource")
         # Support both analysis://control/ac-2 and analysis://control/fedramp-moderate/ac-2
         if len(path_parts) == 1:
-            control_id = path_parts[0]
+            control_id = normalize_control_id(path_parts[0])
             framework_id = "fedramp-moderate"  # Default framework
         else:
             framework_id = path_parts[0]
-            control_id = path_parts[1]
+            control_id = normalize_control_id(path_parts[1])
 
         return format_control_analysis_prompt(framework_id, control_id)
 
@@ -266,8 +267,7 @@ async def list_tools() -> list[Tool]:
         Tool(
             name="pretorin_get_system",
             description=(
-                "Get detailed information about a specific system"
-                " including frameworks and security impact level"
+                "Get detailed information about a specific system including frameworks and security impact level"
             ),
             inputSchema={
                 "type": "object",
@@ -446,8 +446,7 @@ async def list_tools() -> list[Tool]:
                     "event_type": {
                         "type": "string",
                         "description": (
-                            "Event type: security_scan, configuration_change,"
-                            " access_review, compliance_check"
+                            "Event type: security_scan, configuration_change, access_review, compliance_check"
                         ),
                         "default": "security_scan",
                     },
@@ -564,8 +563,7 @@ async def list_tools() -> list[Tool]:
         Tool(
             name="pretorin_get_control_implementation",
             description=(
-                "Get implementation details for a control in a system,"
-                " including narrative, evidence count, and notes"
+                "Get implementation details for a control in a system, including narrative, evidence count, and notes"
             ),
             inputSchema={
                 "type": "object",
@@ -714,7 +712,7 @@ async def _handle_get_control(
 ) -> list[TextContent]:
     """Handle the get_control tool."""
     framework_id = arguments.get("framework_id", "")
-    control_id = arguments.get("control_id", "")
+    control_id = normalize_control_id(arguments.get("control_id", ""))
     control = await client.get_control(framework_id, control_id)
     return _format_json(
         {
@@ -736,7 +734,7 @@ async def _handle_get_control_references(
 ) -> list[TextContent]:
     """Handle the get_control_references tool."""
     framework_id = arguments.get("framework_id", "")
-    control_id = arguments.get("control_id", "")
+    control_id = normalize_control_id(arguments.get("control_id", ""))
     refs = await client.get_control_references(framework_id, control_id)
     return _format_json(
         {
@@ -843,8 +841,9 @@ async def _handle_search_evidence(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the search_evidence tool."""
+    raw_control_id = arguments.get("control_id")
     evidence = await client.list_evidence(
-        control_id=arguments.get("control_id"),
+        control_id=normalize_control_id(raw_control_id) if raw_control_id else None,
         framework_id=arguments.get("framework_id"),
         limit=arguments.get("limit", 20),
     )
@@ -873,12 +872,13 @@ async def _handle_create_evidence(
     """Handle the create_evidence tool."""
     from pretorin.client.models import EvidenceCreate
 
+    raw_control_id = arguments.get("control_id")
     evidence = EvidenceCreate(
         name=arguments.get("name", ""),
         description=arguments.get("description", ""),
         evidence_type=arguments.get("evidence_type", "documentation"),
         source="mcp",
-        control_id=arguments.get("control_id"),
+        control_id=normalize_control_id(raw_control_id) if raw_control_id else None,
         framework_id=arguments.get("framework_id"),
     )
     # Use empty org ID — the API will resolve from the auth token
@@ -893,7 +893,7 @@ async def _handle_link_evidence(
     """Handle the link_evidence tool."""
     result = await client.link_evidence_to_control(
         evidence_id=arguments.get("evidence_id", ""),
-        control_id=arguments.get("control_id", ""),
+        control_id=normalize_control_id(arguments.get("control_id", "")),
         framework_id=arguments.get("framework_id"),
     )
     return _format_json(result)
@@ -906,7 +906,7 @@ async def _handle_generate_narrative(
     """Handle the generate_narrative tool."""
     result = await client.generate_narrative(
         system_id=arguments.get("system_id", ""),
-        control_id=arguments.get("control_id", ""),
+        control_id=normalize_control_id(arguments.get("control_id", "")),
         framework_id=arguments.get("framework_id", ""),
         context=arguments.get("context"),
     )
@@ -920,7 +920,7 @@ async def _handle_get_narrative(
     """Handle the get_narrative tool."""
     narrative = await client.get_narrative(
         system_id=arguments.get("system_id", ""),
-        control_id=arguments.get("control_id", ""),
+        control_id=normalize_control_id(arguments.get("control_id", "")),
         framework_id=arguments.get("framework_id"),
     )
     return _format_json(
@@ -941,12 +941,13 @@ async def _handle_push_monitoring_event(
     """Handle the push_monitoring_event tool."""
     from pretorin.client.models import MonitoringEventCreate
 
+    raw_control_id = arguments.get("control_id")
     event = MonitoringEventCreate(
         event_type=arguments.get("event_type", "security_scan"),
         title=arguments.get("title", ""),
         description=arguments.get("description", ""),
         severity=arguments.get("severity", "medium"),
-        control_id=arguments.get("control_id"),
+        control_id=normalize_control_id(raw_control_id) if raw_control_id else None,
         event_data={"source": "mcp"},
     )
     result = await client.create_monitoring_event(
@@ -963,7 +964,7 @@ async def _handle_get_control_context(
     """Handle the get_control_context tool."""
     ctx = await client.get_control_context(
         system_id=arguments.get("system_id", ""),
-        control_id=arguments.get("control_id", ""),
+        control_id=normalize_control_id(arguments.get("control_id", "")),
         framework_id=arguments.get("framework_id", ""),
     )
     return _format_json(ctx.model_dump())
@@ -987,7 +988,7 @@ async def _handle_update_narrative(
     """Handle the update_narrative tool."""
     result = await client.update_narrative(
         system_id=arguments.get("system_id", ""),
-        control_id=arguments.get("control_id", ""),
+        control_id=normalize_control_id(arguments.get("control_id", "")),
         framework_id=arguments.get("framework_id", ""),
         narrative=arguments.get("narrative", ""),
         is_ai_generated=arguments.get("is_ai_generated", False),
@@ -1002,7 +1003,7 @@ async def _handle_update_control_status(
     """Handle the update_control_status tool."""
     result = await client.update_control_status(
         system_id=arguments.get("system_id", ""),
-        control_id=arguments.get("control_id", ""),
+        control_id=normalize_control_id(arguments.get("control_id", "")),
         status=arguments.get("status", ""),
         framework_id=arguments.get("framework_id"),
     )
@@ -1016,7 +1017,7 @@ async def _handle_get_control_implementation(
     """Handle the get_control_implementation tool."""
     impl = await client.get_control_implementation(
         system_id=arguments.get("system_id", ""),
-        control_id=arguments.get("control_id", ""),
+        control_id=normalize_control_id(arguments.get("control_id", "")),
         framework_id=arguments.get("framework_id"),
     )
     return _format_json(

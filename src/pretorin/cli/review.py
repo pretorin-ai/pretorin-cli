@@ -34,13 +34,28 @@ EARLY_ACCESS_MSG = (
 
 # Common code file extensions to discover for review
 CODE_EXTENSIONS = (
-    "*.py", "*.js", "*.ts", "*.tsx", "*.jsx",
-    "*.go", "*.rs", "*.java", "*.rb", "*.php",
-    "*.yaml", "*.yml", "*.json", "*.toml",
-    "*.tf", "*.hcl",
-    "*.sh", "*.bash",
-    "*.md", "*.txt",
-    "Dockerfile", "Makefile",
+    "*.py",
+    "*.js",
+    "*.ts",
+    "*.tsx",
+    "*.jsx",
+    "*.go",
+    "*.rs",
+    "*.java",
+    "*.rb",
+    "*.php",
+    "*.yaml",
+    "*.yml",
+    "*.json",
+    "*.toml",
+    "*.tf",
+    "*.hcl",
+    "*.sh",
+    "*.bash",
+    "*.md",
+    "*.txt",
+    "Dockerfile",
+    "Makefile",
 )
 
 
@@ -68,22 +83,26 @@ def _discover_files(path: Path) -> list[Path]:
 def run(
     control_id: str = typer.Option(
         ...,
-        "--control-id", "-c",
+        "--control-id",
+        "-c",
         help="Control ID to review against (e.g., ac-2, sc-7).",
     ),
     framework_id: str | None = typer.Option(
         None,
-        "--framework-id", "-f",
+        "--framework-id",
+        "-f",
         help="Framework ID (uses active context if not set).",
     ),
     system: str | None = typer.Option(
         None,
-        "--system", "-s",
+        "--system",
+        "-s",
         help="System name or ID (uses active context if not set).",
     ),
     path: str = typer.Option(
         ".",
-        "--path", "-p",
+        "--path",
+        "-p",
         help="Path to files to review.",
     ),
     local: bool = typer.Option(
@@ -93,7 +112,8 @@ def run(
     ),
     output_dir: str = typer.Option(
         ".pretorin/reviews",
-        "--output-dir", "-o",
+        "--output-dir",
+        "-o",
         help="Output directory for local review artifacts.",
     ),
 ) -> None:
@@ -108,14 +128,16 @@ def run(
         pretorin review run -c sc-7 -f fedramp-moderate --path ./src
         pretorin review run -c ac-2 --local -o ./compliance-notes
     """
-    asyncio.run(_run_review(
-        control_id=control_id,
-        framework_id=framework_id,
-        system=system,
-        path=path,
-        local=local,
-        output_dir=output_dir,
-    ))
+    asyncio.run(
+        _run_review(
+            control_id=control_id,
+            framework_id=framework_id,
+            system=system,
+            path=path,
+            local=local,
+            output_dir=output_dir,
+        )
+    )
 
 
 async def _run_review(
@@ -136,7 +158,8 @@ async def _run_review(
     if not local:
         try:
             system_id, resolved_framework_id = resolve_context(
-                system=system, framework=framework_id,
+                system=system,
+                framework=framework_id,
             )
         except SystemExit:
             # Context resolution failed — fall back to local mode
@@ -144,9 +167,7 @@ async def _run_review(
                 resolved_framework_id = framework_id
                 local = True
                 if not is_json_mode():
-                    rprint(
-                        f"\n  {ROMEBOT_WORKING}  No system context — falling back to local mode.\n"
-                    )
+                    rprint(f"\n  {ROMEBOT_WORKING}  No system context — falling back to local mode.\n")
             else:
                 # No framework at all — re-raise
                 rprint("[red]No framework specified and no active context.[/red]")
@@ -196,14 +217,16 @@ async def _run_review(
             if len(guidance_display) > 500:
                 guidance_display = guidance_display[:500] + "..."
 
-            rprint(Panel(
-                f"  [bold]Control:[/bold]   {control_id.upper()}: {control_title}\n\n"
-                f"  [bold]Statement:[/bold]\n  {statement}\n\n"
-                f"  [bold]Guidance:[/bold]\n  {guidance_display}",
-                title=f"{ROMEBOT_DONE}  Control Requirements",
-                border_style="#FF9010",
-                padding=(1, 2),
-            ))
+            rprint(
+                Panel(
+                    f"  [bold]Control:[/bold]   {control_id.upper()}: {control_title}\n\n"
+                    f"  [bold]Statement:[/bold]\n  {statement}\n\n"
+                    f"  [bold]Guidance:[/bold]\n  {guidance_display}",
+                    title=f"{ROMEBOT_DONE}  Control Requirements",
+                    border_style="#FF9010",
+                    padding=(1, 2),
+                )
+            )
 
             rprint(f"\n  [dim]Found {len(files)} file(s) at {review_path.resolve()}[/dim]\n")
 
@@ -219,7 +242,9 @@ async def _run_review(
                 ) as progress:
                     progress.add_task("Fetching current implementation status...", total=None)
                     implementation = await client.get_control_implementation(
-                        system_id, control_id, resolved_framework_id,
+                        system_id,
+                        control_id,
+                        resolved_framework_id,
                     )
             except PretorianClientError:
                 # Not found or no implementation yet — that's fine
@@ -235,15 +260,17 @@ async def _run_review(
                 if len(narrative_display) > 300:
                     narrative_display = narrative_display[:300] + "..."
 
-                rprint(Panel(
-                    f"  [bold]Status:[/bold]         {impl_status}\n"
-                    f"  [bold]Evidence items:[/bold] {evidence_count}\n"
-                    f"  [bold]Narrative:[/bold]      "
-                    f"{narrative_display if narrative_display else '[dim]not yet generated[/dim]'}",
-                    title="Current Implementation",
-                    border_style="#95D7E0",
-                    padding=(1, 2),
-                ))
+                rprint(
+                    Panel(
+                        f"  [bold]Status:[/bold]         {impl_status}\n"
+                        f"  [bold]Evidence items:[/bold] {evidence_count}\n"
+                        f"  [bold]Narrative:[/bold]      "
+                        f"{narrative_display if narrative_display else '[dim]not yet generated[/dim]'}",
+                        title="Current Implementation",
+                        border_style="#95D7E0",
+                        padding=(1, 2),
+                    )
+                )
 
         # --- AI review hint ---
         if not is_json_mode():
@@ -259,26 +286,28 @@ async def _run_review(
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             content = (
-                f"# {control_id.upper()}: {control_title}\n\n"
-                f"## Statement\n{statement}\n\n"
-                f"## Guidance\n{guidance}\n"
+                f"# {control_id.upper()}: {control_title}\n\n## Statement\n{statement}\n\n## Guidance\n{guidance}\n"
             )
             output_path.write_text(content)
 
             if is_json_mode():
-                print_json({
-                    "control_id": control_id,
-                    "framework_id": resolved_framework_id,
-                    "output_path": str(output_path),
-                    "files_found": len(files),
-                })
+                print_json(
+                    {
+                        "control_id": control_id,
+                        "framework_id": resolved_framework_id,
+                        "output_path": str(output_path),
+                        "files_found": len(files),
+                    }
+                )
             else:
-                rprint(Panel(
-                    f"  [bold]Saved:[/bold] {output_path}",
-                    title=f"{ROMEBOT_DONE}  Local Review Artifact",
-                    border_style="#95D7E0",
-                    padding=(1, 2),
-                ))
+                rprint(
+                    Panel(
+                        f"  [bold]Saved:[/bold] {output_path}",
+                        title=f"{ROMEBOT_DONE}  Local Review Artifact",
+                        border_style="#95D7E0",
+                        padding=(1, 2),
+                    )
+                )
                 rprint(EARLY_ACCESS_MSG)
         else:
             if is_json_mode():
@@ -300,17 +329,20 @@ async def _run_review(
 def status(
     control_id: str = typer.Option(
         ...,
-        "--control-id", "-c",
+        "--control-id",
+        "-c",
         help="Control ID (e.g., ac-2, sc-7).",
     ),
     system: str | None = typer.Option(
         None,
-        "--system", "-s",
+        "--system",
+        "-s",
         help="System name or ID (uses active context if not set).",
     ),
     framework_id: str | None = typer.Option(
         None,
-        "--framework-id", "-f",
+        "--framework-id",
+        "-f",
         help="Framework ID (uses active context if not set).",
     ),
 ) -> None:
@@ -320,11 +352,13 @@ def status(
         pretorin review status -c ac-2
         pretorin review status -c sc-7 -f fedramp-moderate -s my-system
     """
-    asyncio.run(_review_status(
-        control_id=control_id,
-        system=system,
-        framework_id=framework_id,
-    ))
+    asyncio.run(
+        _review_status(
+            control_id=control_id,
+            system=system,
+            framework_id=framework_id,
+        )
+    )
 
 
 async def _review_status(
@@ -336,7 +370,8 @@ async def _review_status(
     from pretorin.client.api import PretorianClient, PretorianClientError
 
     system_id, resolved_framework_id = resolve_context(
-        system=system, framework=framework_id,
+        system=system,
+        framework=framework_id,
     )
 
     async with PretorianClient() as client:
@@ -356,7 +391,9 @@ async def _review_status(
             ) as progress:
                 progress.add_task("Loading implementation status...", total=None)
                 implementation = await client.get_control_implementation(
-                    system_id, control_id, resolved_framework_id,
+                    system_id,
+                    control_id,
+                    resolved_framework_id,
                 )
         except PretorianClientError as e:
             if is_json_mode():
@@ -371,15 +408,17 @@ async def _review_status(
         last_reviewed = getattr(implementation, "last_reviewed", None)
 
         if is_json_mode():
-            print_json({
-                "control_id": control_id,
-                "framework_id": resolved_framework_id,
-                "system_id": system_id,
-                "status": impl_status,
-                "narrative": narrative,
-                "evidence_count": evidence_count,
-                "last_reviewed": str(last_reviewed) if last_reviewed else None,
-            })
+            print_json(
+                {
+                    "control_id": control_id,
+                    "framework_id": resolved_framework_id,
+                    "system_id": system_id,
+                    "status": impl_status,
+                    "narrative": narrative,
+                    "evidence_count": evidence_count,
+                    "last_reviewed": str(last_reviewed) if last_reviewed else None,
+                }
+            )
             return
 
         # Truncate narrative for display
@@ -405,9 +444,11 @@ async def _review_status(
             f"  {narrative_display if narrative_display else '[dim]No narrative generated yet.[/dim]'}"
         )
 
-        rprint(Panel(
-            panel_content,
-            title=f"{ROMEBOT_DONE}  Implementation Status",
-            border_style="#95D7E0",
-            padding=(1, 2),
-        ))
+        rprint(
+            Panel(
+                panel_content,
+                title=f"{ROMEBOT_DONE}  Implementation Status",
+                border_style="#95D7E0",
+                padding=(1, 2),
+            )
+        )

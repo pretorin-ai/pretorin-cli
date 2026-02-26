@@ -40,14 +40,7 @@ def test_set_scalar_replaces_existing_value() -> None:
 
 
 def test_replace_or_append_table_replaces_existing_block() -> None:
-    content = (
-        "[mcp_servers.pretorin]\n"
-        'command = "old"\n'
-        'args = ["old"]\n'
-        "\n"
-        "[another.section]\n"
-        'value = "x"\n'
-    )
+    content = '[mcp_servers.pretorin]\ncommand = "old"\nargs = ["old"]\n\n[another.section]\nvalue = "x"\n'
     updated = harness_cli._replace_or_append_table(
         content,
         "mcp_servers.pretorin",
