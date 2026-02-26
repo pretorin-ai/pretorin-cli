@@ -196,6 +196,16 @@ class Config:
         env = os.environ.get(ENV_OPENAI_MODEL)
         return env if env else self.get("openai_model", "gpt-4o")
 
+    @property
+    def codex_home(self) -> Path:
+        """Isolated Codex home directory managed by Pretorin."""
+        return CONFIG_DIR / "codex"
+
+    @property
+    def codex_bin_dir(self) -> Path:
+        """Directory for managed Codex binaries."""
+        return CONFIG_DIR / "bin"
+
     def to_dict(self) -> dict[str, Any]:
         """Return all stored config as a dictionary."""
         return dict(self._config)

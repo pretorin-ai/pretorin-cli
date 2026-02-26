@@ -6,6 +6,7 @@ Requires optional `agent` dependency group: `pip install pretorin[agent]`
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 
 import typer
 from rich import print as rprint
@@ -35,32 +36,108 @@ def _check_agent_deps() -> None:
         raise typer.Exit(1)
 
 
+def _check_codex_deps() -> None:
+    """Check that Codex SDK dependencies are installed."""
+    try:
+        import openai_codex_sdk  # noqa: F401
+    except ImportError:
+        rprint("[red]Codex agent features require openai-codex-sdk.[/red]")
+        rprint("[dim]Install with: [bold]pip install pretorin\\[agent][/bold][/dim]")
+        raise typer.Exit(1)
+
+
 @app.command("run")
 def agent_run(
-    message: str = typer.Argument(..., help="Task or question for the agent"),
+    message: str = typer.Argument(..., help="Compliance task or question."),
     skill: str | None = typer.Option(
         None,
         "--skill",
         "-s",
         help="Skill to use: gap-analysis, narrative-generation, evidence-collection, security-review",
     ),
-    model: str = typer.Option("gpt-4o", "--model", "-m", help="Model to use"),
-    max_turns: int = typer.Option(15, "--max-turns", help="Maximum agent turns"),
-    no_mcp: bool = typer.Option(False, "--no-mcp", help="Disable external MCP servers"),
-    no_stream: bool = typer.Option(False, "--no-stream", help="Disable streaming output"),
+    model: str | None = typer.Option(None, "--model", "-m", help="Model override."),
+    base_url: str | None = typer.Option(None, "--base-url", help="LLM endpoint override."),
+    working_dir: Path | None = typer.Option(None, "--working-dir", "-w", help="Working directory."),
+    no_stream: bool = typer.Option(False, "--no-stream", help="Disable streaming output."),
+    use_legacy: bool = typer.Option(
+        False, "--legacy", help="Use OpenAI Agents SDK instead of Codex runtime."
+    ),
+    max_turns: int = typer.Option(15, "--max-turns", help="Maximum agent turns (legacy mode only)."),
+    no_mcp: bool = typer.Option(False, "--no-mcp", help="Disable external MCP servers (legacy mode only)."),
 ) -> None:
-    """Run the compliance agent with a message or task.
+    """Run a compliance task using the Codex agent runtime.
 
     Examples:
-        pretorin agent run "List my systems and check AC-2 compliance"
-        pretorin agent run "Generate narratives for all AC controls" --skill narrative-generation
-        pretorin agent run "Review security posture" --skill security-review --model gpt-4o-mini
+        pretorin agent run "Analyze this codebase for FedRAMP Moderate AC-02"
+        pretorin agent run "Generate narratives for AC controls" --skill narrative-generation
+        pretorin agent run "Review security posture" --skill security-review
+        pretorin agent run "List my systems" --base-url https://my-vllm.example.com/v1
+        pretorin agent run "Check compliance" --legacy  # Use OpenAI Agents SDK
     """
-    _check_agent_deps()
-    asyncio.run(_run_agent(message, skill, model, max_turns, no_mcp, not no_stream))
+    if use_legacy:
+        _check_agent_deps()
+        resolved_model = model or "gpt-4o"
+        asyncio.run(_run_legacy_agent(message, skill, resolved_model, max_turns, no_mcp, not no_stream))
+        return
+
+    _check_codex_deps()
+    asyncio.run(
+        _run_codex_agent(
+            message=message,
+            skill=skill,
+            model=model,
+            base_url=base_url,
+            working_dir=working_dir,
+            stream=not no_stream,
+        )
+    )
 
 
-async def _run_agent(
+async def _run_codex_agent(
+    message: str,
+    skill: str | None,
+    model: str | None,
+    base_url: str | None,
+    working_dir: Path | None,
+    stream: bool,
+) -> None:
+    """Execute a task using the Codex agent runtime."""
+    from pretorin.agent.codex_agent import CodexAgent
+
+    try:
+        agent = CodexAgent(
+            model=model,
+            base_url=base_url,
+        )
+    except RuntimeError as e:
+        rprint(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+    if not is_json_mode():
+        skill_label = f" with skill [bold]{skill}[/bold]" if skill else ""
+        rprint(f"  {ROMEBOT_AGENT}  Starting Codex agent{skill_label} (model: {agent.model})\n")
+
+    try:
+        result = await agent.run(
+            task=message,
+            working_directory=working_dir,
+            skill=skill,
+            stream=stream,
+        )
+        if not stream and result:
+            if is_json_mode():
+                print_json({"response": result.response, "evidence_created": result.evidence_created})
+            else:
+                rprint(result.response)
+    except RuntimeError as e:
+        rprint(f"[red]Agent error: {e}[/red]")
+        raise typer.Exit(1)
+    except Exception as e:
+        rprint(f"[red]Agent error: {e}[/red]")
+        raise typer.Exit(1)
+
+
+async def _run_legacy_agent(
     message: str,
     skill: str | None,
     model: str,
@@ -68,22 +145,21 @@ async def _run_agent(
     no_mcp: bool,
     stream: bool,
 ) -> None:
-    """Execute the agent."""
+    """Execute the agent using the legacy OpenAI Agents SDK path."""
+    import os
+
     from pretorin.agent.runner import ComplianceAgent
     from pretorin.client.api import PretorianClient, PretorianClientError
     from pretorin.client.config import Config
 
     config = Config()
 
-    # Resolve OpenAI settings
-    import os
-
     api_key = os.environ.get("OPENAI_API_KEY", config.get("openai_api_key"))
     base_url = os.environ.get("OPENAI_BASE_URL", config.get("openai_base_url"))
     model = os.environ.get("OPENAI_MODEL", model)
 
     if not api_key:
-        rprint("[red]OPENAI_API_KEY is required for agent features.[/red]")
+        rprint("[red]OPENAI_API_KEY is required for legacy agent features.[/red]")
         rprint("[dim]Set it with: [bold]export OPENAI_API_KEY=sk-...[/bold][/dim]")
         raise typer.Exit(1)
 
@@ -92,7 +168,6 @@ async def _run_agent(
             rprint("[red]Not configured. Run 'pretorin login' first.[/red]")
             raise typer.Exit(1)
 
-        # Load MCP servers
         mcp_servers = None
         if not no_mcp:
             try:
@@ -104,11 +179,11 @@ async def _run_agent(
                     if not is_json_mode():
                         rprint(f"  {ROMEBOT_AGENT}  Connected to {len(mcp_servers)} MCP server(s)\n")
             except Exception:
-                pass  # MCP servers are optional
+                pass
 
         if not is_json_mode():
             skill_label = f" with skill [bold]{skill}[/bold]" if skill else ""
-            rprint(f"  {ROMEBOT_AGENT}  Starting agent{skill_label} (model: {model})\n")
+            rprint(f"  {ROMEBOT_AGENT}  Starting legacy agent{skill_label} (model: {model})\n")
 
         agent = ComplianceAgent(
             client=client,
@@ -133,6 +208,114 @@ async def _run_agent(
         except Exception as e:
             rprint(f"[red]Agent error: {e}[/red]")
             raise typer.Exit(1)
+
+
+@app.command("doctor")
+def agent_doctor() -> None:
+    """Validate Codex runtime setup and configuration."""
+    from pretorin.agent.codex_runtime import CodexRuntime
+
+    runtime = CodexRuntime()
+    errors: list[str] = []
+    warnings: list[str] = []
+    info: dict[str, str] = {}
+
+    info["codex_version"] = runtime.version
+    info["binary_path"] = str(runtime.binary_path)
+    info["binary_installed"] = str(runtime.is_installed)
+    info["codex_home"] = str(runtime.codex_home)
+
+    if not runtime.is_installed:
+        errors.append(f"Codex binary not found at {runtime.binary_path}. Run 'pretorin agent install'.")
+
+    config_path = runtime.codex_home / "config.toml"
+    info["config_exists"] = str(config_path.exists())
+    if not config_path.exists():
+        warnings.append("Codex config.toml not yet written (will be created on first run).")
+
+    # Check for API key availability
+    import os
+
+    has_key = bool(
+        os.environ.get("PRETORIN_LLM_API_KEY")
+        or os.environ.get("OPENAI_API_KEY")
+    )
+    if not has_key:
+        warnings.append("No LLM API key found. Set PRETORIN_LLM_API_KEY or OPENAI_API_KEY.")
+
+    ok = len(errors) == 0
+
+    if is_json_mode():
+        print_json({"ok": ok, "info": info, "errors": errors, "warnings": warnings})
+        if not ok:
+            raise typer.Exit(1)
+        return
+
+    table = Table(title="Codex Runtime Check", show_header=True, header_style="bold")
+    table.add_column("Item")
+    table.add_column("Value")
+    for key, value in info.items():
+        table.add_row(key, value)
+    console.print(table)
+
+    for warning in warnings:
+        rprint(f"[yellow]! {warning}[/yellow]")
+    if errors:
+        for error in errors:
+            rprint(f"[red]x {error}[/red]")
+        raise typer.Exit(1)
+
+    rprint("[#95D7E0]v[/#95D7E0] Codex runtime is ready.")
+
+
+@app.command("install")
+def agent_install() -> None:
+    """Download and install the pinned Codex binary."""
+    from pretorin.agent.codex_runtime import CodexRuntime
+
+    runtime = CodexRuntime()
+
+    if not is_json_mode():
+        rprint(f"  {ROMEBOT_AGENT}  Installing Codex {runtime.version}...")
+
+    try:
+        path = runtime.ensure_installed()
+        if is_json_mode():
+            print_json({"installed": True, "path": str(path), "version": runtime.version})
+        else:
+            rprint(f"[#95D7E0]v[/#95D7E0] Codex binary installed at {path}")
+    except RuntimeError as e:
+        if is_json_mode():
+            print_json({"installed": False, "error": str(e)})
+        else:
+            rprint(f"[red]Installation failed: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command("version")
+def agent_version() -> None:
+    """Show pinned Codex version and binary status."""
+    from pretorin.agent.codex_runtime import CodexRuntime
+
+    runtime = CodexRuntime()
+    installed = runtime.is_installed
+    status = "installed" if installed else "not installed"
+
+    if is_json_mode():
+        print_json({
+            "codex_version": runtime.version,
+            "binary_path": str(runtime.binary_path),
+            "status": status,
+        })
+        return
+
+    rprint(f"[#FF9010]Codex version:[/#FF9010] {runtime.version}")
+    rprint(f"[#FF9010]Binary path:[/#FF9010]   {runtime.binary_path}")
+    if installed:
+        rprint(f"[#FF9010]Status:[/#FF9010]        [#95D7E0]{status}[/#95D7E0]")
+    else:
+        rprint(f"[#FF9010]Status:[/#FF9010]        [yellow]{status}[/yellow]")
+        rprint("[dim]Run 'pretorin agent install' to download.[/dim]")
 
 
 @app.command("skills")
