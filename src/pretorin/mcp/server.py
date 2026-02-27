@@ -55,7 +55,7 @@ def _format_json(data: Any) -> list[TextContent]:
     return [TextContent(type="text", text=json.dumps(data, indent=2, default=str))]
 
 
-_VALID_EVIDENCE_TYPES = {"documentation", "configuration", "screenshot", "log", "report", "policy", "code"}
+_VALID_EVIDENCE_TYPES = {"screenshot", "screen_recording", "log_file", "configuration", "test_result", "certificate", "attestation", "code_snippet", "repository_link", "policy_document", "scan_result", "interview_notes", "other"}
 _VALID_SEVERITIES = {"critical", "high", "medium", "low", "info"}
 _VALID_EVENT_TYPES = {"security_scan", "configuration_change", "access_review", "compliance_check"}
 _VALID_CONTROL_STATUSES = {"implemented", "partial", "planned", "not_started", "not_applicable"}
@@ -932,7 +932,7 @@ async def _handle_create_evidence(
 
     from pretorin.client.models import EvidenceCreate
 
-    evidence_type = arguments.get("evidence_type", "documentation")
+    evidence_type = arguments.get("evidence_type", "policy_document")
     enum_err = _validate_enum(evidence_type, _VALID_EVIDENCE_TYPES, "evidence_type")
     if enum_err:
         return _format_error(enum_err)

@@ -40,10 +40,10 @@ def login(
         rprint("\n[bold #FF9010]Welcome to Pretorin[/bold #FF9010] [dim]\\[BETA][/dim]")
         rprint("[dim]Making compliance the best part of your day.[/dim]\n")
         rprint("Get your API key from: [link=https://platform.pretorin.com/]https://platform.pretorin.com/[/link]")
-        rprint("[dim]A beta code is required for platform features (evidence, narratives, monitoring).")
+        rprint("[dim]A beta code is required for platform features (evidence, narratives, monitoring).[/dim]")
         rprint("No beta code? You can still browse frameworks and controls freely.")
         rprint(
-            "Sign up for early access: [link=https://pretorin.com/early-access/]https://pretorin.com/early-access/[/link][/dim]\n"
+            "[dim]Sign up for early access:[/dim] [link=https://pretorin.com/early-access/]https://pretorin.com/early-access/[/link]\n"
         )
         api_key = typer.prompt("Enter your API key", hide_input=True)
 

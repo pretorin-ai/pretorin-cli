@@ -41,10 +41,10 @@ def evidence_create(
         help="Evidence name (defaults to description summary)",
     ),
     evidence_type: str = typer.Option(
-        "documentation",
+        "policy_document",
         "--type",
         "-t",
-        help="Evidence type: documentation, configuration, screenshot, log, code",
+        help="Evidence type: screenshot, screen_recording, log_file, configuration, test_result, certificate, attestation, code_snippet, repository_link, policy_document, scan_result, interview_notes, other",
     ),
 ) -> None:
     """Create a local evidence file.

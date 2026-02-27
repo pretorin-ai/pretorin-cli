@@ -175,7 +175,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     async def create_evidence(
         name: str,
         description: str,
-        evidence_type: str = "documentation",
+        evidence_type: str = "policy_document",
         control_id: str | None = None,
         framework_id: str | None = None,
     ) -> str:

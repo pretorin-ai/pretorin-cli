@@ -23,15 +23,16 @@ def normalize_control_id(control_id: str) -> str:
     if not control_id:
         return control_id
 
-    lowered = control_id.lower().strip()
+    stripped = control_id.strip()
 
-    # Match: family prefix (letters) - single digit, optionally followed by
-    # enhancement suffixes like .1, (1), etc.
-    match = re.match(r"^([a-z]{2})-(\d+)(.*)", lowered)
+    # Match NIST/FedRAMP pattern: family prefix (2 letters) - number, optionally
+    # followed by enhancement suffixes like .1, (1), etc.
+    # e.g., ac-3, AC-02, sc-7.1 — but NOT CMMC-style IDs like AC.L1-3.1.1
+    match = re.match(r"^([a-zA-Z]{2})-(\d+)((?:\.\d+|\(\d+\))?)$", stripped)
     if not match:
-        return lowered
+        return stripped
 
-    family = match.group(1)
+    family = match.group(1).lower()
     number = match.group(2)
     suffix = match.group(3)
 

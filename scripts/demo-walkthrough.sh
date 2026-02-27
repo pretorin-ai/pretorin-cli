@@ -38,7 +38,7 @@ pause() {
     echo -e "${ORANGE}${BOLD}  $1${RESET}"
     echo -e "${ORANGE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo ""
-    read -r -p "  Press Enter to continue..."
+    read -r -p "  Press Enter to continue..." </dev/tty
     echo ""
 }
 
@@ -65,6 +65,11 @@ echo ""
 echo -e "  ${DIM}Pretorin is in closed beta. Framework/control browsing works for everyone.${RESET}"
 echo -e "  ${DIM}Platform features (evidence, narratives, monitoring) require a beta code.${RESET}"
 echo -e "  ${DIM}Sign up: https://pretorin.com/early-access/${RESET}"
+echo ""
+echo -e "  ${GOLD}${BOLD}Prerequisites:${RESET}"
+echo -e "    • A Pretorin account with a beta code"
+echo -e "    • A test system with the ${BOLD}fedramp-moderate${RESET} framework attached"
+echo -e "    ${DIM}(Create both at https://platform.pretorin.com before running this demo)${RESET}"
 echo ""
 
 pause "Section 0: Pre-flight checks"
@@ -115,10 +120,12 @@ echo -e "  ${DIM}(The demo will continue — 'context set' will fail if no syste
 echo ""
 
 echo -e "  ${BOLD}Select your active system (interactive picker):${RESET}"
+echo -e "  ${DIM}This demo requires fedramp-moderate — select a system that has it.${RESET}"
+echo ""
 if ! pretorin context set; then
     echo ""
     echo -e "  ${GOLD}No systems available.${RESET}"
-    echo -e "  Create a system at ${BOLD}https://platform.pretorin.com${RESET} and re-run this demo."
+    echo -e "  Create a system with ${BOLD}fedramp-moderate${RESET} at ${BOLD}https://platform.pretorin.com${RESET} and re-run this demo."
     exit 1
 fi
 
@@ -126,19 +133,44 @@ echo ""
 echo -e "  ${BOLD}Show current context:${RESET}"
 run_cmd pretorin context show
 
-# Capture the active system name for later commands
-ACTIVE_SYSTEM=$(pretorin context show --json 2>/dev/null | python3 -c "
+# Capture the active system name and framework for later commands
+CONTEXT_JSON=$(pretorin context show --json 2>/dev/null || echo "{}")
+
+ACTIVE_SYSTEM=$(echo "$CONTEXT_JSON" | python3 -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
-    print(data.get('system', data.get('system_name', data.get('name', ''))))
+    print(data.get('active_system_name', data.get('system', '')))
+except Exception:
+    pass
+" 2>/dev/null || echo "")
+
+ACTIVE_FRAMEWORK=$(echo "$CONTEXT_JSON" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    print(data.get('active_framework_id', data.get('framework', '')))
 except Exception:
     pass
 " 2>/dev/null || echo "")
 
 if [[ -z "$ACTIVE_SYSTEM" ]]; then
-    echo -e "  ${DIM}(Could not detect active system name — narrative push will need manual entry.)${RESET}"
+    echo -e "  ${GOLD}Error:${RESET} Could not detect active system name."
+    echo -e "  Create a system at ${BOLD}https://platform.pretorin.com${RESET} and re-run this demo."
+    exit 1
 fi
+
+if [[ "$ACTIVE_FRAMEWORK" != "fedramp-moderate" ]]; then
+    echo -e "  ${GOLD}Error:${RESET} This demo requires the ${BOLD}fedramp-moderate${RESET} framework."
+    echo -e "  Selected framework: ${BOLD}${ACTIVE_FRAMEWORK:-none}${RESET}"
+    echo ""
+    echo -e "  Either:"
+    echo -e "    1. Re-run this demo and select a system with fedramp-moderate attached"
+    echo -e "    2. Attach fedramp-moderate to your system at ${BOLD}https://platform.pretorin.com${RESET}"
+    exit 1
+fi
+
+echo -e "  ✓ Framework ${BOLD}fedramp-moderate${RESET} confirmed."
 
 # ── Section 3: Evidence Workflow ─────────────────────────────────────────────
 

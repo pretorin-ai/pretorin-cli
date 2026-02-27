@@ -16,7 +16,7 @@ class LocalEvidence:
     framework_id: str
     name: str
     description: str
-    evidence_type: str = "documentation"
+    evidence_type: str = "policy_document"
     status: str = "draft"
     collected_at: str = ""
     platform_id: str | None = None

@@ -316,7 +316,7 @@ class EvidenceCreate(BaseModel):
 
     name: str = Field(..., description="Evidence name")
     description: str = Field(..., description="Evidence description")
-    evidence_type: str = Field(default="documentation", description="Type of evidence")
+    evidence_type: str = Field(default="policy_document", description="Type of evidence")
     source: str = Field(default="cli", description="Source of evidence")
     control_id: str | None = Field(default=None, description="Associated control ID")
     framework_id: str | None = Field(default=None, description="Associated framework ID")
