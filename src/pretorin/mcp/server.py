@@ -35,10 +35,12 @@ server = Server(
     instructions=(
         "Pretorin is currently in BETA. Framework and control reference tools "
         "(list_frameworks, get_control, etc.) work without restrictions. "
-        "Platform write features (evidence, narratives, monitoring, control status) "
-        "require a beta code. Users without a beta code can sign up for early access "
-        "at https://pretorin.com/early-access/. If a platform write call fails with "
-        "an authentication error, let the user know they may need a beta code."
+        "Creating a system requires a beta code — systems can only be created on "
+        "the Pretorin platform (https://platform.pretorin.com), not through the CLI "
+        "or MCP. Without a system, platform write features (evidence, narratives, "
+        "monitoring, control status) cannot be used. If list_systems returns no "
+        "systems, tell the user they need a beta code to create one on the platform "
+        "and can sign up for early access at https://pretorin.com/early-access/."
     ),
 )
 
@@ -839,20 +841,27 @@ async def _handle_list_systems(
 ) -> list[TextContent]:
     """Handle the list_systems tool."""
     systems = await client.list_systems()
-    return _format_json(
-        {
-            "total": len(systems),
-            "systems": [
-                {
-                    "id": s.get("id", ""),
-                    "name": s.get("name", ""),
-                    "description": s.get("description"),
-                    "security_impact_level": s.get("security_impact_level"),
-                }
-                for s in systems
-            ],
-        }
-    )
+    result: dict[str, Any] = {
+        "total": len(systems),
+        "systems": [
+            {
+                "id": s.get("id", ""),
+                "name": s.get("name", ""),
+                "description": s.get("description"),
+                "security_impact_level": s.get("security_impact_level"),
+            }
+            for s in systems
+        ],
+    }
+    if not systems:
+        result["note"] = (
+            "No systems found. Systems can only be created on the Pretorin platform "
+            "(https://platform.pretorin.com) with a beta code. Pretorin is currently "
+            "in closed beta — the user can sign up for early access at "
+            "https://pretorin.com/early-access/. Without a system, framework and "
+            "control browsing tools still work."
+        )
+    return _format_json(result)
 
 
 async def _handle_get_system(
