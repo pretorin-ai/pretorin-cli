@@ -347,9 +347,16 @@ class ControlImplementationResponse(BaseModel):
 
     control_id: str
     status: str | None = None
-    narrative: str | None = None
+    implementation_narrative: str | None = None
+    ai_generated_narrative: str | None = None
+    ai_confidence_score: float | None = None
     evidence_count: int = 0
     notes: list[dict[str, Any]] = Field(default_factory=list)
+
+    @property
+    def narrative(self) -> str | None:
+        """Return the best available narrative (user-written takes precedence)."""
+        return self.implementation_narrative or self.ai_generated_narrative
 
 
 # =============================================================================

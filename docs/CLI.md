@@ -337,6 +337,103 @@ $ pretorin context show
 pretorin context clear
 ```
 
+## Evidence Commands
+
+The `evidence` command group manages local evidence files and syncs them to the platform.
+
+### Create Local Evidence
+
+```bash
+pretorin evidence create --control-id ac-02 --framework-id fedramp-moderate \
+  --name "RBAC Configuration" --description "Role-based access control in Azure AD"
+```
+
+Creates a markdown file under `evidence/<framework>/<control>/` with YAML frontmatter.
+
+### List Local Evidence
+
+```bash
+pretorin evidence list
+pretorin evidence list --framework fedramp-moderate
+```
+
+### Push Evidence to Platform
+
+```bash
+pretorin evidence push
+```
+
+Pushes all draft evidence files to the platform. Requires an active system context (`pretorin context set`).
+
+## Narrative Commands
+
+The `narrative` command group pushes implementation narratives to the platform.
+
+### Push a Narrative File
+
+```bash
+pretorin narrative push ac-02 fedramp-moderate "My System" narrative-ac02.md
+```
+
+Reads a markdown/text file and submits it as the implementation narrative for a control. To generate narratives with AI, use the agent:
+
+```bash
+pretorin agent run --skill narrative-generation "Generate narrative for AC-02"
+```
+
+## Monitoring Commands
+
+### Push a Monitoring Event
+
+```bash
+pretorin monitoring push --system "My System" --title "Quarterly Access Review" \
+  --event-type access_review --severity info
+```
+
+Valid event types: `security_scan`, `configuration_change`, `access_review`, `compliance_check`
+Valid severities: `critical`, `high`, `medium`, `low`, `info`
+
+## Agent Commands
+
+The `agent` command group runs autonomous compliance tasks using the Codex agent runtime. The agent has access to all Pretorin MCP tools and can perform multi-step compliance workflows.
+
+### Run a Compliance Task
+
+```bash
+# Free-form task
+pretorin agent run "Assess AC-2 implementation gaps for my system"
+
+# Use a predefined skill
+pretorin agent run --skill gap-analysis
+pretorin agent run --skill narrative-generation "Generate narratives for all AC controls"
+pretorin agent run --skill evidence-collection
+pretorin agent run --skill security-review
+```
+
+### Available Skills
+
+| Skill | Description |
+|-------|-------------|
+| `gap-analysis` | Analyze system compliance gaps across frameworks |
+| `narrative-generation` | Generate implementation narratives for controls |
+| `evidence-collection` | Collect and map evidence from codebase to controls |
+| `security-review` | Review codebase for security controls and compliance posture |
+
+### Agent Setup
+
+```bash
+# Check setup
+pretorin agent doctor
+
+# Install the Codex binary
+pretorin agent install
+
+# Manage MCP servers available to the agent
+pretorin agent mcp-list
+pretorin agent mcp-add <name> --command <cmd> --args <args>
+pretorin agent mcp-remove <name>
+```
+
 ## Review Commands
 
 The `review` command group helps you review local code against framework controls.
@@ -351,7 +448,7 @@ pretorin review run --control-id ac-02 --path ./src
 pretorin review run --control-id ac-02 --framework-id nist-800-53-r5 --path ./src
 ```
 
-If a system context is set (beta user), narratives and evidence are pushed to the platform. Otherwise, they're saved locally to `narratives/` and `evidence/` directories.
+If a system context is set, narratives and evidence are pushed to the platform. Otherwise, they're saved locally to `narratives/` and `evidence/` directories.
 
 ### Check Implementation Status
 
@@ -482,15 +579,31 @@ Different frameworks use different ID conventions. Always use `pretorin framewor
 | `pretorin frameworks get <id>` | Get framework details |
 | `pretorin frameworks families <id>` | List control families |
 | `pretorin frameworks controls <id>` | List controls (`--family`, `--limit`) |
-| `pretorin frameworks control <framework> <control>` | Get control details (`--references`) |
+| `pretorin frameworks control <fw> <ctrl>` | Get control details (`--references`) |
 | `pretorin frameworks documents <id>` | Get document requirements |
-| `pretorin context list` | List available systems and frameworks with progress |
-| `pretorin context set` | Set active system/framework context (`--system`, `--framework`) |
+| `pretorin context list` | List systems and frameworks with progress |
+| `pretorin context set` | Set active system/framework context |
 | `pretorin context show` | Display current active context |
-| `pretorin context clear` | Clear active system/framework context |
-| `pretorin review run` | Review code against a control (`--control-id`, `--framework-id`, `--path`) |
-| `pretorin review status` | Check implementation status for a control (`--control-id`) |
+| `pretorin context clear` | Clear active context |
+| `pretorin evidence create` | Create a local evidence file |
+| `pretorin evidence list` | List local evidence files |
+| `pretorin evidence push` | Push local evidence to the platform |
+| `pretorin narrative push <ctrl> <fw> <sys> <file>` | Push a narrative file to the platform |
+| `pretorin monitoring push` | Push a monitoring event to a system |
+| `pretorin agent run "<task>"` | Run a compliance task with the Codex agent |
+| `pretorin agent run --skill <name>` | Run a predefined agent skill |
+| `pretorin agent doctor` | Validate Codex runtime setup |
+| `pretorin agent install` | Download the pinned Codex binary |
+| `pretorin agent skills` | List available agent skills |
+| `pretorin agent mcp-list` | List configured MCP servers |
+| `pretorin agent mcp-add` | Add an MCP server configuration |
+| `pretorin agent mcp-remove` | Remove an MCP server configuration |
+| `pretorin review run` | Review code against a control |
+| `pretorin review status` | Check implementation status for a control |
 | `pretorin config list` | List all configuration |
 | `pretorin config get <key>` | Get a config value |
 | `pretorin config set <key> <value>` | Set a config value |
 | `pretorin config path` | Show config file path |
+| `pretorin harness init` | Initialize harness config |
+| `pretorin harness doctor` | Validate harness setup |
+| `pretorin harness run "<task>"` | Run task through harness backend |

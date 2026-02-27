@@ -27,6 +27,17 @@ class LocalEvidence:
             self.collected_at = datetime.now(UTC).isoformat()
 
 
+def _safe_path_component(text: str) -> str:
+    """Sanitize a string for use as a path component (no traversal)."""
+    # Strip any path separators and parent references
+    cleaned = text.replace("/", "").replace("\\", "").replace("\0", "")
+    cleaned = re.sub(r"\.{2,}", ".", cleaned)
+    cleaned = cleaned.strip(". ")
+    if not cleaned:
+        raise ValueError(f"Invalid path component: {text!r}")
+    return cleaned
+
+
 def _slugify(text: str) -> str:
     """Convert text to a filesystem-safe slug."""
     slug = text.lower().strip()
@@ -92,10 +103,15 @@ class EvidenceWriter:
             Path to the created file.
         """
         slug = _slugify(evidence.name)
-        dir_path = self.base_dir / evidence.framework_id / evidence.control_id
+        safe_framework = _safe_path_component(evidence.framework_id)
+        safe_control = _safe_path_component(evidence.control_id)
+        dir_path = self.base_dir / safe_framework / safe_control
         dir_path.mkdir(parents=True, exist_ok=True)
 
         file_path = dir_path / f"{slug}.md"
+        # Final check: resolved path must be under base_dir
+        if not file_path.resolve().is_relative_to(self.base_dir.resolve()):
+            raise ValueError(f"Path traversal detected: {file_path}")
 
         frontmatter = _format_frontmatter(evidence)
         content = f"{frontmatter}\n\n# {evidence.name}\n\n{evidence.description}\n"
@@ -159,7 +175,7 @@ class EvidenceWriter:
             return []
 
         results = []
-        search_dir = self.base_dir / framework_id if framework_id else self.base_dir
+        search_dir = self.base_dir / _safe_path_component(framework_id) if framework_id else self.base_dir
 
         if not search_dir.exists():
             return []

@@ -12,20 +12,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pretorin context set` — Set active system/framework context (interactive or via `--system`/`--framework` flags)
 - `pretorin context show` — Display current active context with live progress stats
 - `pretorin context clear` — Clear active system/framework context
+- `pretorin evidence create` — Create local evidence files with YAML frontmatter
+- `pretorin evidence list` — List local evidence files with optional framework filter
+- `pretorin evidence push` — Push local evidence to the platform with review flagging
+- `pretorin narrative push` — Push a narrative file to the platform for a control
+- `pretorin monitoring push` — Push monitoring events (security scans, config changes, access reviews)
+- `pretorin agent run` — Run autonomous compliance tasks using the Codex agent runtime
+- `pretorin agent run --skill <name>` — Run predefined skills (gap-analysis, narrative-generation, evidence-collection, security-review)
+- `pretorin agent doctor/install/version/skills` — Agent runtime management commands
+- `pretorin agent mcp-list/mcp-add/mcp-remove` — Manage MCP servers available to the agent
 - `pretorin review run` — Review local code against framework controls with AI guidance
 - `pretorin review status` — Check implementation status for a specific control
 - `resolve_context()` helper for resolving system/framework from flags > stored config > error
 - Local-only mode: commands work without platform access, saving artifacts locally
-- 3 new MCP tools: `pretorin_get_control_context`, `pretorin_get_scope`, `pretorin_update_narrative`
-- 3 new agent tools: `get_control_context`, `get_scope`, `update_narrative`
-- Updated all agent skills with new tool lists
-- `ControlContext` and `ScopeResponse` client models
+- 14 new MCP tools: system management, evidence CRUD, narrative push, monitoring events, control notes, control status, control implementation details
+- `pretorin_add_control_note` MCP tool — Add notes with suggestions for manual steps or systems to connect
+- `add_control_note` added to narrative-generation, evidence-collection, and security-review agent skills
+- `ControlContext`, `ScopeResponse`, `MonitoringEventCreate`, `EvidenceCreate` client models
+- Control ID normalization (zero-padding NIST IDs like ac-3 → ac-03)
+- Codex agent runtime with isolated binary management under `~/.pretorin/bin/`
 
 ### Changed
 - Default platform API base URL changed to `/api/v1/public` for public API routing
 - Client methods updated to match new public API path structure
 - `list_evidence()` and `create_evidence()` now scoped to system (not organization)
 - `update_control_status()` changed from PATCH to POST with body
+
+### Removed
+- `pretorin narrative generate` command — use `pretorin agent run --skill narrative-generation` instead
+- `pretorin_generate_narrative` MCP tool — the CLI generates narratives locally, never via the platform
+
+### Security
+- All MCP mutation handlers now validate required parameters (system_id, framework_id) before API calls
+- Added `system_id` to `create_evidence` and `link_evidence` MCP tool schemas (was missing)
+- Client-side enum validation for evidence_type, severity, event_type, and control status
+- Path traversal protection in evidence writer (sanitized framework_id and control_id in file paths)
+- TOML injection prevention in Codex runtime config writer
+- Connection error handling now shows the URL being contacted
 
 ## [0.2.0] - 2026-02-06
 

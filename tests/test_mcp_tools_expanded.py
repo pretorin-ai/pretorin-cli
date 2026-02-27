@@ -1,4 +1,4 @@
-"""Tests for expanded MCP tools (18 total).
+"""Tests for expanded MCP tools (21 total).
 
 Tests verify tool listing, dispatch, and error handling using mocked API responses.
 """
@@ -38,9 +38,10 @@ class TestToolListing:
             "pretorin_search_evidence",
             "pretorin_create_evidence",
             "pretorin_link_evidence",
-            # Narrative 2
-            "pretorin_generate_narrative",
+            # Narrative 1
             "pretorin_get_narrative",
+            # Notes 1
+            "pretorin_add_control_note",
             # Monitoring 1
             "pretorin_push_monitoring_event",
             # Control context & scope 2
@@ -153,40 +154,37 @@ class TestEvidenceTools:
 
     def test_create_evidence(self) -> None:
         client = _make_mock_client(create_evidence={"id": "ev-new", "name": "New Evidence"})
-        result = _run_tool("pretorin_create_evidence", {"name": "New Evidence", "description": "Test"}, client)
+        result = _run_tool(
+            "pretorin_create_evidence",
+            {"system_id": "sys-1", "name": "New Evidence", "description": "Test"},
+            client,
+        )
         data = _parse_result(result)
         assert data["id"] == "ev-new"
 
+    def test_create_evidence_missing_system_id(self) -> None:
+        client = _make_mock_client()
+        result = _run_tool("pretorin_create_evidence", {"name": "New Evidence", "description": "Test"}, client)
+        assert any("Missing required" in c.text for c in result)
+
     def test_link_evidence(self) -> None:
         client = _make_mock_client(link_evidence_to_control={"linked": True})
-        result = _run_tool("pretorin_link_evidence", {"evidence_id": "ev-1", "control_id": "ac-2"}, client)
+        result = _run_tool(
+            "pretorin_link_evidence",
+            {"system_id": "sys-1", "evidence_id": "ev-1", "control_id": "ac-2"},
+            client,
+        )
         data = _parse_result(result)
         assert data["linked"] is True
+
+    def test_link_evidence_missing_system_id(self) -> None:
+        client = _make_mock_client()
+        result = _run_tool("pretorin_link_evidence", {"evidence_id": "ev-1", "control_id": "ac-2"}, client)
+        assert any("Missing required" in c.text for c in result)
 
 
 class TestNarrativeTools:
     """Test narrative-related MCP tools."""
-
-    def test_generate_narrative(self) -> None:
-        client = _make_mock_client(
-            generate_narrative={
-                "control_id": "ac-2",
-                "narrative": "This system implements AC-2 through...",
-                "ai_confidence_score": 0.85,
-            }
-        )
-        result = _run_tool(
-            "pretorin_generate_narrative",
-            {
-                "system_id": "sys-1",
-                "control_id": "ac-2",
-                "framework_id": "fedramp-moderate",
-            },
-            client,
-        )
-        data = _parse_result(result)
-        assert data["control_id"] == "ac-2"
-        assert "narrative" in data
 
     def test_get_narrative(self) -> None:
         from pretorin.client.models import NarrativeResponse
