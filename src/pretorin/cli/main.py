@@ -87,7 +87,7 @@ app.add_typer(context_app, name="context", help="Manage active system/framework 
 app.add_typer(frameworks_app, name="frameworks", help="Browse compliance frameworks and controls")
 app.add_typer(monitoring_app, name="monitoring", help="Monitoring events and compliance tracking")
 app.add_typer(evidence_app, name="evidence", help="Local evidence management and platform sync")
-app.add_typer(narrative_app, name="narrative", help="AI narrative generation and management")
+app.add_typer(narrative_app, name="narrative", help="Narrative management")
 app.add_typer(review_app, name="review", help="Review local artifacts against compliance controls")
 app.add_typer(agent_app, name="agent", help="Autonomous compliance agent")
 app.add_typer(harness_app, name="harness", help="AI harness wrapper with Pretorin policy defaults")

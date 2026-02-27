@@ -158,7 +158,21 @@ class PretorianClient:
             PretorianClientError: If the request fails.
         """
         client = await self._get_client()
-        response = await client.request(method, path, **kwargs)
+        try:
+            response = await client.request(method, path, **kwargs)
+        except httpx.ConnectError as exc:
+            raise PretorianClientError(
+                f"Could not connect to {self._api_base_url}{path} — "
+                f"is the API reachable? ({exc})",
+            ) from exc
+        except httpx.TimeoutException as exc:
+            raise PretorianClientError(
+                f"Request timed out connecting to {self._api_base_url}{path} ({exc})",
+            ) from exc
+        except httpx.HTTPError as exc:
+            raise PretorianClientError(
+                f"HTTP error contacting {self._api_base_url}{path}: {exc}",
+            ) from exc
 
         if not response.is_success:
             self._handle_error(response)
@@ -487,44 +501,6 @@ class PretorianClient:
     # Narrative Endpoints
     # =========================================================================
 
-    async def generate_narrative(
-        self,
-        system_id: str,
-        control_id: str,
-        framework_id: str,
-        context: str | None = None,
-    ) -> dict[str, Any]:
-        """Generate an AI narrative for a control implementation.
-
-        Args:
-            system_id: ID of the system.
-            control_id: ID of the control.
-            framework_id: ID of the framework.
-            context: Optional additional context for generation.
-
-        Returns:
-            Generated narrative response.
-        """
-        payload: dict[str, Any] = {
-            "system_id": system_id,
-            "control_id": control_id,
-            "framework_id": framework_id,
-        }
-        if context:
-            payload["context"] = context
-
-        # Narrative generation can take 30-60s
-        client = await self._get_client()
-        response = await client.request(
-            "POST",
-            "/ai/narrative/generate",
-            json=payload,
-            timeout=120.0,
-        )
-        if not response.is_success:
-            self._handle_error(response)
-        return response.json()
-
     async def get_narrative(
         self,
         system_id: str,
@@ -649,6 +625,7 @@ class PretorianClient:
         system_id: str,
         control_id: str,
         content: str,
+        framework_id: str,
         source: str = "cli",
     ) -> dict[str, Any]:
         """Add a note to a control implementation.
@@ -657,6 +634,7 @@ class PretorianClient:
             system_id: ID of the system.
             control_id: ID of the control.
             content: Note content.
+            framework_id: Framework ID (required by the API).
             source: Note source identifier.
 
         Returns:
@@ -666,6 +644,7 @@ class PretorianClient:
         data = await self._request(
             "POST",
             f"/systems/{system_id}/controls/{control_id}/notes",
+            params={"framework_id": framework_id},
             json=payload,
         )
         return data

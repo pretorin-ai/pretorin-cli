@@ -43,6 +43,33 @@ def _format_json(data: Any) -> list[TextContent]:
     return [TextContent(type="text", text=json.dumps(data, indent=2, default=str))]
 
 
+_VALID_EVIDENCE_TYPES = {"documentation", "configuration", "screenshot", "log", "report", "policy", "code"}
+_VALID_SEVERITIES = {"critical", "high", "medium", "low", "info"}
+_VALID_EVENT_TYPES = {"security_scan", "configuration_change", "access_review", "compliance_check"}
+_VALID_CONTROL_STATUSES = {"implemented", "partial", "planned", "not_started", "not_applicable"}
+
+
+def _require(arguments: dict[str, Any], *keys: str) -> str | None:
+    """Validate that all keys are present and non-empty.
+
+    Returns an error message string if validation fails, None if all ok.
+    """
+    missing = [k for k in keys if not arguments.get(k)]
+    if missing:
+        return f"Missing required parameter(s): {', '.join(missing)}"
+    return None
+
+
+def _validate_enum(value: str, valid: set[str], field_name: str) -> str | None:
+    """Validate a value against allowed enum values.
+
+    Returns an error message if invalid, None if ok.
+    """
+    if value not in valid:
+        return f"Invalid {field_name}: {value!r}. Must be one of: {', '.join(sorted(valid))}"
+    return None
+
+
 # =============================================================================
 # MCP Resources for Analysis
 # =============================================================================
@@ -324,6 +351,10 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
+                    "system_id": {
+                        "type": "string",
+                        "description": "The system ID",
+                    },
                     "name": {
                         "type": "string",
                         "description": "Evidence name",
@@ -334,8 +365,9 @@ async def list_tools() -> list[Tool]:
                     },
                     "evidence_type": {
                         "type": "string",
-                        "description": "Type of evidence (e.g., documentation, configuration, screenshot)",
+                        "description": "Type of evidence",
                         "default": "documentation",
+                        "enum": sorted(_VALID_EVIDENCE_TYPES),
                     },
                     "control_id": {
                         "type": "string",
@@ -346,7 +378,7 @@ async def list_tools() -> list[Tool]:
                         "description": "Optional: Associated framework ID",
                     },
                 },
-                "required": ["name", "description"],
+                "required": ["system_id", "name", "description"],
             },
         ),
         Tool(
@@ -355,6 +387,10 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
+                    "system_id": {
+                        "type": "string",
+                        "description": "The system ID",
+                    },
                     "evidence_id": {
                         "type": "string",
                         "description": "The evidence item ID",
@@ -368,39 +404,10 @@ async def list_tools() -> list[Tool]:
                         "description": "Optional: Framework context for the link",
                     },
                 },
-                "required": ["evidence_id", "control_id"],
+                "required": ["system_id", "evidence_id", "control_id"],
             },
         ),
         # === Narrative Tools ===
-        Tool(
-            name="pretorin_generate_narrative",
-            description=(
-                "Generate an AI implementation narrative for a control."
-                " This may take 30-60 seconds as it uses AI to analyze the system."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
-                    "control_id": {
-                        "type": "string",
-                        "description": "The control ID (e.g., ac-2)",
-                    },
-                    "framework_id": {
-                        "type": "string",
-                        "description": "The framework ID (e.g., fedramp-moderate)",
-                    },
-                    "context": {
-                        "type": "string",
-                        "description": "Optional: Additional context to guide narrative generation",
-                    },
-                },
-                "required": ["system_id", "control_id", "framework_id"],
-            },
-        ),
         Tool(
             name="pretorin_get_narrative",
             description="Get an existing implementation narrative for a control in a system",
@@ -440,15 +447,15 @@ async def list_tools() -> list[Tool]:
                     },
                     "severity": {
                         "type": "string",
-                        "description": "Event severity: critical, high, medium, low, info",
+                        "description": "Event severity",
                         "default": "medium",
+                        "enum": sorted(_VALID_SEVERITIES),
                     },
                     "event_type": {
                         "type": "string",
-                        "description": (
-                            "Event type: security_scan, configuration_change, access_review, compliance_check"
-                        ),
+                        "description": "Event type",
                         "default": "security_scan",
+                        "enum": sorted(_VALID_EVENT_TYPES),
                     },
                     "control_id": {
                         "type": "string",
@@ -533,6 +540,35 @@ async def list_tools() -> list[Tool]:
                 "required": ["system_id", "control_id", "framework_id", "narrative"],
             },
         ),
+        Tool(
+            name="pretorin_add_control_note",
+            description=(
+                "Add a note to a control implementation with suggestions such as"
+                " connecting systems not directly available or manually adding evidence"
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": {
+                        "type": "string",
+                        "description": "The system ID",
+                    },
+                    "control_id": {
+                        "type": "string",
+                        "description": "The control ID",
+                    },
+                    "framework_id": {
+                        "type": "string",
+                        "description": "The framework ID",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Note content (suggestions, manual steps, integration guidance)",
+                    },
+                },
+                "required": ["system_id", "control_id", "framework_id", "content"],
+            },
+        ),
         # === Control Implementation Tools ===
         Tool(
             name="pretorin_update_control_status",
@@ -550,7 +586,8 @@ async def list_tools() -> list[Tool]:
                     },
                     "status": {
                         "type": "string",
-                        "description": "New status: implemented, partial, planned, not_started, not_applicable",
+                        "description": "New implementation status",
+                        "enum": sorted(_VALID_CONTROL_STATUSES),
                     },
                     "framework_id": {
                         "type": "string",
@@ -870,19 +907,27 @@ async def _handle_create_evidence(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the create_evidence tool."""
+    err = _require(arguments, "system_id")
+    if err:
+        return _format_error(err)
+
     from pretorin.client.models import EvidenceCreate
+
+    evidence_type = arguments.get("evidence_type", "documentation")
+    enum_err = _validate_enum(evidence_type, _VALID_EVIDENCE_TYPES, "evidence_type")
+    if enum_err:
+        return _format_error(enum_err)
 
     raw_control_id = arguments.get("control_id")
     evidence = EvidenceCreate(
         name=arguments.get("name", ""),
         description=arguments.get("description", ""),
-        evidence_type=arguments.get("evidence_type", "documentation"),
+        evidence_type=evidence_type,
         source="mcp",
         control_id=normalize_control_id(raw_control_id) if raw_control_id else None,
         framework_id=arguments.get("framework_id"),
     )
-    # Use empty org ID — the API will resolve from the auth token
-    result = await client.create_evidence("", evidence)
+    result = await client.create_evidence(arguments["system_id"], evidence)
     return _format_json(result)
 
 
@@ -891,24 +936,15 @@ async def _handle_link_evidence(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the link_evidence tool."""
+    err = _require(arguments, "system_id", "evidence_id", "control_id")
+    if err:
+        return _format_error(err)
+
     result = await client.link_evidence_to_control(
-        evidence_id=arguments.get("evidence_id", ""),
-        control_id=normalize_control_id(arguments.get("control_id", "")),
+        evidence_id=arguments["evidence_id"],
+        control_id=normalize_control_id(arguments["control_id"]),
+        system_id=arguments["system_id"],
         framework_id=arguments.get("framework_id"),
-    )
-    return _format_json(result)
-
-
-async def _handle_generate_narrative(
-    client: PretorianClient,
-    arguments: dict[str, Any],
-) -> list[TextContent]:
-    """Handle the generate_narrative tool."""
-    result = await client.generate_narrative(
-        system_id=arguments.get("system_id", ""),
-        control_id=normalize_control_id(arguments.get("control_id", "")),
-        framework_id=arguments.get("framework_id", ""),
-        context=arguments.get("context"),
     )
     return _format_json(result)
 
@@ -939,19 +975,32 @@ async def _handle_push_monitoring_event(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the push_monitoring_event tool."""
+    err = _require(arguments, "system_id", "title")
+    if err:
+        return _format_error(err)
+
     from pretorin.client.models import MonitoringEventCreate
+
+    event_type = arguments.get("event_type", "security_scan")
+    severity = arguments.get("severity", "medium")
+    enum_err = _validate_enum(event_type, _VALID_EVENT_TYPES, "event_type")
+    if enum_err:
+        return _format_error(enum_err)
+    enum_err = _validate_enum(severity, _VALID_SEVERITIES, "severity")
+    if enum_err:
+        return _format_error(enum_err)
 
     raw_control_id = arguments.get("control_id")
     event = MonitoringEventCreate(
-        event_type=arguments.get("event_type", "security_scan"),
-        title=arguments.get("title", ""),
+        event_type=event_type,
+        title=arguments["title"],
         description=arguments.get("description", ""),
-        severity=arguments.get("severity", "medium"),
+        severity=severity,
         control_id=normalize_control_id(raw_control_id) if raw_control_id else None,
         event_data={"source": "mcp"},
     )
     result = await client.create_monitoring_event(
-        system_id=arguments.get("system_id", ""),
+        system_id=arguments["system_id"],
         event=event,
     )
     return _format_json(result)
@@ -981,16 +1030,39 @@ async def _handle_get_scope(
     return _format_json(scope.model_dump())
 
 
+async def _handle_add_control_note(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent]:
+    """Handle the add_control_note tool."""
+    err = _require(arguments, "system_id", "control_id", "framework_id", "content")
+    if err:
+        return _format_error(err)
+
+    result = await client.add_control_note(
+        system_id=arguments["system_id"],
+        control_id=normalize_control_id(arguments["control_id"]),
+        content=arguments["content"],
+        framework_id=arguments["framework_id"],
+        source="mcp",
+    )
+    return _format_json(result)
+
+
 async def _handle_update_narrative(
     client: PretorianClient,
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the update_narrative tool."""
+    err = _require(arguments, "system_id", "control_id", "framework_id", "narrative")
+    if err:
+        return _format_error(err)
+
     result = await client.update_narrative(
-        system_id=arguments.get("system_id", ""),
-        control_id=normalize_control_id(arguments.get("control_id", "")),
-        framework_id=arguments.get("framework_id", ""),
-        narrative=arguments.get("narrative", ""),
+        system_id=arguments["system_id"],
+        control_id=normalize_control_id(arguments["control_id"]),
+        framework_id=arguments["framework_id"],
+        narrative=arguments["narrative"],
         is_ai_generated=arguments.get("is_ai_generated", False),
     )
     return _format_json(result)
@@ -1001,10 +1073,18 @@ async def _handle_update_control_status(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the update_control_status tool."""
+    err = _require(arguments, "system_id", "control_id", "status")
+    if err:
+        return _format_error(err)
+
+    enum_err = _validate_enum(arguments["status"], _VALID_CONTROL_STATUSES, "status")
+    if enum_err:
+        return _format_error(enum_err)
+
     result = await client.update_control_status(
-        system_id=arguments.get("system_id", ""),
-        control_id=normalize_control_id(arguments.get("control_id", "")),
-        status=arguments.get("status", ""),
+        system_id=arguments["system_id"],
+        control_id=normalize_control_id(arguments["control_id"]),
+        status=arguments["status"],
         framework_id=arguments.get("framework_id"),
     )
     return _format_json(result)
@@ -1046,9 +1126,9 @@ _TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pretorin_search_evidence": _handle_search_evidence,
     "pretorin_create_evidence": _handle_create_evidence,
     "pretorin_link_evidence": _handle_link_evidence,
-    "pretorin_generate_narrative": _handle_generate_narrative,
     "pretorin_get_narrative": _handle_get_narrative,
     "pretorin_push_monitoring_event": _handle_push_monitoring_event,
+    "pretorin_add_control_note": _handle_add_control_note,
     "pretorin_update_control_status": _handle_update_control_status,
     "pretorin_get_control_implementation": _handle_get_control_implementation,
     "pretorin_get_control_context": _handle_get_control_context,

@@ -136,18 +136,46 @@ pretorin harness run "Assess AC-2 implementation gaps"
 
 ## Available Tools
 
+### Framework & Control Reference
+
 | Tool | Description |
 |------|-------------|
 | `pretorin_list_frameworks` | List all compliance frameworks with tier and category info |
-| `pretorin_get_framework` | Get framework metadata including AI context (purpose, target audience, regulatory context, scope, key concepts) |
-| `pretorin_list_control_families` | List control families with AI context (domain summary, risk context, implementation priority) |
+| `pretorin_get_framework` | Get framework metadata including AI context |
+| `pretorin_list_control_families` | List control families with AI context |
 | `pretorin_list_controls` | List controls with optional family filter |
-| `pretorin_get_control` | Get detailed control info including AI guidance (summary, intent, evidence expectations, implementation considerations, common failures) |
-| `pretorin_get_control_references` | Get control statement, guidance, objectives, parameters, and related controls |
-| `pretorin_get_document_requirements` | Get explicit and implicit document requirements for a framework |
-| `pretorin_get_control_context` | Get rich control context: AI guidance, statement, objectives, and implementation details for a system |
+| `pretorin_get_control` | Get detailed control info including AI guidance |
+| `pretorin_get_control_references` | Get control statement, guidance, objectives, and related controls |
+| `pretorin_get_document_requirements` | Get document requirements for a framework |
+
+### System & Compliance
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_list_systems` | List all systems in your organization |
+| `pretorin_get_system` | Get system details including frameworks and security impact level |
+| `pretorin_get_compliance_status` | Get compliance status and framework progress for a system |
+| `pretorin_get_control_context` | Get rich control context: AI guidance, statement, objectives, and implementation details |
 | `pretorin_get_scope` | Get system scope/policy information including excluded controls |
+| `pretorin_get_control_implementation` | Get implementation details including narrative, evidence count, and notes |
+
+### Evidence & Narrative
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_search_evidence` | Search evidence items, optionally filtered by control or framework |
+| `pretorin_create_evidence` | Create a new evidence item on the platform |
+| `pretorin_link_evidence` | Link an existing evidence item to a control |
+| `pretorin_get_narrative` | Get existing implementation narrative for a control |
 | `pretorin_update_narrative` | Push a narrative text update for a control implementation |
+| `pretorin_add_control_note` | Add a note with suggestions (manual steps, systems to connect) |
+
+### Monitoring & Status
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_push_monitoring_event` | Push a monitoring event (security scan, config change, access review) |
+| `pretorin_update_control_status` | Update the implementation status of a control |
 
 ## Resources
 
@@ -212,25 +240,48 @@ pretorin frameworks control nist-800-53-r5 ac-02 --references
 | `pretorin login` | Authenticate with the Pretorin API |
 | `pretorin logout` | Clear stored credentials |
 | `pretorin whoami` | Display current authentication status |
+| **Frameworks** | |
 | `pretorin frameworks list` | List all compliance frameworks |
 | `pretorin frameworks get <id>` | Get framework details |
 | `pretorin frameworks families <id>` | List control families |
 | `pretorin frameworks controls <id>` | List controls (`--family`, `--limit`) |
-| `pretorin frameworks control <framework> <control>` | Get control details (`--references`) |
+| `pretorin frameworks control <fw> <ctrl>` | Get control details (`--references`) |
 | `pretorin frameworks documents <id>` | Get document requirements |
-| `pretorin context list` | List available systems and frameworks with progress |
-| `pretorin context set` | Set active system/framework context (`--system`, `--framework`) |
+| **Context** | |
+| `pretorin context list` | List systems and frameworks with progress |
+| `pretorin context set` | Set active system/framework context |
 | `pretorin context show` | Display current active context |
-| `pretorin context clear` | Clear active system/framework context |
-| `pretorin review run` | Review code against a control (`--control-id`, `--framework-id`, `--path`) |
-| `pretorin review status` | Check implementation status (`--control-id`) |
+| `pretorin context clear` | Clear active context |
+| **Evidence** | |
+| `pretorin evidence create` | Create a local evidence file |
+| `pretorin evidence list` | List local evidence files |
+| `pretorin evidence push` | Push local evidence to the platform |
+| **Narrative** | |
+| `pretorin narrative push <ctrl> <fw> <sys> <file>` | Push a narrative file to the platform |
+| **Monitoring** | |
+| `pretorin monitoring push` | Push a monitoring event to a system |
+| **Agent** | |
+| `pretorin agent run "<task>"` | Run a compliance task with the Codex agent |
+| `pretorin agent run --skill <name>` | Run a predefined skill (gap-analysis, narrative-generation, etc.) |
+| `pretorin agent doctor` | Validate Codex runtime setup |
+| `pretorin agent install` | Download the pinned Codex binary |
+| `pretorin agent skills` | List available agent skills |
+| `pretorin agent mcp-list` | List configured MCP servers |
+| `pretorin agent mcp-add` | Add an MCP server configuration |
+| `pretorin agent mcp-remove` | Remove an MCP server configuration |
+| **Review** | |
+| `pretorin review run` | Review code against a control |
+| `pretorin review status` | Check implementation status |
+| **Config** | |
 | `pretorin config list` | List all configuration |
 | `pretorin config get <key>` | Get a config value |
 | `pretorin config set <key> <value>` | Set a config value |
 | `pretorin config path` | Show config file path |
-| `pretorin harness init` | Initialize harness config with Pretorin policy defaults |
-| `pretorin harness doctor` | Validate harness/provider/MCP policy setup |
-| `pretorin harness run "<task>"` | Run a compliance task through the configured harness backend |
+| **Harness** | |
+| `pretorin harness init` | Initialize harness config |
+| `pretorin harness doctor` | Validate harness setup |
+| `pretorin harness run "<task>"` | Run task through harness backend |
+| **Utilities** | |
 | `pretorin version` | Show CLI version |
 | `pretorin update` | Update to latest version |
 | `pretorin mcp-serve` | Start the MCP server |

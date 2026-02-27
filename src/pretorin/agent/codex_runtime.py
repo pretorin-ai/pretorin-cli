@@ -22,17 +22,24 @@ logger = logging.getLogger(__name__)
 
 CODEX_VERSION = "rust-v0.88.0-alpha.3"
 
+# Mapping from our simplified platform keys to Rust target triples used in release assets.
+_PLATFORM_TO_TARGET: dict[str, str] = {
+    "darwin-arm64": "aarch64-apple-darwin",
+    "darwin-x64": "x86_64-apple-darwin",
+    "linux-x64": "x86_64-unknown-linux-gnu",
+}
+
 # SHA256 checksums per platform — verified on download.
 # Maintainer must update these when bumping CODEX_VERSION.
 CODEX_CHECKSUMS: dict[str, str] = {
-    "darwin-arm64": "",
-    "darwin-x64": "",
-    "linux-x64": "",
+    "darwin-arm64": "a20463a19ed5dd7fe01cdd14cbdf11e7a1b23296135df61aba65944dc0ac5367",
+    "darwin-x64": "ea5a1343cd1b7216ccf6085257217ef1819f54c237cb60e33a9f000f4456405d",
+    "linux-x64": "e3dd97f06ad09f7893e73d7ea091bdc5045ef7bd7ba306140d13a14d512cdc5f",
 }
 
 CODEX_DOWNLOAD_URL = (
     "https://github.com/openai/codex/releases/download/{version}/"
-    "codex-{platform}.tar.gz"
+    "codex-{target}.tar.gz"
 )
 
 
@@ -94,6 +101,26 @@ class CodexRuntime:
         env.update(extra)
         return env
 
+    @staticmethod
+    def _toml_escape(value: str) -> str:
+        """Escape a string value for safe TOML embedding."""
+        # Replace backslashes first, then quotes and control characters
+        value = value.replace("\\", "\\\\")
+        value = value.replace('"', '\\"')
+        value = value.replace("\n", "\\n")
+        value = value.replace("\r", "\\r")
+        value = value.replace("\t", "\\t")
+        return value
+
+    @staticmethod
+    def _toml_bare_key(key: str) -> str:
+        """Validate a string is safe for use as a TOML bare key."""
+        import re
+
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", key):
+            raise ValueError(f"Invalid TOML key: {key!r}")
+        return key
+
     def write_config(
         self,
         model: str,
@@ -109,15 +136,18 @@ class CodexRuntime:
         self.codex_home.mkdir(parents=True, exist_ok=True)
         config_path = self.codex_home / "config.toml"
 
+        safe_provider = self._toml_bare_key(provider_name)
+        esc = self._toml_escape
+
         lines = [
-            f'model_provider = "{provider_name}"',
+            f'model_provider = "{esc(safe_provider)}"',
             'web_search = "disabled"',
             "",
-            f"[model_providers.{provider_name}]",
-            f'name = "{provider_name}"',
-            f'base_url = "{base_url}"',
-            f'wire_api = "{wire_api}"',
-            f'env_key = "{env_key}"',
+            f"[model_providers.{safe_provider}]",
+            f'name = "{esc(safe_provider)}"',
+            f'base_url = "{esc(base_url)}"',
+            f'wire_api = "{esc(wire_api)}"',
+            f'env_key = "{esc(env_key)}"',
             "",
             "[mcp_servers.pretorin]",
             'command = "pretorin"',
@@ -127,15 +157,16 @@ class CodexRuntime:
         # Merge user MCP servers from ~/.pretorin/mcp.json if present
         extra_mcp = self._load_user_mcp_servers()
         for name, server in extra_mcp.items():
+            safe_name = self._toml_bare_key(name)
             lines.append("")
-            lines.append(f"[mcp_servers.{name}]")
+            lines.append(f"[mcp_servers.{safe_name}]")
             if server.get("command"):
-                lines.append(f'command = "{server["command"]}"')
+                lines.append(f'command = "{esc(str(server["command"]))}"')
             if server.get("args"):
-                args_str = ", ".join(f'"{a}"' for a in server["args"])
+                args_str = ", ".join(f'"{esc(str(a))}"' for a in server["args"])
                 lines.append(f"args = [{args_str}]")
             if server.get("url"):
-                lines.append(f'url = "{server["url"]}"')
+                lines.append(f'url = "{esc(str(server["url"]))}"')
 
         config_path.write_text("\n".join(lines) + "\n")
         return config_path
@@ -156,7 +187,8 @@ class CodexRuntime:
     def _download(self) -> None:
         """Download the Codex binary tarball for the current platform."""
         plat = _detect_platform()
-        url = CODEX_DOWNLOAD_URL.format(version=self.version, platform=plat)
+        target = _PLATFORM_TO_TARGET.get(plat, plat)
+        url = CODEX_DOWNLOAD_URL.format(version=self.version, target=target)
         logger.info("Downloading Codex %s for %s from %s", self.version, plat, url)
 
         self.bin_dir.mkdir(parents=True, exist_ok=True)

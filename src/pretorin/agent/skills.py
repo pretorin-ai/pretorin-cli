@@ -54,9 +54,12 @@ SKILLS: dict[str, Skill] = {
             "3. Generate clear, specific implementation narratives\n"
             "4. Each narrative should explain HOW the control is implemented, "
             "not just WHAT the control requires\n"
-            "5. Push the narrative to the platform using update_narrative\n\n"
+            "5. Push the narrative to the platform using update_narrative\n"
+            "6. Add notes with suggestions for manual steps or systems to connect\n\n"
             "Use search_evidence and get_control_context to gather context before "
-            "generating narratives. Reference specific evidence items in the narrative."
+            "generating narratives. Reference specific evidence items in the narrative. "
+            "After pushing a narrative, add a note if there are manual steps needed "
+            "or additional systems that should be connected."
         ),
         tool_names=[
             "list_systems",
@@ -66,9 +69,9 @@ SKILLS: dict[str, Skill] = {
             "get_control_context",
             "get_scope",
             "search_evidence",
-            "generate_narrative",
             "get_narrative",
             "update_narrative",
+            "add_control_note",
         ],
         max_turns=15,
     ),
@@ -80,10 +83,12 @@ SKILLS: dict[str, Skill] = {
             "1. Analyze the codebase and infrastructure using available MCP tools\n"
             "2. Identify configurations, code, and documentation that serve as evidence\n"
             "3. Create evidence items on the platform and link them to controls\n"
-            "4. Focus on concrete, auditable artifacts (config files, code modules, docs)\n\n"
+            "4. Focus on concrete, auditable artifacts (config files, code modules, docs)\n"
+            "5. Add notes for evidence that must be manually collected or systems to connect\n\n"
             "When creating evidence, provide specific descriptions that reference "
             "file paths, configurations, or code patterns. Link each evidence item "
-            "to the most relevant control(s)."
+            "to the most relevant control(s). After collecting evidence, add notes "
+            "for any evidence that can't be collected programmatically."
         ),
         tool_names=[
             "list_systems",
@@ -94,6 +99,7 @@ SKILLS: dict[str, Skill] = {
             "get_scope",
             "search_evidence",
             "create_evidence",
+            "add_control_note",
         ],
         max_turns=20,
     ),
@@ -106,10 +112,12 @@ SKILLS: dict[str, Skill] = {
             "2. Map findings to compliance framework controls\n"
             "3. Identify strengths and weaknesses in the security posture\n"
             "4. Push monitoring events for any notable findings\n"
-            "5. Update control statuses and narratives based on your findings\n\n"
+            "5. Update control statuses and narratives based on your findings\n"
+            "6. Add notes with suggestions for manual remediation or systems to connect\n\n"
             "Use external MCP tools (if available) to access the codebase, "
             "then use platform tools to record your findings. "
-            "Push monitoring events for critical or high-severity findings."
+            "Push monitoring events for critical or high-severity findings. "
+            "Add notes for any findings that require manual intervention."
         ),
         tool_names=[
             "list_systems",
@@ -124,6 +132,7 @@ SKILLS: dict[str, Skill] = {
             "update_narrative",
             "create_evidence",
             "search_evidence",
+            "add_control_note",
         ],
         max_turns=25,
     ),
