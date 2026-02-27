@@ -67,6 +67,10 @@ coverage.xml
 .mcpregistry_registry_token
 mcp-publisher
 
+# Pretorin local data (API keys, evidence drafts)
+.pretorin/
+evidence/
+
 # OS
 .DS_Store
 Thumbs.db
