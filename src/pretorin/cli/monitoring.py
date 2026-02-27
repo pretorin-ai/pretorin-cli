@@ -136,10 +136,22 @@ async def _push_event(
         # Find the target system
         target = None
         if system is None:
-            if len(systems) == 1:
+            # Check active context first
+            from pretorin.client.config import Config
+
+            config = Config()
+            active_system_id = config.get("active_system_id")
+            if active_system_id:
+                for s in systems:
+                    if s["id"] == active_system_id:
+                        target = s
+                        break
+
+            if target is None and len(systems) == 1:
                 target = systems[0]
-            else:
-                rprint("[red]Multiple systems found. Use --system to specify one:[/red]")
+
+            if target is None:
+                rprint("[red]Multiple systems found. Use --system to specify one, or set context with 'pretorin context set':[/red]")
                 for s in systems:
                     rprint(f"  - {s['name']} ({s['id'][:8]}...)")
                 raise typer.Exit(1)
