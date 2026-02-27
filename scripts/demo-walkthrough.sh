@@ -82,11 +82,19 @@ fi
 echo -e "  ✓ Found: $(command -v pretorin)"
 echo ""
 
-echo -e "  ${BOLD}Authenticate with your API key:${RESET}"
-run_cmd pretorin login
+echo -e "  Checking authentication..."
+if pretorin whoami &>/dev/null; then
+    echo -e "  ✓ Already authenticated."
+    echo ""
+    echo -e "  ${BOLD}Current session:${RESET}"
+    run_cmd pretorin whoami
+else
+    echo -e "  ${BOLD}Authenticate with your API key:${RESET}"
+    run_cmd pretorin login
 
-echo -e "  ${BOLD}Confirming identity:${RESET}"
-run_cmd pretorin whoami
+    echo -e "  ${BOLD}Confirming identity:${RESET}"
+    run_cmd pretorin whoami
+fi
 
 # ── Section 1: Browse Frameworks ─────────────────────────────────────────────
 
