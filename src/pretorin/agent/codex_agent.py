@@ -92,21 +92,24 @@ class CodexAgent:
         )
 
         try:
-            from openai_codex_sdk import Codex  # type: ignore[import-not-found]
+            from openai_codex_sdk import Codex  # type: ignore[import-not-found,unused-ignore]
         except ImportError:
             raise RuntimeError(
-                "openai-codex-sdk is required for Codex agent features.\n"
-                "Install with: pip install pretorin[agent]"
+                "openai-codex-sdk is required for Codex agent features.\nInstall with: pip install pretorin[agent]"
             )
 
-        codex = Codex({
-            "codex_path_override": str(binary_path),
-            "env": env,
-        })
+        codex = Codex(
+            {
+                "codex_path_override": str(binary_path),
+                "env": env,
+            }
+        )
 
-        thread = codex.start_thread({
-            "working_directory": str(working_directory or Path.cwd()),
-        })
+        thread = codex.start_thread(
+            {
+                "working_directory": str(working_directory or Path.cwd()),
+            }
+        )
 
         prompt = self._build_prompt(task, skill)
 

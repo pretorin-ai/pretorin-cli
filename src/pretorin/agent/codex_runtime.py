@@ -15,6 +15,7 @@ import stat
 import tarfile
 import tempfile
 from pathlib import Path
+from typing import Any
 
 import httpx
 
@@ -37,10 +38,7 @@ CODEX_CHECKSUMS: dict[str, str] = {
     "linux-x64": "e3dd97f06ad09f7893e73d7ea091bdc5045ef7bd7ba306140d13a14d512cdc5f",
 }
 
-CODEX_DOWNLOAD_URL = (
-    "https://github.com/openai/codex/releases/download/{version}/"
-    "codex-{target}.tar.gz"
-)
+CODEX_DOWNLOAD_URL = "https://github.com/openai/codex/releases/download/{version}/codex-{target}.tar.gz"
 
 
 def _detect_platform() -> str:
@@ -163,7 +161,8 @@ class CodexRuntime:
             if server.get("command"):
                 lines.append(f'command = "{esc(str(server["command"]))}"')
             if server.get("args"):
-                args_str = ", ".join(f'"{esc(str(a))}"' for a in server["args"])
+                args_list: Any = server["args"]
+                args_str = ", ".join(f'"{esc(str(a))}"' for a in args_list)
                 lines.append(f"args = [{args_str}]")
             if server.get("url"):
                 lines.append(f'url = "{esc(str(server["url"]))}"')
@@ -228,11 +227,7 @@ class CodexRuntime:
         actual = sha256.hexdigest()
         if actual != expected:
             self._tarball_path.unlink(missing_ok=True)
-            raise RuntimeError(
-                f"Checksum mismatch for {plat}:\n"
-                f"  expected: {expected}\n"
-                f"  actual:   {actual}"
-            )
+            raise RuntimeError(f"Checksum mismatch for {plat}:\n  expected: {expected}\n  actual:   {actual}")
 
         self._extract_tarball()
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Any
 
 import typer
 from rich import print as rprint
@@ -85,7 +86,7 @@ async def _context_list() -> None:
             raise typer.Exit(0)
 
         # Gather compliance status for each system
-        rows: list[dict] = []
+        rows: list[dict[str, Any]] = []
         for sys in systems:
             system_id = sys["id"]
             system_name = sys["name"]

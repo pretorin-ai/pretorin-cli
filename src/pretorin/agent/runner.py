@@ -87,7 +87,6 @@ class ComplianceAgent:
             skill_config = get_skill(skill)
             if skill_config:
                 system_prompt = skill_config.system_prompt
-                max_turns = skill_config.max_turns
                 # Filter tools to skill's tool set if specified
                 if skill_config.tool_names:
                     tool_names = set(skill_config.tool_names)
@@ -104,20 +103,19 @@ class ComplianceAgent:
         # Configure model provider
         run_config = RunConfig(
             model=self.model,
-            max_turns=max_turns,
         )
 
         if stream:
-            result = Runner.run_streamed(agent, input=message, run_config=run_config)
+            streamed_result = Runner.run_streamed(agent, input=message, run_config=run_config)
             output_parts: list[str] = []
-            async for event in result.stream_events():
+            async for event in streamed_result.stream_events():
                 if hasattr(event, "data") and hasattr(event.data, "delta"):
                     delta = self._coerce_output_text(event.data.delta)
                     sys.stdout.write(delta)
                     sys.stdout.flush()
                     output_parts.append(delta)
             sys.stdout.write("\n")
-            return "".join(output_parts) if output_parts else self._coerce_output_text(result.final_output)
+            return "".join(output_parts) if output_parts else self._coerce_output_text(streamed_result.final_output)
         else:
             result = await Runner.run(agent, input=message, run_config=run_config)
             return self._coerce_output_text(result.final_output)

@@ -42,7 +42,9 @@ def login(
         rprint("Get your API key from: [link=https://platform.pretorin.com/]https://platform.pretorin.com/[/link]")
         rprint("[dim]A beta code is required for platform features (evidence, narratives, monitoring).")
         rprint("No beta code? You can still browse frameworks and controls freely.")
-        rprint("Sign up for early access: [link=https://pretorin.com/early-access/]https://pretorin.com/early-access/[/link][/dim]\n")
+        rprint(
+            "Sign up for early access: [link=https://pretorin.com/early-access/]https://pretorin.com/early-access/[/link][/dim]\n"
+        )
         api_key = typer.prompt("Enter your API key", hide_input=True)
 
     if not api_key:

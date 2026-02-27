@@ -213,33 +213,6 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
 
     # --- Narratives ---
 
-    async def generate_narrative(
-        system_id: str,
-        control_id: str,
-        framework_id: str,
-        context: str | None = None,
-    ) -> str:
-        result = await client.generate_narrative(system_id, control_id, framework_id, context)
-        return json.dumps(result, default=str)
-
-    tools.append(
-        ToolDefinition(
-            name="generate_narrative",
-            description="Generate an AI implementation narrative for a control (may take 30-60s)",
-            parameters={
-                "type": "object",
-                "properties": {
-                    "system_id": {"type": "string", "description": "System ID"},
-                    "control_id": {"type": "string", "description": "Control ID"},
-                    "framework_id": {"type": "string", "description": "Framework ID"},
-                    "context": {"type": "string", "description": "Additional context"},
-                },
-                "required": ["system_id", "control_id", "framework_id"],
-            },
-            handler=generate_narrative,
-        )
-    )
-
     async def get_narrative(
         system_id: str,
         control_id: str,

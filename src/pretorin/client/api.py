@@ -162,8 +162,7 @@ class PretorianClient:
             response = await client.request(method, path, **kwargs)
         except httpx.ConnectError as exc:
             raise PretorianClientError(
-                f"Could not connect to {self._api_base_url}{path} — "
-                f"is the API reachable? ({exc})",
+                f"Could not connect to {self._api_base_url}{path} — is the API reachable? ({exc})",
             ) from exc
         except httpx.TimeoutException as exc:
             raise PretorianClientError(

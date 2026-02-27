@@ -59,9 +59,7 @@ def agent_run(
     base_url: str | None = typer.Option(None, "--base-url", help="LLM endpoint override."),
     working_dir: Path | None = typer.Option(None, "--working-dir", "-w", help="Working directory."),
     no_stream: bool = typer.Option(False, "--no-stream", help="Disable streaming output."),
-    use_legacy: bool = typer.Option(
-        False, "--legacy", help="Use OpenAI Agents SDK instead of Codex runtime."
-    ),
+    use_legacy: bool = typer.Option(False, "--legacy", help="Use OpenAI Agents SDK instead of Codex runtime."),
     max_turns: int = typer.Option(15, "--max-turns", help="Maximum agent turns (legacy mode only)."),
     no_mcp: bool = typer.Option(False, "--no-mcp", help="Disable external MCP servers (legacy mode only)."),
 ) -> None:
@@ -236,10 +234,7 @@ def agent_doctor() -> None:
     # Check for API key availability
     import os
 
-    has_key = bool(
-        os.environ.get("PRETORIN_LLM_API_KEY")
-        or os.environ.get("OPENAI_API_KEY")
-    )
+    has_key = bool(os.environ.get("PRETORIN_LLM_API_KEY") or os.environ.get("OPENAI_API_KEY"))
     if not has_key:
         warnings.append("No LLM API key found. Set PRETORIN_LLM_API_KEY or OPENAI_API_KEY.")
 
@@ -302,11 +297,13 @@ def agent_version() -> None:
     status = "installed" if installed else "not installed"
 
     if is_json_mode():
-        print_json({
-            "codex_version": runtime.version,
-            "binary_path": str(runtime.binary_path),
-            "status": status,
-        })
+        print_json(
+            {
+                "codex_version": runtime.version,
+                "binary_path": str(runtime.binary_path),
+                "status": status,
+            }
+        )
         return
 
     rprint(f"[#FF9010]Codex version:[/#FF9010] {runtime.version}")

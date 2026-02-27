@@ -50,15 +50,19 @@ class MCPServerConfig:
         self.validate()
 
         if self.transport == "stdio":
+            assert self.command is not None  # guaranteed by validate()
+            stdio_params: Any = {
+                "command": self.command,
+                "args": self.args,
+            }
+            if self.env:
+                stdio_params["env"] = self.env
             return MCPServerStdio(
                 name=self.name,
-                params={
-                    "command": self.command,
-                    "args": self.args,
-                    "env": self.env if self.env else None,
-                },
+                params=stdio_params,
             )
         elif self.transport == "http":
+            assert self.url is not None  # guaranteed by validate()
             return MCPServerStreamableHttp(
                 name=self.name,
                 params={"url": self.url},

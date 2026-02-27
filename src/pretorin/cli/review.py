@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
+from typing import Any
 
 import typer
 from rich import print as rprint
@@ -311,7 +312,7 @@ async def _run_review(
                 rprint(EARLY_ACCESS_MSG)
         else:
             if is_json_mode():
-                result: dict = {
+                result: dict[str, Any] = {
                     "control_id": control_id,
                     "framework_id": resolved_framework_id,
                     "system_id": system_id,
