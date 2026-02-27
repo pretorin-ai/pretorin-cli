@@ -262,7 +262,7 @@ pretorin frameworks control nist-800-53-r5 ac-02 --references
 | `pretorin monitoring push` | Push a monitoring event to a system |
 | **Agent** | |
 | `pretorin agent run "<task>"` | Run a compliance task with the Codex agent |
-| `pretorin agent run --skill <name>` | Run a predefined skill (gap-analysis, narrative-generation, etc.) |
+| `pretorin agent run --skill <name>` | Run a predefined skill (gap-analysis, narrative-generation, evidence-collection, security-review) |
 | `pretorin agent doctor` | Validate Codex runtime setup |
 | `pretorin agent install` | Download the pinned Codex binary |
 | `pretorin agent skills` | List available agent skills |
@@ -285,6 +285,14 @@ pretorin frameworks control nist-800-53-r5 ac-02 --references
 | `pretorin version` | Show CLI version |
 | `pretorin update` | Update to latest version |
 | `pretorin mcp-serve` | Start the MCP server |
+
+### Demo Walkthrough
+
+New to Pretorin? Run the interactive walkthrough to see the full CLI workflow — auth, frameworks, evidence, narratives, monitoring, agent skills, and MCP integration:
+
+```bash
+bash scripts/demo-walkthrough.sh
+```
 
 ## Installation
 
