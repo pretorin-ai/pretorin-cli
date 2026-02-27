@@ -95,11 +95,15 @@ pause "Section 1: Browse compliance frameworks"
 echo -e "  ${BOLD}List all available frameworks:${RESET}"
 run_cmd pretorin frameworks list
 
+pause "Drill into FedRAMP Moderate"
+
 echo -e "  ${BOLD}Get details for FedRAMP Moderate:${RESET}"
 run_cmd pretorin frameworks get fedramp-moderate
 
 echo -e "  ${BOLD}List control families:${RESET}"
 run_cmd pretorin frameworks families fedramp-moderate
+
+pause "Explore individual controls"
 
 echo -e "  ${BOLD}List Access Control controls (first 5):${RESET}"
 run_cmd pretorin frameworks controls fedramp-moderate --family access-control --limit 5
@@ -186,6 +190,8 @@ run_cmd pretorin evidence create ac-02 fedramp-moderate \
 echo -e "  ${BOLD}List local evidence:${RESET}"
 run_cmd pretorin evidence list
 
+pause "Push evidence to the platform"
+
 echo -e "  ${BOLD}Push evidence to the platform:${RESET}"
 run_cmd pretorin evidence push
 
@@ -226,7 +232,8 @@ echo ""
 echo -e "  ${DIM}--- narrative content ---${RESET}"
 cat "$TEMP_NARRATIVE"
 echo -e "  ${DIM}--- end ---${RESET}"
-echo ""
+
+pause "Push narrative to the platform"
 
 if [[ -n "$ACTIVE_SYSTEM" ]]; then
     echo -e "  ${BOLD}Push narrative to platform:${RESET}"
