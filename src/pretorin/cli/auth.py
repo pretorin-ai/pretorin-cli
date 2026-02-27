@@ -36,6 +36,21 @@ def login(
 
     Get your API key from the Pretorin platform at https://platform.pretorin.com/
     """
+    # If already authenticated and no explicit key provided, skip login
+    if api_key is None and Config().is_configured:
+        async def _check_existing() -> bool:
+            async with PretorianClient() as client:
+                try:
+                    await client.validate_api_key()
+                    return True
+                except (AuthenticationError, PretorianClientError):
+                    return False
+
+        if asyncio.run(_check_existing()):
+            rprint("\n[#EAB536]\\[°◡°]/[/#EAB536] Already authenticated. Run [bold]pretorin whoami[/bold] to see your session.")
+            rprint("[dim]To re-authenticate, run: pretorin login --api-key <new-key>[/dim]")
+            return
+
     if api_key is None:
         rprint("\n[bold #FF9010]Welcome to Pretorin[/bold #FF9010] [dim]\\[BETA][/dim]")
         rprint("[dim]Making compliance the best part of your day.[/dim]\n")
