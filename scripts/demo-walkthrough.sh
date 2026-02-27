@@ -134,7 +134,7 @@ echo -e "  ${BOLD}Show current context:${RESET}"
 run_cmd pretorin context show
 
 # Capture the active system name and framework for later commands
-CONTEXT_JSON=$(pretorin context show --json 2>/dev/null || echo "{}")
+CONTEXT_JSON=$(pretorin --json context show 2>/dev/null || echo "{}")
 
 ACTIVE_SYSTEM=$(echo "$CONTEXT_JSON" | python3 -c "
 import sys, json
