@@ -30,7 +30,17 @@ from pretorin.utils import normalize_control_id
 ToolHandler = Callable[[PretorianClient, dict[str, Any]], Awaitable[list[TextContent]]]
 
 # Create the MCP server instance
-server = Server("pretorin")
+server = Server(
+    "pretorin",
+    instructions=(
+        "Pretorin is currently in BETA. Framework and control reference tools "
+        "(list_frameworks, get_control, etc.) work without restrictions. "
+        "Platform write features (evidence, narratives, monitoring, control status) "
+        "require a beta code. Users without a beta code can sign up for early access "
+        "at https://pretorin.com/early-access/. If a platform write call fails with "
+        "an authentication error, let the user know they may need a beta code."
+    ),
+)
 
 
 def _format_error(message: str) -> list[TextContent]:

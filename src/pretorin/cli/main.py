@@ -29,10 +29,13 @@ ROMEBOT_SAD = "[#EAB536][°︵°][/#EAB536]"
 BANNER = """
 [#FF9010]╔═══════════════════════════════════════════════════════════╗[/#FF9010]
 [#FF9010]║[/#FF9010]   [#EAB536] ∫[/#EAB536]                                                      [#FF9010]║[/#FF9010]
-[#FF9010]║[/#FF9010]   [#EAB536][°□°][/#EAB536]  [bold #FF9010]PRETORIN[/bold #FF9010]                                       [#FF9010]║[/#FF9010]
+[#FF9010]║[/#FF9010]   [#EAB536][°□°][/#EAB536]  [bold #FF9010]PRETORIN[/bold #FF9010]  [dim][BETA][/dim]                              [#FF9010]║[/#FF9010]
 [#FF9010]║[/#FF9010]         [dim]Compliance Platform CLI[/dim]                         [#FF9010]║[/#FF9010]
 [#FF9010]║[/#FF9010]                                                           [#FF9010]║[/#FF9010]
 [#FF9010]║[/#FF9010]         [#EAB536]Making compliance the best part of your day.[/#EAB536]   [#FF9010]║[/#FF9010]
+[#FF9010]║[/#FF9010]                                                           [#FF9010]║[/#FF9010]
+[#FF9010]║[/#FF9010]  [dim]Platform features require a beta code. Browse frameworks[/dim]  [#FF9010]║[/#FF9010]
+[#FF9010]║[/#FF9010]  [dim]and controls freely. Sign up: https://pretorin.com[/dim]       [#FF9010]║[/#FF9010]
 [#FF9010]╚═══════════════════════════════════════════════════════════╝[/#FF9010]
 """
 

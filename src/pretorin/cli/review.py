@@ -26,8 +26,8 @@ ROMEBOT_WORKING = "[#EAB536][°~°][/#EAB536]"
 ROMEBOT_DONE = "[#EAB536]\\[°◡°]/[/#EAB536]"
 
 EARLY_ACCESS_MSG = (
-    "\n[dim]Your artifacts were saved locally. Want centralized tracking, "
-    "AI analysis, and audit trails?[/dim]\n"
+    "\n[dim]Your artifacts were saved locally. Centralized tracking, "
+    "AI analysis, and audit trails are available with a beta code.[/dim]\n"
     "[dim]Sign up for early access: [link=https://pretorin.com/early-access/]"
     "https://pretorin.com/early-access/[/link][/dim]"
 )

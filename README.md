@@ -17,6 +17,8 @@
 
 ---
 
+> **Beta** — Pretorin is currently in closed beta. Framework and control browsing works for everyone. Platform features (evidence, narratives, monitoring) require a beta code. [Sign up for early access](https://pretorin.com/early-access/).
+
 Pretorin brings compliance into your development workflow. Use the **MCP server** to give AI agents direct access to authoritative control data, not hallucinated requirements. Use the **CLI** to query frameworks, controls, and document requirements from your terminal or CI pipeline. Both connect to the same API with enriched data for NIST 800-53, NIST 800-171, FedRAMP, CMMC, and more.
 
 ## Quick Start
