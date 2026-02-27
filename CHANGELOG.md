@@ -5,6 +5,23 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-02-27
+
+### Fixed
+- Rich markup error in login flow — unbalanced `[dim]` tags caused `MarkupError` crash
+- Evidence type mismatch — CLI used `documentation` but API expects `policy_document`, `screenshot`, `configuration`, etc.
+- Control ID casing — CMMC-style IDs like `AC.L1-3.1.1` were incorrectly lowercased by `normalize_control_id`
+- `monitoring push` now checks active context before requiring `--system` flag
+- `pretorin login` skips API key prompt when already authenticated (validates key against API)
+- Demo script: `--json` flag position (`pretorin --json context show`, not `pretorin context show --json`)
+- Demo script: `pause` reads from `/dev/tty` so commands no longer consume stdin meant for prompts
+
+### Changed
+- Default evidence type changed from `documentation` to `policy_document` across CLI, MCP, and agent tools
+- Valid evidence types aligned with API: `screenshot`, `screen_recording`, `log_file`, `configuration`, `test_result`, `certificate`, `attestation`, `code_snippet`, `repository_link`, `policy_document`, `scan_result`, `interview_notes`, `other`
+- Demo walkthrough adds prerequisites note, fedramp-moderate validation, and checkpoint pauses between sections
+- Added `.pretorin/` and `evidence/` to `.gitignore` to prevent accidental credential commits
+
 ## [0.5.0] - 2026-02-27
 
 ### Added
