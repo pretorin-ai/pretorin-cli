@@ -62,6 +62,10 @@ echo "  ╚═╝     ╚═╝  ╚═╝╚══════╝   ╚═╝  
 echo -e "${RESET}"
 echo -e "${ORANGE}  CLI Walkthrough Demo${RESET}"
 echo ""
+echo -e "  ${DIM}Pretorin is in closed beta. Framework/control browsing works for everyone.${RESET}"
+echo -e "  ${DIM}Platform features (evidence, narratives, monitoring) require a beta code.${RESET}"
+echo -e "  ${DIM}Sign up: https://pretorin.com/early-access/${RESET}"
+echo ""
 
 pause "Section 0: Pre-flight checks"
 
