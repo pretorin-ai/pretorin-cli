@@ -5,7 +5,7 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] - 2026-02-27
 
 ### Added
 - `pretorin context list` — List available systems and frameworks with compliance progress
@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ControlContext`, `ScopeResponse`, `MonitoringEventCreate`, `EvidenceCreate` client models
 - Control ID normalization (zero-padding NIST IDs like ac-3 → ac-03)
 - Codex agent runtime with isolated binary management under `~/.pretorin/bin/`
+- Interactive demo walkthrough script (`scripts/demo-walkthrough.sh`)
+- Beta messaging across CLI banner, login flow, MCP server instructions, and README
+- MCP server `instructions` field guides AI agents on beta status and system creation requirements
 
 ### Changed
 - Default platform API base URL changed to `/api/v1/public` for public API routing
@@ -109,6 +112,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CMMC Level 1, 2, and 3
 - Additional frameworks available on the platform
 
-[Unreleased]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.2.0...HEAD
+[0.5.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.3.1...v0.5.0
 [0.2.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/pretorin-ai/pretorin-cli/releases/tag/v0.1.0
