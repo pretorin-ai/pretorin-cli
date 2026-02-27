@@ -21,7 +21,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-ROMEBOT_EVIDENCE = "[#EAB536][°□°][/#EAB536]"
+ROMEBOT_EVIDENCE = "[#EAB536]\\[°□°][/#EAB536]"
 
 
 @app.command("create")

@@ -21,8 +21,8 @@ app = typer.Typer(
 )
 
 # Rome-bot expressions
-ROMEBOT_ALERT = "[#EAB536][°!°][/#EAB536]"
-ROMEBOT_WORKING = "[#EAB536][°~°][/#EAB536]"
+ROMEBOT_ALERT = "[#EAB536]\\[°!°][/#EAB536]"
+ROMEBOT_WORKING = "[#EAB536]\\[°~°][/#EAB536]"
 ROMEBOT_DONE = "[#EAB536]\\[°◡°]/[/#EAB536]"
 
 SEVERITY_COLORS = {

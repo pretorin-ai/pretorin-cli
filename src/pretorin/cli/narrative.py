@@ -16,7 +16,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-ROMEBOT_AI = "[#EAB536][°~°][/#EAB536]"
+ROMEBOT_AI = "[#EAB536]\\[°~°][/#EAB536]"
 
 
 @app.command("push")

@@ -23,13 +23,13 @@ console = Console()
 
 # Rome-bot expressions (for inline use)
 ROMEBOT_HAPPY = "[#EAB536]\\[°◡°]/[/#EAB536]"
-ROMEBOT_THINKING = "[#EAB536][°~°][/#EAB536]"
-ROMEBOT_SAD = "[#EAB536][°︵°][/#EAB536]"
+ROMEBOT_THINKING = "[#EAB536]\\[°~°][/#EAB536]"
+ROMEBOT_SAD = "[#EAB536]\\[°︵°][/#EAB536]"
 
 BANNER = """
 [#FF9010]╔═══════════════════════════════════════════════════════════╗[/#FF9010]
 [#FF9010]║[/#FF9010]   [#EAB536] ∫[/#EAB536]                                                      [#FF9010]║[/#FF9010]
-[#FF9010]║[/#FF9010]   [#EAB536][°□°][/#EAB536]  [bold #FF9010]PRETORIN[/bold #FF9010]  [dim][BETA][/dim]                              [#FF9010]║[/#FF9010]
+[#FF9010]║[/#FF9010]   [#EAB536]\\[°□°][/#EAB536]  [bold #FF9010]PRETORIN[/bold #FF9010]  [dim]\\[BETA][/dim]                              [#FF9010]║[/#FF9010]
 [#FF9010]║[/#FF9010]         [dim]Compliance Platform CLI[/dim]                         [#FF9010]║[/#FF9010]
 [#FF9010]║[/#FF9010]                                                           [#FF9010]║[/#FF9010]
 [#FF9010]║[/#FF9010]         [#EAB536]Making compliance the best part of your day.[/#EAB536]   [#FF9010]║[/#FF9010]
@@ -55,10 +55,24 @@ def show_banner(check_updates: bool = True) -> None:
             rprint()
 
 
+def _version_callback(value: bool) -> None:
+    """Print version and exit."""
+    if value:
+        from pretorin.cli.version_check import get_update_message
+
+        rprint(f"[#FF9010]pretorin[/#FF9010] version {__version__}")
+        update_msg = get_update_message()
+        if update_msg:
+            rprint()
+            rprint(update_msg)
+        raise typer.Exit()
+
+
 app = typer.Typer(
     name="pretorin",
     help="Access compliance frameworks, control families, and control details.",
     no_args_is_help=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
 )
 
 
@@ -66,6 +80,14 @@ app = typer.Typer(
 def main(
     ctx: typer.Context,
     json_output: bool = typer.Option(False, "--json", help="Output results as JSON (for scripting and AI agents)"),
+    _version: bool = typer.Option(
+        False,
+        "--version",
+        "-V",
+        help="Show version and exit.",
+        callback=_version_callback,
+        is_eager=True,
+    ),
 ) -> None:
     """CLI for the Pretorin Compliance Platform.
 

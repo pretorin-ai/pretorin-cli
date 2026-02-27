@@ -23,7 +23,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-ROMEBOT_AGENT = "[#EAB536][°□°][/#EAB536]"
+ROMEBOT_AGENT = "[#EAB536]\\[°□°][/#EAB536]"
 
 
 def _check_agent_deps() -> None:

@@ -24,7 +24,7 @@ console = Console()
 def require_auth(client: PretorianClient) -> None:
     """Check that the client is authenticated."""
     if not client.is_configured:
-        rprint("[#EAB536][°~°][/#EAB536] Not logged in yet.")
+        rprint("[#EAB536]\\[°~°][/#EAB536] Not logged in yet.")
         rprint("[dim]Run [bold]pretorin login[/bold] to get started.[/dim]")
         raise typer.Exit(1)
 
@@ -145,7 +145,7 @@ def framework_get(
                 )
 
             except NotFoundError:
-                rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find framework: {framework_id}")
+                rprint(f"[#EAB536]\\[°︵°][/#EAB536] Couldn't find framework: {framework_id}")
                 rprint("[dim]Try [bold]pretorin frameworks list[/bold] to see what's available.[/dim]")
                 rprint("[dim]Example: [bold]pretorin frameworks get fedramp-moderate[/bold][/dim]")
                 raise typer.Exit(1)
@@ -211,7 +211,7 @@ def framework_families(
                 rprint(f"\n[dim]Total: {len(families)} family(ies)[/dim]")
 
             except NotFoundError:
-                rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find framework: {framework_id}")
+                rprint(f"[#EAB536]\\[°︵°][/#EAB536] Couldn't find framework: {framework_id}")
                 rprint("[dim]Try [bold]pretorin frameworks list[/bold] to see what's available.[/dim]")
                 rprint("[dim]Example: [bold]pretorin frameworks families fedramp-moderate[/bold][/dim]")
                 raise typer.Exit(1)
@@ -294,7 +294,7 @@ def framework_controls(
                     rprint(f"\n[dim]Total: {total} control(s)[/dim]")
 
             except NotFoundError:
-                rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find framework: {framework_id}")
+                rprint(f"[#EAB536]\\[°︵°][/#EAB536] Couldn't find framework: {framework_id}")
                 rprint("[dim]Try [bold]pretorin frameworks list[/bold] to see what's available.[/dim]")
                 rprint("[dim]Example: [bold]pretorin frameworks controls fedramp-low access-control[/bold][/dim]")
                 raise typer.Exit(1)
@@ -415,7 +415,7 @@ def control_get(
                     rprint(f"\n[bold]Enhancements:[/bold] {len(control.controls)} available")
 
             except NotFoundError:
-                rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find control [bold]{control_id}[/bold] in {framework_id}")
+                rprint(f"[#EAB536]\\[°︵°][/#EAB536] Couldn't find control [bold]{control_id}[/bold] in {framework_id}")
                 rprint(
                     f"[dim]Try [bold]pretorin frameworks controls {framework_id}[/bold] "
                     "to see available controls.[/dim]"
@@ -501,7 +501,7 @@ def framework_documents(
                 rprint(f"\n[dim]Total: {docs.total} document requirement(s)[/dim]")
 
             except NotFoundError:
-                rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find document requirements for: {framework_id}")
+                rprint(f"[#EAB536]\\[°︵°][/#EAB536] Couldn't find document requirements for: {framework_id}")
                 rprint(
                     "[dim]This framework may not have document requirements, "
                     "or check the ID with [bold]pretorin frameworks list[/bold].[/dim]"
@@ -581,7 +581,7 @@ def family_get(
                     console.print(table)
 
             except NotFoundError:
-                rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find family [bold]{family_id}[/bold] in {framework_id}")
+                rprint(f"[#EAB536]\\[°︵°][/#EAB536] Couldn't find family [bold]{family_id}[/bold] in {framework_id}")
                 rprint(
                     f"[dim]Try [bold]pretorin frameworks families {framework_id}[/bold] "
                     "to see available families.[/dim]"
@@ -652,7 +652,7 @@ def framework_metadata(
                 rprint(f"\n[dim]Total: {len(metadata)} control(s)[/dim]")
 
             except NotFoundError:
-                rprint(f"[#EAB536][°︵°][/#EAB536] Couldn't find framework: {framework_id}")
+                rprint(f"[#EAB536]\\[°︵°][/#EAB536] Couldn't find framework: {framework_id}")
                 rprint("[dim]Try [bold]pretorin frameworks list[/bold] to see what's available.[/dim]")
                 rprint("[dim]Example: [bold]pretorin frameworks metadata fedramp-low[/bold][/dim]")
                 raise typer.Exit(1)
@@ -690,10 +690,10 @@ def submit_artifact(
         raw = json.loads(file_path.read_text())
         artifact = ComplianceArtifact(**raw)
     except json.JSONDecodeError as e:
-        rprint(f"[#EAB536][°︵°][/#EAB536] Invalid JSON in {file_path}: {e}")
+        rprint(f"[#EAB536]\\[°︵°][/#EAB536] Invalid JSON in {file_path}: {e}")
         raise typer.Exit(1)
     except Exception as e:
-        rprint(f"[#EAB536][°︵°][/#EAB536] Failed to parse artifact: {e}")
+        rprint(f"[#EAB536]\\[°︵°][/#EAB536] Failed to parse artifact: {e}")
         rprint("[dim]Ensure the file matches the ComplianceArtifact schema.[/dim]")
         raise typer.Exit(1)
 

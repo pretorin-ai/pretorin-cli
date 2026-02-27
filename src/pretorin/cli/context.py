@@ -23,8 +23,8 @@ app = typer.Typer(
 )
 
 ROMEBOT_HAPPY = "[#EAB536]\\[°◡°]/[/#EAB536]"
-ROMEBOT_THINKING = "[#EAB536][°~°][/#EAB536]"
-ROMEBOT_SAD = "[#EAB536][°︵°][/#EAB536]"
+ROMEBOT_THINKING = "[#EAB536]\\[°~°][/#EAB536]"
+ROMEBOT_SAD = "[#EAB536]\\[°︵°][/#EAB536]"
 
 
 def resolve_context(

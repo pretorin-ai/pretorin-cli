@@ -37,7 +37,7 @@ def login(
     Get your API key from the Pretorin platform at https://platform.pretorin.com/
     """
     if api_key is None:
-        rprint("\n[bold #FF9010]Welcome to Pretorin[/bold #FF9010] [dim][BETA][/dim]")
+        rprint("\n[bold #FF9010]Welcome to Pretorin[/bold #FF9010] [dim]\\[BETA][/dim]")
         rprint("[dim]Making compliance the best part of your day.[/dim]\n")
         rprint("Get your API key from: [link=https://platform.pretorin.com/]https://platform.pretorin.com/[/link]")
         rprint("[dim]A beta code is required for platform features (evidence, narratives, monitoring).")
@@ -72,7 +72,7 @@ def login(
             )
 
         except AuthenticationError as e:
-            rprint(f"\n[#EAB536][°︵°][/#EAB536] Authentication failed: {e.message}")
+            rprint(f"\n[#EAB536]\\[°︵°][/#EAB536] Authentication failed: {e.message}")
             rprint("[dim]Double-check your API key and try again.[/dim]")
             raise typer.Exit(1)
         except PretorianClientError as e:
@@ -94,7 +94,7 @@ def logout() -> None:
         return
 
     clear_credentials()
-    rprint("[#EAB536][°◡°][/#EAB536] Logged out. See you next time!")
+    rprint("[#EAB536]\\[°◡°][/#EAB536] Logged out. See you next time!")
 
 
 @app.command()

@@ -23,7 +23,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-ROMEBOT_WORKING = "[#EAB536][°~°][/#EAB536]"
+ROMEBOT_WORKING = "[#EAB536]\\[°~°][/#EAB536]"
 ROMEBOT_DONE = "[#EAB536]\\[°◡°]/[/#EAB536]"
 
 EARLY_ACCESS_MSG = (
