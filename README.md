@@ -21,6 +21,11 @@
 
 Pretorin CLI gives developers and AI agents direct access to compliance data, implementation context, and evidence workflows.
 
+## Two Usage Modes
+
+1. Pretorin-hosted model mode: run `pretorin agent run` and route model calls through Pretorin `/v1` endpoints.
+2. Bring-your-own-agent mode: run `pretorin mcp-serve` and connect the MCP server to your existing AI tool (Claude Code, Codex CLI, Cursor, etc.).
+
 ## Quick Start
 
 ```bash
@@ -69,6 +74,8 @@ Key behavior:
 - If `OPENAI_API_KEY` is set in your shell, it overrides stored login credentials.
 
 ## Add to Your AI Tool
+
+Use this flow when you already have an AI agent/tool and want Pretorin as an MCP capability provider.
 
 ### 1. Claude Code
 

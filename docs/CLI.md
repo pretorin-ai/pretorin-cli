@@ -395,7 +395,9 @@ Valid severities: `critical`, `high`, `medium`, `low`, `info`
 
 ## Agent Commands
 
-The `agent` command group runs autonomous compliance tasks using the Codex agent runtime. The agent has access to all Pretorin MCP tools and can perform multi-step compliance workflows.
+The `agent` command group runs autonomous compliance tasks using the Codex agent runtime. This is the hosted model mode (`pretorin agent run`).
+
+If you already use another AI agent, use the MCP mode instead (`pretorin mcp-serve`) and connect Pretorin tools to that agent.
 
 ### Run a Compliance Task
 
