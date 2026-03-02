@@ -151,7 +151,10 @@ async def _push_event(
                 target = systems[0]
 
             if target is None:
-                rprint("[red]Multiple systems found. Use --system to specify one, or set context with 'pretorin context set':[/red]")
+                rprint(
+                    "[red]Multiple systems found. Use --system to specify one, "
+                    "or set context with 'pretorin context set':[/red]"
+                )
                 for s in systems:
                     rprint(f"  - {s['name']} ({s['id'][:8]}...)")
                 raise typer.Exit(1)

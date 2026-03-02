@@ -47,7 +47,10 @@ def login(
                     return False
 
         if asyncio.run(_check_existing()):
-            rprint("\n[#EAB536]\\[°◡°]/[/#EAB536] Already authenticated. Run [bold]pretorin whoami[/bold] to see your session.")
+            rprint(
+                "\n[#EAB536]\\[°◡°]/[/#EAB536] Already authenticated. "
+                "Run [bold]pretorin whoami[/bold] to see your session."
+            )
             rprint("[dim]To re-authenticate, run: pretorin login --api-key <new-key>[/dim]")
             return
 

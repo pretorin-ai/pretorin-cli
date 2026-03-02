@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -47,7 +45,11 @@ class TestCodexAgent:
         assert agent.api_key == "sk-pretorin-test"
 
     @patch("pretorin.agent.codex_agent.Config")
-    def test_resolves_api_key_from_openai_env(self, mock_config_cls: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_resolves_api_key_from_openai_env(
+        self,
+        mock_config_cls: MagicMock,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
         mock_config.model_api_base_url = "https://example.com/v1"

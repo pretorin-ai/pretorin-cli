@@ -55,7 +55,21 @@ def _format_json(data: Any) -> list[TextContent]:
     return [TextContent(type="text", text=json.dumps(data, indent=2, default=str))]
 
 
-_VALID_EVIDENCE_TYPES = {"screenshot", "screen_recording", "log_file", "configuration", "test_result", "certificate", "attestation", "code_snippet", "repository_link", "policy_document", "scan_result", "interview_notes", "other"}
+_VALID_EVIDENCE_TYPES = {
+    "screenshot",
+    "screen_recording",
+    "log_file",
+    "configuration",
+    "test_result",
+    "certificate",
+    "attestation",
+    "code_snippet",
+    "repository_link",
+    "policy_document",
+    "scan_result",
+    "interview_notes",
+    "other",
+}
 _VALID_SEVERITIES = {"critical", "high", "medium", "low", "info"}
 _VALID_EVENT_TYPES = {"security_scan", "configuration_change", "access_review", "compliance_check"}
 _VALID_CONTROL_STATUSES = {"implemented", "partial", "planned", "not_started", "not_applicable"}

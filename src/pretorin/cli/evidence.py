@@ -44,7 +44,11 @@ def evidence_create(
         "policy_document",
         "--type",
         "-t",
-        help="Evidence type: screenshot, screen_recording, log_file, configuration, test_result, certificate, attestation, code_snippet, repository_link, policy_document, scan_result, interview_notes, other",
+        help=(
+            "Evidence type: screenshot, screen_recording, log_file, configuration, "
+            "test_result, certificate, attestation, code_snippet, repository_link, "
+            "policy_document, scan_result, interview_notes, other"
+        ),
     ),
 ) -> None:
     """Create a local evidence file.
