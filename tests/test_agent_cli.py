@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import stat
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -117,7 +116,7 @@ class TestAgentRunCLI:
             patch.object(agent_cli, "_check_codex_deps"),
             patch("pretorin.cli.agent.asyncio") as mock_asyncio,
         ):
-            result = runner.invoke(agent_cli.app, ["run", "test task"])
+            runner.invoke(agent_cli.app, ["run", "test task"])
             mock_asyncio.run.assert_called_once()
 
     def test_run_legacy_flag_uses_agents_sdk(self) -> None:
@@ -125,7 +124,7 @@ class TestAgentRunCLI:
             patch.object(agent_cli, "_check_agent_deps"),
             patch("pretorin.cli.agent.asyncio") as mock_asyncio,
         ):
-            result = runner.invoke(agent_cli.app, ["run", "test task", "--legacy"])
+            runner.invoke(agent_cli.app, ["run", "test task", "--legacy"])
             mock_asyncio.run.assert_called_once()
 
 
@@ -141,7 +140,6 @@ class TestHarnessDeprecation:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         from pretorin.cli import harness as harness_cli
-        import shutil
 
         config_path = tmp_path / "config.toml"
         monkeypatch.setattr(harness_cli, "HARNESS_CONFIG_FILE", config_path)
