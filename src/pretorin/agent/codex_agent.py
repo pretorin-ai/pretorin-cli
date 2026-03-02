@@ -46,19 +46,28 @@ class CodexAgent:
         self.api_key = api_key or self._resolve_api_key()
 
     def _resolve_api_key(self) -> str:
-        """Resolve API key: PRETORIN_LLM_API_KEY -> OPENAI_API_KEY -> config."""
+        """Resolve API key: PRETORIN_LLM_API_KEY -> OPENAI_API_KEY -> config.api_key -> config.openai_api_key."""
+        def _valid(value: object) -> str | None:
+            return value.strip() if isinstance(value, str) and value.strip() else None
+
         key = os.environ.get("PRETORIN_LLM_API_KEY")
-        if key:
-            return key
+        resolved = _valid(key)
+        if resolved:
+            return resolved
         key = os.environ.get("OPENAI_API_KEY")
-        if key:
-            return key
-        config_key = self._config.openai_api_key
+        resolved = _valid(key)
+        if resolved:
+            return resolved
+
+        config_key = _valid(getattr(self._config, "api_key", None))
+        if config_key:
+            return config_key
+        config_key = _valid(getattr(self._config, "openai_api_key", None))
         if config_key:
             return config_key
         raise RuntimeError(
             "No API key found. Set PRETORIN_LLM_API_KEY, OPENAI_API_KEY, "
-            "or configure openai_api_key in ~/.pretorin/config.json"
+            "or configure api_key/openai_api_key in ~/.pretorin/config.json"
         )
 
     async def run(
