@@ -47,6 +47,7 @@ class CodexAgent:
 
     def _resolve_api_key(self) -> str:
         """Resolve API key: PRETORIN_LLM_API_KEY -> OPENAI_API_KEY -> config.api_key -> config.openai_api_key."""
+
         def _valid(value: object) -> str | None:
             return value.strip() if isinstance(value, str) and value.strip() else None
 

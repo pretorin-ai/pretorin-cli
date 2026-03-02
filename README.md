@@ -30,7 +30,13 @@ uv tool install pretorin
 pretorin login
 ```
 
-That's it. Now add Pretorin to your AI tool below.
+Run the interactive demo walkthrough (recommended for first-time setup):
+
+```bash
+bash scripts/demo-walkthrough.sh
+```
+
+Then add Pretorin to your AI tool below.
 
 ## Add to Your AI Tool
 
@@ -56,6 +62,16 @@ This registers the server for your current project. To make it available across 
     }
   }
 }
+```
+
+### Codex CLI
+
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.pretorin]
+command = "pretorin"
+args = ["mcp-serve"]
 ```
 
 ### Claude Desktop
@@ -114,14 +130,6 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 Restart Windsurf after saving.
 
 ### Harness CLI
-
-If your harness uses the Codex-compatible config format, add to `~/.codex/config.toml`:
-
-```toml
-[mcp_servers.pretorin]
-command = "pretorin"
-args = ["mcp-serve"]
-```
 
 Prefer using Pretorin's neutral wrapper command so you can swap harness backends later:
 
@@ -287,14 +295,6 @@ pretorin frameworks control nist-800-53-r5 ac-02 --references
 | `pretorin version` | Show CLI version |
 | `pretorin update` | Update to latest version |
 | `pretorin mcp-serve` | Start the MCP server |
-
-### Demo Walkthrough
-
-New to Pretorin? Run the interactive walkthrough to see the full CLI workflow — auth, frameworks, evidence, narratives, monitoring, agent skills, and MCP integration:
-
-```bash
-bash scripts/demo-walkthrough.sh
-```
 
 ## Installation
 

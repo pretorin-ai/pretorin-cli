@@ -38,6 +38,7 @@ def login(
     """
     # If already authenticated and no explicit key provided, skip login
     if api_key is None and Config().is_configured:
+
         async def _check_existing() -> bool:
             async with PretorianClient() as client:
                 try:
