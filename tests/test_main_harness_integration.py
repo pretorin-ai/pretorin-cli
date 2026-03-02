@@ -34,7 +34,7 @@ def _valid_pretorin_config(base_url: str = "https://models.example/v1") -> str:
         'model_provider = "pretorin"\n\n'
         "[model_providers.pretorin]\n"
         f'base_url = "{base_url}"\n'
-        'env_key = "PRETORIN_LLM_API_KEY"\n\n'
+        'env_key = "OPENAI_API_KEY"\n\n'
         "[mcp_servers.pretorin]\n"
         'command = "pretorin"\n'
         'args = ["mcp-serve"]\n'

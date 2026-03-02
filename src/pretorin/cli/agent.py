@@ -14,6 +14,7 @@ from rich.console import Console
 from rich.table import Table
 
 from pretorin.cli.output import is_json_mode, print_json
+from pretorin.client.config import Config
 
 console = Console()
 
@@ -148,17 +149,16 @@ async def _run_legacy_agent(
 
     from pretorin.agent.runner import ComplianceAgent
     from pretorin.client.api import PretorianClient, PretorianClientError
-    from pretorin.client.config import Config
 
     config = Config()
 
-    api_key = os.environ.get("OPENAI_API_KEY", config.get("openai_api_key"))
+    api_key = os.environ.get("OPENAI_API_KEY") or config.get("api_key") or config.get("openai_api_key")
     base_url = os.environ.get("OPENAI_BASE_URL", config.get("openai_base_url"))
     model = os.environ.get("OPENAI_MODEL", model)
 
     if not api_key:
-        rprint("[red]OPENAI_API_KEY is required for legacy agent features.[/red]")
-        rprint("[dim]Set it with: [bold]export OPENAI_API_KEY=sk-...[/bold][/dim]")
+        rprint("[red]No model API key found for legacy agent features.[/red]")
+        rprint("[dim]Run [bold]pretorin login[/bold] or set [bold]OPENAI_API_KEY[/bold].[/dim]")
         raise typer.Exit(1)
 
     async with PretorianClient() as client:
@@ -214,6 +214,7 @@ def agent_doctor() -> None:
     from pretorin.agent.codex_runtime import CodexRuntime
 
     runtime = CodexRuntime()
+    config = Config()
     errors: list[str] = []
     warnings: list[str] = []
     info: dict[str, str] = {}
@@ -234,9 +235,9 @@ def agent_doctor() -> None:
     # Check for API key availability
     import os
 
-    has_key = bool(os.environ.get("PRETORIN_LLM_API_KEY") or os.environ.get("OPENAI_API_KEY"))
+    has_key = bool(os.environ.get("OPENAI_API_KEY") or config.get("api_key") or config.get("openai_api_key"))
     if not has_key:
-        warnings.append("No LLM API key found. Set PRETORIN_LLM_API_KEY or OPENAI_API_KEY.")
+        warnings.append("No model API key found. Run `pretorin login` or set OPENAI_API_KEY.")
 
     ok = len(errors) == 0
 

@@ -62,9 +62,7 @@ class TestAgentDoctor:
             result = runner.invoke(agent_cli.app, ["doctor"])
         assert result.exit_code == 1
 
-    def test_doctor_succeeds_with_installed_binary(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_doctor_succeeds_with_installed_binary(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         codex_home = tmp_path / "codex"
         codex_home.mkdir()
         (codex_home / "config.toml").write_text("# config")
@@ -107,6 +105,11 @@ class TestAgentInstall:
 class TestAgentRunCLI:
     """Tests for 'pretorin agent run' command argument parsing."""
 
+    @staticmethod
+    def _close_coroutine(coro: object) -> None:
+        if hasattr(coro, "close"):
+            coro.close()
+
     def test_run_requires_message(self) -> None:
         result = runner.invoke(agent_cli.app, ["run"])
         assert result.exit_code != 0
@@ -116,6 +119,7 @@ class TestAgentRunCLI:
             patch.object(agent_cli, "_check_codex_deps"),
             patch("pretorin.cli.agent.asyncio") as mock_asyncio,
         ):
+            mock_asyncio.run.side_effect = self._close_coroutine
             runner.invoke(agent_cli.app, ["run", "test task"])
             mock_asyncio.run.assert_called_once()
 
@@ -124,6 +128,7 @@ class TestAgentRunCLI:
             patch.object(agent_cli, "_check_agent_deps"),
             patch("pretorin.cli.agent.asyncio") as mock_asyncio,
         ):
+            mock_asyncio.run.side_effect = self._close_coroutine
             runner.invoke(agent_cli.app, ["run", "test task", "--legacy"])
             mock_asyncio.run.assert_called_once()
 
@@ -136,9 +141,7 @@ class TestHarnessDeprecation:
 
         assert harness_cli.app.info.deprecated is True
 
-    def test_harness_run_shows_deprecation_warning(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_harness_run_shows_deprecation_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         from pretorin.cli import harness as harness_cli
 
         config_path = tmp_path / "config.toml"
@@ -149,7 +152,7 @@ class TestHarnessDeprecation:
             'model_provider = "pretorin"\n\n'
             "[model_providers.pretorin]\n"
             'base_url = "https://example.com/v1"\n'
-            'env_key = "PRETORIN_LLM_API_KEY"\n\n'
+            'env_key = "OPENAI_API_KEY"\n\n'
             "[mcp_servers.pretorin]\n"
             'command = "pretorin"\n'
             'args = ["mcp-serve"]\n'
