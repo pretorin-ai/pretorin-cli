@@ -73,6 +73,24 @@ class TestCodexAgent:
             CodexAgent()
 
     @patch("pretorin.agent.codex_agent.Config")
+    def test_resolves_api_key_from_platform_config(
+        self,
+        mock_config_cls: MagicMock,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        mock_config = MagicMock()
+        mock_config.openai_model = "gpt-4o"
+        mock_config.model_api_base_url = "https://example.com/v1"
+        mock_config.api_key = "ptn-platform-key"
+        mock_config.openai_api_key = None
+        mock_config_cls.return_value = mock_config
+
+        monkeypatch.delenv("PRETORIN_LLM_API_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        agent = CodexAgent()
+        assert agent.api_key == "ptn-platform-key"
+
+    @patch("pretorin.agent.codex_agent.Config")
     def test_model_override(self, mock_config_cls: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
