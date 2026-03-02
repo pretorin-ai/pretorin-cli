@@ -430,9 +430,35 @@ pretorin agent install
 
 # Manage MCP servers available to the agent
 pretorin agent mcp-list
-pretorin agent mcp-add <name> --command <cmd> --args <args>
+pretorin agent mcp-add <name> stdio <command> --arg <arg>
 pretorin agent mcp-remove <name>
 ```
+
+### Hosted Model Setup (Pretorin Endpoint)
+
+Use this setup when you want `pretorin agent run` to call Pretorin-hosted `/v1` model endpoints.
+
+```bash
+# 1) Login with your Pretorin API key
+pretorin login
+
+# 2) Optional: custom/self-hosted Pretorin model endpoint
+pretorin config set model_api_base_url https://platform.pretorin.com/v1
+
+# 3) Validate runtime
+pretorin agent doctor
+pretorin agent install
+
+# 4) Run a task
+pretorin agent run "Assess AC-2 implementation gaps for my system"
+```
+
+Model key precedence for the agent runtime is:
+- `OPENAI_API_KEY`
+- `config.api_key` (from `pretorin login`)
+- `config.openai_api_key`
+
+If `OPENAI_API_KEY` is set in your shell, it overrides the stored Pretorin login key.
 
 ## Review Commands
 
@@ -497,7 +523,10 @@ $ pretorin config path
 | Variable | Description |
 |----------|-------------|
 | `PRETORIN_API_KEY` | API key (overrides stored config) |
-| `PRETORIN_API_BASE_URL` | Custom API URL (default: `https://platform.pretorin.com/api/v1/public`) |
+| `PRETORIN_PLATFORM_API_BASE_URL` | Platform REST API URL (default: `https://platform.pretorin.com/api/v1/public`) |
+| `PRETORIN_API_BASE_URL` | Backward-compatible alias for `PRETORIN_PLATFORM_API_BASE_URL` |
+| `PRETORIN_MODEL_API_BASE_URL` | Model API URL for agent/harness flows (default: `https://platform.pretorin.com/v1`) |
+| `OPENAI_API_KEY` | Optional model key override for the agent runtime |
 
 ## Utilities
 
