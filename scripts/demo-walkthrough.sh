@@ -271,7 +271,7 @@ run_cmd pretorin agent skills
 
 echo ""
 echo -e "  ${DIM}The agent can run compliance tasks using an LLM backend.${RESET}"
-echo -e "  ${DIM}Example (requires OPENAI_API_KEY or similar):${RESET}"
+echo -e "  ${DIM}Example (requires pretorin login or OPENAI_API_KEY):${RESET}"
 echo ""
 echo -e "  ${DIM}  \$ pretorin agent run --skill gap-analysis${RESET}"
 echo ""

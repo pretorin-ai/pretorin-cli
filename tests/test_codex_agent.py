@@ -40,12 +40,12 @@ class TestCodexAgent:
         mock_config.model_api_base_url = "https://example.com/v1"
         mock_config_cls.return_value = mock_config
 
-        monkeypatch.setenv("PRETORIN_LLM_API_KEY", "sk-pretorin-test")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-test")
         agent = CodexAgent()
-        assert agent.api_key == "sk-pretorin-test"
+        assert agent.api_key == "sk-openai-test"
 
     @patch("pretorin.agent.codex_agent.Config")
-    def test_resolves_api_key_from_openai_env(
+    def test_resolves_api_key_from_openai_config(
         self,
         mock_config_cls: MagicMock,
         monkeypatch: pytest.MonkeyPatch,
@@ -53,13 +53,13 @@ class TestCodexAgent:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
         mock_config.model_api_base_url = "https://example.com/v1"
-        mock_config.openai_api_key = None
+        mock_config.api_key = None
+        mock_config.openai_api_key = "sk-config-openai"
         mock_config_cls.return_value = mock_config
 
-        monkeypatch.delenv("PRETORIN_LLM_API_KEY", raising=False)
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-test")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         agent = CodexAgent()
-        assert agent.api_key == "sk-openai-test"
+        assert agent.api_key == "sk-config-openai"
 
     @patch("pretorin.agent.codex_agent.Config")
     def test_raises_when_no_api_key(self, mock_config_cls: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -69,9 +69,8 @@ class TestCodexAgent:
         mock_config.openai_api_key = None
         mock_config_cls.return_value = mock_config
 
-        monkeypatch.delenv("PRETORIN_LLM_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-        with pytest.raises(RuntimeError, match="No API key found"):
+        with pytest.raises(RuntimeError, match="No model API key found"):
             CodexAgent()
 
     @patch("pretorin.agent.codex_agent.Config")
@@ -87,7 +86,6 @@ class TestCodexAgent:
         mock_config.openai_api_key = None
         mock_config_cls.return_value = mock_config
 
-        monkeypatch.delenv("PRETORIN_LLM_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         agent = CodexAgent()
         assert agent.api_key == "ptn-platform-key"

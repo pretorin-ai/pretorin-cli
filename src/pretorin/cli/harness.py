@@ -24,7 +24,6 @@ from pretorin.client.config import Config
 HARNESS_CONFIG_FILE = Path.home() / ".codex" / "config.toml"
 PRETORIN_PROVIDER_NAME = "pretorin"
 OPENAI_PROVIDER_NAME = "openai"
-PRETORIN_ENV_KEY = "PRETORIN_LLM_API_KEY"
 OPENAI_ENV_KEY = "OPENAI_API_KEY"
 DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1"
 DEFAULT_WIRE_API = "responses"
@@ -162,8 +161,8 @@ def _evaluate_setup(content: str, allow_openai_api: bool, backend_command: str) 
             errors.append("Pretorin provider is missing `base_url`.")
         elif _contains_disallowed_endpoint(provider_base_url):
             errors.append("Pretorin provider base_url points to OpenAI/ChatGPT endpoint.")
-        if provider_env_key != PRETORIN_ENV_KEY:
-            warnings.append(f"Pretorin provider env_key should be `{PRETORIN_ENV_KEY}`.")
+        if provider_env_key != OPENAI_ENV_KEY:
+            warnings.append(f"Pretorin provider env_key should be `{OPENAI_ENV_KEY}`.")
 
     if provider == OPENAI_PROVIDER_NAME and not allow_openai_api:
         errors.append("OpenAI API provider is configured, but this mode forbids OpenAI endpoints.")
@@ -261,7 +260,7 @@ def harness_init(
                 'name = "Pretorin Platform"',
                 f'base_url = "{resolved_provider_url}"',
                 f'wire_api = "{DEFAULT_WIRE_API}"',
-                f'env_key = "{PRETORIN_ENV_KEY}"',
+                f'env_key = "{OPENAI_ENV_KEY}"',
             ],
         )
 

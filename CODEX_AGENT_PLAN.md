@@ -173,7 +173,7 @@ class CodexAgent:
         self.api_key = api_key or self._resolve_api_key()
 
     def _resolve_api_key(self) -> str:
-        """Resolve API key: PRETORIN_LLM_API_KEY → OPENAI_API_KEY → config."""
+        """Resolve API key: OPENAI_API_KEY → config.api_key → config.openai_api_key."""
         ...
 
     async def run(
@@ -455,7 +455,7 @@ ls ~/.codex/                     # Should be UNTOUCHED
 | Binary | System PATH (`npm`, `brew`) | `~/.pretorin/bin/codex-{version}` |
 | Config | `~/.codex/config.toml` | `~/.pretorin/codex/config.toml` |
 | MCP servers | User's own config | Pretorin MCP auto-injected |
-| API key env var | `OPENAI_API_KEY` | `PRETORIN_LLM_API_KEY` (or `OPENAI_API_KEY` via env dict) |
+| API key env var | `OPENAI_API_KEY` | `OPENAI_API_KEY` |
 | Model | User's choice | Pretorin config → `--model` flag → env var |
 | Python package | Not affected | `pretorin[agent]` optional extras |
 

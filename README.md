@@ -17,40 +17,73 @@
 
 ---
 
-> **Beta** — Pretorin is currently in closed beta. Framework and control browsing works for everyone. Platform features (evidence, narratives, monitoring) require a beta code. [Sign up for early access](https://pretorin.com/early-access/).
+> **Beta** — Pretorin is currently in closed beta. Framework/control browsing works for everyone. Platform write features (evidence, narratives, monitoring) require a beta code. [Sign up for early access](https://pretorin.com/early-access/).
 
-Pretorin brings compliance into your development workflow. Use the **MCP server** to give AI agents direct access to authoritative control data, not hallucinated requirements. Use the **CLI** to query frameworks, controls, and document requirements from your terminal or CI pipeline. Both connect to the same API with enriched data for NIST 800-53, NIST 800-171, FedRAMP, CMMC, and more.
+Pretorin CLI gives developers and AI agents direct access to compliance data, implementation context, and evidence workflows.
+
+## Two Usage Modes
+
+1. Pretorin-hosted model mode: run `pretorin agent run` and route model calls through Pretorin `/v1` endpoints.
+2. Bring-your-own-agent mode: run `pretorin mcp-serve` and connect the MCP server to your existing AI tool (Claude Code, Codex CLI, Cursor, etc.).
 
 ## Quick Start
-
-Get your API key from [platform.pretorin.com](https://platform.pretorin.com/), then:
 
 ```bash
 uv tool install pretorin
 pretorin login
 ```
 
-Run the interactive demo walkthrough (recommended for first-time setup):
+Run the walkthrough:
 
 ```bash
 bash scripts/demo-walkthrough.sh
 ```
 
-Then add Pretorin to your AI tool below.
+## Hosted Model Workflow (Recommended)
+
+Use this flow when you want `pretorin agent run` to go through Pretorin-hosted model endpoints.
+
+1. Authenticate with your Pretorin API key:
+
+```bash
+pretorin login
+```
+
+2. Optional: point model traffic to a custom/self-hosted Pretorin endpoint:
+
+```bash
+pretorin config set model_api_base_url https://platform.pretorin.com/v1
+```
+
+3. Verify runtime setup:
+
+```bash
+pretorin agent doctor
+pretorin agent install
+```
+
+4. Run an agent task:
+
+```bash
+pretorin agent run "Assess AC-2 implementation gaps for my system"
+```
+
+Key behavior:
+- Preferred setup is `pretorin login` with no shell-level `OPENAI_API_KEY` override.
+- Model key precedence is: `OPENAI_API_KEY` -> `config.api_key` -> `config.openai_api_key`.
+- If `OPENAI_API_KEY` is set in your shell, it overrides stored login credentials.
 
 ## Add to Your AI Tool
 
-<img src="assets/Rome-bot_Basic-1.png" alt="Rome-bot" width="120" align="right">
+Use this flow when you already have an AI agent/tool and want Pretorin as an MCP capability provider.
 
-### Claude Code
+### 1. Claude Code
 
 ```bash
 claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 ```
 
-This registers the server for your current project. To make it available across all your projects, add `--scope user`.
-
-**Team setup** - add a `.mcp.json` file to your project root so every team member gets the server automatically:
+Team setup via `.mcp.json`:
 
 ```json
 {
@@ -64,7 +97,7 @@ This registers the server for your current project. To make it available across 
 }
 ```
 
-### Codex CLI
+### 2. Codex CLI
 
 Add to `~/.codex/config.toml`:
 
@@ -74,342 +107,52 @@ command = "pretorin"
 args = ["mcp-serve"]
 ```
 
-### Claude Desktop
+For Claude Desktop, Cursor, and Windsurf setup, see [docs/MCP.md](docs/MCP.md).
 
-Add to your Claude Desktop configuration file:
+## Core Commands
 
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-**Linux**: `~/.config/Claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "pretorin": {
-      "command": "pretorin",
-      "args": ["mcp-serve"]
-    }
-  }
-}
-```
-
-Restart Claude Desktop after saving.
-
-### Cursor
-
-Add to `~/.cursor/mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "pretorin": {
-      "command": "pretorin",
-      "args": ["mcp-serve"]
-    }
-  }
-}
-```
-
-Restart Cursor after saving.
-
-### Windsurf
-
-Add to `~/.codeium/windsurf/mcp_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "pretorin": {
-      "command": "pretorin",
-      "args": ["mcp-serve"]
-    }
-  }
-}
-```
-
-Restart Windsurf after saving.
-
-### Harness CLI
-
-Prefer using Pretorin's neutral wrapper command so you can swap harness backends later:
-
-```bash
-# Initialize harness policy defaults (Pretorin provider mode)
-pretorin harness init --provider-url https://your-pretorin-instance.example/v1
-
-# Validate local setup
-pretorin harness doctor
-
-# Run a compliance task through your configured harness backend
-pretorin harness run "Assess AC-2 implementation gaps"
-```
-
-## Available Tools
-
-### Framework & Control Reference
-
-| Tool | Description |
-|------|-------------|
-| `pretorin_list_frameworks` | List all compliance frameworks with tier and category info |
-| `pretorin_get_framework` | Get framework metadata including AI context |
-| `pretorin_list_control_families` | List control families with AI context |
-| `pretorin_list_controls` | List controls with optional family filter |
-| `pretorin_get_control` | Get detailed control info including AI guidance |
-| `pretorin_get_control_references` | Get control statement, guidance, objectives, and related controls |
-| `pretorin_get_document_requirements` | Get document requirements for a framework |
-
-### System & Compliance
-
-| Tool | Description |
-|------|-------------|
-| `pretorin_list_systems` | List all systems in your organization |
-| `pretorin_get_system` | Get system details including frameworks and security impact level |
-| `pretorin_get_compliance_status` | Get compliance status and framework progress for a system |
-| `pretorin_get_control_context` | Get rich control context: AI guidance, statement, objectives, and implementation details |
-| `pretorin_get_scope` | Get system scope/policy information including excluded controls |
-| `pretorin_get_control_implementation` | Get implementation details including narrative, evidence count, and notes |
-
-### Evidence & Narrative
-
-| Tool | Description |
-|------|-------------|
-| `pretorin_search_evidence` | Search evidence items, optionally filtered by control or framework |
-| `pretorin_create_evidence` | Create a new evidence item on the platform |
-| `pretorin_link_evidence` | Link an existing evidence item to a control |
-| `pretorin_get_narrative` | Get existing implementation narrative for a control |
-| `pretorin_update_narrative` | Push a narrative text update for a control implementation |
-| `pretorin_add_control_note` | Add a note with suggestions (manual steps, systems to connect) |
-
-### Monitoring & Status
-
-| Tool | Description |
-|------|-------------|
-| `pretorin_push_monitoring_event` | Push a monitoring event (security scan, config change, access review) |
-| `pretorin_update_control_status` | Update the implementation status of a control |
-
-## Resources
-
-| Resource URI | Description |
-|--------------|-------------|
-| `analysis://schema` | Compliance artifact JSON schema |
-| `analysis://guide/{framework_id}` | Framework analysis guide |
-| `analysis://control/{control_id}` | Control analysis guidance |
-
-## Example Prompts
-
-Try asking your AI assistant:
-
-- "What compliance frameworks are available for government systems?"
-- "What are the Account Management requirements for FedRAMP Moderate?"
-- "What documents do I need for NIST 800-171 compliance?"
-- "Show me all Audit controls in NIST 800-53"
-
-For comprehensive MCP documentation, see [docs/MCP.md](docs/MCP.md).
-
-## Supported Frameworks
-
-The initial public release includes these Government Core frameworks:
-
-- NIST SP 800-53 Rev 5
-- NIST SP 800-171 Rev 2
-- FedRAMP (Low, Moderate, High)
-- CMMC Level 1, 2, and 3
-
-Additional frameworks are available on the platform. See [platform.pretorin.com/api/docs](https://platform.pretorin.com/api/docs) for the full list.
-
-## CLI Reference
-
-Pretorin also includes a full CLI for working with compliance data directly in the terminal. For comprehensive documentation with real terminal output examples, see [docs/CLI.md](docs/CLI.md).
-
-### Quick Examples
-
-```bash
-# List all frameworks
-pretorin frameworks list
-
-# Get framework details
-pretorin frameworks get fedramp-moderate
-
-# List control families (IDs are slugs like "access-control", not "ac")
-pretorin frameworks families nist-800-53-r5
-
-# List controls filtered by family
-pretorin frameworks controls nist-800-53-r5 --family access-control --limit 10
-
-# Get control details (IDs are zero-padded: "ac-01", not "ac-1")
-pretorin frameworks control nist-800-53-r5 ac-02
-
-# Get full control details with statement, guidance, and related controls
-pretorin frameworks control nist-800-53-r5 ac-02 --references
-```
-
-### All Commands
-
-| Command | Description |
-|---------|-------------|
-| `pretorin login` | Authenticate with the Pretorin API |
-| `pretorin logout` | Clear stored credentials |
-| `pretorin whoami` | Display current authentication status |
-| **Frameworks** | |
-| `pretorin frameworks list` | List all compliance frameworks |
-| `pretorin frameworks get <id>` | Get framework details |
-| `pretorin frameworks families <id>` | List control families |
-| `pretorin frameworks controls <id>` | List controls (`--family`, `--limit`) |
-| `pretorin frameworks control <fw> <ctrl>` | Get control details (`--references`) |
-| `pretorin frameworks documents <id>` | Get document requirements |
-| **Context** | |
-| `pretorin context list` | List systems and frameworks with progress |
+| Command | Purpose |
+|---------|---------|
+| `pretorin frameworks list` | List available frameworks |
+| `pretorin frameworks control <framework> <control>` | Get control details and guidance |
 | `pretorin context set` | Set active system/framework context |
-| `pretorin context show` | Display current active context |
-| `pretorin context clear` | Clear active context |
-| **Evidence** | |
-| `pretorin evidence create` | Create a local evidence file |
-| `pretorin evidence list` | List local evidence files |
-| `pretorin evidence push` | Push local evidence to the platform |
-| **Narrative** | |
-| `pretorin narrative push <ctrl> <fw> <sys> <file>` | Push a narrative file to the platform |
-| **Monitoring** | |
-| `pretorin monitoring push` | Push a monitoring event to a system |
-| **Agent** | |
-| `pretorin agent run "<task>"` | Run a compliance task with the Codex agent |
-| `pretorin agent run --skill <name>` | Run a predefined skill (gap-analysis, narrative-generation, evidence-collection, security-review) |
-| `pretorin agent doctor` | Validate Codex runtime setup |
-| `pretorin agent install` | Download the pinned Codex binary |
-| `pretorin agent skills` | List available agent skills |
-| `pretorin agent mcp-list` | List configured MCP servers |
-| `pretorin agent mcp-add` | Add an MCP server configuration |
-| `pretorin agent mcp-remove` | Remove an MCP server configuration |
-| **Review** | |
-| `pretorin review run` | Review code against a control |
-| `pretorin review status` | Check implementation status |
-| **Config** | |
-| `pretorin config list` | List all configuration |
-| `pretorin config get <key>` | Get a config value |
-| `pretorin config set <key> <value>` | Set a config value |
-| `pretorin config path` | Show config file path |
-| **Harness** | |
-| `pretorin harness init` | Initialize harness config |
-| `pretorin harness doctor` | Validate harness setup |
-| `pretorin harness run "<task>"` | Run task through harness backend |
-| **Utilities** | |
-| `pretorin version` | Show CLI version |
-| `pretorin update` | Update to latest version |
-| `pretorin mcp-serve` | Start the MCP server |
-
-## Installation
-
-### Stable (PyPI)
-
-We recommend using [uv](https://docs.astral.sh/uv/) or [pipx](https://pipx.pypa.io/) for isolated installation:
-
-```bash
-uv tool install pretorin
-```
-
-```bash
-pipx install pretorin
-```
-
-Or with pip:
-
-```bash
-pip install pretorin
-```
-
-### Latest (GitHub)
-
-Install the latest development version directly from GitHub:
-
-```bash
-uv tool install git+https://github.com/pretorin-ai/pretorin-cli.git
-```
-
-### Updating
-
-```bash
-pretorin update
-```
+| `pretorin evidence create` | Create local evidence file |
+| `pretorin evidence push` | Push local evidence to Pretorin |
+| `pretorin narrative push <ctrl> <fw> <sys> <file>` | Push a narrative file |
+| `pretorin monitoring push` | Push a monitoring event |
+| `pretorin agent run "<task>"` | Run Codex-powered compliance task |
+| `pretorin review run --control-id <id> --path <dir>` | Review local code for control coverage |
+| `pretorin mcp-serve` | Start MCP server |
 
 ## Configuration
 
-Credentials are stored in `~/.pretorin/config.json`.
-
-### Environment Variables
+Credentials are stored at `~/.pretorin/config.json`.
 
 | Variable | Description |
 |----------|-------------|
-| `PRETORIN_API_KEY` | API key (overrides stored config) |
-| `PRETORIN_PLATFORM_API_BASE_URL` | Platform REST API URL for framework/system/evidence/narrative endpoints (default: https://platform.pretorin.com/api/v1/public) |
+| `PRETORIN_API_KEY` | API key for platform access (overrides stored config) |
+| `PRETORIN_PLATFORM_API_BASE_URL` | Platform REST API base URL (`/api/v1/public`) |
 | `PRETORIN_API_BASE_URL` | Backward-compatible alias for `PRETORIN_PLATFORM_API_BASE_URL` |
-| `PRETORIN_MODEL_API_BASE_URL` | Model provider URL used by `pretorin harness init` (default: https://platform.pretorin.com/v1) |
+| `PRETORIN_MODEL_API_BASE_URL` | Model API base URL used by agent/harness flows (default: `https://platform.pretorin.com/v1`) |
+| `OPENAI_API_KEY` | Optional model key override for agent runtime |
+
+## Documentation
+
+- CLI reference: [docs/CLI.md](docs/CLI.md)
+- MCP integration guide: [docs/MCP.md](docs/MCP.md)
+- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Development
-
-### Setup
 
 ```bash
 git clone https://github.com/pretorin-ai/pretorin-cli.git
 cd pretorin-cli
 uv pip install -e ".[dev]"
-```
-
-Or with pip:
-
-```bash
-pip install -e ".[dev]"
-```
-
-### Running Tests
-
-```bash
 pytest
-```
-
-With coverage:
-
-```bash
-pytest --cov=pretorin --cov-report=term-missing
-```
-
-### Docker Testing
-
-```bash
-# Run all tests
-docker-compose run --rm test
-
-# Run linter
-docker-compose run --rm lint
-
-# Run type checker
-docker-compose run --rm typecheck
-
-# Or use the convenience script
-./scripts/docker-test.sh all
-```
-
-### Type Checking
-
-```bash
-mypy src/pretorin
-```
-
-### Linting
-
-```bash
 ruff check src/pretorin
 ruff format --check src/pretorin
 ```
 
-## Contributing
-
-Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-## MCP Registry
-
-This server is listed on the official [MCP Registry](https://registry.modelcontextprotocol.io/).
-
-<!-- mcp-name: io.github.pretorin-ai/pretorin -->
-
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](LICENSE).

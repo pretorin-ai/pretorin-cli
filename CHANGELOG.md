@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - CI lint failure from `ruff format --check` by formatting `src/pretorin/agent/codex_agent.py` and `src/pretorin/cli/auth.py`
-- CLI key precedence remains: `PRETORIN_LLM_API_KEY` -> `OPENAI_API_KEY` -> `config.api_key` -> `config.openai_api_key`
+- CLI model key precedence: `OPENAI_API_KEY` -> `config.api_key` -> `config.openai_api_key`
 
 ## [0.5.2] - 2026-02-27
 
