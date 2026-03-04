@@ -76,8 +76,37 @@ jobs:
           name: dist
           path: dist/
 
+      - name: Validate release tag matches package version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+
+          artifact_file="$(ls dist/pretorin-*.tar.gz | head -n 1 || true)"
+          if [[ -z "$artifact_file" ]]; then
+            echo "::error::No source distribution found in dist/."
+            exit 1
+          fi
+
+          artifact_name="$(basename "$artifact_file")"
+          package_version="${artifact_name#pretorin-}"
+          package_version="${package_version%.tar.gz}"
+          if [[ ! "$package_version" =~ ^[0-9][A-Za-z0-9.+-]*$ ]]; then
+            echo "::error::Could not parse version from '${artifact_name}'."
+            exit 1
+          fi
+
+          tag_version="${RELEASE_TAG#v}"
+
+          if [[ "$package_version" != "$tag_version" ]]; then
+            echo "::error::Release tag '${RELEASE_TAG}' does not match package version '${package_version}'."
+            exit 1
+          fi
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
         # No API token needed - uses OIDC trusted publishing
 
   publish-mcp-registry:
