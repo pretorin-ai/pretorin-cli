@@ -23,7 +23,7 @@ ARTIFACT_SCHEMA = {
     "control_id": {
         "type": "string",
         "required": True,
-        "description": "The control ID being addressed (e.g., ac-2, au-2)",
+        "description": "The control ID being addressed (e.g., ac-02, au-02)",
     },
     "component": {
         "type": "object",
@@ -121,7 +121,7 @@ When analyzing code for compliance, produce a JSON artifact with this structure:
 ```json
 {
   "framework_id": "fedramp-moderate",
-  "control_id": "ac-2",
+  "control_id": "ac-02",
   "component": {
     "component_id": "my-application",
     "title": "My Application",
@@ -129,7 +129,7 @@ When analyzing code for compliance, produce a JSON artifact with this structure:
     "type": "software",
     "control_implementations": [
       {
-        "control_id": "ac-2",
+        "control_id": "ac-02",
         "description": "The application implements account management through...",
         "implementation_status": "implemented",
         "responsible_roles": ["System Administrator", "Security Team"],
@@ -290,13 +290,13 @@ non-federal systems. It's a subset of 800-53 with ~110 requirements.
 
 CONTROL_ANALYSIS_PROMPTS: dict[str, dict[str, str]] = {
     # -------------------------------------------------------------------------
-    # AC-2: Account Management
+    # AC-02: Account Management
     # -------------------------------------------------------------------------
     "ac-02": {
         "title": "Account Management",
         "family": "Access Control",
         "summary": """
-AC-2 requires organizations to manage system accounts including identifying
+AC-02 requires organizations to manage system accounts including identifying
 account types, assigning account managers, establishing conditions for group
 membership, specifying authorized users, and maintaining ongoing account
 administration.
@@ -380,13 +380,13 @@ not just that relevant code exists.
 """,
     },
     # -------------------------------------------------------------------------
-    # AU-2: Audit Events
+    # AU-02: Audit Events
     # -------------------------------------------------------------------------
     "au-02": {
         "title": "Audit Events",
         "family": "Audit and Accountability",
         "summary": """
-AU-2 requires identifying events that need to be audited, coordinating the
+AU-02 requires identifying events that need to be audited, coordinating the
 audit function with other organizational entities, and determining which
 events require auditing based on risk assessments.
 """,
@@ -464,13 +464,13 @@ log4j*.xml
 """,
     },
     # -------------------------------------------------------------------------
-    # IA-2: Identification and Authentication
+    # IA-02: Identification and Authentication
     # -------------------------------------------------------------------------
     "ia-02": {
         "title": "Identification and Authentication (Organizational Users)",
         "family": "Identification and Authentication",
         "summary": """
-IA-2 requires uniquely identifying and authenticating organizational users
+IA-02 requires uniquely identifying and authenticating organizational users
 (or processes acting on behalf of users). This includes implementing
 multi-factor authentication for various access types.
 """,
@@ -553,13 +553,13 @@ multi-factor authentication for various access types.
 """,
     },
     # -------------------------------------------------------------------------
-    # SC-7: Boundary Protection
+    # SC-07: Boundary Protection
     # -------------------------------------------------------------------------
     "sc-07": {
         "title": "Boundary Protection",
         "family": "System and Communications Protection",
         "summary": """
-SC-7 requires monitoring and controlling communications at external and
+SC-07 requires monitoring and controlling communications at external and
 key internal boundaries of the system. This includes implementing managed
 interfaces with traffic control and enforcing network segmentation.
 """,
@@ -644,13 +644,13 @@ interfaces with traffic control and enforcing network segmentation.
 """,
     },
     # -------------------------------------------------------------------------
-    # CM-2: Baseline Configuration
+    # CM-02: Baseline Configuration
     # -------------------------------------------------------------------------
     "cm-02": {
         "title": "Baseline Configuration",
         "family": "Configuration Management",
         "summary": """
-CM-2 requires developing, documenting, and maintaining a current baseline
+CM-02 requires developing, documenting, and maintaining a current baseline
 configuration of the system. This includes configuration settings, software
 versions, and security configurations.
 """,
@@ -781,11 +781,14 @@ def get_control_prompt(control_id: str) -> dict[str, str] | None:
 
 def format_control_analysis_prompt(framework_id: str, control_id: str) -> str:
     """Format a complete analysis prompt for a control."""
-    prompt_data = get_control_prompt(control_id)
+    from pretorin.utils import normalize_control_id
+
+    normalized_control_id = normalize_control_id(control_id)
+    prompt_data = get_control_prompt(normalized_control_id)
 
     if not prompt_data:
         return f"""
-# Control Analysis: {control_id.upper()}
+# Control Analysis: {normalized_control_id.upper()}
 
 No specific analysis guidance available for this control.
 
@@ -803,7 +806,7 @@ Use the schema from `analysis://schema` to format your artifact.
 """
 
     return f"""
-# Control Analysis: {control_id.upper()} - {prompt_data["title"]}
+# Control Analysis: {normalized_control_id.upper()} - {prompt_data["title"]}
 
 **Family:** {prompt_data["family"]}
 
@@ -819,7 +822,7 @@ Use the schema from `analysis://schema` to format your artifact.
 ## Output Format
 
 Produce a JSON artifact following the schema from `analysis://schema`.
-Set the framework_id to `{framework_id}` and control_id to `{control_id}`.
+Set the framework_id to `{framework_id}` and control_id to `{normalized_control_id}`.
 
 After analysis, validate with `pretorin_validate_artifact` and submit
 with `pretorin_submit_artifact`.

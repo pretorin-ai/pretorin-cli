@@ -73,6 +73,22 @@ _VALID_EVIDENCE_TYPES = {
 _VALID_SEVERITIES = {"critical", "high", "medium", "low", "info"}
 _VALID_EVENT_TYPES = {"security_scan", "configuration_change", "access_review", "compliance_check"}
 _VALID_CONTROL_STATUSES = {"implemented", "partial", "planned", "not_started", "not_applicable"}
+_CONTROL_ID_DESCRIPTION = (
+    "The control ID. Use canonical IDs from list_controls. "
+    "NIST/FedRAMP IDs are zero-padded (e.g., ac-02). "
+    "CMMC IDs use dotted notation (e.g., AC.L2-3.1.1)."
+)
+_CONTROL_ID_EXAMPLES = ["ac-02", "sc-07", "AC.L2-3.1.1", "03.01.01"]
+
+
+def _control_id_property(*, optional: bool = False) -> dict[str, Any]:
+    """Return a shared JSON schema field for control_id parameters."""
+    description = _CONTROL_ID_DESCRIPTION if not optional else f"Optional: {_CONTROL_ID_DESCRIPTION}"
+    return {
+        "type": "string",
+        "description": description,
+        "examples": _CONTROL_ID_EXAMPLES,
+    }
 
 
 def _require(arguments: dict[str, Any], *keys: str) -> str | None:
@@ -267,10 +283,7 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "The framework ID (e.g., nist-800-53-r5)",
                     },
-                    "control_id": {
-                        "type": "string",
-                        "description": "The control ID",
-                    },
+                    "control_id": _control_id_property(),
                 },
                 "required": ["framework_id", "control_id"],
             },
@@ -285,10 +298,7 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "The framework ID (e.g., nist-800-53-r5)",
                     },
-                    "control_id": {
-                        "type": "string",
-                        "description": "The control ID",
-                    },
+                    "control_id": _control_id_property(),
                 },
                 "required": ["framework_id", "control_id"],
             },
@@ -354,10 +364,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "control_id": {
-                        "type": "string",
-                        "description": "Optional: Filter by control ID",
-                    },
+                    "control_id": _control_id_property(optional=True),
                     "framework_id": {
                         "type": "string",
                         "description": "Optional: Filter by framework ID",
@@ -395,10 +402,7 @@ async def list_tools() -> list[Tool]:
                         "default": "documentation",
                         "enum": sorted(_VALID_EVIDENCE_TYPES),
                     },
-                    "control_id": {
-                        "type": "string",
-                        "description": "Optional: Associated control ID",
-                    },
+                    "control_id": _control_id_property(optional=True),
                     "framework_id": {
                         "type": "string",
                         "description": "Optional: Associated framework ID",
@@ -421,10 +425,7 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "The evidence item ID",
                     },
-                    "control_id": {
-                        "type": "string",
-                        "description": "The control ID to link to",
-                    },
+                    "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
                         "description": "Optional: Framework context for the link",
@@ -444,10 +445,7 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "The system ID",
                     },
-                    "control_id": {
-                        "type": "string",
-                        "description": "The control ID",
-                    },
+                    "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
                         "description": "Optional: Framework ID filter",
@@ -483,10 +481,7 @@ async def list_tools() -> list[Tool]:
                         "default": "security_scan",
                         "enum": sorted(_VALID_EVENT_TYPES),
                     },
-                    "control_id": {
-                        "type": "string",
-                        "description": "Optional: Associated control ID",
-                    },
+                    "control_id": _control_id_property(optional=True),
                     "description": {
                         "type": "string",
                         "description": "Optional: Detailed event description",
@@ -509,10 +504,7 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "The system ID",
                     },
-                    "control_id": {
-                        "type": "string",
-                        "description": "The control ID (e.g., ac-2)",
-                    },
+                    "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
                         "description": "The framework ID (e.g., nist-800-53-r5)",
@@ -545,10 +537,7 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "The system ID",
                     },
-                    "control_id": {
-                        "type": "string",
-                        "description": "The control ID",
-                    },
+                    "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
                         "description": "The framework ID",
@@ -579,10 +568,7 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "The system ID",
                     },
-                    "control_id": {
-                        "type": "string",
-                        "description": "The control ID",
-                    },
+                    "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
                         "description": "The framework ID",
@@ -606,10 +592,7 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "The system ID",
                     },
-                    "control_id": {
-                        "type": "string",
-                        "description": "The control ID",
-                    },
+                    "control_id": _control_id_property(),
                     "status": {
                         "type": "string",
                         "description": "New implementation status",
@@ -635,10 +618,7 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "The system ID",
                     },
-                    "control_id": {
-                        "type": "string",
-                        "description": "The control ID",
-                    },
+                    "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
                         "description": "Optional: Framework ID filter",

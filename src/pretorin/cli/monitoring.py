@@ -57,7 +57,7 @@ def push(
         None,
         "--control",
         "-c",
-        help="Control ID (e.g., sc-7, ac-2).",
+        help="Control ID (e.g., sc-07, ac-02).",
     ),
     description: str = typer.Option(
         "",
