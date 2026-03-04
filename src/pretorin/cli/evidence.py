@@ -184,13 +184,12 @@ def evidence_push(
 
 async def _push_evidence(dry_run: bool) -> None:
     """Push evidence to platform."""
+    from pretorin.cli.commands import require_auth
     from pretorin.client.api import PretorianClient, PretorianClientError
     from pretorin.evidence.sync import EvidenceSync
 
     async with PretorianClient() as client:
-        if not client.is_configured:
-            rprint("[red]Not configured. Run 'pretorin login' first.[/red]")
-            raise typer.Exit(1)
+        require_auth(client)
 
         sync = EvidenceSync()
 

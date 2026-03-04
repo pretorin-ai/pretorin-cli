@@ -58,12 +58,11 @@ def context_list() -> None:
 
 async def _context_list() -> None:
     """Fetch systems and compliance status from the API."""
+    from pretorin.cli.commands import require_auth
     from pretorin.client.api import PretorianClient, PretorianClientError
 
     async with PretorianClient() as client:
-        if not client.is_configured:
-            rprint("[red]Not configured. Run 'pretorin login' or 'pretorin config set api-key <key>' first.[/red]")
-            raise typer.Exit(1)
+        require_auth(client)
 
         if not is_json_mode():
             rprint(f"\n  {ROMEBOT_THINKING}  Fetching systems...\n")
@@ -191,13 +190,12 @@ async def _context_set(
     framework: str | None,
 ) -> None:
     """Set context interactively or from flags."""
+    from pretorin.cli.commands import require_auth
     from pretorin.client.api import PretorianClient, PretorianClientError
     from pretorin.client.config import Config
 
     async with PretorianClient() as client:
-        if not client.is_configured:
-            rprint("[red]Not configured. Run 'pretorin login' or 'pretorin config set api-key <key>' first.[/red]")
-            raise typer.Exit(1)
+        require_auth(client)
 
         if not is_json_mode():
             rprint(f"\n  {ROMEBOT_THINKING}  Connecting to Pretorin...\n")

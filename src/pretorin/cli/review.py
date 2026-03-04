@@ -150,6 +150,7 @@ async def _run_review(
     output_dir: str,
 ) -> None:
     """Run the review workflow."""
+    from pretorin.cli.commands import require_auth
     from pretorin.client.api import PretorianClient, PretorianClientError
 
     # --- Resolve context ---
@@ -181,9 +182,7 @@ async def _run_review(
             raise typer.Exit(1)
 
     async with PretorianClient() as client:
-        if not client.is_configured:
-            rprint("[red]Not configured. Run 'pretorin login' or 'pretorin config set api-key <key>' first.[/red]")
-            raise typer.Exit(1)
+        require_auth(client)
 
         # --- Fetch control details ---
         if not is_json_mode():
@@ -368,6 +367,7 @@ async def _review_status(
     framework_id: str | None,
 ) -> None:
     """Fetch and display implementation status for a control."""
+    from pretorin.cli.commands import require_auth
     from pretorin.client.api import PretorianClient, PretorianClientError
 
     system_id, resolved_framework_id = resolve_context(
@@ -376,9 +376,7 @@ async def _review_status(
     )
 
     async with PretorianClient() as client:
-        if not client.is_configured:
-            rprint("[red]Not configured. Run 'pretorin login' or 'pretorin config set api-key <key>' first.[/red]")
-            raise typer.Exit(1)
+        require_auth(client)
 
         if not is_json_mode():
             rprint(f"\n  {ROMEBOT_WORKING}  Fetching implementation for {control_id.upper()}...\n")
