@@ -795,7 +795,6 @@ No specific analysis guidance available for this control.
 2. Search the codebase for relevant implementations
 3. Document evidence with file paths and line numbers
 4. Assess implementation status based on findings
-5. Submit artifact using `pretorin_submit_artifact`
 
 ## Output Format
 
@@ -821,8 +820,6 @@ Use the schema from `analysis://schema` to format your artifact.
 Produce a JSON artifact following the schema from `analysis://schema`.
 Set the framework_id to `{framework_id}` and control_id to `{control_id}`.
 
-After analysis, validate with `pretorin_validate_artifact` and submit
-with `pretorin_submit_artifact`.
 """
 
 
