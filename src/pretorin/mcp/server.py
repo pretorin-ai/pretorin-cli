@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 from urllib.parse import urlparse
@@ -11,6 +12,7 @@ from urllib.parse import urlparse
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import (
+    CallToolResult,
     Resource,
     TextContent,
     Tool,
@@ -27,7 +29,9 @@ from pretorin.mcp.analysis_prompts import (
 )
 from pretorin.utils import normalize_control_id
 
-ToolHandler = Callable[[PretorianClient, dict[str, Any]], Awaitable[list[TextContent]]]
+logger = logging.getLogger(__name__)
+
+ToolHandler = Callable[[PretorianClient, dict[str, Any]], Awaitable[list[TextContent] | CallToolResult]]
 
 # Create the MCP server instance
 server = Server(
@@ -45,9 +49,12 @@ server = Server(
 )
 
 
-def _format_error(message: str) -> list[TextContent]:
+def _format_error(message: str) -> CallToolResult:
     """Format an error message for MCP response."""
-    return [TextContent(type="text", text=f"Error: {message}")]
+    return CallToolResult(
+        content=[TextContent(type="text", text=f"Error: {message}")],
+        isError=True,
+    )
 
 
 def _format_json(data: Any) -> list[TextContent]:
@@ -178,6 +185,10 @@ async def read_resource(uri: str) -> str:
         if len(path_parts) == 1:
             control_id = normalize_control_id(path_parts[0])
             framework_id = "fedramp-moderate"  # Default framework
+            logger.warning(
+                "No framework specified for control resource '%s', defaulting to fedramp-moderate",
+                control_id,
+            )
         else:
             framework_id = path_parts[0]
             control_id = normalize_control_id(path_parts[1])
@@ -651,7 +662,7 @@ async def list_tools() -> list[Tool]:
 
 
 @server.call_tool()
-async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
+async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
     """Handle tool calls."""
     try:
         async with PretorianClient() as client:
@@ -938,7 +949,7 @@ async def _handle_search_evidence(
 async def _handle_create_evidence(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the create_evidence tool."""
     err = _require(arguments, "system_id")
     if err:
@@ -967,7 +978,7 @@ async def _handle_create_evidence(
 async def _handle_link_evidence(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the link_evidence tool."""
     err = _require(arguments, "system_id", "evidence_id", "control_id")
     if err:
@@ -1006,7 +1017,7 @@ async def _handle_get_narrative(
 async def _handle_push_monitoring_event(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the push_monitoring_event tool."""
     err = _require(arguments, "system_id", "title")
     if err:
@@ -1066,7 +1077,7 @@ async def _handle_get_scope(
 async def _handle_add_control_note(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the add_control_note tool."""
     err = _require(arguments, "system_id", "control_id", "framework_id", "content")
     if err:
@@ -1085,7 +1096,7 @@ async def _handle_add_control_note(
 async def _handle_update_narrative(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the update_narrative tool."""
     err = _require(arguments, "system_id", "control_id", "framework_id", "narrative")
     if err:
@@ -1104,7 +1115,7 @@ async def _handle_update_narrative(
 async def _handle_update_control_status(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the update_control_status tool."""
     err = _require(arguments, "system_id", "control_id", "status")
     if err:
