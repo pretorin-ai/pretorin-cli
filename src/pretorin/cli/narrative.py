@@ -8,7 +8,9 @@ from pathlib import Path
 import typer
 from rich import print as rprint
 
+from pretorin.cli.commands import require_auth
 from pretorin.cli.output import is_json_mode, print_json
+from pretorin.utils import normalize_control_id
 
 app = typer.Typer(
     name="narrative",
@@ -42,6 +44,7 @@ def narrative_push(
         rprint("[red]File is empty.[/red]")
         raise typer.Exit(1)
 
+    control_id = normalize_control_id(control_id)
     asyncio.run(_push_narrative(control_id, framework_id, system, content))
 
 
@@ -55,9 +58,7 @@ async def _push_narrative(
     from pretorin.client.api import PretorianClient, PretorianClientError
 
     async with PretorianClient() as client:
-        if not client.is_configured:
-            rprint("[red]Not configured. Run 'pretorin login' first.[/red]")
-            raise typer.Exit(1)
+        require_auth(client)
 
         # Resolve system
         try:

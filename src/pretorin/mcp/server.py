@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 from urllib.parse import urlparse
@@ -11,6 +12,7 @@ from urllib.parse import urlparse
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import (
+    CallToolResult,
     Resource,
     TextContent,
     Tool,
@@ -26,6 +28,8 @@ from pretorin.mcp.analysis_prompts import (
     get_framework_guide,
 )
 from pretorin.utils import normalize_control_id
+
+logger = logging.getLogger(__name__)
 
 ToolHandler = Callable[[PretorianClient, dict[str, Any]], Awaitable[list[TextContent]]]
 
@@ -45,9 +49,12 @@ server = Server(
 )
 
 
-def _format_error(message: str) -> list[TextContent]:
+def _format_error(message: str) -> CallToolResult:
     """Format an error message for MCP response."""
-    return [TextContent(type="text", text=f"Error: {message}")]
+    return CallToolResult(
+        content=[TextContent(type="text", text=f"Error: {message}")],
+        isError=True,
+    )
 
 
 def _format_json(data: Any) -> list[TextContent]:
@@ -177,7 +184,14 @@ async def read_resource(uri: str) -> str:
         # Support both analysis://control/ac-2 and analysis://control/fedramp-moderate/ac-2
         if len(path_parts) == 1:
             control_id = normalize_control_id(path_parts[0])
-            framework_id = "fedramp-moderate"  # Default framework
+            # Default to fedramp-moderate when no framework is specified in the URI
+            # (e.g. analysis://control/ac-2 vs analysis://control/fedramp-moderate/ac-2)
+            framework_id = "fedramp-moderate"
+            logger.warning(
+                "No framework specified in control resource URI 'analysis://control/%s', "
+                "defaulting to fedramp-moderate",
+                control_id,
+            )
         else:
             framework_id = path_parts[0]
             control_id = normalize_control_id(path_parts[1])

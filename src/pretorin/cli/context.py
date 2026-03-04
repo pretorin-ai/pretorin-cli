@@ -12,6 +12,7 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
+from pretorin.cli.commands import require_auth
 from pretorin.cli.output import is_json_mode, print_json
 
 console = Console()
@@ -61,9 +62,7 @@ async def _context_list() -> None:
     from pretorin.client.api import PretorianClient, PretorianClientError
 
     async with PretorianClient() as client:
-        if not client.is_configured:
-            rprint("[red]Not configured. Run 'pretorin login' or 'pretorin config set api-key <key>' first.[/red]")
-            raise typer.Exit(1)
+        require_auth(client)
 
         if not is_json_mode():
             rprint(f"\n  {ROMEBOT_THINKING}  Fetching systems...\n")
@@ -195,9 +194,7 @@ async def _context_set(
     from pretorin.client.config import Config
 
     async with PretorianClient() as client:
-        if not client.is_configured:
-            rprint("[red]Not configured. Run 'pretorin login' or 'pretorin config set api-key <key>' first.[/red]")
-            raise typer.Exit(1)
+        require_auth(client)
 
         if not is_json_mode():
             rprint(f"\n  {ROMEBOT_THINKING}  Connecting to Pretorin...\n")

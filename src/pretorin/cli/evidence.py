@@ -10,6 +10,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from pretorin.cli.commands import require_auth
 from pretorin.cli.output import is_json_mode, print_json
 from pretorin.utils import normalize_control_id
 
@@ -188,9 +189,7 @@ async def _push_evidence(dry_run: bool) -> None:
     from pretorin.evidence.sync import EvidenceSync
 
     async with PretorianClient() as client:
-        if not client.is_configured:
-            rprint("[red]Not configured. Run 'pretorin login' first.[/red]")
-            raise typer.Exit(1)
+        require_auth(client)
 
         sync = EvidenceSync()
 

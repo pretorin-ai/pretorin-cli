@@ -165,7 +165,8 @@ class TestEvidenceTools:
     def test_create_evidence_missing_system_id(self) -> None:
         client = _make_mock_client()
         result = _run_tool("pretorin_create_evidence", {"name": "New Evidence", "description": "Test"}, client)
-        assert any("Missing required" in c.text for c in result)
+        assert result.isError
+        assert any("Missing required" in c.text for c in result.content)
 
     def test_link_evidence(self) -> None:
         client = _make_mock_client(link_evidence_to_control={"linked": True})
@@ -180,7 +181,8 @@ class TestEvidenceTools:
     def test_link_evidence_missing_system_id(self) -> None:
         client = _make_mock_client()
         result = _run_tool("pretorin_link_evidence", {"evidence_id": "ev-1", "control_id": "ac-2"}, client)
-        assert any("Missing required" in c.text for c in result)
+        assert result.isError
+        assert any("Missing required" in c.text for c in result.content)
 
 
 class TestNarrativeTools:
@@ -278,7 +280,8 @@ class TestErrorHandling:
     def test_unknown_tool_returns_error(self) -> None:
         client = _make_mock_client()
         result = _run_tool("pretorin_nonexistent_tool", {}, client)
-        text = result[0].text
+        assert result.isError
+        text = result.content[0].text
         assert "Error" in text
         assert "Unknown tool" in text
 
@@ -286,7 +289,8 @@ class TestErrorHandling:
         client = AsyncMock()
         client.is_configured = False
         result = _run_tool("pretorin_list_systems", {}, client)
-        text = result[0].text
+        assert result.isError
+        text = result.content[0].text
         assert "Error" in text
         assert "Not authenticated" in text
 
@@ -294,7 +298,8 @@ class TestErrorHandling:
         client = _make_mock_client()
         client.get_system = AsyncMock(side_effect=NotFoundError("System not found", 404))
         result = _run_tool("pretorin_get_system", {"system_id": "bad-id"}, client)
-        text = result[0].text
+        assert result.isError
+        text = result.content[0].text
         assert "Error" in text
         assert "Not found" in text
 
@@ -302,6 +307,7 @@ class TestErrorHandling:
         client = _make_mock_client()
         client.list_systems = AsyncMock(side_effect=PretorianClientError("Server error", 500))
         result = _run_tool("pretorin_list_systems", {}, client)
-        text = result[0].text
+        assert result.isError
+        text = result.content[0].text
         assert "Error" in text
         assert "Server error" in text

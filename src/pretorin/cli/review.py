@@ -12,6 +12,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
+from pretorin.cli.commands import require_auth
 from pretorin.cli.context import resolve_context
 from pretorin.cli.output import is_json_mode, print_json
 
@@ -181,9 +182,7 @@ async def _run_review(
             raise typer.Exit(1)
 
     async with PretorianClient() as client:
-        if not client.is_configured:
-            rprint("[red]Not configured. Run 'pretorin login' or 'pretorin config set api-key <key>' first.[/red]")
-            raise typer.Exit(1)
+        require_auth(client)
 
         # --- Fetch control details ---
         if not is_json_mode():
@@ -376,9 +375,7 @@ async def _review_status(
     )
 
     async with PretorianClient() as client:
-        if not client.is_configured:
-            rprint("[red]Not configured. Run 'pretorin login' or 'pretorin config set api-key <key>' first.[/red]")
-            raise typer.Exit(1)
+        require_auth(client)
 
         if not is_json_mode():
             rprint(f"\n  {ROMEBOT_WORKING}  Fetching implementation for {control_id.upper()}...\n")

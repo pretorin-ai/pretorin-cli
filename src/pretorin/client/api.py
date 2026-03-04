@@ -6,6 +6,7 @@ from typing import Any
 
 import httpx
 
+from pretorin import __version__
 from pretorin.client.config import Config
 from pretorin.client.models import (
     ComplianceArtifact,
@@ -85,7 +86,7 @@ class PretorianClient:
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "pretorin-cli/0.1.0",
+            "User-Agent": f"pretorin-cli/{__version__}",
         }
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"

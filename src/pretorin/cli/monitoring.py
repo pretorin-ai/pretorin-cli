@@ -10,6 +10,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
+from pretorin import __version__
+from pretorin.cli.commands import require_auth
 from pretorin.cli.output import is_json_mode
 
 console = Console()
@@ -115,9 +117,7 @@ async def _push_event(
         raise typer.Exit(1)
 
     async with PretorianClient() as client:
-        if not client.is_configured:
-            rprint("[red]Not configured. Run 'pretorin login' or 'pretorin config set api-key <key>' first.[/red]")
-            raise typer.Exit(1)
+        require_auth(client)
 
         # Resolve system
         if not is_json_mode():
@@ -186,7 +186,7 @@ async def _push_event(
             description=description,
             severity=severity,
             control_id=control,
-            event_data={"source": "pretorin-cli", "cli_version": "0.1.0"},
+            event_data={"source": "pretorin-cli", "cli_version": __version__},
         )
 
         try:
