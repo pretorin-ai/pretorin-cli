@@ -36,7 +36,7 @@ def narrative_push(
         pretorin agent run --skill narrative-generation "Generate narrative for AC-02"
 
     Examples:
-        pretorin narrative push ac-2 fedramp-moderate "My System" narrative-ac2.md
+        pretorin narrative push ac-02 fedramp-moderate "My System" narrative-ac2.md
     """
     content = file.read_text().strip()
     if not content:

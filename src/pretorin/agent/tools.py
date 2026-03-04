@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from pretorin.client.api import PretorianClient
+from pretorin.utils import normalize_control_id
 
 
 @dataclass
@@ -56,6 +57,11 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         List of ToolDefinition instances.
     """
     tools: list[ToolDefinition] = []
+
+    def _normalize(control_id: str | None) -> str | None:
+        if control_id is None:
+            return None
+        return normalize_control_id(control_id)
 
     # --- Systems ---
 
@@ -122,7 +128,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     )
 
     async def get_control(framework_id: str, control_id: str) -> str:
-        control = await client.get_control(framework_id, control_id)
+        control = await client.get_control(framework_id, _normalize(control_id) or control_id)
         return json.dumps(control.model_dump(), default=str)
 
     tools.append(
@@ -149,7 +155,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         limit: int = 20,
     ) -> str:
         evidence = await client.list_evidence(
-            control_id=control_id,
+            control_id=_normalize(control_id),
             framework_id=framework_id,
             limit=limit,
         )
@@ -186,7 +192,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
             description=description,
             evidence_type=evidence_type,
             source="agent",
-            control_id=control_id,
+            control_id=_normalize(control_id),
             framework_id=framework_id,
         )
         result = await client.create_evidence("", ev)
@@ -218,7 +224,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         control_id: str,
         framework_id: str | None = None,
     ) -> str:
-        narrative = await client.get_narrative(system_id, control_id, framework_id)
+        narrative = await client.get_narrative(system_id, _normalize(control_id) or control_id, framework_id)
         return json.dumps(narrative.model_dump(), default=str)
 
     tools.append(
@@ -255,7 +261,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
             title=title,
             description=description,
             severity=severity,
-            control_id=control_id,
+            control_id=_normalize(control_id),
             event_data={"source": "agent"},
         )
         result = await client.create_monitoring_event(system_id, event)
@@ -289,7 +295,12 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         status: str,
         framework_id: str | None = None,
     ) -> str:
-        result = await client.update_control_status(system_id, control_id, status, framework_id)
+        result = await client.update_control_status(
+            system_id,
+            _normalize(control_id) or control_id,
+            status,
+            framework_id,
+        )
         return json.dumps(result, default=str)
 
     tools.append(
@@ -315,7 +326,11 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         control_id: str,
         framework_id: str | None = None,
     ) -> str:
-        impl = await client.get_control_implementation(system_id, control_id, framework_id)
+        impl = await client.get_control_implementation(
+            system_id,
+            _normalize(control_id) or control_id,
+            framework_id,
+        )
         return json.dumps(impl.model_dump(), default=str)
 
     tools.append(
@@ -342,7 +357,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         control_id: str,
         framework_id: str,
     ) -> str:
-        ctx = await client.get_control_context(system_id, control_id, framework_id)
+        ctx = await client.get_control_context(system_id, _normalize(control_id) or control_id, framework_id)
         return json.dumps(ctx.model_dump(), default=str)
 
     tools.append(
@@ -394,7 +409,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     ) -> str:
         result = await client.update_narrative(
             system_id,
-            control_id,
+            _normalize(control_id) or control_id,
             narrative,
             framework_id,
             is_ai_generated,

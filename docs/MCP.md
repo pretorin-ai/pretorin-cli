@@ -262,7 +262,7 @@ Get rich context for a control including AI guidance, control statement, assessm
 
 **Returns:** Combined control metadata and implementation details: AI guidance, statement, objectives, scope status, narrative, user context.
 
-**Example prompt:** "What's the full context for AC-2 in my FedRAMP Moderate system?"
+**Example prompt:** "What's the full context for AC-02 in my FedRAMP Moderate system?"
 
 ---
 
@@ -292,7 +292,7 @@ Push a narrative text update for a control implementation on the platform.
 
 **Returns:** Confirmation of the update.
 
-**Example prompt:** "Update the narrative for AC-2 with the implementation details I just described"
+**Example prompt:** "Update the narrative for AC-02 with the implementation details I just described"
 
 ## Resources
 

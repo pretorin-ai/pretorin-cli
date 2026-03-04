@@ -144,7 +144,8 @@ class TestFormatControlAnalysisPrompt:
     def test_known_control_formatting(self):
         """Test formatting for known control."""
         prompt = format_control_analysis_prompt("fedramp-moderate", "ac-2")
-        assert "AC-2" in prompt
+        assert "AC-02" in prompt
+        assert "control_id to `ac-02`" in prompt
         assert "Account Management" in prompt
         assert "fedramp-moderate" in prompt
         assert "analysis://schema" in prompt

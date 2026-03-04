@@ -28,6 +28,7 @@ from pretorin.client.models import (
     ScopeResponse,
     SystemDetail,
 )
+from pretorin.utils import normalize_control_id
 
 
 class PretorianClientError(Exception):
@@ -182,6 +183,13 @@ class PretorianClient:
 
         return response.json()
 
+    @staticmethod
+    def _normalize_control_id(control_id: str | None) -> str | None:
+        """Normalize control IDs where applicable (NIST/FedRAMP formats)."""
+        if control_id is None:
+            return None
+        return normalize_control_id(control_id)
+
     # =========================================================================
     # Auth / Validation
     # =========================================================================
@@ -291,7 +299,8 @@ class PretorianClient:
         Returns:
             ControlDetail with full control information.
         """
-        data = await self._request("GET", f"/frameworks/{framework_id}/controls/{control_id}")
+        normalized_control_id = self._normalize_control_id(control_id)
+        data = await self._request("GET", f"/frameworks/{framework_id}/controls/{normalized_control_id}")
         return ControlDetail(**data)
 
     async def get_control_references(self, framework_id: str, control_id: str) -> ControlReferences:
@@ -304,7 +313,11 @@ class PretorianClient:
         Returns:
             ControlReferences with statement, guidance, objectives, etc.
         """
-        data = await self._request("GET", f"/frameworks/{framework_id}/controls/{control_id}/references")
+        normalized_control_id = self._normalize_control_id(control_id)
+        data = await self._request(
+            "GET",
+            f"/frameworks/{framework_id}/controls/{normalized_control_id}/references",
+        )
         return ControlReferences(**data)
 
     async def get_controls_metadata(self, framework_id: str | None = None) -> dict[str, ControlMetadata]:
@@ -358,10 +371,21 @@ class PretorianClient:
         Raises:
             PretorianClientError: If the submission fails.
         """
+        payload = artifact.model_dump()
+        if payload.get("control_id"):
+            payload["control_id"] = normalize_control_id(payload["control_id"])
+        component = payload.get("component")
+        if isinstance(component, dict):
+            implementations = component.get("control_implementations")
+            if isinstance(implementations, list):
+                for implementation in implementations:
+                    if isinstance(implementation, dict) and implementation.get("control_id"):
+                        implementation["control_id"] = normalize_control_id(implementation["control_id"])
+
         data = await self._request(
             "POST",
             "/artifacts",
-            json=artifact.model_dump(),
+            json=payload,
         )
         return data
 
@@ -429,7 +453,7 @@ class PretorianClient:
         """
         params: dict[str, Any] = {"limit": limit}
         if control_id:
-            params["control_id"] = control_id
+            params["control_id"] = normalize_control_id(control_id)
         if framework_id:
             params["framework_id"] = framework_id
 
@@ -465,6 +489,8 @@ class PretorianClient:
             Created evidence response.
         """
         payload = evidence.model_dump(exclude_none=True)
+        if payload.get("control_id"):
+            payload["control_id"] = normalize_control_id(payload["control_id"])
         data = await self._request(
             "POST",
             f"/systems/{system_id}/evidence",
@@ -490,7 +516,7 @@ class PretorianClient:
         Returns:
             Link result.
         """
-        payload: dict[str, Any] = {"control_id": control_id}
+        payload: dict[str, Any] = {"control_id": normalize_control_id(control_id)}
         if framework_id:
             payload["framework_id"] = framework_id
         path = f"/systems/{system_id}/evidence/{evidence_id}/link" if system_id else f"/evidence/{evidence_id}/link"
@@ -520,9 +546,10 @@ class PretorianClient:
         params: dict[str, Any] = {}
         if framework_id:
             params["framework_id"] = framework_id
+        normalized_control_id = self._normalize_control_id(control_id)
         data = await self._request(
             "GET",
-            f"/systems/{system_id}/controls/{control_id}/narrative",
+            f"/systems/{system_id}/controls/{normalized_control_id}/narrative",
             params=params,
         )
         return NarrativeResponse(**data)
@@ -550,9 +577,10 @@ class PretorianClient:
         params: dict[str, Any] = {}
         if framework_id:
             params["framework_id"] = framework_id
+        normalized_control_id = self._normalize_control_id(control_id)
         data = await self._request(
             "GET",
-            f"/systems/{system_id}/controls/{control_id}",
+            f"/systems/{system_id}/controls/{normalized_control_id}",
             params=params,
         )
         return ControlImplementationResponse(**data)
@@ -573,9 +601,10 @@ class PretorianClient:
         Returns:
             ControlContext with combined OSCAL + implementation data.
         """
+        normalized_control_id = self._normalize_control_id(control_id)
         data = await self._request(
             "GET",
-            f"/systems/{system_id}/controls/{control_id}/context",
+            f"/systems/{system_id}/controls/{normalized_control_id}/context",
             params={"framework_id": framework_id},
         )
         return ControlContext(**data)
@@ -600,9 +629,10 @@ class PretorianClient:
         Returns:
             Updated control implementation data.
         """
+        normalized_control_id = self._normalize_control_id(control_id)
         data = await self._request(
             "POST",
-            f"/systems/{system_id}/controls/{control_id}/narrative",
+            f"/systems/{system_id}/controls/{normalized_control_id}/narrative",
             params={"framework_id": framework_id},
             json={"narrative": narrative, "is_ai_generated": is_ai_generated},
         )
@@ -641,9 +671,10 @@ class PretorianClient:
             Created note response.
         """
         payload = {"content": content, "source": source}
+        normalized_control_id = self._normalize_control_id(control_id)
         data = await self._request(
             "POST",
-            f"/systems/{system_id}/controls/{control_id}/notes",
+            f"/systems/{system_id}/controls/{normalized_control_id}/notes",
             params={"framework_id": framework_id},
             json=payload,
         )
@@ -670,9 +701,10 @@ class PretorianClient:
         params: dict[str, Any] = {}
         if framework_id:
             params["framework_id"] = framework_id
+        normalized_control_id = self._normalize_control_id(control_id)
         data = await self._request(
             "POST",
-            f"/systems/{system_id}/controls/{control_id}/status",
+            f"/systems/{system_id}/controls/{normalized_control_id}/status",
             params=params,
             json={"status": status},
         )
@@ -696,9 +728,13 @@ class PretorianClient:
         Returns:
             Created event response.
         """
+        payload = event.model_dump(exclude_none=True)
+        if payload.get("control_id"):
+            payload["control_id"] = normalize_control_id(payload["control_id"])
+
         data = await self._request(
             "POST",
             f"/systems/{system_id}/monitoring/events",
-            json=event.model_dump(exclude_none=True),
+            json=payload,
         )
         return data

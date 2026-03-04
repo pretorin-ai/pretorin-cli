@@ -195,7 +195,7 @@ class Evidence(BaseModel):
 class ImplementationStatement(BaseModel):
     """Implementation statement for a specific control."""
 
-    control_id: str = Field(..., description="Control ID (e.g., ac-2, au-2)")
+    control_id: str = Field(..., description="Control ID (e.g., ac-02, au-02)")
     description: str = Field(
         ...,
         description="2-3 sentence narrative of how control is implemented",
@@ -238,7 +238,7 @@ class ComplianceArtifact(BaseModel):
     """A compliance artifact containing implementation evidence for a control."""
 
     framework_id: str = Field(..., description="Framework ID (e.g., fedramp-moderate)")
-    control_id: str = Field(..., description="Control ID (e.g., ac-2)")
+    control_id: str = Field(..., description="Control ID (e.g., ac-02)")
     component: ComponentDefinition = Field(..., description="Component definition")
     confidence: Literal["high", "medium", "low"] = Field(
         default="medium",

@@ -26,7 +26,7 @@ ROMEBOT_EVIDENCE = "[#EAB536]\\[°□°][/#EAB536]"
 
 @app.command("create")
 def evidence_create(
-    control_id: str = typer.Argument(..., help="Control ID (e.g., ac-2)"),
+    control_id: str = typer.Argument(..., help="Control ID (e.g., ac-02)"),
     framework_id: str = typer.Argument(..., help="Framework ID (e.g., fedramp-moderate)"),
     description: str = typer.Option(
         ...,
@@ -57,8 +57,8 @@ def evidence_create(
     with YAML frontmatter for tracking.
 
     Examples:
-        pretorin evidence create ac-2 fedramp-moderate -d "RBAC configuration in Kubernetes"
-        pretorin evidence create sc-7 nist-800-53-r5 -d "Firewall rules" -t configuration
+        pretorin evidence create ac-02 fedramp-moderate -d "RBAC configuration in Kubernetes"
+        pretorin evidence create sc-07 nist-800-53-r5 -d "Firewall rules" -t configuration
     """
     from pretorin.evidence.writer import EvidenceWriter, LocalEvidence
 
@@ -141,7 +141,7 @@ def evidence_list(
     if not items:
         rprint("[dim]No local evidence found.[/dim]")
         rprint(
-            '[dim]Create one with: [bold]pretorin evidence create ac-2 fedramp-moderate -d "description"[/bold][/dim]'
+            '[dim]Create one with: [bold]pretorin evidence create ac-02 fedramp-moderate -d "description"[/bold][/dim]'
         )
         return
 

@@ -403,7 +403,7 @@ If you already use another AI agent, use the MCP mode instead (`pretorin mcp-ser
 
 ```bash
 # Free-form task
-pretorin agent run "Assess AC-2 implementation gaps for my system"
+pretorin agent run "Assess AC-02 implementation gaps for my system"
 
 # Use a predefined skill
 pretorin agent run --skill gap-analysis
@@ -452,7 +452,7 @@ pretorin agent doctor
 pretorin agent install
 
 # 4) Run a task
-pretorin agent run "Assess AC-2 implementation gaps for my system"
+pretorin agent run "Assess AC-02 implementation gaps for my system"
 ```
 
 Model key precedence for the agent runtime is:

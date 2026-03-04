@@ -86,7 +86,7 @@ def run(
         ...,
         "--control-id",
         "-c",
-        help="Control ID to review against (e.g., ac-2, sc-7).",
+        help="Control ID to review against (e.g., ac-02, sc-07).",
     ),
     framework_id: str | None = typer.Option(
         None,
@@ -125,9 +125,9 @@ def run(
     as markdown files without requiring a system.
 
     Examples:
-        pretorin review run -c ac-2
-        pretorin review run -c sc-7 -f fedramp-moderate --path ./src
-        pretorin review run -c ac-2 --local -o ./compliance-notes
+        pretorin review run -c ac-02
+        pretorin review run -c sc-07 -f fedramp-moderate --path ./src
+        pretorin review run -c ac-02 --local -o ./compliance-notes
     """
     asyncio.run(
         _run_review(
@@ -331,7 +331,7 @@ def status(
         ...,
         "--control-id",
         "-c",
-        help="Control ID (e.g., ac-2, sc-7).",
+        help="Control ID (e.g., ac-02, sc-07).",
     ),
     system: str | None = typer.Option(
         None,
@@ -349,8 +349,8 @@ def status(
     """Show the implementation status for a specific control.
 
     Examples:
-        pretorin review status -c ac-2
-        pretorin review status -c sc-7 -f fedramp-moderate -s my-system
+        pretorin review status -c ac-02
+        pretorin review status -c sc-07 -f fedramp-moderate -s my-system
     """
     asyncio.run(
         _review_status(

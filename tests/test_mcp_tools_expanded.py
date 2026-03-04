@@ -68,6 +68,27 @@ class TestToolListing:
             assert tool.inputSchema, f"Tool {tool.name} has no input schema"
             assert tool.inputSchema.get("type") == "object"
 
+    def test_control_id_schemas_use_shared_guidance(self) -> None:
+        tools = asyncio.run(list_tools())
+        with_control_id = [t for t in tools if "control_id" in t.inputSchema.get("properties", {})]
+
+        assert with_control_id, "Expected at least one tool with a control_id parameter"
+
+        for tool in with_control_id:
+            control_field = tool.inputSchema["properties"]["control_id"]
+            description = control_field.get("description", "")
+            required = tool.inputSchema.get("required", [])
+
+            assert "zero-padded" in description
+            assert "ac-02" in description
+            assert "AC.L2-3.1.1" in description
+            assert control_field.get("examples") == ["ac-02", "sc-07", "AC.L2-3.1.1", "03.01.01"]
+
+            if "control_id" in required:
+                assert not description.startswith("Optional:")
+            else:
+                assert description.startswith("Optional:")
+
 
 def _make_mock_client(**overrides: Any) -> AsyncMock:
     """Create a properly configured mock PretorianClient."""
@@ -151,6 +172,7 @@ class TestEvidenceTools:
         data = _parse_result(result)
         assert data["total"] == 1
         assert data["evidence"][0]["name"] == "RBAC Config"
+        client.list_evidence.assert_awaited_once_with(control_id="ac-02", framework_id=None, limit=20)
 
     def test_create_evidence(self) -> None:
         client = _make_mock_client(create_evidence={"id": "ev-new", "name": "New Evidence"})
@@ -177,6 +199,12 @@ class TestEvidenceTools:
         )
         data = _parse_result(result)
         assert data["linked"] is True
+        client.link_evidence_to_control.assert_awaited_once_with(
+            evidence_id="ev-1",
+            control_id="ac-02",
+            system_id="sys-1",
+            framework_id=None,
+        )
 
     def test_link_evidence_missing_system_id(self) -> None:
         client = _make_mock_client()
@@ -202,6 +230,7 @@ class TestNarrativeTools:
         result = _run_tool("pretorin_get_narrative", {"system_id": "sys-1", "control_id": "ac-2"}, client)
         data = _parse_result(result)
         assert data["narrative"] == "Existing narrative"
+        client.get_narrative.assert_awaited_once_with(system_id="sys-1", control_id="ac-02", framework_id=None)
 
 
 class TestMonitoringTools:
@@ -249,6 +278,12 @@ class TestControlImplementationTools:
         )
         data = _parse_result(result)
         assert data["status"] == "implemented"
+        client.update_control_status.assert_awaited_once_with(
+            system_id="sys-1",
+            control_id="ac-02",
+            status="implemented",
+            framework_id=None,
+        )
 
     def test_get_control_implementation(self) -> None:
         from pretorin.client.models import ControlImplementationResponse
@@ -272,6 +307,11 @@ class TestControlImplementationTools:
         data = _parse_result(result)
         assert data["control_id"] == "ac-2"
         assert data["evidence_count"] == 3
+        client.get_control_implementation.assert_awaited_once_with(
+            system_id="sys-1",
+            control_id="ac-02",
+            framework_id=None,
+        )
 
 
 class TestErrorHandling:

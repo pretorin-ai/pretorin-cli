@@ -312,7 +312,7 @@ def framework_controls(
 @app.command("control")
 def control_get(
     framework_id: str = typer.Argument(..., help="Framework ID (e.g., nist-800-53-r5)"),
-    control_id: str = typer.Argument(..., help="Control ID (e.g., ac-2, ia-02)"),
+    control_id: str = typer.Argument(..., help="Control ID (e.g., ac-02, ia-02)"),
     brief: bool = typer.Option(
         False,
         "--brief",
@@ -334,9 +334,9 @@ def control_get(
 
     Examples:
         pretorin frameworks control fedramp-low ia-02
-        pretorin frameworks control nist-800-53-r5 ac-2
+        pretorin frameworks control nist-800-53-r5 ac-02
         pretorin frameworks control fedramp-low ia-02 --brief
-        pretorin --json frameworks control fedramp-moderate ac-2
+        pretorin --json frameworks control fedramp-moderate ac-02
     """
 
     async def fetch_control() -> None:
@@ -420,7 +420,7 @@ def control_get(
                     f"[dim]Try [bold]pretorin frameworks controls {framework_id}[/bold] "
                     "to see available controls.[/dim]"
                 )
-                rprint(f"[dim]Example: [bold]pretorin frameworks control {framework_id} ac-2[/bold][/dim]")
+                rprint(f"[dim]Example: [bold]pretorin frameworks control {framework_id} ac-02[/bold][/dim]")
                 raise typer.Exit(1)
             except AuthenticationError as e:
                 rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
