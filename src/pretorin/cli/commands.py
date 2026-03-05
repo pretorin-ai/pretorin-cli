@@ -65,12 +65,12 @@ def frameworks_list() -> None:
                     show_header=True,
                     header_style="bold",
                 )
-                table.add_column("ID", style="cyan")
-                table.add_column("Title")
-                table.add_column("Version")
-                table.add_column("Tier")
-                table.add_column("Families", justify="right")
-                table.add_column("Controls", justify="right")
+                table.add_column("ID", style="cyan", no_wrap=True)
+                table.add_column("Title", max_width=60)
+                table.add_column("Version", no_wrap=True)
+                table.add_column("Tier", no_wrap=True)
+                table.add_column("Families", justify="right", no_wrap=True)
+                table.add_column("Controls", justify="right", no_wrap=True)
 
                 tier_colors = {
                     "foundational": "#95D7E0",  # Light Turquoise
@@ -80,9 +80,12 @@ def frameworks_list() -> None:
 
                 for fw in result.frameworks:
                     tier_color = tier_colors.get(fw.tier or "", "white")
+                    title = fw.title
+                    if len(title) > 60:
+                        title = title[:57] + "..."
                     table.add_row(
                         fw.external_id,
-                        fw.title,
+                        title,
                         fw.version,
                         f"[{tier_color}]{fw.tier or '-'}[/{tier_color}]",
                         str(fw.families_count),
@@ -194,10 +197,10 @@ def framework_families(
                     show_header=True,
                     header_style="bold",
                 )
-                table.add_column("ID", style="cyan")
-                table.add_column("Title")
-                table.add_column("Class")
-                table.add_column("Controls", justify="right")
+                table.add_column("ID", style="cyan", no_wrap=True)
+                table.add_column("Title", max_width=50)
+                table.add_column("Class", no_wrap=True)
+                table.add_column("Controls", justify="right", no_wrap=True)
 
                 for family in families:
                     table.add_row(

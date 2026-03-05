@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 # ── Pretorin CLI Demo Walkthrough ─────────────────────────────────────────────
 # Guided tour of the full Pretorin CLI workflow for new beta users.
@@ -45,7 +45,13 @@ pause() {
 run_cmd() {
     echo -e "  ${DIM}\$ $*${RESET}"
     echo ""
-    "$@"
+    if ! "$@"; then
+        echo ""
+        echo -e "  ${GOLD}⚠ Command failed:${RESET} $*"
+        echo -e "  ${DIM}Continuing...${RESET}"
+        echo ""
+        return 1
+    fi
     echo ""
 }
 
@@ -131,8 +137,33 @@ echo -e "  ${BOLD}If no systems appeared above, create one at platform.pretorin.
 echo -e "  ${DIM}(The demo will continue — 'context set' will fail if no systems exist.)${RESET}"
 echo ""
 
+# Show which systems have fedramp-moderate before the picker
+FEDRAMP_SYSTEMS=$(pretorin --json context list 2>/dev/null | python3 -c "
+import sys, json
+try:
+    rows = json.load(sys.stdin)
+    names = sorted(set(r['system_name'] for r in rows if r.get('framework_id') == 'fedramp-moderate'))
+    if names:
+        for n in names:
+            print(n)
+except Exception:
+    pass
+" 2>/dev/null || echo "")
+
+if [[ -n "$FEDRAMP_SYSTEMS" ]]; then
+    echo -e "  ${BOLD}Systems with fedramp-moderate attached:${RESET}"
+    while IFS= read -r sysname; do
+        echo -e "    ✓ ${sysname}"
+    done <<< "$FEDRAMP_SYSTEMS"
+    echo ""
+else
+    echo -e "  ${GOLD}⚠ No systems with fedramp-moderate detected.${RESET}"
+    echo -e "  ${DIM}Attach fedramp-moderate to a system at https://platform.pretorin.com before continuing.${RESET}"
+    echo ""
+fi
+
 echo -e "  ${BOLD}Select your active system (interactive picker):${RESET}"
-echo -e "  ${DIM}This demo requires fedramp-moderate — select a system that has it.${RESET}"
+echo -e "  ${DIM}Pick one of the fedramp-moderate systems listed above.${RESET}"
 echo ""
 if ! pretorin context set; then
     echo ""
@@ -190,18 +221,25 @@ pause "Section 3: Create and push evidence"
 
 DEMO_EVIDENCE_DIR="./evidence"
 
+SECTION3_OK=true
+
 echo -e "  ${BOLD}Create a local evidence file for AC-02:${RESET}"
-run_cmd pretorin evidence create ac-02 fedramp-moderate \
+if ! run_cmd pretorin evidence create ac-02 fedramp-moderate \
     -d "Role-based access control audit completed for demo walkthrough. All users verified against approved role matrix." \
-    -n "Demo RBAC Evidence"
+    -n "Demo RBAC Evidence"; then
+    echo -e "  ${GOLD}⚠ Evidence creation failed — skipping rest of Section 3.${RESET}"
+    SECTION3_OK=false
+fi
 
-echo -e "  ${BOLD}List local evidence:${RESET}"
-run_cmd pretorin evidence list
+if $SECTION3_OK; then
+    echo -e "  ${BOLD}List local evidence:${RESET}"
+    run_cmd pretorin evidence list || true
 
-pause "Push evidence to the platform"
+    pause "Push evidence to the platform"
 
-echo -e "  ${BOLD}Push evidence to the platform:${RESET}"
-run_cmd pretorin evidence push
+    echo -e "  ${BOLD}Push evidence to the platform:${RESET}"
+    run_cmd pretorin evidence push || true
+fi
 
 # ── Section 4: Narrative Workflow ────────────────────────────────────────────
 
@@ -245,7 +283,7 @@ pause "Push narrative to the platform"
 
 if [[ -n "$ACTIVE_SYSTEM" ]]; then
     echo -e "  ${BOLD}Push narrative to platform:${RESET}"
-    run_cmd pretorin narrative push ac-02 fedramp-moderate "$ACTIVE_SYSTEM" "$TEMP_NARRATIVE"
+    run_cmd pretorin narrative push ac-02 fedramp-moderate "$ACTIVE_SYSTEM" "$TEMP_NARRATIVE" || true
 else
     echo -e "  ${GOLD}Skipping narrative push — could not detect active system name.${RESET}"
     echo -e "  ${DIM}Run manually: pretorin narrative push ac-02 fedramp-moderate <system> ${TEMP_NARRATIVE}${RESET}"
@@ -260,14 +298,14 @@ run_cmd pretorin monitoring push \
     -t "Demo: Access review completed" \
     --severity info \
     --control ac-02 \
-    --event-type access_review
+    --event-type access_review || true
 
 # ── Section 6: Agent Skills (informational) ──────────────────────────────────
 
 pause "Section 6: Agent skills (informational)"
 
 echo -e "  ${BOLD}List available agent skills:${RESET}"
-run_cmd pretorin agent skills
+run_cmd pretorin agent skills || true
 
 echo ""
 echo -e "  ${DIM}The agent can run compliance tasks using an LLM backend.${RESET}"
