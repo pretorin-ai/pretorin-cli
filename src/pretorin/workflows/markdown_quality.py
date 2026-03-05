@@ -74,9 +74,7 @@ def validate_audit_markdown(content: str, artifact_type: ArtifactType) -> Markdo
             if artifact_type == "narrative"
             else "at least one rich markdown element"
         )
-        result.errors.append(
-            f"{needed} required ({', '.join(_RICH_ELEMENTS)}); found {len(result.rich_elements)}"
-        )
+        result.errors.append(f"{needed} required ({', '.join(_RICH_ELEMENTS)}); found {len(result.rich_elements)}")
 
     if artifact_type == "narrative" and not _STRUCTURAL_ELEMENTS.intersection(result.rich_elements):
         result.errors.append("narratives must include at least one structural element (code_block, table, or list)")
