@@ -363,11 +363,37 @@ pretorin evidence list --framework fedramp-moderate
 pretorin evidence push
 ```
 
-Pushes all draft evidence files to the platform. Requires an active system context (`pretorin context set`).
+Pushes local evidence files to the platform using find-or-create upsert logic.
+Requires an active system context (`pretorin context set`) unless `--system` is provided via `evidence upsert`.
+
+### Search Platform Evidence
+
+```bash
+pretorin evidence search --control-id ac-02 --framework-id fedramp-moderate
+pretorin evidence search --org-level --limit 100
+```
+
+### Upsert Evidence
+
+```bash
+pretorin evidence upsert ac-02 fedramp-moderate \
+  --name "RBAC Configuration" \
+  --description "Role mapping in IdP" \
+  --type configuration
+```
+
+Finds and reuses exact matching org-level evidence by default, otherwise creates a new item, then ensures system/control linking.
+Evidence descriptions must be auditor-ready markdown with no headings and at least one rich element (code block, table, list, or link). Markdown images are currently disallowed.
 
 ## Narrative Commands
 
 The `narrative` command group pushes implementation narratives to the platform.
+
+### Get Current Narrative
+
+```bash
+pretorin narrative get ac-02 fedramp-moderate --system "My System"
+```
 
 ### Push a Narrative File
 
@@ -376,9 +402,27 @@ pretorin narrative push ac-02 fedramp-moderate "My System" narrative-ac02.md
 ```
 
 Reads a markdown/text file and submits it as the implementation narrative for a control. To generate narratives with AI, use the agent:
+Narratives must be auditor-ready markdown with no headings, at least two rich elements, and at least one structural element (code block, table, or list).
 
 ```bash
 pretorin agent run --skill narrative-generation "Generate narrative for AC-02"
+```
+
+## Notes Commands
+
+The `notes` command group manages control implementation notes.
+
+### List Notes
+
+```bash
+pretorin notes list ac-02 fedramp-moderate --system "My System"
+```
+
+### Add Note
+
+```bash
+pretorin notes add ac-02 fedramp-moderate \
+  --content "Gap: Missing SSO evidence ..."
 ```
 
 ## Monitoring Commands
@@ -619,7 +663,12 @@ Different frameworks use different ID conventions. Always use `pretorin framewor
 | `pretorin evidence create` | Create a local evidence file |
 | `pretorin evidence list` | List local evidence files |
 | `pretorin evidence push` | Push local evidence to the platform |
+| `pretorin evidence search` | Search platform evidence |
+| `pretorin evidence upsert <ctrl> <fw>` | Find-or-create evidence and link it |
+| `pretorin narrative get <ctrl> <fw>` | Get current control narrative |
 | `pretorin narrative push <ctrl> <fw> <sys> <file>` | Push a narrative file to the platform |
+| `pretorin notes list <ctrl> <fw>` | List control notes |
+| `pretorin notes add <ctrl> <fw> --content ...` | Add a control note |
 | `pretorin monitoring push` | Push a monitoring event to a system |
 | `pretorin agent run "<task>"` | Run a compliance task with the Codex agent |
 | `pretorin agent run --skill <name>` | Run a predefined agent skill |

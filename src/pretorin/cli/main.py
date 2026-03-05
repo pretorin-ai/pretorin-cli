@@ -16,6 +16,7 @@ from pretorin.cli.evidence import app as evidence_app
 from pretorin.cli.harness import app as harness_app
 from pretorin.cli.monitoring import app as monitoring_app
 from pretorin.cli.narrative import app as narrative_app
+from pretorin.cli.notes import app as notes_app
 from pretorin.cli.output import set_json_mode
 from pretorin.cli.review import app as review_app
 
@@ -113,6 +114,7 @@ app.add_typer(frameworks_app, name="frameworks", help="Browse compliance framewo
 app.add_typer(monitoring_app, name="monitoring", help="Monitoring events and compliance tracking")
 app.add_typer(evidence_app, name="evidence", help="Local evidence management and platform sync")
 app.add_typer(narrative_app, name="narrative", help="Narrative management")
+app.add_typer(notes_app, name="notes", help="Control note management")
 app.add_typer(review_app, name="review", help="Review local artifacts against compliance controls")
 app.add_typer(agent_app, name="agent", help="Autonomous compliance agent")
 app.add_typer(harness_app, name="harness", help="AI harness wrapper with Pretorin policy defaults")

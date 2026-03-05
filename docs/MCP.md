@@ -141,7 +141,8 @@ Restart the application to load the new MCP server.
 
 ## Available Tools
 
-The MCP server provides 10 tools for accessing and managing compliance data:
+The MCP server provides 22 tools for accessing and managing compliance data.
+Core workflow tools for narrative/evidence/note parity are:
 
 | Tool | Description |
 |------|-------------|
@@ -153,7 +154,12 @@ The MCP server provides 10 tools for accessing and managing compliance data:
 | `pretorin_get_control_references` | Get control guidance, objectives, and related controls |
 | `pretorin_get_document_requirements` | Get document requirements for a framework |
 | `pretorin_get_control_context` | Get rich control context: AI guidance, statement, objectives, and implementation details |
+| `pretorin_search_evidence` | Search current evidence items |
+| `pretorin_create_evidence` | Upsert evidence (find-or-create by default) |
+| `pretorin_link_evidence` | Link an existing evidence item to a control |
 | `pretorin_get_scope` | Get system scope/policy information including excluded controls |
+| `pretorin_get_control_notes` | Read notes for a control implementation |
+| `pretorin_add_control_note` | Add a control note with manual follow-up guidance |
 | `pretorin_update_narrative` | Push a narrative text update for a control implementation |
 
 ### Tool Reference
@@ -290,9 +296,54 @@ Push a narrative text update for a control implementation on the platform.
 - `narrative` (required): The narrative text to set
 - `is_ai_generated` (optional): Whether the narrative was AI-generated (default: false)
 
+Validation rules:
+- No markdown headings (`#`, `##`, etc.)
+- At least two rich markdown elements (fenced code blocks, tables, lists, links)
+- At least one structural element (`code block`, `table`, or `list`)
+- Markdown images are currently disallowed
+
 **Returns:** Confirmation of the update.
 
 **Example prompt:** "Update the narrative for AC-02 with the implementation details I just described"
+
+---
+
+#### pretorin_create_evidence
+
+Upsert evidence on the platform (find-or-create by default). If `dedupe` is true, exact matching org-level evidence is reused; otherwise a new record is created. The tool then attempts to ensure control/system linking.
+
+**Parameters:**
+- `system_id` (required): The system ID
+- `name` (required): Evidence name
+- `description` (required): Evidence description
+- `evidence_type` (optional): Evidence type (default: `policy_document`)
+- `control_id` (optional): Associated control
+- `framework_id` (optional): Associated framework
+- `dedupe` (optional): Reuse exact matches before create (default: `true`)
+
+Validation rules:
+- No markdown headings (`#`, `##`, etc.)
+- At least one rich markdown element (fenced code blocks, tables, lists, or links)
+- Markdown images are currently disallowed
+
+**Returns:** Upsert result with:
+- `evidence_id`
+- `created` (true if new, false if reused)
+- `linked` (whether control/system link succeeded)
+- `match_basis` (`exact_name_desc_type_control_framework` or `none`)
+
+---
+
+#### pretorin_get_control_notes
+
+Get notes for a control implementation in a system.
+
+**Parameters:**
+- `system_id` (required): The system ID
+- `control_id` (required): The control ID
+- `framework_id` (optional): Framework context
+
+**Returns:** Note list with `total` count.
 
 ## Resources
 

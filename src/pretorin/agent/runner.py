@@ -80,7 +80,15 @@ class ComplianceAgent:
             "their security compliance by analyzing systems, generating narratives, "
             "collecting evidence, and monitoring compliance posture.\n\n"
             "You have access to the Pretorin platform tools and optionally to "
-            "external MCP servers for accessing codebases and infrastructure."
+            "external MCP servers for accessing codebases and infrastructure.\n\n"
+            "Never hallucinate unknown details. For missing data, use the "
+            "[[PRETORIN_TODO]] narrative placeholder format and add explicit gap "
+            "notes with manual next steps. Write auditor-ready markdown with no "
+            "section headings: narratives require at least two rich markdown elements "
+            "(with at least one structural element: code block, table, or list), and "
+            "evidence descriptions require at least one rich markdown element. "
+            "Do not include markdown images until platform-side image evidence upload "
+            "support is available."
         )
 
         if skill:

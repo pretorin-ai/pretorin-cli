@@ -29,6 +29,7 @@ from pretorin.client.models import (
     SystemDetail,
 )
 from pretorin.utils import normalize_control_id
+from pretorin.workflows.markdown_quality import ensure_audit_markdown
 
 
 class PretorianClientError(Exception):
@@ -547,12 +548,26 @@ class PretorianClient:
         if framework_id:
             params["framework_id"] = framework_id
         normalized_control_id = self._normalize_control_id(control_id)
-        data = await self._request(
-            "GET",
-            f"/systems/{system_id}/controls/{normalized_control_id}/narrative",
-            params=params,
-        )
-        return NarrativeResponse(**data)
+        try:
+            data = await self._request(
+                "GET",
+                f"/systems/{system_id}/controls/{normalized_control_id}/narrative",
+                params=params,
+            )
+            return NarrativeResponse(**data)
+        except PretorianClientError as exc:
+            if exc.status_code != 405:
+                raise
+            # Compatibility fallback for deployments that expose narrative
+            # through control implementation instead of the dedicated endpoint.
+            impl = await self.get_control_implementation(system_id, normalized_control_id or "", framework_id)
+            return NarrativeResponse(
+                control_id=impl.control_id,
+                framework_id=framework_id,
+                narrative=impl.narrative,
+                ai_confidence_score=impl.ai_confidence_score,
+                status=impl.status,
+            )
 
     # =========================================================================
     # Control Implementation Endpoints
@@ -629,6 +644,7 @@ class PretorianClient:
         Returns:
             Updated control implementation data.
         """
+        ensure_audit_markdown(narrative, artifact_type="narrative")
         normalized_control_id = self._normalize_control_id(control_id)
         data = await self._request(
             "POST",
@@ -679,6 +695,26 @@ class PretorianClient:
             json=payload,
         )
         return data
+
+    async def list_control_notes(
+        self,
+        system_id: str,
+        control_id: str,
+        framework_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """List notes for a control implementation."""
+        params: dict[str, Any] = {}
+        if framework_id:
+            params["framework_id"] = framework_id
+        normalized_control_id = self._normalize_control_id(control_id)
+        data = await self._request(
+            "GET",
+            f"/systems/{system_id}/controls/{normalized_control_id}/notes",
+            params=params,
+        )
+        if isinstance(data, list):
+            return data
+        return data.get("notes", data.get("items", []))
 
     async def update_control_status(
         self,

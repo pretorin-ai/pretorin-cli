@@ -28,6 +28,7 @@ from pretorin.mcp.analysis_prompts import (
     get_framework_guide,
 )
 from pretorin.utils import normalize_control_id
+from pretorin.workflows.compliance_updates import upsert_evidence
 
 logger = logging.getLogger(__name__)
 
@@ -391,7 +392,10 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_create_evidence",
-            description="Create a new evidence item on the platform",
+            description=(
+                "Upsert an evidence item on the platform (find-or-create by default) "
+                "using auditor-ready markdown descriptions"
+            ),
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -405,18 +409,26 @@ async def list_tools() -> list[Tool]:
                     },
                     "description": {
                         "type": "string",
-                        "description": "Evidence description",
+                        "description": (
+                            "Evidence description in markdown with no headings and at least one rich element "
+                            "(code block, table, list, or link). Images are not allowed yet."
+                        ),
                     },
                     "evidence_type": {
                         "type": "string",
                         "description": "Type of evidence",
-                        "default": "documentation",
+                        "default": "policy_document",
                         "enum": sorted(_VALID_EVIDENCE_TYPES),
                     },
                     "control_id": _control_id_property(optional=True),
                     "framework_id": {
                         "type": "string",
                         "description": "Optional: Associated framework ID",
+                    },
+                    "dedupe": {
+                        "type": "boolean",
+                        "description": "Whether to reuse exact-matching org evidence before creating",
+                        "default": True,
                     },
                 },
                 "required": ["system_id", "name", "description"],
@@ -555,7 +567,10 @@ async def list_tools() -> list[Tool]:
                     },
                     "narrative": {
                         "type": "string",
-                        "description": "The narrative text to set",
+                        "description": (
+                            "Narrative markdown with no headings, at least two rich elements, and at least one "
+                            "structural element (code block, table, or list). Images are not allowed yet."
+                        ),
                     },
                     "is_ai_generated": {
                         "type": "boolean",
@@ -590,6 +605,25 @@ async def list_tools() -> list[Tool]:
                     },
                 },
                 "required": ["system_id", "control_id", "framework_id", "content"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_control_notes",
+            description="Get notes for a control implementation in a system",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": {
+                        "type": "string",
+                        "description": "The system ID",
+                    },
+                    "control_id": _control_id_property(),
+                    "framework_id": {
+                        "type": "string",
+                        "description": "Optional: Framework ID filter",
+                    },
+                },
+                "required": ["system_id", "control_id"],
             },
         ),
         # === Control Implementation Tools ===
@@ -931,28 +965,34 @@ async def _handle_create_evidence(
     arguments: dict[str, Any],
 ) -> list[TextContent] | CallToolResult:
     """Handle the create_evidence tool."""
-    err = _require(arguments, "system_id")
+    err = _require(arguments, "system_id", "name", "description")
     if err:
         return _format_error(err)
-
-    from pretorin.client.models import EvidenceCreate
 
     evidence_type = arguments.get("evidence_type", "policy_document")
     enum_err = _validate_enum(evidence_type, _VALID_EVIDENCE_TYPES, "evidence_type")
     if enum_err:
         return _format_error(enum_err)
 
+    dedupe = arguments.get("dedupe", True)
     raw_control_id = arguments.get("control_id")
-    evidence = EvidenceCreate(
-        name=arguments.get("name", ""),
-        description=arguments.get("description", ""),
-        evidence_type=evidence_type,
-        source="mcp",
-        control_id=normalize_control_id(raw_control_id) if raw_control_id else None,
-        framework_id=arguments.get("framework_id"),
-    )
-    result = await client.create_evidence(arguments["system_id"], evidence)
-    return _format_json(result)
+    try:
+        result = await upsert_evidence(
+            client,
+            system_id=arguments["system_id"],
+            name=arguments.get("name", ""),
+            description=arguments.get("description", ""),
+            evidence_type=evidence_type,
+            control_id=normalize_control_id(raw_control_id) if raw_control_id else None,
+            framework_id=arguments.get("framework_id"),
+            source="cli",
+            dedupe=bool(dedupe),
+        )
+    except ValueError as e:
+        return _format_error(str(e))
+    payload = result.to_dict()
+    payload["id"] = result.evidence_id
+    return _format_json(payload)
 
 
 async def _handle_link_evidence(
@@ -1021,7 +1061,7 @@ async def _handle_push_monitoring_event(
         description=arguments.get("description", ""),
         severity=severity,
         control_id=normalize_control_id(raw_control_id) if raw_control_id else None,
-        event_data={"source": "mcp"},
+        event_data={"source": "cli"},
     )
     result = await client.create_monitoring_event(
         system_id=arguments["system_id"],
@@ -1068,9 +1108,30 @@ async def _handle_add_control_note(
         control_id=normalize_control_id(arguments["control_id"]),
         content=arguments["content"],
         framework_id=arguments["framework_id"],
-        source="mcp",
+        source="cli",
     )
     return _format_json(result)
+
+
+async def _handle_get_control_notes(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent]:
+    """Handle the get_control_notes tool."""
+    normalized_control_id = normalize_control_id(arguments.get("control_id", ""))
+    notes = await client.list_control_notes(
+        system_id=arguments.get("system_id", ""),
+        control_id=normalized_control_id,
+        framework_id=arguments.get("framework_id"),
+    )
+    return _format_json(
+        {
+            "control_id": normalized_control_id,
+            "framework_id": arguments.get("framework_id"),
+            "total": len(notes),
+            "notes": notes,
+        }
+    )
 
 
 async def _handle_update_narrative(
@@ -1082,13 +1143,16 @@ async def _handle_update_narrative(
     if err:
         return _format_error(err)
 
-    result = await client.update_narrative(
-        system_id=arguments["system_id"],
-        control_id=normalize_control_id(arguments["control_id"]),
-        framework_id=arguments["framework_id"],
-        narrative=arguments["narrative"],
-        is_ai_generated=arguments.get("is_ai_generated", False),
-    )
+    try:
+        result = await client.update_narrative(
+            system_id=arguments["system_id"],
+            control_id=normalize_control_id(arguments["control_id"]),
+            framework_id=arguments["framework_id"],
+            narrative=arguments["narrative"],
+            is_ai_generated=arguments.get("is_ai_generated", False),
+        )
+    except ValueError as e:
+        return _format_error(str(e))
     return _format_json(result)
 
 
@@ -1153,6 +1217,7 @@ _TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pretorin_get_narrative": _handle_get_narrative,
     "pretorin_push_monitoring_event": _handle_push_monitoring_event,
     "pretorin_add_control_note": _handle_add_control_note,
+    "pretorin_get_control_notes": _handle_get_control_notes,
     "pretorin_update_control_status": _handle_update_control_status,
     "pretorin_get_control_implementation": _handle_get_control_implementation,
     "pretorin_get_control_context": _handle_get_control_context,

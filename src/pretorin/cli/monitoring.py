@@ -186,7 +186,7 @@ async def _push_event(
             description=description,
             severity=severity,
             control_id=control,
-            event_data={"source": "pretorin-cli", "cli_version": __version__},
+            event_data={"source": "cli", "cli_version": __version__},
         )
 
         try:

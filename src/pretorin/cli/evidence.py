@@ -22,6 +22,21 @@ app = typer.Typer(
 )
 
 ROMEBOT_EVIDENCE = "[#EAB536]\\[°□°][/#EAB536]"
+_VALID_EVIDENCE_TYPES = {
+    "screenshot",
+    "screen_recording",
+    "log_file",
+    "configuration",
+    "test_result",
+    "certificate",
+    "attestation",
+    "code_snippet",
+    "repository_link",
+    "policy_document",
+    "scan_result",
+    "interview_notes",
+    "other",
+}
 
 
 @app.command("create")
@@ -172,7 +187,7 @@ def evidence_push(
 ) -> None:
     """Push local evidence to the Pretorin platform.
 
-    New evidence (without platform_id) gets created on the platform.
+    New evidence (without platform_id) is upserted on the platform.
     Already-synced evidence is skipped.
 
     Examples:
@@ -207,8 +222,10 @@ async def _push_evidence(dry_run: bool) -> None:
             print_json(
                 {
                     "created": result.created,
+                    "reused": result.reused,
                     "skipped": result.skipped,
                     "errors": result.errors,
+                    # Deprecated: retained for compatibility.
                     "events": result.events,
                 }
             )
@@ -219,10 +236,10 @@ async def _push_evidence(dry_run: bool) -> None:
             for item in result.created:
                 rprint(f"  [#95D7E0]+[/#95D7E0] {item}")
 
-        if result.events:
-            rprint("\n[bold yellow]Controls flagged for review:[/bold yellow]")
-            for ev in result.events:
-                rprint(f"  [yellow]![/yellow] {ev} → status set to partially_implemented")
+        if result.reused:
+            rprint("\n[bold]Reused:[/bold]")
+            for item in result.reused:
+                rprint(f"  [#EAB536]=[/#EAB536] {item}")
 
         if result.skipped:
             rprint(f"\n[dim]Skipped {len(result.skipped)} already-synced item(s)[/dim]")
@@ -232,5 +249,189 @@ async def _push_evidence(dry_run: bool) -> None:
             for err in result.errors:
                 rprint(f"  [red]![/red] {err}")
 
-        if not result.created and not result.errors:
+        if not result.created and not result.reused and not result.errors:
             rprint("[dim]Nothing to push — all evidence is already synced.[/dim]")
+
+
+@app.command("search")
+def evidence_search(
+    control_id: str | None = typer.Option(None, "--control-id", "-c", help="Optional control ID filter."),
+    framework_id: str | None = typer.Option(None, "--framework-id", "-f", help="Optional framework filter."),
+    system: str | None = typer.Option(None, "--system", "-s", help="System name or ID."),
+    org_level: bool = typer.Option(False, "--org-level", help="Search org-level evidence instead of one system."),
+    limit: int = typer.Option(50, "--limit", "-n", help="Max results."),
+) -> None:
+    """Search platform evidence items."""
+    asyncio.run(
+        _search_evidence(
+            control_id=control_id,
+            framework_id=framework_id,
+            system=system,
+            org_level=org_level,
+            limit=limit,
+        )
+    )
+
+
+async def _search_evidence(
+    control_id: str | None,
+    framework_id: str | None,
+    system: str | None,
+    org_level: bool,
+    limit: int,
+) -> None:
+    from pretorin.cli.commands import require_auth
+    from pretorin.client.api import PretorianClient, PretorianClientError
+    from pretorin.workflows.compliance_updates import resolve_system
+
+    control_filter = normalize_control_id(control_id) if control_id else None
+
+    async with PretorianClient() as client:
+        require_auth(client)
+
+        try:
+            system_id = None
+            system_name = None
+            if not org_level:
+                system_id, system_name = await resolve_system(client, system)
+            items = await client.list_evidence(
+                system_id=system_id,
+                control_id=control_filter,
+                framework_id=framework_id,
+                limit=limit,
+            )
+        except PretorianClientError as e:
+            rprint(f"[red]Search failed: {e.message}[/red]")
+            raise typer.Exit(1)
+
+        if is_json_mode():
+            print_json(
+                {
+                    "scope": "org" if org_level else f"system:{system_id}",
+                    "system_name": system_name,
+                    "total": len(items),
+                    "evidence": [item.model_dump() for item in items],
+                }
+            )
+            return
+
+        scope = "[bold]Organization[/bold]" if org_level else f"[bold]{system_name}[/bold]"
+        rprint(f"\n  {ROMEBOT_EVIDENCE}  Evidence Search Scope: {scope}\n")
+        if not items:
+            rprint("[dim]No evidence found for the current filters.[/dim]")
+            return
+
+        table = Table(title="Platform Evidence", show_header=True, header_style="bold")
+        table.add_column("ID", style="cyan", no_wrap=True)
+        table.add_column("Name")
+        table.add_column("Type")
+        table.add_column("Status")
+
+        for item in items:
+            table.add_row(item.id[:8], item.name, item.evidence_type or "-", item.status or "-")
+
+        console.print(table)
+        rprint(f"\n[dim]Total: {len(items)} evidence item(s)[/dim]")
+
+
+@app.command("upsert")
+def evidence_upsert(
+    control_id: str = typer.Argument(..., help="Control ID (e.g., ac-02)"),
+    framework_id: str = typer.Argument(..., help="Framework ID (e.g., fedramp-moderate)"),
+    name: str = typer.Option(..., "--name", "-n", help="Evidence name"),
+    description: str = typer.Option(
+        ...,
+        "--description",
+        "-d",
+        help=(
+            "Evidence markdown with no headings and at least one rich element "
+            "(code block, table, list, or link). Images are not allowed yet."
+        ),
+    ),
+    evidence_type: str = typer.Option("policy_document", "--type", "-t", help="Evidence type."),
+    system: str | None = typer.Option(None, "--system", "-s", help="System name or ID."),
+) -> None:
+    """Find-or-create evidence and ensure system/control link."""
+    if evidence_type not in _VALID_EVIDENCE_TYPES:
+        rprint(
+            f"[red]Invalid evidence type: {evidence_type}. "
+            f"Choose one of: {', '.join(sorted(_VALID_EVIDENCE_TYPES))}[/red]"
+        )
+        raise typer.Exit(1)
+
+    asyncio.run(
+        _upsert_evidence(
+            control_id=normalize_control_id(control_id),
+            framework_id=framework_id,
+            name=name,
+            description=description,
+            evidence_type=evidence_type,
+            system=system,
+        )
+    )
+
+
+async def _upsert_evidence(
+    control_id: str,
+    framework_id: str,
+    name: str,
+    description: str,
+    evidence_type: str,
+    system: str | None,
+) -> None:
+    from pretorin.cli.commands import require_auth
+    from pretorin.client.api import PretorianClient, PretorianClientError
+    from pretorin.workflows.compliance_updates import resolve_system, upsert_evidence
+
+    async with PretorianClient() as client:
+        require_auth(client)
+        try:
+            system_id, system_name = await resolve_system(client, system)
+            result = await upsert_evidence(
+                client,
+                system_id=system_id,
+                name=name,
+                description=description,
+                evidence_type=evidence_type,
+                control_id=control_id,
+                framework_id=framework_id,
+                source="cli",
+                dedupe=True,
+            )
+        except ValueError as e:
+            rprint(f"[red]Upsert failed: {e}[/red]")
+            raise typer.Exit(1)
+        except PretorianClientError as e:
+            rprint(f"[red]Upsert failed: {e.message}[/red]")
+            raise typer.Exit(1)
+
+        payload = result.to_dict()
+        payload.update(
+            {
+                "system_id": system_id,
+                "system_name": system_name,
+                "control_id": control_id,
+                "framework_id": framework_id,
+            }
+        )
+        if is_json_mode():
+            print_json(payload)
+            return
+
+        action = "Created" if result.created else "Reused"
+        link_state = "linked" if result.linked else "link_pending"
+        rprint(
+            Panel(
+                f"  [bold]Action:[/bold]    {action}\n"
+                f"  [bold]Evidence ID:[/bold] {result.evidence_id}\n"
+                f"  [bold]System:[/bold]    {system_name}\n"
+                f"  [bold]Control:[/bold]   {control_id.upper()}\n"
+                f"  [bold]Framework:[/bold] {framework_id}\n"
+                f"  [bold]Link:[/bold]      {link_state}\n",
+                title=f"{ROMEBOT_EVIDENCE}  Evidence Upserted",
+                border_style="#95D7E0",
+                padding=(1, 2),
+            )
+        )
+        if result.link_error:
+            rprint(f"[yellow]Warning: evidence link failed: {result.link_error}[/yellow]")

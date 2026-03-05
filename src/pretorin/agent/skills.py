@@ -16,6 +16,32 @@ class Skill:
     max_turns: int = 15
 
 
+_WORKFLOW_GUARDRAILS = (
+    "Workflow requirements:\n"
+    "- Read current platform state first (control context, current narrative, evidence, and notes).\n"
+    "- Use only observable facts from codebase and connected systems.\n"
+    "- Do not hallucinate missing controls, integrations, or evidence.\n"
+    "- Write auditor-ready markdown with no section headings.\n"
+    "- Narratives must include at least two rich markdown elements and at least one structural element.\n"
+    "- Evidence descriptions must include at least one rich markdown element.\n"
+    "- Rich markdown elements: fenced code blocks, tables, lists, and links.\n"
+    "- Do not include markdown images until platform-side image evidence upload support is available.\n"
+    "- For missing information, insert this exact narrative block:\n"
+    "  [[PRETORIN_TODO]]\n"
+    "  missing_item: <what is missing>\n"
+    "  reason: Not observable from current workspace and connected MCP systems\n"
+    "  required_manual_action: <what user must do on platform/integrations>\n"
+    "  suggested_evidence_type: <policy_document|configuration|...>\n"
+    "  [[/PRETORIN_TODO]]\n"
+    "- Add one control note per unresolved gap in this exact format:\n"
+    "  Gap: <short title>\n"
+    "  Observed: <what was verifiably found>\n"
+    "  Missing: <what could not be verified>\n"
+    "  Why missing: <access/system limitation>\n"
+    "  Manual next step: <explicit user/platform action>\n"
+)
+
+
 SKILLS: dict[str, Skill] = {
     "gap-analysis": Skill(
         name="gap-analysis",
@@ -50,7 +76,7 @@ SKILLS: dict[str, Skill] = {
         system_prompt=(
             "You are a compliance documentation specialist. Your task is to:\n"
             "1. Identify the target system and control(s)\n"
-            "2. Review existing evidence and implementation details using get_control_context\n"
+            "2. Review existing narrative, evidence, and notes before drafting updates\n"
             "3. Generate clear, specific implementation narratives\n"
             "4. Each narrative should explain HOW the control is implemented, "
             "not just WHAT the control requires\n"
@@ -59,7 +85,8 @@ SKILLS: dict[str, Skill] = {
             "Use search_evidence and get_control_context to gather context before "
             "generating narratives. Reference specific evidence items in the narrative. "
             "After pushing a narrative, add a note if there are manual steps needed "
-            "or additional systems that should be connected."
+            "or additional systems that should be connected.\n\n"
+            f"{_WORKFLOW_GUARDRAILS}"
         ),
         tool_names=[
             "list_systems",
@@ -70,6 +97,7 @@ SKILLS: dict[str, Skill] = {
             "get_scope",
             "search_evidence",
             "get_narrative",
+            "get_control_notes",
             "update_narrative",
             "add_control_note",
         ],
@@ -82,13 +110,14 @@ SKILLS: dict[str, Skill] = {
             "You are a compliance evidence collection specialist. Your task is to:\n"
             "1. Analyze the codebase and infrastructure using available MCP tools\n"
             "2. Identify configurations, code, and documentation that serve as evidence\n"
-            "3. Create evidence items on the platform and link them to controls\n"
+            "3. Read current evidence/notes, then upsert evidence and link to controls\n"
             "4. Focus on concrete, auditable artifacts (config files, code modules, docs)\n"
             "5. Add notes for evidence that must be manually collected or systems to connect\n\n"
             "When creating evidence, provide specific descriptions that reference "
             "file paths, configurations, or code patterns. Link each evidence item "
             "to the most relevant control(s). After collecting evidence, add notes "
-            "for any evidence that can't be collected programmatically."
+            "for any evidence that can't be collected programmatically.\n\n"
+            f"{_WORKFLOW_GUARDRAILS}"
         ),
         tool_names=[
             "list_systems",
@@ -99,6 +128,8 @@ SKILLS: dict[str, Skill] = {
             "get_scope",
             "search_evidence",
             "create_evidence",
+            "link_evidence",
+            "get_control_notes",
             "add_control_note",
         ],
         max_turns=20,
@@ -117,7 +148,8 @@ SKILLS: dict[str, Skill] = {
             "Use external MCP tools (if available) to access the codebase, "
             "then use platform tools to record your findings. "
             "Push monitoring events for critical or high-severity findings. "
-            "Add notes for any findings that require manual intervention."
+            "Add notes for any findings that require manual intervention.\n\n"
+            f"{_WORKFLOW_GUARDRAILS}"
         ),
         tool_names=[
             "list_systems",
@@ -131,7 +163,9 @@ SKILLS: dict[str, Skill] = {
             "update_control_status",
             "update_narrative",
             "create_evidence",
+            "link_evidence",
             "search_evidence",
+            "get_control_notes",
             "add_control_note",
         ],
         max_turns=25,

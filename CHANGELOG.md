@@ -5,6 +5,44 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-03-05
+
+### Added
+- Shared markdown quality validator for auditor-readable artifacts, including strict no-heading enforcement and rich-markdown requirements
+- Dedicated tests for markdown quality guardrails, including explicit image rejection
+- CLI/MCP/agent parity for reading notes via the dedicated control-notes endpoint
+
+### Changed
+- Narrative and evidence update flows now enforce markdown quality checks before push/upsert
+- Agent prompts and skill guidance now require auditor-ready markdown (lists/tables/code/links) and ban image markdown until platform upload support is available
+- Source tagging normalized to `cli` across CLI/MCP/agent write paths
+
+### Removed
+- Markdown image usage from narrative/evidence authoring contract (temporarily disabled pending platform-side attachment support)
+
+## [0.5.4] - 2026-03-05
+
+### Added
+- `pretorin narrative get` to read current control narratives from the platform
+- `pretorin notes list` and `pretorin notes add` for explicit control-note management
+- `pretorin evidence search` for platform evidence visibility
+- `pretorin evidence upsert` for find-or-create evidence with control/system linking
+- Shared compliance workflow helpers for:
+  - system resolution
+  - evidence dedupe/upsert
+  - canonical narrative TODO block rendering
+  - canonical gap-note rendering
+- MCP `pretorin_get_control_notes` tool for note read parity
+
+### Changed
+- `pretorin_create_evidence` MCP behavior now upserts by default (`dedupe: true`) and returns normalized upsert metadata (`evidence_id`, `created`, `linked`, `match_basis`)
+- `pretorin evidence push` now uses find-or-create upsert logic (reused matches are reported separately)
+- Agent skill prompts now include explicit no-hallucination guidance, structured TODO placeholders, and gap note format requirements
+- Legacy agent toolset now includes `add_control_note`, `link_evidence`, and `get_control_notes`
+
+### Removed
+- Automatic control status updates and monitoring-event side effects from CLI evidence push workflow
+
 ## [0.5.3] - 2026-03-02
 
 ### Fixed
@@ -135,6 +173,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CMMC Level 1, 2, and 3
 - Additional frameworks available on the platform
 
+[0.6.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.6...v0.6.0
+[0.5.4]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.3...v0.5.4
+[0.5.3]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.2...v0.5.3
+[0.5.2]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.0...v0.5.2
 [0.5.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.3.1...v0.5.0
 [0.2.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/pretorin-ai/pretorin-cli/releases/tag/v0.1.0

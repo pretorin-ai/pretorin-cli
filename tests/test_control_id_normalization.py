@@ -103,3 +103,65 @@ async def test_agent_tool_search_evidence_normalizes_control_id_filter() -> None
         framework_id="fedramp-moderate",
         limit=10,
     )
+
+
+@pytest.mark.asyncio
+async def test_agent_tool_add_control_note_normalizes_control_id() -> None:
+    mock_client = AsyncMock()
+    mock_client.add_control_note = AsyncMock(return_value={"ok": True})
+
+    tools = {tool.name: tool for tool in create_platform_tools(mock_client)}
+    await tools["add_control_note"].handler(
+        system_id="sys-1",
+        control_id="ac-2",
+        framework_id="fedramp-moderate",
+        content="Need manual SSO upload",
+    )
+
+    mock_client.add_control_note.assert_awaited_once_with(
+        system_id="sys-1",
+        control_id="ac-02",
+        content="Need manual SSO upload",
+        framework_id="fedramp-moderate",
+        source="cli",
+    )
+
+
+@pytest.mark.asyncio
+async def test_agent_tool_get_control_notes_normalizes_control_id() -> None:
+    mock_client = AsyncMock()
+    mock_client.list_control_notes = AsyncMock(return_value=[])
+
+    tools = {tool.name: tool for tool in create_platform_tools(mock_client)}
+    await tools["get_control_notes"].handler(
+        system_id="sys-1",
+        control_id="ac-2",
+        framework_id="fedramp-moderate",
+    )
+
+    mock_client.list_control_notes.assert_awaited_once_with(
+        system_id="sys-1",
+        control_id="ac-02",
+        framework_id="fedramp-moderate",
+    )
+
+
+@pytest.mark.asyncio
+async def test_agent_tool_link_evidence_normalizes_control_id() -> None:
+    mock_client = AsyncMock()
+    mock_client.link_evidence_to_control = AsyncMock(return_value={"linked": True})
+
+    tools = {tool.name: tool for tool in create_platform_tools(mock_client)}
+    await tools["link_evidence"].handler(
+        system_id="sys-1",
+        evidence_id="ev-1",
+        control_id="ac-2",
+        framework_id="fedramp-moderate",
+    )
+
+    mock_client.link_evidence_to_control.assert_awaited_once_with(
+        evidence_id="ev-1",
+        control_id="ac-02",
+        system_id="sys-1",
+        framework_id="fedramp-moderate",
+    )

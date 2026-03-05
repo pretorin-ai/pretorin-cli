@@ -118,11 +118,21 @@ For Claude Desktop, Cursor, and Windsurf setup, see [docs/MCP.md](docs/MCP.md).
 | `pretorin context set` | Set active system/framework context |
 | `pretorin evidence create` | Create local evidence file |
 | `pretorin evidence push` | Push local evidence to Pretorin |
+| `pretorin evidence search` | Search platform evidence |
+| `pretorin evidence upsert <ctrl> <fw>` | Find-or-create evidence and link it |
+| `pretorin narrative get <ctrl> <fw>` | Get current control narrative |
 | `pretorin narrative push <ctrl> <fw> <sys> <file>` | Push a narrative file |
+| `pretorin notes list <ctrl> <fw>` | List control notes |
+| `pretorin notes add <ctrl> <fw> --content ...` | Add control note |
 | `pretorin monitoring push` | Push a monitoring event |
 | `pretorin agent run "<task>"` | Run Codex-powered compliance task |
 | `pretorin review run --control-id <id> --path <dir>` | Review local code for control coverage |
 | `pretorin mcp-serve` | Start MCP server |
+
+## Artifact Authoring Rules
+
+- Narrative and evidence markdown must be human-readable for auditors: no markdown headings, use lists/tables/code blocks/links.
+- Markdown image embeds are temporarily disabled until platform-side file upload support is available.
 
 ## Configuration
 

@@ -68,7 +68,62 @@ When unsure of an ID, discover it first with `pretorin_list_control_families` or
 ### System & Implementation Context
 - **`pretorin_get_control_context`** — Get rich context for a control including AI guidance, statement, objectives, scope status, and current implementation details. Pass `system_id`, `control_id`, and `framework_id`. This is the most comprehensive view for understanding both what a control requires and how it's currently implemented.
 - **`pretorin_get_scope`** — Get system scope/policy information including excluded controls and Q&A responses. Pass `system_id`. Useful for understanding what's in/out of scope before generating narratives.
+- **`pretorin_get_control_implementation`** — Get implementation details including current narrative, evidence_count, and notes. Use this to read current state before writing updates.
+- **`pretorin_get_control_notes`** — Get notes for a control implementation. Pass `system_id`, `control_id`, and optionally `framework_id`.
 - **`pretorin_update_narrative`** — Push a narrative text update for a control implementation. Pass `system_id`, `control_id`, `framework_id`, and `narrative`. Use this after generating a narrative to save it to the platform.
+- **`pretorin_create_evidence`** — Upsert evidence (find-or-create by default with `dedupe: true`) and return whether it was created or reused. Pass `system_id`, `name`, `description`, `evidence_type`, and control/framework context.
+- **`pretorin_link_evidence`** — Link an existing evidence item to a control (low-level helper).
+- **`pretorin_add_control_note`** — Add a note for unresolved gaps or manual follow-up actions.
+
+## Narrative + Evidence + Notes Workflow
+
+For any control update, follow this exact sequence:
+
+1. Resolve the target `system_id`, `control_id`, and `framework_id`
+2. Read current state first:
+   - `pretorin_get_control_context`
+   - `pretorin_get_narrative` or `pretorin_get_control_implementation`
+   - `pretorin_search_evidence`
+   - `pretorin_get_control_notes`
+3. Collect only observable facts from the codebase and connected MCP systems
+4. Draft updates:
+   - Narrative update (include TODO placeholders for unknowns)
+   - Evidence upserts
+   - Gap notes for unresolved/manual items
+5. Push updates:
+   - `pretorin_update_narrative`
+   - `pretorin_create_evidence` (dedupe on by default)
+   - `pretorin_add_control_note`
+
+### No-Hallucination Requirements
+
+- Never claim an implementation detail unless it is directly observed.
+- Mark uncertain or missing information as unknown.
+- Use auditor-friendly markdown with no section headings.
+- Narratives must include at least two rich markdown elements and at least one structural element (`code block`, `table`, or `list`).
+- Evidence descriptions must include at least one rich markdown element.
+- Rich markdown elements include: fenced code blocks, tables, lists, and links.
+- Do not include markdown images until platform-side image evidence upload support is available.
+- For missing narrative data, insert this exact block:
+
+```text
+[[PRETORIN_TODO]]
+missing_item: <what is missing>
+reason: Not observable from current workspace and connected MCP systems
+required_manual_action: <what user must do on platform/integrations>
+suggested_evidence_type: <policy_document|configuration|...>
+[[/PRETORIN_TODO]]
+```
+
+- For each unresolved gap, add one control note in this format:
+
+```text
+Gap: <short title>
+Observed: <what was verifiably found>
+Missing: <what could not be verified>
+Why missing: <access/system limitation>
+Manual next step: <explicit user/platform action>
+```
 
 ## Workflows
 

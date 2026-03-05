@@ -1,4 +1,4 @@
-"""Tests for expanded MCP tools (21 total).
+"""Tests for expanded MCP tools.
 
 Tests verify tool listing, dispatch, and error handling using mocked API responses.
 """
@@ -15,7 +15,7 @@ from pretorin.mcp.server import call_tool, list_tools
 
 
 class TestToolListing:
-    """Verify all 21 tools are registered."""
+    """Verify expected tools are registered."""
 
     def test_all_tools_listed(self) -> None:
         tools = asyncio.run(list_tools())
@@ -40,8 +40,9 @@ class TestToolListing:
             "pretorin_link_evidence",
             # Narrative 1
             "pretorin_get_narrative",
-            # Notes 1
+            # Notes 2
             "pretorin_add_control_note",
+            "pretorin_get_control_notes",
             # Monitoring 1
             "pretorin_push_monitoring_event",
             # Control context & scope 2
@@ -53,7 +54,7 @@ class TestToolListing:
             "pretorin_get_control_implementation",
         ]
 
-        assert len(tools) == 21
+        assert len(tools) == 22
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 
@@ -175,18 +176,56 @@ class TestEvidenceTools:
         client.list_evidence.assert_awaited_once_with(control_id="ac-02", framework_id=None, limit=20)
 
     def test_create_evidence(self) -> None:
-        client = _make_mock_client(create_evidence={"id": "ev-new", "name": "New Evidence"})
+        client = _make_mock_client(
+            list_evidence=[],
+            create_evidence={"id": "ev-new", "name": "New Evidence"},
+            link_evidence_to_control={"linked": True},
+        )
         result = _run_tool(
             "pretorin_create_evidence",
-            {"system_id": "sys-1", "name": "New Evidence", "description": "Test"},
+            {"system_id": "sys-1", "name": "New Evidence", "description": "- Test"},
             client,
         )
         data = _parse_result(result)
-        assert data["id"] == "ev-new"
+        assert data["evidence_id"] == "ev-new"
+        assert data["created"] is True
+        assert data["linked"] is False
+
+    def test_create_evidence_reuses_duplicate(self) -> None:
+        from pretorin.client.models import EvidenceItemResponse
+
+        client = _make_mock_client(
+            list_evidence=[
+                EvidenceItemResponse(
+                    id="ev-existing",
+                    name="New Evidence",
+                    description="- Test",
+                    evidence_type="policy_document",
+                    collected_at="2026-01-01T00:00:00+00:00",
+                )
+            ],
+            link_evidence_to_control={"linked": True},
+        )
+        result = _run_tool(
+            "pretorin_create_evidence",
+            {
+                "system_id": "sys-1",
+                "name": "New Evidence",
+                "description": "- Test",
+                "control_id": "ac-2",
+                "framework_id": "fedramp-moderate",
+            },
+            client,
+        )
+        data = _parse_result(result)
+        assert data["evidence_id"] == "ev-existing"
+        assert data["created"] is False
+        assert data["linked"] is True
+        assert data["match_basis"] == "exact_name_desc_type_control_framework"
 
     def test_create_evidence_missing_system_id(self) -> None:
         client = _make_mock_client()
-        result = _run_tool("pretorin_create_evidence", {"name": "New Evidence", "description": "Test"}, client)
+        result = _run_tool("pretorin_create_evidence", {"name": "New Evidence", "description": "- Test"}, client)
         assert result.isError is True
         assert any("Missing required" in c.text for c in result.content)
 
@@ -231,6 +270,20 @@ class TestNarrativeTools:
         data = _parse_result(result)
         assert data["narrative"] == "Existing narrative"
         client.get_narrative.assert_awaited_once_with(system_id="sys-1", control_id="ac-02", framework_id=None)
+
+    def test_get_control_notes(self) -> None:
+        client = _make_mock_client(
+            list_control_notes=[{"content": "Manual SSO evidence upload required"}],
+        )
+        result = _run_tool("pretorin_get_control_notes", {"system_id": "sys-1", "control_id": "ac-2"}, client)
+        data = _parse_result(result)
+        assert data["total"] == 1
+        assert data["notes"][0]["content"] == "Manual SSO evidence upload required"
+        client.list_control_notes.assert_awaited_once_with(
+            system_id="sys-1",
+            control_id="ac-02",
+            framework_id=None,
+        )
 
 
 class TestMonitoringTools:

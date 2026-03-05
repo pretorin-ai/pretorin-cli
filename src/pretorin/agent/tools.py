@@ -12,6 +12,7 @@ from typing import Any
 
 from pretorin.client.api import PretorianClient
 from pretorin.utils import normalize_control_id
+from pretorin.workflows.compliance_updates import upsert_evidence
 
 
 @dataclass
@@ -179,24 +180,31 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     )
 
     async def create_evidence(
+        system_id: str,
         name: str,
         description: str,
         evidence_type: str = "policy_document",
         control_id: str | None = None,
         framework_id: str | None = None,
+        dedupe: bool = True,
     ) -> str:
-        from pretorin.client.models import EvidenceCreate
-
-        ev = EvidenceCreate(
-            name=name,
-            description=description,
-            evidence_type=evidence_type,
-            source="agent",
-            control_id=_normalize(control_id),
-            framework_id=framework_id,
-        )
-        result = await client.create_evidence("", ev)
-        return json.dumps(result, default=str)
+        try:
+            result = await upsert_evidence(
+                client,
+                system_id=system_id,
+                name=name,
+                description=description,
+                evidence_type=evidence_type,
+                control_id=_normalize(control_id),
+                framework_id=framework_id,
+                source="cli",
+                dedupe=dedupe,
+            )
+        except ValueError as e:
+            return json.dumps({"error": str(e)}, default=str)
+        payload = result.to_dict()
+        payload["id"] = result.evidence_id
+        return json.dumps(payload, default=str)
 
     tools.append(
         ToolDefinition(
@@ -205,15 +213,55 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
             parameters={
                 "type": "object",
                 "properties": {
+                    "system_id": {"type": "string", "description": "System ID"},
                     "name": {"type": "string", "description": "Evidence name"},
-                    "description": {"type": "string", "description": "Evidence description"},
+                    "description": {
+                        "type": "string",
+                        "description": (
+                            "Evidence description in markdown with no headings and at least one rich element "
+                            "(code block, table, list, or link). Images are not allowed yet."
+                        ),
+                    },
                     "evidence_type": {"type": "string", "description": "Type of evidence"},
                     "control_id": {"type": "string", "description": "Associated control"},
                     "framework_id": {"type": "string", "description": "Associated framework"},
+                    "dedupe": {"type": "boolean", "description": "Reuse exact-matching evidence", "default": True},
                 },
-                "required": ["name", "description"],
+                "required": ["system_id", "name", "description"],
             },
             handler=create_evidence,
+        )
+    )
+
+    async def link_evidence(
+        system_id: str,
+        evidence_id: str,
+        control_id: str,
+        framework_id: str | None = None,
+    ) -> str:
+        result = await client.link_evidence_to_control(
+            evidence_id=evidence_id,
+            control_id=_normalize(control_id) or control_id,
+            system_id=system_id,
+            framework_id=framework_id,
+        )
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="link_evidence",
+            description="Link an existing evidence item to a control",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "system_id": {"type": "string", "description": "System ID"},
+                    "evidence_id": {"type": "string", "description": "Evidence item ID"},
+                    "control_id": {"type": "string", "description": "Control ID"},
+                    "framework_id": {"type": "string", "description": "Framework context"},
+                },
+                "required": ["system_id", "evidence_id", "control_id"],
+            },
+            handler=link_evidence,
         )
     )
 
@@ -244,6 +292,75 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         )
     )
 
+    async def add_control_note(
+        system_id: str,
+        control_id: str,
+        framework_id: str,
+        content: str,
+    ) -> str:
+        result = await client.add_control_note(
+            system_id=system_id,
+            control_id=_normalize(control_id) or control_id,
+            content=content,
+            framework_id=framework_id,
+            source="cli",
+        )
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="add_control_note",
+            description="Add a note to a control implementation",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "system_id": {"type": "string", "description": "System ID"},
+                    "control_id": {"type": "string", "description": "Control ID"},
+                    "framework_id": {"type": "string", "description": "Framework ID"},
+                    "content": {"type": "string", "description": "Note content"},
+                },
+                "required": ["system_id", "control_id", "framework_id", "content"],
+            },
+            handler=add_control_note,
+        )
+    )
+
+    async def get_control_notes(
+        system_id: str,
+        control_id: str,
+        framework_id: str | None = None,
+    ) -> str:
+        normalized_control_id = _normalize(control_id) or control_id
+        notes = await client.list_control_notes(
+            system_id=system_id,
+            control_id=normalized_control_id,
+            framework_id=framework_id,
+        )
+        payload = {
+            "control_id": normalized_control_id,
+            "framework_id": framework_id,
+            "total": len(notes),
+            "notes": notes,
+        }
+        return json.dumps(payload, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="get_control_notes",
+            description="Get notes for a control implementation",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "system_id": {"type": "string", "description": "System ID"},
+                    "control_id": {"type": "string", "description": "Control ID"},
+                    "framework_id": {"type": "string", "description": "Framework ID filter"},
+                },
+                "required": ["system_id", "control_id"],
+            },
+            handler=get_control_notes,
+        )
+    )
+
     # --- Monitoring ---
 
     async def push_monitoring_event(
@@ -262,7 +379,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
             description=description,
             severity=severity,
             control_id=_normalize(control_id),
-            event_data={"source": "agent"},
+            event_data={"source": "cli"},
         )
         result = await client.create_monitoring_event(system_id, event)
         return json.dumps(result, default=str)
@@ -407,13 +524,16 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         narrative: str,
         is_ai_generated: bool = False,
     ) -> str:
-        result = await client.update_narrative(
-            system_id,
-            _normalize(control_id) or control_id,
-            narrative,
-            framework_id,
-            is_ai_generated,
-        )
+        try:
+            result = await client.update_narrative(
+                system_id,
+                _normalize(control_id) or control_id,
+                narrative,
+                framework_id,
+                is_ai_generated,
+            )
+        except ValueError as e:
+            return json.dumps({"error": str(e)}, default=str)
         return json.dumps(result, default=str)
 
     tools.append(
@@ -426,7 +546,13 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
                     "system_id": {"type": "string", "description": "System ID"},
                     "control_id": {"type": "string", "description": "Control ID"},
                     "framework_id": {"type": "string", "description": "Framework ID"},
-                    "narrative": {"type": "string", "description": "Narrative text"},
+                    "narrative": {
+                        "type": "string",
+                        "description": (
+                            "Narrative markdown with no headings, at least two rich elements, and at least one "
+                            "structural element (code block, table, or list). Images are not allowed yet."
+                        ),
+                    },
                     "is_ai_generated": {"type": "boolean", "description": "AI-generated flag"},
                 },
                 "required": ["system_id", "control_id", "framework_id", "narrative"],
