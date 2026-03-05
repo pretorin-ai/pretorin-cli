@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -24,7 +24,7 @@ class LocalEvidence:
 
     def __post_init__(self) -> None:
         if not self.collected_at:
-            self.collected_at = datetime.now(UTC).isoformat()
+            self.collected_at = datetime.now(timezone.utc).isoformat()
 
 
 def _safe_path_component(text: str) -> str:
