@@ -151,7 +151,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     )
 
     async def get_control(framework_id: str, control_id: str) -> str:
-        control = await client.get_control(framework_id, _normalize(control_id) or control_id)
+        control = await client.get_control(framework_id, control_id)
         return json.dumps(control.model_dump(), default=str)
 
     async def get_controls_batch(framework_id: str, control_ids: list[str] | None = None) -> str:
@@ -389,7 +389,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         control_id: str,
         framework_id: str,
     ) -> str:
-        narrative = await client.get_narrative(system_id, _normalize(control_id) or control_id, framework_id)
+        narrative = await client.get_narrative(system_id, control_id, framework_id)
         return json.dumps(narrative.model_dump(), default=str)
 
     tools.append(
@@ -417,7 +417,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     ) -> str:
         result = await client.add_control_note(
             system_id=system_id,
-            control_id=_normalize(control_id) or control_id,
+            control_id=control_id,
             content=content,
             framework_id=framework_id,
             source="cli",
@@ -578,7 +578,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     ) -> str:
         impl = await client.get_control_implementation(
             system_id,
-            _normalize(control_id) or control_id,
+            control_id,
             framework_id,
         )
         return json.dumps(impl.model_dump(), default=str)
@@ -607,7 +607,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         control_id: str,
         framework_id: str,
     ) -> str:
-        ctx = await client.get_control_context(system_id, _normalize(control_id) or control_id, framework_id)
+        ctx = await client.get_control_context(system_id, control_id, framework_id)
         return json.dumps(ctx.model_dump(), default=str)
 
     tools.append(
@@ -660,7 +660,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         try:
             result = await client.update_narrative(
                 system_id,
-                _normalize(control_id) or control_id,
+                control_id,
                 narrative,
                 framework_id,
                 is_ai_generated,
