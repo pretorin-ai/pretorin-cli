@@ -7,8 +7,9 @@ from unittest.mock import AsyncMock
 import pytest
 
 from pretorin.agent.tools import create_platform_tools
-from pretorin.client.api import PretorianClient
+from pretorin.client.api import PretorianClient, PretorianClientError
 from pretorin.client.models import ComplianceArtifact, ComponentDefinition, EvidenceCreate, ImplementationStatement
+from pretorin.utils import normalize_control_id
 
 
 @pytest.mark.asyncio
@@ -84,7 +85,7 @@ async def test_agent_tool_update_control_status_normalizes_control_id() -> None:
 
     mock_client.update_control_status.assert_awaited_once_with(
         "sys-1",
-        "ac-02",
+        "ac-2",
         "implemented",
         "fedramp-moderate",
     )
@@ -99,7 +100,7 @@ async def test_agent_tool_search_evidence_normalizes_control_id_filter() -> None
     await tools["search_evidence"].handler(control_id="ac-2", framework_id="fedramp-moderate", limit=10)
 
     mock_client.list_evidence.assert_awaited_once_with(
-        control_id="ac-02",
+        control_id="ac-2",
         framework_id="fedramp-moderate",
         limit=10,
     )
@@ -120,7 +121,7 @@ async def test_agent_tool_add_control_note_normalizes_control_id() -> None:
 
     mock_client.add_control_note.assert_awaited_once_with(
         system_id="sys-1",
-        control_id="ac-02",
+        control_id="ac-2",
         content="Need manual SSO upload",
         framework_id="fedramp-moderate",
         source="cli",
@@ -141,7 +142,7 @@ async def test_agent_tool_get_control_notes_normalizes_control_id() -> None:
 
     mock_client.list_control_notes.assert_awaited_once_with(
         system_id="sys-1",
-        control_id="ac-02",
+        control_id="ac-2",
         framework_id="fedramp-moderate",
     )
 
@@ -161,7 +162,76 @@ async def test_agent_tool_link_evidence_normalizes_control_id() -> None:
 
     mock_client.link_evidence_to_control.assert_awaited_once_with(
         evidence_id="ev-1",
-        control_id="ac-02",
+        control_id="ac-2",
         system_id="sys-1",
         framework_id="fedramp-moderate",
+    )
+
+
+# =========================================================================
+# CMMC / non-NIST control ID passthrough
+# =========================================================================
+
+
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        ("AC.L1-3.1.1", "AC.L1-3.1.1"),
+        ("AC.L2-3.1.3", "AC.L2-3.1.3"),
+        ("IA.L1-3.5.1", "IA.L1-3.5.1"),
+        ("PE.L1-3.10.1", "PE.L1-3.10.1"),
+        ("SI.L1-3.14.5", "SI.L1-3.14.5"),
+        ("03.01.01", "03.01.01"),
+        ("03.05.01", "03.05.01"),
+    ],
+)
+def test_normalize_passes_cmmc_and_800_171_ids_unchanged(raw: str, expected: str) -> None:
+    assert normalize_control_id(raw) == expected
+
+
+# =========================================================================
+# get_control_implementation requires framework_id
+# =========================================================================
+
+
+@pytest.mark.asyncio
+async def test_client_get_control_implementation_requires_framework_id() -> None:
+    client = PretorianClient(api_key="test", api_base_url="https://api.example.com")
+
+    with pytest.raises(PretorianClientError, match="framework_id is required"):
+        await client.get_control_implementation("sys-1", "AC.L1-3.1.1")
+
+
+@pytest.mark.asyncio
+async def test_client_get_control_implementation_cmmc_with_framework_id() -> None:
+    client = PretorianClient(api_key="test", api_base_url="https://api.example.com")
+    client._request = AsyncMock(return_value={"control_id": "ac.l1-3.1.1", "status": "not_started"})  # type: ignore[method-assign]
+
+    await client.get_control_implementation("sys-1", "AC.L1-3.1.1", "cmmc-l1")
+
+    client._request.assert_awaited_once_with(
+        "GET",
+        "/systems/sys-1/controls/AC.L1-3.1.1",
+        params={"framework_id": "cmmc-l1"},
+    )
+
+
+@pytest.mark.asyncio
+async def test_agent_tool_get_control_implementation_requires_framework_id() -> None:
+    mock_client = AsyncMock()
+    mock_client.get_control_implementation = AsyncMock(
+        return_value=AsyncMock(model_dump=lambda: {"control_id": "ac.l1-3.1.1"})
+    )
+
+    tools = {tool.name: tool for tool in create_platform_tools(mock_client)}
+    await tools["get_control_implementation"].handler(
+        system_id="sys-1",
+        control_id="AC.L1-3.1.1",
+        framework_id="cmmc-l1",
+    )
+
+    mock_client.get_control_implementation.assert_awaited_once_with(
+        "sys-1",
+        "AC.L1-3.1.1",
+        "cmmc-l1",
     )

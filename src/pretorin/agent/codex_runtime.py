@@ -89,6 +89,12 @@ class CodexRuntime:
         Sets CODEX_HOME to ~/.pretorin/codex/ so the binary never reads
         ~/.codex/config.toml.
         """
+        if not api_key:
+            raise RuntimeError(
+                "OPENAI_API_KEY is not set. Export it in your shell:\n"
+                "  export OPENAI_API_KEY='sk-...'\n"
+                "or run `pretorin login` to configure your API key."
+            )
         env: dict[str, str] = {
             "CODEX_HOME": str(self.codex_home),
             "OPENAI_API_KEY": api_key,

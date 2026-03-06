@@ -354,6 +354,7 @@ class TestControlImplementationTools:
             {
                 "system_id": "sys-1",
                 "control_id": "ac-2",
+                "framework_id": "fedramp-moderate",
             },
             client,
         )
@@ -363,8 +364,19 @@ class TestControlImplementationTools:
         client.get_control_implementation.assert_awaited_once_with(
             system_id="sys-1",
             control_id="ac-02",
-            framework_id=None,
+            framework_id="fedramp-moderate",
         )
+
+
+    def test_get_control_implementation_missing_framework_id(self) -> None:
+        client = _make_mock_client()
+        result = _run_tool(
+            "pretorin_get_control_implementation",
+            {"system_id": "sys-1", "control_id": "ac-2"},
+            client,
+        )
+        assert result.isError is True
+        assert any("Missing required" in c.text for c in result.content)
 
 
 class TestErrorHandling:

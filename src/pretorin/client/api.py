@@ -584,14 +584,16 @@ class PretorianClient:
         Args:
             system_id: ID of the system.
             control_id: ID of the control.
-            framework_id: Optional framework filter.
+            framework_id: Framework ID — required by the API for control lookup.
 
         Returns:
             Control implementation details.
         """
-        params: dict[str, Any] = {}
-        if framework_id:
-            params["framework_id"] = framework_id
+        if not framework_id:
+            raise PretorianClientError(
+                f"framework_id is required to look up control implementation for '{control_id}'"
+            )
+        params: dict[str, Any] = {"framework_id": framework_id}
         normalized_control_id = self._normalize_control_id(control_id)
         data = await self._request(
             "GET",

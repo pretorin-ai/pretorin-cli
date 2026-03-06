@@ -82,6 +82,12 @@ class TestCodexRuntime:
         assert "PATH" in env
         assert "HOME" in env
 
+    def test_build_env_raises_when_api_key_missing(self, tmp_path: Path) -> None:
+        runtime = CodexRuntime()
+        runtime.codex_home = tmp_path / "codex"
+        with pytest.raises(RuntimeError, match="OPENAI_API_KEY is not set"):
+            runtime.build_env(api_key="", base_url="https://example.com/v1")
+
     def test_build_env_accepts_extra_vars(self, tmp_path: Path) -> None:
         runtime = CodexRuntime()
         runtime.codex_home = tmp_path / "codex"

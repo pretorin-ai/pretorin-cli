@@ -70,7 +70,7 @@ class TestCodexAgent:
         mock_config_cls.return_value = mock_config
 
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-        with pytest.raises(RuntimeError, match="No model API key found"):
+        with pytest.raises(RuntimeError, match="OPENAI_API_KEY is not set"):
             CodexAgent()
 
     @patch("pretorin.agent.codex_agent.Config")

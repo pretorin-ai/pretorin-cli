@@ -62,7 +62,11 @@ class CodexAgent:
         config_key = _valid(getattr(self._config, "openai_api_key", None))
         if config_key:
             return config_key
-        raise RuntimeError("No model API key found. Run `pretorin login` or set OPENAI_API_KEY.")
+        raise RuntimeError(
+            "OPENAI_API_KEY is not set. Export it in your shell:\n"
+            "  export OPENAI_API_KEY='sk-...'\n"
+            "or run `pretorin login` to configure your API key."
+        )
 
     async def run(
         self,
@@ -98,7 +102,7 @@ class CodexAgent:
             from openai_codex_sdk import Codex  # type: ignore[import-not-found,unused-ignore]
         except ImportError:
             raise RuntimeError(
-                "openai-codex-sdk is required for Codex agent features.\nInstall with: pip install pretorin[agent]"
+                "Codex agent features are not installed.\nRun: pip install 'pretorin[agent]'"
             )
 
         codex = Codex(

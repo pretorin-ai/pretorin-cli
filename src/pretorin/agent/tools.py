@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from typing import Any
 
 from pretorin.client.api import PretorianClient
-from pretorin.utils import normalize_control_id
 from pretorin.workflows.compliance_updates import upsert_evidence
 
 
@@ -34,7 +33,7 @@ def to_function_tool(tool: ToolDefinition) -> Any:
     try:
         from agents import FunctionTool
     except ImportError:
-        raise ImportError("openai-agents is required for agent tools. Install with: pip install pretorin[agent]")
+        raise ImportError("Agent features are not installed. Run: pip install 'pretorin[agent]'")
 
     async def wrapper(ctx: Any, args: str) -> str:
         parsed = json.loads(args) if args else {}
@@ -58,11 +57,6 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         List of ToolDefinition instances.
     """
     tools: list[ToolDefinition] = []
-
-    def _normalize(control_id: str | None) -> str | None:
-        if control_id is None:
-            return None
-        return normalize_control_id(control_id)
 
     # --- Systems ---
 
@@ -129,7 +123,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     )
 
     async def get_control(framework_id: str, control_id: str) -> str:
-        control = await client.get_control(framework_id, _normalize(control_id) or control_id)
+        control = await client.get_control(framework_id, control_id)
         return json.dumps(control.model_dump(), default=str)
 
     tools.append(
@@ -156,7 +150,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         limit: int = 20,
     ) -> str:
         evidence = await client.list_evidence(
-            control_id=_normalize(control_id),
+            control_id=control_id,
             framework_id=framework_id,
             limit=limit,
         )
@@ -195,7 +189,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
                 name=name,
                 description=description,
                 evidence_type=evidence_type,
-                control_id=_normalize(control_id),
+                control_id=control_id,
                 framework_id=framework_id,
                 source="cli",
                 dedupe=dedupe,
@@ -241,7 +235,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     ) -> str:
         result = await client.link_evidence_to_control(
             evidence_id=evidence_id,
-            control_id=_normalize(control_id) or control_id,
+            control_id=control_id,
             system_id=system_id,
             framework_id=framework_id,
         )
@@ -272,7 +266,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         control_id: str,
         framework_id: str | None = None,
     ) -> str:
-        narrative = await client.get_narrative(system_id, _normalize(control_id) or control_id, framework_id)
+        narrative = await client.get_narrative(system_id, control_id, framework_id)
         return json.dumps(narrative.model_dump(), default=str)
 
     tools.append(
@@ -300,7 +294,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     ) -> str:
         result = await client.add_control_note(
             system_id=system_id,
-            control_id=_normalize(control_id) or control_id,
+            control_id=control_id,
             content=content,
             framework_id=framework_id,
             source="cli",
@@ -330,14 +324,13 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         control_id: str,
         framework_id: str | None = None,
     ) -> str:
-        normalized_control_id = _normalize(control_id) or control_id
         notes = await client.list_control_notes(
             system_id=system_id,
-            control_id=normalized_control_id,
+            control_id=control_id,
             framework_id=framework_id,
         )
         payload = {
-            "control_id": normalized_control_id,
+            "control_id": control_id,
             "framework_id": framework_id,
             "total": len(notes),
             "notes": notes,
@@ -378,7 +371,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
             title=title,
             description=description,
             severity=severity,
-            control_id=_normalize(control_id),
+            control_id=control_id,
             event_data={"source": "cli"},
         )
         result = await client.create_monitoring_event(system_id, event)
@@ -414,7 +407,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     ) -> str:
         result = await client.update_control_status(
             system_id,
-            _normalize(control_id) or control_id,
+            control_id,
             status,
             framework_id,
         )
@@ -441,11 +434,11 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     async def get_control_implementation(
         system_id: str,
         control_id: str,
-        framework_id: str | None = None,
+        framework_id: str,
     ) -> str:
         impl = await client.get_control_implementation(
             system_id,
-            _normalize(control_id) or control_id,
+            control_id,
             framework_id,
         )
         return json.dumps(impl.model_dump(), default=str)
@@ -459,9 +452,9 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
                 "properties": {
                     "system_id": {"type": "string", "description": "System ID"},
                     "control_id": {"type": "string", "description": "Control ID"},
-                    "framework_id": {"type": "string", "description": "Framework ID filter"},
+                    "framework_id": {"type": "string", "description": "Framework ID (required)"},
                 },
-                "required": ["system_id", "control_id"],
+                "required": ["system_id", "control_id", "framework_id"],
             },
             handler=get_control_implementation,
         )
@@ -474,7 +467,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         control_id: str,
         framework_id: str,
     ) -> str:
-        ctx = await client.get_control_context(system_id, _normalize(control_id) or control_id, framework_id)
+        ctx = await client.get_control_context(system_id, control_id, framework_id)
         return json.dumps(ctx.model_dump(), default=str)
 
     tools.append(
@@ -527,7 +520,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         try:
             result = await client.update_narrative(
                 system_id,
-                _normalize(control_id) or control_id,
+                control_id,
                 narrative,
                 framework_id,
                 is_ai_generated,

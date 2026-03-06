@@ -666,10 +666,10 @@ async def list_tools() -> list[Tool]:
                     "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
-                        "description": "Optional: Framework ID filter",
+                        "description": "The framework ID (required for control lookup)",
                     },
                 },
-                "required": ["system_id", "control_id"],
+                "required": ["system_id", "control_id", "framework_id"],
             },
         ),
     ]
@@ -1181,12 +1181,16 @@ async def _handle_update_control_status(
 async def _handle_get_control_implementation(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_control_implementation tool."""
+    err = _require(arguments, "system_id", "control_id", "framework_id")
+    if err:
+        return _format_error(err)
+
     impl = await client.get_control_implementation(
-        system_id=arguments.get("system_id", ""),
-        control_id=normalize_control_id(arguments.get("control_id", "")),
-        framework_id=arguments.get("framework_id"),
+        system_id=arguments["system_id"],
+        control_id=normalize_control_id(arguments["control_id"]),
+        framework_id=arguments["framework_id"],
     )
     return _format_json(
         {

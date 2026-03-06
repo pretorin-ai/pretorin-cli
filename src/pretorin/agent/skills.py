@@ -114,9 +114,13 @@ SKILLS: dict[str, Skill] = {
             "4. Focus on concrete, auditable artifacts (config files, code modules, docs)\n"
             "5. Add notes for evidence that must be manually collected or systems to connect\n\n"
             "When creating evidence, provide specific descriptions that reference "
-            "file paths, configurations, or code patterns. Link each evidence item "
-            "to the most relevant control(s). After collecting evidence, add notes "
-            "for any evidence that can't be collected programmatically.\n\n"
+            "file paths, configurations, or code patterns. Always pass control_id "
+            "when calling create_evidence — this auto-links it to the control. If "
+            "the evidence applies to multiple controls, call link_evidence for each "
+            "additional control after creation. Never create evidence without a "
+            "control_id unless it is genuinely framework-level with no specific "
+            "control. After collecting evidence, add notes for any evidence that "
+            "can't be collected programmatically.\n\n"
             f"{_WORKFLOW_GUARDRAILS}"
         ),
         tool_names=[
