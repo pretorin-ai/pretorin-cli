@@ -590,9 +590,7 @@ class PretorianClient:
             Control implementation details.
         """
         if not framework_id:
-            raise PretorianClientError(
-                f"framework_id is required to look up control implementation for '{control_id}'"
-            )
+            raise PretorianClientError(f"framework_id is required to look up control implementation for '{control_id}'")
         params: dict[str, Any] = {"framework_id": framework_id}
         normalized_control_id = self._normalize_control_id(control_id)
         data = await self._request(
