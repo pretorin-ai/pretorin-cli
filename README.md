@@ -20,6 +20,7 @@
 > **Beta** — Pretorin is currently in closed beta. Framework/control browsing works for everyone. Platform write features (evidence, narratives, monitoring) require a beta code. [Sign up for early access](https://pretorin.com/early-access/).
 
 Pretorin CLI gives developers and AI agents direct access to compliance data, implementation context, and evidence workflows.
+mcp-name: io.github.pretorin-ai/pretorin
 
 ## Two Usage Modes
 
