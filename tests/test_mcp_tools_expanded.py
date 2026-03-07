@@ -377,7 +377,7 @@ class TestControlImplementationTools:
         impl = ControlImplementationResponse(
             control_id="ac-2",
             status="partial",
-            narrative="In progress",
+            implementation_narrative="In progress",
             evidence_count=3,
             notes=[{"content": "Working on it"}],
         )

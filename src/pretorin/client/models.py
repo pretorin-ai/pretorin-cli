@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -359,7 +359,7 @@ class ControlImplementationResponse(BaseModel):
         """Treat null notes from older platform deployments as an empty list."""
         if value is None:
             return []
-        return value
+        return cast(list[dict[str, Any]], value)
 
     @property
     def narrative(self) -> str | None:

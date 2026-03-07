@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
 from unittest.mock import AsyncMock
 
 import pytest
@@ -43,8 +44,10 @@ async def test_client_create_evidence_normalizes_control_id_in_payload() -> None
     await client.create_evidence("sys-1", evidence)
 
     client._request.assert_awaited_once()
-    _method, _path = client._request.await_args.args
-    payload = client._request.await_args.kwargs["json"]
+    await_args = client._request.await_args
+    assert await_args is not None
+    _method, _path = await_args.args
+    payload = cast(dict[str, Any], await_args.kwargs["json"])
     assert payload["control_id"] == "ac-02"
 
 
@@ -72,7 +75,9 @@ async def test_client_submit_artifact_normalizes_root_and_nested_control_ids() -
     await client.submit_artifact(artifact)
 
     client._request.assert_awaited_once()
-    payload = client._request.await_args.kwargs["json"]
+    await_args = client._request.await_args
+    assert await_args is not None
+    payload = cast(dict[str, Any], await_args.kwargs["json"])
     assert payload["control_id"] == "ac-02"
     assert payload["component"]["control_implementations"][0]["control_id"] == "ac-02"
 
@@ -228,7 +233,7 @@ async def test_client_get_control_implementation_cmmc_with_framework_id() -> Non
 async def test_client_get_narrative_405_requires_framework_id_for_fallback() -> None:
     client = PretorianClient(api_key="test", api_base_url="https://api.example.com")
 
-    async def fake_request(method: str, path: str, params: dict[str, str] | None = None) -> dict[str, str]:
+    async def fake_request(method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         if path.endswith("/narrative"):
             raise PretorianClientError("Method not allowed", status_code=405)
         return {"control_id": "ac-02", "status": "not_started"}
