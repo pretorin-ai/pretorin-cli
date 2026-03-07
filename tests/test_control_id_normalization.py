@@ -217,6 +217,21 @@ async def test_client_get_control_implementation_cmmc_with_framework_id() -> Non
 
 
 @pytest.mark.asyncio
+async def test_client_get_narrative_405_requires_framework_id_for_fallback() -> None:
+    client = PretorianClient(api_key="test", api_base_url="https://api.example.com")
+
+    async def fake_request(method: str, path: str, params: dict[str, str] | None = None) -> dict[str, str]:
+        if path.endswith("/narrative"):
+            raise PretorianClientError("Method not allowed", status_code=405)
+        return {"control_id": "ac-02", "status": "not_started"}
+
+    client._request = fake_request  # type: ignore[method-assign]
+
+    with pytest.raises(PretorianClientError, match="framework_id is required to look up narrative"):
+        await client.get_narrative("sys-1", "ac-2")
+
+
+@pytest.mark.asyncio
 async def test_agent_tool_get_control_implementation_requires_framework_id() -> None:
     mock_client = AsyncMock()
     mock_client.get_control_implementation = AsyncMock(

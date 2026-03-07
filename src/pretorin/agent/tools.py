@@ -270,7 +270,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     async def get_narrative(
         system_id: str,
         control_id: str,
-        framework_id: str | None = None,
+        framework_id: str,
     ) -> str:
         narrative = await client.get_narrative(system_id, _normalize(control_id) or control_id, framework_id)
         return json.dumps(narrative.model_dump(), default=str)
@@ -284,9 +284,9 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
                 "properties": {
                     "system_id": {"type": "string", "description": "System ID"},
                     "control_id": {"type": "string", "description": "Control ID"},
-                    "framework_id": {"type": "string", "description": "Framework ID filter"},
+                    "framework_id": {"type": "string", "description": "Framework ID (required)"},
                 },
-                "required": ["system_id", "control_id"],
+                "required": ["system_id", "control_id", "framework_id"],
             },
             handler=get_narrative,
         )

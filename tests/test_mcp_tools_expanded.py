@@ -266,10 +266,28 @@ class TestNarrativeTools:
             status="approved",
         )
         client = _make_mock_client(get_narrative=narrative)
-        result = _run_tool("pretorin_get_narrative", {"system_id": "sys-1", "control_id": "ac-2"}, client)
+        result = _run_tool(
+            "pretorin_get_narrative",
+            {
+                "system_id": "sys-1",
+                "control_id": "ac-2",
+                "framework_id": "fedramp-moderate",
+            },
+            client,
+        )
         data = _parse_result(result)
         assert data["narrative"] == "Existing narrative"
-        client.get_narrative.assert_awaited_once_with(system_id="sys-1", control_id="ac-02", framework_id=None)
+        client.get_narrative.assert_awaited_once_with(
+            system_id="sys-1",
+            control_id="ac-02",
+            framework_id="fedramp-moderate",
+        )
+
+    def test_get_narrative_missing_framework_id(self) -> None:
+        client = _make_mock_client()
+        result = _run_tool("pretorin_get_narrative", {"system_id": "sys-1", "control_id": "ac-2"}, client)
+        assert result.isError is True
+        assert any("Missing required" in c.text for c in result.content)
 
     def test_get_control_notes(self) -> None:
         client = _make_mock_client(

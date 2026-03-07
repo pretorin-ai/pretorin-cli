@@ -560,6 +560,11 @@ class PretorianClient:
                 raise
             # Compatibility fallback for deployments that expose narrative
             # through control implementation instead of the dedicated endpoint.
+            if not framework_id:
+                raise PretorianClientError(
+                    f"framework_id is required to look up narrative for '{control_id}' "
+                    "when the dedicated narrative endpoint is unavailable"
+                ) from exc
             impl = await self.get_control_implementation(system_id, normalized_control_id or "", framework_id)
             return NarrativeResponse(
                 control_id=impl.control_id,
