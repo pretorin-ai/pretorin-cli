@@ -413,6 +413,7 @@ class TestNarrativeTools:
         result = _run_tool("pretorin_get_narrative", {"system_id": "sys-1", "control_id": "ac-2"}, client)
         assert result.isError is True
         assert any("Missing required" in c.text for c in result.content)
+<<<<<<< HEAD
 
     def test_get_narrative_resolves_system_name(self) -> None:
         from pretorin.client.models import NarrativeResponse
@@ -474,6 +475,8 @@ class TestNarrativeTools:
         assert data["parse_status"] == "json"
         assert data["narrative_draft"] == "- Draft narrative"
         mock_generate.assert_awaited_once()
+=======
+>>>>>>> a9d7bab (Fix narrative framework requirements)
 
     def test_get_control_notes(self) -> None:
         client = _make_mock_client(
