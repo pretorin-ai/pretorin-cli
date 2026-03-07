@@ -85,7 +85,7 @@ async def test_agent_tool_update_control_status_normalizes_control_id() -> None:
 
     mock_client.update_control_status.assert_awaited_once_with(
         "sys-1",
-        "ac-2",
+        "ac-02",
         "implemented",
         "fedramp-moderate",
     )
@@ -100,7 +100,7 @@ async def test_agent_tool_search_evidence_normalizes_control_id_filter() -> None
     await tools["search_evidence"].handler(control_id="ac-2", framework_id="fedramp-moderate", limit=10)
 
     mock_client.list_evidence.assert_awaited_once_with(
-        control_id="ac-2",
+        control_id="ac-02",
         framework_id="fedramp-moderate",
         limit=10,
     )
@@ -121,7 +121,7 @@ async def test_agent_tool_add_control_note_normalizes_control_id() -> None:
 
     mock_client.add_control_note.assert_awaited_once_with(
         system_id="sys-1",
-        control_id="ac-2",
+        control_id="ac-02",
         content="Need manual SSO upload",
         framework_id="fedramp-moderate",
         source="cli",
@@ -142,7 +142,7 @@ async def test_agent_tool_get_control_notes_normalizes_control_id() -> None:
 
     mock_client.list_control_notes.assert_awaited_once_with(
         system_id="sys-1",
-        control_id="ac-2",
+        control_id="ac-02",
         framework_id="fedramp-moderate",
     )
 
@@ -162,7 +162,7 @@ async def test_agent_tool_link_evidence_normalizes_control_id() -> None:
 
     mock_client.link_evidence_to_control.assert_awaited_once_with(
         evidence_id="ev-1",
-        control_id="ac-2",
+        control_id="ac-02",
         system_id="sys-1",
         framework_id="fedramp-moderate",
     )
