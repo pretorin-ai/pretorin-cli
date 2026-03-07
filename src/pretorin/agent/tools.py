@@ -151,11 +151,13 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     # --- Evidence ---
 
     async def search_evidence(
+        system_id: str | None = None,
         control_id: str | None = None,
         framework_id: str | None = None,
         limit: int = 20,
     ) -> str:
-        evidence = await client.list_evidence(
+        evidence = await client.search_evidence_with_fallback(
+            system_id=system_id,
             control_id=_normalize(control_id),
             framework_id=framework_id,
             limit=limit,
@@ -169,6 +171,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
             parameters={
                 "type": "object",
                 "properties": {
+                    "system_id": {"type": "string", "description": "Optional system ID for system-scoped search"},
                     "control_id": {"type": "string", "description": "Control ID filter"},
                     "framework_id": {"type": "string", "description": "Framework ID filter"},
                     "limit": {"type": "integer", "description": "Max results", "default": 20},

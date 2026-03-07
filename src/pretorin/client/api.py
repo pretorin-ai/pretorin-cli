@@ -463,6 +463,52 @@ class PretorianClient:
         items = data if isinstance(data, list) else data.get("items", data.get("evidence", []))
         return [EvidenceItemResponse(**item) for item in items]
 
+    async def search_evidence_with_fallback(
+        self,
+        system_id: str | None = None,
+        control_id: str | None = None,
+        framework_id: str | None = None,
+        limit: int = 20,
+    ) -> list[EvidenceItemResponse]:
+        """Search evidence with compatibility fallbacks for system-only deployments."""
+        try:
+            return await self.list_evidence(
+                system_id=system_id,
+                control_id=control_id,
+                framework_id=framework_id,
+                limit=limit,
+            )
+        except NotFoundError:
+            if system_id is not None:
+                raise
+        except PretorianClientError as exc:
+            if exc.status_code not in {404, 405} or system_id is not None:
+                raise
+
+        systems = await self.list_systems()
+        results: list[EvidenceItemResponse] = []
+        seen_ids: set[str] = set()
+        for system in systems:
+            candidate_id = str(system.get("id", ""))
+            if not candidate_id:
+                continue
+            try:
+                scoped = await self.list_evidence(
+                    system_id=candidate_id,
+                    control_id=control_id,
+                    framework_id=framework_id,
+                    limit=limit,
+                )
+            except PretorianClientError:
+                continue
+            for item in scoped:
+                if item.id not in seen_ids:
+                    seen_ids.add(item.id)
+                    results.append(item)
+                    if len(results) >= limit:
+                        return results
+        return results
+
     async def get_evidence(self, evidence_id: str) -> EvidenceItemResponse:
         """Get a specific evidence item.
 
@@ -712,14 +758,20 @@ class PretorianClient:
         if framework_id:
             params["framework_id"] = framework_id
         normalized_control_id = self._normalize_control_id(control_id)
-        data = await self._request(
-            "GET",
-            f"/systems/{system_id}/controls/{normalized_control_id}/notes",
-            params=params,
-        )
-        if isinstance(data, list):
-            return data
-        return data.get("notes", data.get("items", []))
+        try:
+            data = await self._request(
+                "GET",
+                f"/systems/{system_id}/controls/{normalized_control_id}/notes",
+                params=params,
+            )
+            if isinstance(data, list):
+                return data
+            return data.get("notes", data.get("items", []))
+        except PretorianClientError as exc:
+            if exc.status_code != 405:
+                raise
+            impl = await self.get_control_implementation(system_id, normalized_control_id or "", framework_id)
+            return impl.notes
 
     async def update_control_status(
         self,

@@ -5,6 +5,22 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-03-07
+
+### Fixed
+- Made control implementation parsing tolerant of deployments that return `notes: null`, preventing narrative and implementation read crashes on untouched controls
+- Added compatibility fallback for control note reads when the dedicated `/notes` endpoint returns `405 Method Not Allowed`
+- Added compatibility fallback for evidence search on deployments that only expose system-scoped evidence routes
+- Prevented `pretorin agent run --no-stream` from crashing when model output includes literal `[[PRETORIN_TODO]]` blocks
+
+### Changed
+- MCP and legacy agent evidence search tools now accept optional `system_id` context and use the same compatibility search path as the CLI
+
+## [0.6.1] - 2026-03-05
+
+### Fixed
+- Added required MCP registry ownership marker (`mcp-name: io.github.pretorin-ai/pretorin`) to PyPI README metadata so MCP registry publish validation succeeds
+
 ## [0.6.0] - 2026-03-05
 
 ### Added
@@ -173,6 +189,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CMMC Level 1, 2, and 3
 - Additional frameworks available on the platform
 
+[0.7.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.1...v0.7.0
+[0.6.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.6...v0.6.0
 [0.5.4]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.2...v0.5.3

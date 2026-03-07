@@ -376,6 +376,10 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
+                    "system_id": {
+                        "type": "string",
+                        "description": "Optional: search one system directly instead of org/global scope",
+                    },
                     "control_id": _control_id_property(optional=True),
                     "framework_id": {
                         "type": "string",
@@ -937,7 +941,8 @@ async def _handle_search_evidence(
 ) -> list[TextContent]:
     """Handle the search_evidence tool."""
     raw_control_id = arguments.get("control_id")
-    evidence = await client.list_evidence(
+    evidence = await client.search_evidence_with_fallback(
+        system_id=arguments.get("system_id"),
         control_id=normalize_control_id(raw_control_id) if raw_control_id else None,
         framework_id=arguments.get("framework_id"),
         limit=arguments.get("limit", 20),
@@ -945,6 +950,7 @@ async def _handle_search_evidence(
     return _format_json(
         {
             "total": len(evidence),
+            "system_id": arguments.get("system_id"),
             "evidence": [
                 {
                     "id": e.id,

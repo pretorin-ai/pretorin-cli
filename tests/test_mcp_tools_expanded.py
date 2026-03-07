@@ -168,12 +168,27 @@ class TestEvidenceTools:
                 evidence_type="configuration",
             ),
         ]
-        client = _make_mock_client(list_evidence=evidence)
+        client = _make_mock_client(search_evidence_with_fallback=evidence)
         result = _run_tool("pretorin_search_evidence", {"control_id": "ac-2"}, client)
         data = _parse_result(result)
         assert data["total"] == 1
         assert data["evidence"][0]["name"] == "RBAC Config"
-        client.list_evidence.assert_awaited_once_with(control_id="ac-02", framework_id=None, limit=20)
+        client.search_evidence_with_fallback.assert_awaited_once_with(
+            system_id=None,
+            control_id="ac-02",
+            framework_id=None,
+            limit=20,
+        )
+
+    def test_search_evidence_accepts_system_id(self) -> None:
+        client = _make_mock_client(search_evidence_with_fallback=[])
+        _run_tool("pretorin_search_evidence", {"system_id": "sys-1", "control_id": "ac-2"}, client)
+        client.search_evidence_with_fallback.assert_awaited_once_with(
+            system_id="sys-1",
+            control_id="ac-02",
+            framework_id=None,
+            limit=20,
+        )
 
     def test_create_evidence(self) -> None:
         client = _make_mock_client(

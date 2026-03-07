@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # =============================================================================
 # Framework Models
@@ -352,6 +352,14 @@ class ControlImplementationResponse(BaseModel):
     ai_confidence_score: float | None = None
     evidence_count: int = 0
     notes: list[dict[str, Any]] = Field(default_factory=list)
+
+    @field_validator("notes", mode="before")
+    @classmethod
+    def _coerce_null_notes(cls, value: Any) -> list[dict[str, Any]]:
+        """Treat null notes from older platform deployments as an empty list."""
+        if value is None:
+            return []
+        return value
 
     @property
     def narrative(self) -> str | None:

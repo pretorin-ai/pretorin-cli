@@ -7,8 +7,15 @@ from unittest.mock import AsyncMock
 import pytest
 
 from pretorin.agent.tools import create_platform_tools
-from pretorin.client.api import PretorianClient, PretorianClientError
-from pretorin.client.models import ComplianceArtifact, ComponentDefinition, EvidenceCreate, ImplementationStatement
+from pretorin.client.api import NotFoundError, PretorianClient, PretorianClientError
+from pretorin.client.models import (
+    ComplianceArtifact,
+    ComponentDefinition,
+    ControlImplementationResponse,
+    EvidenceCreate,
+    EvidenceItemResponse,
+    ImplementationStatement,
+)
 from pretorin.utils import normalize_control_id
 
 
@@ -94,12 +101,13 @@ async def test_agent_tool_update_control_status_normalizes_control_id() -> None:
 @pytest.mark.asyncio
 async def test_agent_tool_search_evidence_normalizes_control_id_filter() -> None:
     mock_client = AsyncMock()
-    mock_client.list_evidence = AsyncMock(return_value=[])
+    mock_client.search_evidence_with_fallback = AsyncMock(return_value=[])
 
     tools = {tool.name: tool for tool in create_platform_tools(mock_client)}
     await tools["search_evidence"].handler(control_id="ac-2", framework_id="fedramp-moderate", limit=10)
 
-    mock_client.list_evidence.assert_awaited_once_with(
+    mock_client.search_evidence_with_fallback.assert_awaited_once_with(
+        system_id=None,
         control_id="ac-02",
         framework_id="fedramp-moderate",
         limit=10,
@@ -250,3 +258,67 @@ async def test_agent_tool_get_control_implementation_requires_framework_id() -> 
         "AC.L1-3.1.1",
         "cmmc-l1",
     )
+
+
+@pytest.mark.asyncio
+async def test_client_list_control_notes_falls_back_to_implementation_on_405() -> None:
+    client = PretorianClient(api_key="test", api_base_url="https://api.example.com")
+    client._request = AsyncMock(side_effect=PretorianClientError("Method Not Allowed", status_code=405))  # type: ignore[method-assign]
+    client.get_control_implementation = AsyncMock(  # type: ignore[method-assign]
+        return_value=ControlImplementationResponse(
+            control_id="ac-02",
+            status="partial",
+            implementation_narrative="Narrative",
+            notes=[{"content": "Recovered note"}],
+        )
+    )
+
+    notes = await client.list_control_notes("sys-1", "ac-2", "fedramp-moderate")
+
+    assert notes == [{"content": "Recovered note"}]
+    client.get_control_implementation.assert_awaited_once_with("sys-1", "ac-02", "fedramp-moderate")
+
+
+@pytest.mark.asyncio
+async def test_client_search_evidence_falls_back_to_system_scoped_queries() -> None:
+    client = PretorianClient(api_key="test", api_base_url="https://api.example.com")
+    client.list_evidence = AsyncMock(  # type: ignore[method-assign]
+        side_effect=[
+            NotFoundError("Not Found", status_code=404),
+            [
+                EvidenceItemResponse(
+                    id="ev-1",
+                    name="RBAC Config",
+                    description="- Role mapping",
+                    evidence_type="configuration",
+                )
+            ],
+            [
+                EvidenceItemResponse(
+                    id="ev-1",
+                    name="RBAC Config",
+                    description="- Role mapping",
+                    evidence_type="configuration",
+                ),
+                EvidenceItemResponse(
+                    id="ev-2",
+                    name="Approval Export",
+                    description="- IAM approval workflow",
+                    evidence_type="report",
+                ),
+            ],
+        ]
+    )
+    client.list_systems = AsyncMock(  # type: ignore[method-assign]
+        return_value=[{"id": "sys-1"}, {"id": "sys-2"}]
+    )
+
+    evidence = await client.search_evidence_with_fallback(control_id="ac-2", framework_id="fedramp-moderate", limit=10)
+
+    assert [item.id for item in evidence] == ["ev-1", "ev-2"]
+    assert client.list_evidence.await_args_list[0].kwargs == {
+        "system_id": None,
+        "control_id": "ac-2",
+        "framework_id": "fedramp-moderate",
+        "limit": 10,
+    }

@@ -7,6 +7,7 @@ from pretorin.client.models import (
     ArtifactValidationResult,
     ComplianceArtifact,
     ComponentDefinition,
+    ControlImplementationResponse,
     Evidence,
     ImplementationStatement,
 )
@@ -224,6 +225,19 @@ class TestComplianceArtifactModel:
                 ),
                 confidence="invalid",
             )
+
+
+class TestControlImplementationModel:
+    """Tests for control implementation compatibility parsing."""
+
+    def test_control_implementation_coerces_null_notes_to_empty_list(self):
+        impl = ControlImplementationResponse(
+            control_id="ac-02",
+            status="partial",
+            implementation_narrative="Narrative",
+            notes=None,
+        )
+        assert impl.notes == []
 
     def test_artifact_model_dump(self):
         """Test artifact serialization to dict."""

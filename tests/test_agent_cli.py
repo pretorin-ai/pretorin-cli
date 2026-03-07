@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -131,6 +131,35 @@ class TestAgentRunCLI:
             mock_asyncio.run.side_effect = self._close_coroutine
             runner.invoke(agent_cli.app, ["run", "test task", "--legacy"])
             mock_asyncio.run.assert_called_once()
+
+
+class TestAgentRunRendering:
+    """Tests for output rendering safety."""
+
+    @pytest.mark.asyncio
+    async def test_run_codex_agent_prints_todo_blocks_without_markup(self) -> None:
+        result = MagicMock()
+        result.response = "[[/PRETORIN_TODO]]"
+        result.evidence_created = []
+
+        mock_agent = MagicMock()
+        mock_agent.model = "gpt-4o"
+        mock_agent.run = AsyncMock(return_value=result)
+
+        with (
+            patch("pretorin.agent.codex_agent.CodexAgent", return_value=mock_agent),
+            patch("pretorin.cli.agent.console.print") as mock_print,
+        ):
+            await agent_cli._run_codex_agent(
+                message="test",
+                skill=None,
+                model=None,
+                base_url=None,
+                working_dir=None,
+                stream=False,
+            )
+
+        mock_print.assert_called_with("[[/PRETORIN_TODO]]", markup=False)
 
 
 class TestHarnessDeprecation:

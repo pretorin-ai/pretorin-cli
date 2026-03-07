@@ -11,6 +11,7 @@ from pathlib import Path
 import typer
 from rich import print as rprint
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from pretorin.cli.output import is_json_mode, print_json
@@ -127,12 +128,12 @@ async def _run_codex_agent(
             if is_json_mode():
                 print_json({"response": result.response, "evidence_created": result.evidence_created})
             else:
-                rprint(result.response)
+                console.print(result.response, markup=False)
     except RuntimeError as e:
-        rprint(f"[red]Agent error: {e}[/red]")
+        rprint(f"[red]Agent error: {escape(str(e))}[/red]")
         raise typer.Exit(1)
     except Exception as e:
-        rprint(f"[red]Agent error: {e}[/red]")
+        rprint(f"[red]Agent error: {escape(str(e))}[/red]")
         raise typer.Exit(1)
 
 
