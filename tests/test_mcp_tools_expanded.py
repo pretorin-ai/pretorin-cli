@@ -38,8 +38,9 @@ class TestToolListing:
             "pretorin_search_evidence",
             "pretorin_create_evidence",
             "pretorin_link_evidence",
-            # Narrative 1
+            # Narrative 2
             "pretorin_get_narrative",
+            "pretorin_generate_control_artifacts",
             # Notes 2
             "pretorin_add_control_note",
             "pretorin_get_control_notes",
@@ -54,7 +55,7 @@ class TestToolListing:
             "pretorin_get_control_implementation",
         ]
 
-        assert len(tools) == 22
+        assert len(tools) == 23
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 
@@ -95,6 +96,7 @@ def _make_mock_client(**overrides: Any) -> AsyncMock:
     """Create a properly configured mock PretorianClient."""
     client = AsyncMock()
     client.is_configured = True
+    client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Test System"}])
     for attr, val in overrides.items():
         setattr(client, attr, AsyncMock(return_value=val))
     return client
@@ -146,6 +148,20 @@ class TestSystemTools:
         assert data["id"] == "sys-1"
         assert data["name"] == "Test System"
 
+    def test_get_system_resolves_system_name(self) -> None:
+        from pretorin.client.models import SystemDetail
+
+        system = SystemDetail(
+            id="sys-1",
+            name="Test System",
+            description="Desc",
+            frameworks=[{"id": "fedramp-moderate"}],
+            security_impact_level="moderate",
+        )
+        client = _make_mock_client(get_system=system)
+        _run_tool("pretorin_get_system", {"system_id": "test"}, client)
+        client.get_system.assert_awaited_once_with("sys-1")
+
     def test_get_compliance_status(self) -> None:
         status_data = {"system_id": "sys-1", "frameworks": [{"id": "fedramp-moderate", "progress": 75}]}
         client = _make_mock_client(get_system_compliance_status=status_data)
@@ -183,6 +199,16 @@ class TestEvidenceTools:
     def test_search_evidence_accepts_system_id(self) -> None:
         client = _make_mock_client(search_evidence_with_fallback=[])
         _run_tool("pretorin_search_evidence", {"system_id": "sys-1", "control_id": "ac-2"}, client)
+        client.search_evidence_with_fallback.assert_awaited_once_with(
+            system_id="sys-1",
+            control_id="ac-02",
+            framework_id=None,
+            limit=20,
+        )
+
+    def test_search_evidence_resolves_system_name(self) -> None:
+        client = _make_mock_client(search_evidence_with_fallback=[])
+        _run_tool("pretorin_search_evidence", {"system_id": "test", "control_id": "ac-2"}, client)
         client.search_evidence_with_fallback.assert_awaited_once_with(
             system_id="sys-1",
             control_id="ac-02",
@@ -303,6 +329,67 @@ class TestNarrativeTools:
         result = _run_tool("pretorin_get_narrative", {"system_id": "sys-1", "control_id": "ac-2"}, client)
         assert result.isError is True
         assert any("Missing required" in c.text for c in result.content)
+
+    def test_get_narrative_resolves_system_name(self) -> None:
+        from pretorin.client.models import NarrativeResponse
+
+        narrative = NarrativeResponse(
+            control_id="ac-2",
+            framework_id="fedramp-moderate",
+            narrative="Existing narrative",
+            ai_confidence_score=0.9,
+            status="approved",
+        )
+        client = _make_mock_client(get_narrative=narrative)
+        _run_tool(
+            "pretorin_get_narrative",
+            {
+                "system_id": "test",
+                "control_id": "ac-2",
+                "framework_id": "fedramp-moderate",
+            },
+            client,
+        )
+        client.get_narrative.assert_awaited_once_with(
+            system_id="sys-1",
+            control_id="ac-02",
+            framework_id="fedramp-moderate",
+        )
+
+    def test_generate_control_artifacts(self) -> None:
+        client = _make_mock_client()
+        with patch(
+            "pretorin.mcp.server.draft_control_artifacts",
+            new=AsyncMock(
+                return_value={
+                    "system_id": "sys-1",
+                    "system_name": "Test System",
+                    "framework_id": "fedramp-moderate",
+                    "control_id": "ac-02",
+                    "parse_status": "json",
+                    "narrative_draft": "- Draft narrative",
+                    "evidence_gap_assessment": "| Gap | Detail |",
+                    "recommended_notes": ["Gap: Missing review"],
+                    "evidence_recommendations": [{"name": "IAM Export", "evidence_type": "configuration"}],
+                    "raw_response": "{}",
+                }
+            ),
+        ) as mock_generate:
+            result = _run_tool(
+                "pretorin_generate_control_artifacts",
+                {
+                    "system_id": "test",
+                    "control_id": "ac-2",
+                    "framework_id": "fedramp-moderate",
+                },
+                client,
+            )
+
+        data = _parse_result(result)
+        assert data["control_id"] == "ac-02"
+        assert data["parse_status"] == "json"
+        assert data["narrative_draft"] == "- Draft narrative"
+        mock_generate.assert_awaited_once()
 
     def test_get_control_notes(self) -> None:
         client = _make_mock_client(
@@ -439,7 +526,7 @@ class TestErrorHandling:
         assert result.isError is True
         text = result.content[0].text
         assert "Error" in text
-        assert "Not found" in text
+        assert "System not found: bad-id" in text
 
     def test_api_error_returns_error(self) -> None:
         client = _make_mock_client()

@@ -5,6 +5,16 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-03-07
+
+### Added
+- MCP `pretorin_generate_control_artifacts` for read-only AI drafting of control narratives and evidence-gap assessments using the same Codex workflow as the CLI
+- Shared AI drafting workflow helper for structured MCP/CLI parity around generated compliance artifacts
+
+### Changed
+- MCP system-scoped tools now resolve friendly system names the same way the CLI does, returning canonical system IDs in responses
+- Codex Desktop MCP configuration can be pinned to the UV-managed Pretorin wrapper to avoid PATH drift to incompatible installs
+
 ## [0.7.0] - 2026-03-07
 
 ### Fixed
@@ -189,6 +199,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CMMC Level 1, 2, and 3
 - Additional frameworks available on the platform
 
+[0.8.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.6...v0.6.0

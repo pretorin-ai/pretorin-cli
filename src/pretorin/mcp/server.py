@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -28,7 +29,8 @@ from pretorin.mcp.analysis_prompts import (
     get_framework_guide,
 )
 from pretorin.utils import normalize_control_id
-from pretorin.workflows.compliance_updates import upsert_evidence
+from pretorin.workflows.ai_generation import draft_control_artifacts
+from pretorin.workflows.compliance_updates import resolve_system, upsert_evidence
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +101,15 @@ def _control_id_property(*, optional: bool = False) -> dict[str, Any]:
     }
 
 
+def _system_id_property(*, optional: bool = False) -> dict[str, Any]:
+    """Return a shared JSON schema field for system_id parameters."""
+    description = "The system ID or name" if not optional else "Optional: The system ID or name"
+    return {
+        "type": "string",
+        "description": description,
+    }
+
+
 def _require(arguments: dict[str, Any], *keys: str) -> str | None:
     """Validate that all keys are present and non-empty.
 
@@ -118,6 +129,22 @@ def _validate_enum(value: str, valid: set[str], field_name: str) -> str | None:
     if value not in valid:
         return f"Invalid {field_name}: {value!r}. Must be one of: {', '.join(sorted(valid))}"
     return None
+
+
+async def _resolve_system_id(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+    *,
+    required: bool = True,
+) -> str | None:
+    """Resolve MCP system_id arguments using the same name/ID rules as the CLI."""
+    raw_system = arguments.get("system_id")
+    if not raw_system:
+        if required:
+            raise PretorianClientError("system_id is required")
+        return None
+    system_id, _ = await resolve_system(client, str(raw_system))
+    return system_id
 
 
 # =============================================================================
@@ -347,10 +374,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
+                    "system_id": _system_id_property(),
                 },
                 "required": ["system_id"],
             },
@@ -361,10 +385,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
+                    "system_id": _system_id_property(),
                 },
                 "required": ["system_id"],
             },
@@ -376,10 +397,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "Optional: search one system directly instead of org/global scope",
-                    },
+                    "system_id": _system_id_property(optional=True),
                     "control_id": _control_id_property(optional=True),
                     "framework_id": {
                         "type": "string",
@@ -403,10 +421,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
+                    "system_id": _system_id_property(),
                     "name": {
                         "type": "string",
                         "description": "Evidence name",
@@ -444,10 +459,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
+                    "system_id": _system_id_property(),
                     "evidence_id": {
                         "type": "string",
                         "description": "The evidence item ID",
@@ -468,14 +480,38 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
+                    "system_id": _system_id_property(),
                     "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
                         "description": "The framework ID (required for narrative lookup)",
+                    },
+                },
+                "required": ["system_id", "control_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_generate_control_artifacts",
+            description=(
+                "Generate read-only AI drafts for a control narrative and evidence-gap assessment "
+                "using the same Codex agent workflow as the CLI"
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": _system_id_property(),
+                    "control_id": _control_id_property(),
+                    "framework_id": {
+                        "type": "string",
+                        "description": "The framework ID",
+                    },
+                    "working_directory": {
+                        "type": "string",
+                        "description": "Optional: local workspace path for code-aware drafting",
+                    },
+                    "model": {
+                        "type": "string",
+                        "description": "Optional: model override for the Codex agent",
                     },
                 },
                 "required": ["system_id", "control_id", "framework_id"],
@@ -488,10 +524,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
+                    "system_id": _system_id_property(),
                     "title": {
                         "type": "string",
                         "description": "Event title",
@@ -527,10 +560,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
+                    "system_id": _system_id_property(),
                     "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
@@ -546,10 +576,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
+                    "system_id": _system_id_property(),
                 },
                 "required": ["system_id"],
             },
@@ -560,10 +587,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
+                    "system_id": _system_id_property(),
                     "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
@@ -594,10 +618,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
+                    "system_id": _system_id_property(),
                     "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
@@ -637,10 +658,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
+                    "system_id": _system_id_property(),
                     "control_id": _control_id_property(),
                     "status": {
                         "type": "string",
@@ -663,10 +681,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
+                    "system_id": _system_id_property(),
                     "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
@@ -912,7 +927,8 @@ async def _handle_get_system(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_system tool."""
-    system_id = arguments.get("system_id", "")
+    system_id = await _resolve_system_id(client, arguments)
+    assert system_id is not None
     system = await client.get_system(system_id)
     return _format_json(
         {
@@ -930,7 +946,8 @@ async def _handle_get_compliance_status(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_compliance_status tool."""
-    system_id = arguments.get("system_id", "")
+    system_id = await _resolve_system_id(client, arguments)
+    assert system_id is not None
     status = await client.get_system_compliance_status(system_id)
     return _format_json(status)
 
@@ -941,8 +958,9 @@ async def _handle_search_evidence(
 ) -> list[TextContent]:
     """Handle the search_evidence tool."""
     raw_control_id = arguments.get("control_id")
+    system_id = await _resolve_system_id(client, arguments, required=False)
     evidence = await client.search_evidence_with_fallback(
-        system_id=arguments.get("system_id"),
+        system_id=system_id,
         control_id=normalize_control_id(raw_control_id) if raw_control_id else None,
         framework_id=arguments.get("framework_id"),
         limit=arguments.get("limit", 20),
@@ -950,7 +968,7 @@ async def _handle_search_evidence(
     return _format_json(
         {
             "total": len(evidence),
-            "system_id": arguments.get("system_id"),
+            "system_id": system_id,
             "evidence": [
                 {
                     "id": e.id,
@@ -982,10 +1000,12 @@ async def _handle_create_evidence(
 
     dedupe = arguments.get("dedupe", True)
     raw_control_id = arguments.get("control_id")
+    system_id = await _resolve_system_id(client, arguments)
+    assert system_id is not None
     try:
         result = await upsert_evidence(
             client,
-            system_id=arguments["system_id"],
+            system_id=system_id,
             name=arguments.get("name", ""),
             description=arguments.get("description", ""),
             evidence_type=evidence_type,
@@ -1013,7 +1033,7 @@ async def _handle_link_evidence(
     result = await client.link_evidence_to_control(
         evidence_id=arguments["evidence_id"],
         control_id=normalize_control_id(arguments["control_id"]),
-        system_id=arguments["system_id"],
+        system_id=await _resolve_system_id(client, arguments) or "",
         framework_id=arguments.get("framework_id"),
     )
     return _format_json(result)
@@ -1028,8 +1048,10 @@ async def _handle_get_narrative(
     if err:
         return _format_error(err)
 
+    system_id = await _resolve_system_id(client, arguments)
+    assert system_id is not None
     narrative = await client.get_narrative(
-        system_id=arguments["system_id"],
+        system_id=system_id,
         control_id=normalize_control_id(arguments["control_id"]),
         framework_id=arguments["framework_id"],
     )
@@ -1037,11 +1059,32 @@ async def _handle_get_narrative(
         {
             "control_id": narrative.control_id,
             "framework_id": narrative.framework_id,
+            "system_id": system_id,
             "narrative": narrative.narrative,
             "ai_confidence_score": narrative.ai_confidence_score,
             "status": narrative.status,
         }
     )
+
+
+async def _handle_generate_control_artifacts(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Handle read-only AI drafting for control narratives and evidence gaps."""
+    err = _require(arguments, "system_id", "control_id", "framework_id")
+    if err:
+        return _format_error(err)
+
+    result = await draft_control_artifacts(
+        client,
+        system=arguments["system_id"],
+        framework_id=arguments["framework_id"],
+        control_id=arguments["control_id"],
+        working_directory=Path(arguments["working_directory"]) if arguments.get("working_directory") else None,
+        model=arguments.get("model"),
+    )
+    return _format_json(result)
 
 
 async def _handle_push_monitoring_event(
@@ -1065,6 +1108,8 @@ async def _handle_push_monitoring_event(
         return _format_error(enum_err)
 
     raw_control_id = arguments.get("control_id")
+    system_id = await _resolve_system_id(client, arguments)
+    assert system_id is not None
     event = MonitoringEventCreate(
         event_type=event_type,
         title=arguments["title"],
@@ -1074,7 +1119,7 @@ async def _handle_push_monitoring_event(
         event_data={"source": "cli"},
     )
     result = await client.create_monitoring_event(
-        system_id=arguments["system_id"],
+        system_id=system_id,
         event=event,
     )
     return _format_json(result)
@@ -1085,8 +1130,10 @@ async def _handle_get_control_context(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_control_context tool."""
+    system_id = await _resolve_system_id(client, arguments)
+    assert system_id is not None
     ctx = await client.get_control_context(
-        system_id=arguments.get("system_id", ""),
+        system_id=system_id,
         control_id=normalize_control_id(arguments.get("control_id", "")),
         framework_id=arguments.get("framework_id", ""),
     )
@@ -1098,8 +1145,10 @@ async def _handle_get_scope(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_scope tool."""
+    system_id = await _resolve_system_id(client, arguments)
+    assert system_id is not None
     scope = await client.get_scope(
-        system_id=arguments.get("system_id", ""),
+        system_id=system_id,
     )
     return _format_json(scope.model_dump())
 
@@ -1113,8 +1162,10 @@ async def _handle_add_control_note(
     if err:
         return _format_error(err)
 
+    system_id = await _resolve_system_id(client, arguments)
+    assert system_id is not None
     result = await client.add_control_note(
-        system_id=arguments["system_id"],
+        system_id=system_id,
         control_id=normalize_control_id(arguments["control_id"]),
         content=arguments["content"],
         framework_id=arguments["framework_id"],
@@ -1129,14 +1180,17 @@ async def _handle_get_control_notes(
 ) -> list[TextContent]:
     """Handle the get_control_notes tool."""
     normalized_control_id = normalize_control_id(arguments.get("control_id", ""))
+    system_id = await _resolve_system_id(client, arguments)
+    assert system_id is not None
     notes = await client.list_control_notes(
-        system_id=arguments.get("system_id", ""),
+        system_id=system_id,
         control_id=normalized_control_id,
         framework_id=arguments.get("framework_id"),
     )
     return _format_json(
         {
             "control_id": normalized_control_id,
+            "system_id": system_id,
             "framework_id": arguments.get("framework_id"),
             "total": len(notes),
             "notes": notes,
@@ -1153,9 +1207,11 @@ async def _handle_update_narrative(
     if err:
         return _format_error(err)
 
+    system_id = await _resolve_system_id(client, arguments)
+    assert system_id is not None
     try:
         result = await client.update_narrative(
-            system_id=arguments["system_id"],
+            system_id=system_id,
             control_id=normalize_control_id(arguments["control_id"]),
             framework_id=arguments["framework_id"],
             narrative=arguments["narrative"],
@@ -1179,8 +1235,10 @@ async def _handle_update_control_status(
     if enum_err:
         return _format_error(enum_err)
 
+    system_id = await _resolve_system_id(client, arguments)
+    assert system_id is not None
     result = await client.update_control_status(
-        system_id=arguments["system_id"],
+        system_id=system_id,
         control_id=normalize_control_id(arguments["control_id"]),
         status=arguments["status"],
         framework_id=arguments.get("framework_id"),
@@ -1197,14 +1255,17 @@ async def _handle_get_control_implementation(
     if err:
         return _format_error(err)
 
+    system_id = await _resolve_system_id(client, arguments)
+    assert system_id is not None
     impl = await client.get_control_implementation(
-        system_id=arguments["system_id"],
+        system_id=system_id,
         control_id=normalize_control_id(arguments["control_id"]),
         framework_id=arguments["framework_id"],
     )
     return _format_json(
         {
             "control_id": impl.control_id,
+            "system_id": system_id,
             "status": impl.status,
             "narrative": impl.narrative,
             "evidence_count": impl.evidence_count,
@@ -1229,6 +1290,7 @@ _TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pretorin_create_evidence": _handle_create_evidence,
     "pretorin_link_evidence": _handle_link_evidence,
     "pretorin_get_narrative": _handle_get_narrative,
+    "pretorin_generate_control_artifacts": _handle_generate_control_artifacts,
     "pretorin_push_monitoring_event": _handle_push_monitoring_event,
     "pretorin_add_control_note": _handle_add_control_note,
     "pretorin_get_control_notes": _handle_get_control_notes,
