@@ -276,7 +276,7 @@ async def _run_review(
         if not is_json_mode():
             rprint(
                 "  [dim]For full AI-powered security review, run:[/dim]\n"
-                f"  [bold]pretorin agent run --skill security-review --control {control_id}[/bold]\n"
+                f'  [bold]pretorin agent run "Review control coverage for {control_id.upper()} in this codebase" --skill security-review[/bold]\n'
                 "  [dim]Or use MCP tools in your editor for inline analysis.[/dim]\n"
             )
 

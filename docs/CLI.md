@@ -7,6 +7,12 @@ Comprehensive guide to the Pretorin CLI. For MCP server documentation, see [MCP.
 ### Install
 
 ```bash
+uv tool install pretorin
+```
+
+Alternative installs:
+
+```bash
 pip install pretorin
 ```
 
@@ -344,7 +350,7 @@ The `evidence` command group manages local evidence files and syncs them to the 
 ### Create Local Evidence
 
 ```bash
-pretorin evidence create --control-id ac-02 --framework-id fedramp-moderate \
+pretorin evidence create ac-02 fedramp-moderate \
   --name "RBAC Configuration" --description "Role-based access control in Azure AD"
 ```
 
@@ -450,10 +456,10 @@ If you already use another AI agent, use the MCP mode instead (`pretorin mcp-ser
 pretorin agent run "Assess AC-02 implementation gaps for my system"
 
 # Use a predefined skill
-pretorin agent run --skill gap-analysis
+pretorin agent run "Analyze my system compliance gaps" --skill gap-analysis
 pretorin agent run --skill narrative-generation "Generate narratives for all AC controls"
-pretorin agent run --skill evidence-collection
-pretorin agent run --skill security-review
+pretorin agent run "Collect evidence for AC-02 in this repo" --skill evidence-collection
+pretorin agent run "Review this codebase for AC-02 coverage" --skill security-review
 ```
 
 ### Available Skills
@@ -520,7 +526,7 @@ pretorin review run --control-id ac-02 --path ./src
 pretorin review run --control-id ac-02 --framework-id nist-800-53-r5 --path ./src
 ```
 
-If a system context is set, narratives and evidence are pushed to the platform. Otherwise, they're saved locally to `narratives/` and `evidence/` directories.
+`pretorin review run` does not push narratives or evidence. In normal mode it fetches control requirements and current implementation details for comparison. In `--local` mode it writes a markdown review artifact under `.pretorin/reviews/` or the path you pass with `--output-dir`.
 
 ### Check Implementation Status
 
@@ -580,7 +586,7 @@ $ pretorin config path
 
 ```bash
 $ pretorin version
-pretorin version 0.1.0
+pretorin version 0.8.0
 ```
 
 ### Update
@@ -656,6 +662,9 @@ Different frameworks use different ID conventions. Always use `pretorin framewor
 | `pretorin frameworks controls <id>` | List controls (`--family`, `--limit`) |
 | `pretorin frameworks control <fw> <ctrl>` | Get control details (`--references`) |
 | `pretorin frameworks documents <id>` | Get document requirements |
+| `pretorin frameworks family <fw> <family>` | Get control family details |
+| `pretorin frameworks metadata <id>` | Get per-control framework metadata |
+| `pretorin frameworks submit-artifact <file>` | Submit a compliance artifact JSON file |
 | `pretorin context list` | List systems and frameworks with progress |
 | `pretorin context set` | Set active system/framework context |
 | `pretorin context show` | Display current active context |
@@ -674,6 +683,7 @@ Different frameworks use different ID conventions. Always use `pretorin framewor
 | `pretorin agent run --skill <name>` | Run a predefined agent skill |
 | `pretorin agent doctor` | Validate Codex runtime setup |
 | `pretorin agent install` | Download the pinned Codex binary |
+| `pretorin agent version` | Show pinned Codex version and install status |
 | `pretorin agent skills` | List available agent skills |
 | `pretorin agent mcp-list` | List configured MCP servers |
 | `pretorin agent mcp-add` | Add an MCP server configuration |
@@ -684,6 +694,6 @@ Different frameworks use different ID conventions. Always use `pretorin framewor
 | `pretorin config get <key>` | Get a config value |
 | `pretorin config set <key> <value>` | Set a config value |
 | `pretorin config path` | Show config file path |
-| `pretorin harness init` | Initialize harness config |
-| `pretorin harness doctor` | Validate harness setup |
-| `pretorin harness run "<task>"` | Run task through harness backend |
+| `pretorin harness init` | Deprecated: initialize harness config |
+| `pretorin harness doctor` | Deprecated: validate harness setup |
+| `pretorin harness run "<task>"` | Deprecated: run task through harness backend |

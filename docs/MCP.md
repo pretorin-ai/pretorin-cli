@@ -1,6 +1,6 @@
 # Model Context Protocol (MCP) Integration
 
-The Pretorin CLI includes a built-in MCP server that enables AI assistants like Claude to access compliance framework data directly during conversations.
+The Pretorin CLI includes a built-in MCP server that enables AI assistants like Claude, Codex, Cursor, and Windsurf to access compliance framework data directly during conversations.
 
 ## Why MCP?
 
@@ -16,7 +16,14 @@ The Model Context Protocol allows AI assistants to:
 ### 1. Install Pretorin CLI
 
 ```bash
+uv tool install pretorin
+```
+
+Alternative installs:
+
+```bash
 pip install pretorin
+pipx install pretorin
 ```
 
 ### 2. Authenticate
@@ -113,6 +120,8 @@ command = "pretorin"
 args = ["mcp-serve"]
 ```
 
+If you installed Pretorin with `uv tool install` or `pipx`, prefer pinning the absolute path from `command -v pretorin` to avoid PATH drift between shells and GUI apps.
+
 </details>
 
 <details>
@@ -141,8 +150,8 @@ Restart the application to load the new MCP server.
 
 ## Available Tools
 
-The MCP server provides 22 tools for accessing and managing compliance data.
-Core workflow tools for narrative/evidence/note parity are:
+The MCP server provides 23 tools for accessing and managing compliance data.
+The current tool surface is:
 
 | Tool | Description |
 |------|-------------|
@@ -153,14 +162,24 @@ Core workflow tools for narrative/evidence/note parity are:
 | `pretorin_get_control` | Get detailed control information including parameters |
 | `pretorin_get_control_references` | Get control guidance, objectives, and related controls |
 | `pretorin_get_document_requirements` | Get document requirements for a framework |
+| `pretorin_list_systems` | List systems in the current organization |
+| `pretorin_get_system` | Get system metadata, attached frameworks, and impact level |
+| `pretorin_get_compliance_status` | Get implementation progress for a system |
 | `pretorin_get_control_context` | Get rich control context: AI guidance, statement, objectives, and implementation details |
+| `pretorin_get_scope` | Get scope narrative, exclusions, and scope Q&A |
+| `pretorin_get_narrative` | Get the current narrative for a control |
+| `pretorin_get_control_implementation` | Get implementation status, narrative, evidence count, and notes |
+| `pretorin_get_control_notes` | Read notes for a control implementation |
 | `pretorin_search_evidence` | Search current evidence items |
 | `pretorin_create_evidence` | Upsert evidence (find-or-create by default) |
 | `pretorin_link_evidence` | Link an existing evidence item to a control |
-| `pretorin_get_scope` | Get system scope/policy information including excluded controls |
-| `pretorin_get_control_notes` | Read notes for a control implementation |
-| `pretorin_add_control_note` | Add a control note with manual follow-up guidance |
 | `pretorin_update_narrative` | Push a narrative text update for a control implementation |
+| `pretorin_add_control_note` | Add a control note with manual follow-up guidance |
+| `pretorin_update_control_status` | Update a control implementation status |
+| `pretorin_push_monitoring_event` | Create a monitoring event for a system |
+| `pretorin_generate_control_artifacts` | Generate read-only AI narrative and evidence-gap drafts |
+
+`pretorin_generate_control_artifacts` is read-only. Use `pretorin_update_narrative`, `pretorin_create_evidence`, and `pretorin_add_control_note` to persist approved changes.
 
 ### Tool Reference
 
@@ -257,6 +276,44 @@ Get document requirements for a framework.
 
 ---
 
+#### pretorin_list_systems
+
+List systems in the current organization.
+
+**Parameters:** None
+
+**Returns:** System IDs, names, and summary metadata.
+
+**Example prompt:** "List my systems"
+
+---
+
+#### pretorin_get_system
+
+Get metadata about a specific system.
+
+**Parameters:**
+- `system_id` (required): The system ID or name
+
+**Returns:** System metadata including security impact level and attached frameworks.
+
+**Example prompt:** "Show me the details for my production system"
+
+---
+
+#### pretorin_get_compliance_status
+
+Get framework progress and implementation posture for a system.
+
+**Parameters:**
+- `system_id` (required): The system ID or name
+
+**Returns:** Framework status summaries and progress metrics.
+
+**Example prompt:** "How far along is my FedRAMP Moderate system?"
+
+---
+
 #### pretorin_get_control_context
 
 Get rich context for a control including AI guidance, control statement, assessment objectives, scope status, and current implementation details.
@@ -272,6 +329,21 @@ Get rich context for a control including AI guidance, control statement, assessm
 
 ---
 
+#### pretorin_get_narrative
+
+Get the current narrative record for a control.
+
+**Parameters:**
+- `system_id` (required): The system ID
+- `control_id` (required): The control ID
+- `framework_id` (required): The framework ID
+
+**Returns:** Narrative text, status, and AI confidence metadata when present.
+
+**Example prompt:** "Show me the current narrative for AC-02 in my system"
+
+---
+
 #### pretorin_get_scope
 
 Get system scope and policy information including excluded controls and Q&A responses.
@@ -282,6 +354,21 @@ Get system scope and policy information including excluded controls and Q&A resp
 **Returns:** Scope narrative, list of excluded controls, Q&A responses, and scope status.
 
 **Example prompt:** "Which controls are excluded from scope for my system?"
+
+---
+
+#### pretorin_get_control_implementation
+
+Get implementation details for a control in a system.
+
+**Parameters:**
+- `system_id` (required): The system ID
+- `control_id` (required): The control ID
+- `framework_id` (required): The framework ID
+
+**Returns:** Current status, narrative, evidence count, and implementation notes metadata.
+
+**Example prompt:** "Show me implementation details for AC-02 in my system"
 
 ---
 
@@ -334,6 +421,22 @@ Validation rules:
 
 ---
 
+#### pretorin_link_evidence
+
+Link an existing evidence item to a control.
+
+**Parameters:**
+- `system_id` (required): The system ID
+- `evidence_id` (required): The evidence item ID
+- `control_id` (required): The control ID
+- `framework_id` (optional): Framework context for the link
+
+**Returns:** Link confirmation for the requested control association.
+
+**Example prompt:** "Link evidence item ev_123 to AC-02"
+
+---
+
 #### pretorin_get_control_notes
 
 Get notes for a control implementation in a system.
@@ -344,6 +447,73 @@ Get notes for a control implementation in a system.
 - `framework_id` (optional): Framework context
 
 **Returns:** Note list with `total` count.
+
+---
+
+#### pretorin_add_control_note
+
+Add a note for unresolved gaps or manual follow-up actions.
+
+**Parameters:**
+- `system_id` (required): The system ID
+- `control_id` (required): The control ID
+- `framework_id` (required): The framework ID
+- `content` (required): Note body
+
+**Returns:** The created note record.
+
+**Example prompt:** "Add a note that SSO evidence must be collected manually"
+
+---
+
+#### pretorin_update_control_status
+
+Update the implementation status for a control.
+
+**Parameters:**
+- `system_id` (required): The system ID
+- `control_id` (required): The control ID
+- `status` (required): New status value
+- `framework_id` (optional): Framework context
+
+**Returns:** Status update confirmation.
+
+**Example prompt:** "Mark AC-02 as in_progress for my system"
+
+---
+
+#### pretorin_push_monitoring_event
+
+Create a monitoring event for a system.
+
+**Parameters:**
+- `system_id` (required): The system ID
+- `title` (required): Event title
+- `severity` (optional): Severity (`critical`, `high`, `medium`, `low`, `info`)
+- `event_type` (optional): Event type (`security_scan`, `configuration_change`, `access_review`, `compliance_check`)
+- `control_id` (optional): Associated control ID
+- `description` (optional): Detailed event description
+
+**Returns:** The created monitoring event.
+
+**Example prompt:** "Record a quarterly access review event for my production system"
+
+---
+
+#### pretorin_generate_control_artifacts
+
+Generate read-only AI drafts for a control narrative and evidence-gap assessment.
+
+**Parameters:**
+- `system_id` (required): The system ID
+- `control_id` (required): The control ID
+- `framework_id` (required): The framework ID
+- `working_directory` (optional): Local workspace path for code-aware drafting
+- `model` (optional): Model override
+
+**Returns:** Draft narrative text plus evidence-gap analysis without writing anything to the platform.
+
+**Example prompt:** "Draft narrative and evidence gaps for AC-02 using this repo as context"
 
 ## Resources
 
@@ -412,9 +582,9 @@ pretorin whoami  # Verify authentication
    }
    ```
 
-3. For pipx installations, find the path:
+3. For `uv tool` or `pipx` installations, find the path:
    ```bash
-   pipx list --include-injected
+   command -v pretorin
    ```
 
 ### Server Crashes or Hangs

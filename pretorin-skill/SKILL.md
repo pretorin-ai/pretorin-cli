@@ -8,7 +8,7 @@ description: >
   are needed for certification. Trigger phrases include "list frameworks",
   "show controls", "what documents do I need", "compliance check",
   "control requirements", "gap analysis", and "audit my code".
-version: 0.3.0
+version: 0.8.0
 ---
 
 # Pretorin Compliance Skill
@@ -65,15 +65,26 @@ When unsure of an ID, discover it first with `pretorin_list_control_families` or
 ### Documentation
 - **`pretorin_get_document_requirements`** — Get required and implied documents for a framework. Pass `framework_id`. Returns explicit (required) and implicit (control-implied) documents with their control references.
 
+### Systems
+- **`pretorin_list_systems`** — List systems in the organization. Start here when the user has not identified a target system.
+- **`pretorin_get_system`** — Get system metadata including attached frameworks and security impact level. Pass `system_id`.
+- **`pretorin_get_compliance_status`** — Get framework progress and implementation posture for a system. Pass `system_id`.
+
 ### System & Implementation Context
 - **`pretorin_get_control_context`** — Get rich context for a control including AI guidance, statement, objectives, scope status, and current implementation details. Pass `system_id`, `control_id`, and `framework_id`. This is the most comprehensive view for understanding both what a control requires and how it's currently implemented.
 - **`pretorin_get_scope`** — Get system scope/policy information including excluded controls and Q&A responses. Pass `system_id`. Useful for understanding what's in/out of scope before generating narratives.
 - **`pretorin_get_control_implementation`** — Get implementation details including current narrative, evidence_count, and notes. Use this to read current state before writing updates.
+- **`pretorin_get_narrative`** — Get the current narrative record for a control. Pass `system_id`, `control_id`, and `framework_id`.
 - **`pretorin_get_control_notes`** — Get notes for a control implementation. Pass `system_id`, `control_id`, and optionally `framework_id`.
 - **`pretorin_update_narrative`** — Push a narrative text update for a control implementation. Pass `system_id`, `control_id`, `framework_id`, and `narrative`. Use this after generating a narrative to save it to the platform.
 - **`pretorin_create_evidence`** — Upsert evidence (find-or-create by default with `dedupe: true`) and return whether it was created or reused. Pass `system_id`, `name`, `description`, `evidence_type`, and control/framework context.
 - **`pretorin_link_evidence`** — Link an existing evidence item to a control (low-level helper).
 - **`pretorin_add_control_note`** — Add a note for unresolved gaps or manual follow-up actions.
+
+### Review, Monitoring, and Drafting
+- **`pretorin_generate_control_artifacts`** — Generate read-only AI drafts for a control narrative and evidence-gap assessment using the same Codex workflow as the CLI. Use this when the user wants a draft without writing to the platform yet.
+- **`pretorin_push_monitoring_event`** — Record a monitoring event for notable findings such as scans, access reviews, or configuration changes.
+- **`pretorin_update_control_status`** — Update a control implementation status when findings justify a state change.
 
 ## Narrative + Evidence + Notes Workflow
 
@@ -92,8 +103,26 @@ For any control update, follow this exact sequence:
    - Gap notes for unresolved/manual items
 5. Push updates:
    - `pretorin_update_narrative`
-   - `pretorin_create_evidence` (dedupe on by default)
+   - `pretorin_create_evidence` (dedupe on by default; pass `control_id` whenever possible so the evidence auto-links)
+   - `pretorin_link_evidence` for any additional controls that should reference the same evidence item
    - `pretorin_add_control_note`
+
+## Read-Only Draft Workflow
+
+When the user wants drafts before any platform writes:
+
+1. Resolve `system_id`, `control_id`, and `framework_id`
+2. Read current state first:
+   - `pretorin_get_control_context`
+   - `pretorin_get_narrative` or `pretorin_get_control_implementation`
+   - `pretorin_search_evidence`
+   - `pretorin_get_control_notes`
+3. Call `pretorin_generate_control_artifacts`
+4. Present the generated draft as read-only output and clearly separate:
+   - candidate narrative text
+   - evidence gaps
+   - manual follow-up actions
+5. Only call write tools (`pretorin_update_narrative`, `pretorin_create_evidence`, `pretorin_add_control_note`) if the user explicitly wants to persist changes
 
 ### No-Hallucination Requirements
 

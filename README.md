@@ -150,6 +150,7 @@ Credentials are stored at `~/.pretorin/config.json`.
 
 - CLI reference: [docs/CLI.md](docs/CLI.md)
 - MCP integration guide: [docs/MCP.md](docs/MCP.md)
+- Bundled skill guide: [pretorin-skill/SKILL.md](pretorin-skill/SKILL.md)
 - Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Development
