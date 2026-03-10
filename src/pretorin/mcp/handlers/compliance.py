@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -23,12 +24,20 @@ from pretorin.mcp.helpers import (
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.ai_generation import draft_control_artifacts
 
+logger = logging.getLogger(__name__)
+
+
+def _safe_args(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Return arguments with sensitive fields redacted."""
+    return {k: ("***" if k == "api_key" else v) for k, v in arguments.items()}
+
 
 async def handle_generate_control_artifacts(
     client: PretorianClient,
     arguments: dict[str, Any],
 ) -> list[TextContent] | CallToolResult:
     """Handle read-only AI drafting for control narratives and evidence gaps."""
+    logger.debug("handle_generate_control_artifacts called with %s", _safe_args(arguments))
     err = require(arguments, "system_id", "control_id", "framework_id")
     if err:
         return format_error(err)
@@ -49,6 +58,7 @@ async def handle_push_monitoring_event(
     arguments: dict[str, Any],
 ) -> list[TextContent] | CallToolResult:
     """Handle the push_monitoring_event tool."""
+    logger.debug("handle_push_monitoring_event called with %s", _safe_args(arguments))
     err = require(arguments, "title")
     if err:
         return format_error(err)
@@ -86,6 +96,7 @@ async def handle_get_control_context(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_control_context tool."""
+    logger.debug("handle_get_control_context called with %s", _safe_args(arguments))
     system_id, framework_id, normalized_control_id = await resolve_execution_scope(
         client,
         arguments,
@@ -104,6 +115,7 @@ async def handle_get_scope(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_scope tool."""
+    logger.debug("handle_get_scope called with %s", _safe_args(arguments))
     system_id = await resolve_system_id(client, arguments)
     if system_id is None:
         raise PretorianClientError("system_id is required")
@@ -118,6 +130,7 @@ async def handle_add_control_note(
     arguments: dict[str, Any],
 ) -> list[TextContent] | CallToolResult:
     """Handle the add_control_note tool."""
+    logger.debug("handle_add_control_note called with %s", _safe_args(arguments))
     err = require(arguments, "system_id", "control_id", "framework_id", "content")
     if err:
         return format_error(err)
@@ -140,6 +153,7 @@ async def handle_get_control_notes(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_control_notes tool."""
+    logger.debug("handle_get_control_notes called with %s", _safe_args(arguments))
     system_id, framework_id, normalized_control_id = await resolve_execution_scope(
         client,
         arguments,
@@ -166,6 +180,7 @@ async def handle_update_narrative(
     arguments: dict[str, Any],
 ) -> list[TextContent] | CallToolResult:
     """Handle the update_narrative tool."""
+    logger.debug("handle_update_narrative called with %s", _safe_args(arguments))
     err = require(arguments, "system_id", "control_id", "framework_id", "narrative")
     if err:
         return format_error(err)
@@ -191,6 +206,7 @@ async def handle_update_control_status(
     arguments: dict[str, Any],
 ) -> list[TextContent] | CallToolResult:
     """Handle the update_control_status tool."""
+    logger.debug("handle_update_control_status called with %s", _safe_args(arguments))
     err = require(arguments, "control_id", "status")
     if err:
         return format_error(err)
@@ -218,6 +234,7 @@ async def handle_get_control_implementation(
     arguments: dict[str, Any],
 ) -> list[TextContent] | CallToolResult:
     """Handle the get_control_implementation tool."""
+    logger.debug("handle_get_control_implementation called with %s", _safe_args(arguments))
     err = require(arguments, "system_id", "control_id", "framework_id")
     if err:
         return format_error(err)

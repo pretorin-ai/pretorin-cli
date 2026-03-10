@@ -57,24 +57,31 @@ async def list_tools() -> list[Tool]:
 @server.call_tool()
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
     """Handle tool calls."""
+    logger.info("Tool call: %s", name)
     try:
         async with PretorianClient() as client:
             if not client.is_configured:
+                logger.warning("Tool call %s failed: client not authenticated", name)
                 return format_error("Not authenticated. Please run 'pretorin login' in the terminal first.")
 
             handler = TOOL_HANDLERS.get(name)
             if handler:
                 return await handler(client, arguments)
             else:
+                logger.warning("Unknown tool requested: %s", name)
                 return format_error(f"Unknown tool: {name}")
 
     except AuthenticationError as e:
+        logger.warning("Authentication error during tool %s: %s", name, e.message)
         return format_error(f"Authentication failed: {e.message}")
     except NotFoundError as e:
+        logger.warning("Not found during tool %s: %s", name, e.message)
         return format_error(f"Not found: {e.message}")
     except PretorianClientError as e:
+        logger.error("Client error during tool %s: %s", name, e.message)
         return format_error(e.message)
     except Exception as e:
+        logger.error("Unexpected error during tool %s: %s", name, e, exc_info=True)
         return format_error(str(e))
 
 
@@ -90,6 +97,7 @@ async def _run_server() -> None:
 
 def run_server() -> None:
     """Entry point to run the MCP server."""
+    logger.info("Starting Pretorin MCP server")
     asyncio.run(_run_server())
 
 

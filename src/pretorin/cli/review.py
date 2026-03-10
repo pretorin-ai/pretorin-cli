@@ -60,6 +60,22 @@ CODE_EXTENSIONS = (
 )
 
 
+def _validate_path(path: Path, *, label: str = "path") -> Path:
+    """Resolve a path and ensure it stays within the current working directory.
+
+    Raises typer.BadParameter if the resolved path escapes the cwd.
+    """
+    cwd = Path.cwd().resolve()
+    resolved = path.resolve()
+    try:
+        resolved.relative_to(cwd)
+    except ValueError:
+        raise typer.BadParameter(
+            f"{label} must be within the working directory ({cwd}), got: {resolved}"
+        )
+    return resolved
+
+
 def _discover_files(path: Path) -> list[Path]:
     """Discover relevant code files at the given path."""
     files: list[Path] = []
@@ -69,12 +85,13 @@ def _discover_files(path: Path) -> list[Path]:
     for ext in CODE_EXTENSIONS:
         files.extend(path.glob(f"**/{ext}"))
 
-    # Deduplicate and sort
+    # Deduplicate and sort, filtering to cwd boundary
+    cwd = Path.cwd().resolve()
     seen: set[Path] = set()
     unique: list[Path] = []
     for f in sorted(files):
         resolved = f.resolve()
-        if resolved not in seen:
+        if resolved not in seen and resolved.is_relative_to(cwd):
             seen.add(resolved)
             unique.append(f)
     return unique
@@ -206,7 +223,7 @@ async def _run_review(
         guidance = getattr(control_refs, "guidance", None) or getattr(control_detail, "guidance", "N/A")
 
         # --- Discover local files ---
-        review_path = Path(path)
+        review_path = _validate_path(Path(path), label="--path")
         files = _discover_files(review_path)
 
         # --- Display control info ---
@@ -282,7 +299,8 @@ async def _run_review(
 
         # --- Local-only: save control context to file ---
         if local:
-            output_path = Path(output_dir) / resolved_framework_id / f"{control_id}.md"
+            validated_output_dir = _validate_path(Path(output_dir), label="--output-dir")
+            output_path = validated_output_dir / resolved_framework_id / f"{control_id}.md"
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             content = (

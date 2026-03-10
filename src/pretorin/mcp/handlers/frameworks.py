@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from mcp.types import TextContent
@@ -10,9 +11,17 @@ from pretorin.client import PretorianClient
 from pretorin.mcp.helpers import format_json
 from pretorin.utils import normalize_control_id
 
+logger = logging.getLogger(__name__)
+
+
+def _safe_args(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Return arguments with sensitive fields redacted."""
+    return {k: ("***" if k == "api_key" else v) for k, v in arguments.items()}
+
 
 async def handle_list_frameworks(client: PretorianClient, arguments: dict[str, Any]) -> list[TextContent]:
     """Handle the list_frameworks tool."""
+    logger.debug("handle_list_frameworks called with %s", _safe_args(arguments))
     result = await client.list_frameworks()
     return format_json(
         {
@@ -38,6 +47,7 @@ async def handle_get_framework(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_framework tool."""
+    logger.debug("handle_get_framework called with %s", _safe_args(arguments))
     framework_id = arguments.get("framework_id", "")
     framework = await client.get_framework(framework_id)
     return format_json(
@@ -61,6 +71,7 @@ async def handle_list_control_families(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the list_control_families tool."""
+    logger.debug("handle_list_control_families called with %s", _safe_args(arguments))
     framework_id = arguments.get("framework_id", "")
     families = await client.list_control_families(framework_id)
     return format_json(
@@ -86,6 +97,7 @@ async def handle_list_controls(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the list_controls tool."""
+    logger.debug("handle_list_controls called with %s", _safe_args(arguments))
     framework_id = arguments.get("framework_id", "")
     family_id = arguments.get("family_id")
     controls = await client.list_controls(framework_id, family_id)
@@ -111,6 +123,7 @@ async def handle_get_control(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_control tool."""
+    logger.debug("handle_get_control called with %s", _safe_args(arguments))
     framework_id = arguments.get("framework_id", "")
     control_id = normalize_control_id(arguments.get("control_id", ""))
     control = await client.get_control(framework_id, control_id)
@@ -133,6 +146,7 @@ async def handle_get_controls_batch(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_controls_batch tool."""
+    logger.debug("handle_get_controls_batch called with %s", _safe_args(arguments))
     framework_id = arguments.get("framework_id", "")
     control_ids = arguments.get("control_ids")
     normalized_control_ids = [normalize_control_id(control_id) for control_id in control_ids] if control_ids else None
@@ -145,6 +159,7 @@ async def handle_get_control_references(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_control_references tool."""
+    logger.debug("handle_get_control_references called with %s", _safe_args(arguments))
     framework_id = arguments.get("framework_id", "")
     control_id = normalize_control_id(arguments.get("control_id", ""))
     refs = await client.get_control_references(framework_id, control_id)
@@ -168,6 +183,7 @@ async def handle_get_document_requirements(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_document_requirements tool."""
+    logger.debug("handle_get_document_requirements called with %s", _safe_args(arguments))
     framework_id = arguments.get("framework_id", "")
     docs = await client.get_document_requirements(framework_id)
     return format_json(

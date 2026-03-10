@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from mcp.types import CallToolResult, TextContent
@@ -21,12 +22,20 @@ from pretorin.mcp.helpers import (
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.compliance_updates import upsert_evidence
 
+logger = logging.getLogger(__name__)
+
+
+def _safe_args(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Return arguments with sensitive fields redacted."""
+    return {k: ("***" if k == "api_key" else v) for k, v in arguments.items()}
+
 
 async def handle_search_evidence(
     client: PretorianClient,
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the search_evidence tool."""
+    logger.debug("handle_search_evidence called with %s", _safe_args(arguments))
     system_id, framework_id, normalized_control_id = await resolve_execution_scope(client, arguments)
     evidence = await client.list_evidence(
         system_id=system_id,
@@ -59,6 +68,7 @@ async def handle_create_evidence(
     arguments: dict[str, Any],
 ) -> list[TextContent] | CallToolResult:
     """Handle the create_evidence tool."""
+    logger.debug("handle_create_evidence called with %s", _safe_args(arguments))
     err = require(arguments, "name", "description")
     if err:
         return format_error(err)
@@ -94,6 +104,7 @@ async def handle_create_evidence_batch(
     arguments: dict[str, Any],
 ) -> list[TextContent] | CallToolResult:
     """Handle the create_evidence_batch tool."""
+    logger.debug("handle_create_evidence_batch called with %s", _safe_args(arguments))
     err = require(arguments, "items")
     if err:
         return format_error(err)
@@ -125,6 +136,7 @@ async def handle_link_evidence(
     arguments: dict[str, Any],
 ) -> list[TextContent] | CallToolResult:
     """Handle the link_evidence tool."""
+    logger.debug("handle_link_evidence called with %s", _safe_args(arguments))
     err = require(arguments, "evidence_id", "control_id")
     if err:
         return format_error(err)
@@ -148,6 +160,7 @@ async def handle_get_narrative(
     arguments: dict[str, Any],
 ) -> list[TextContent] | CallToolResult:
     """Handle the get_narrative tool."""
+    logger.debug("handle_get_narrative called with %s", _safe_args(arguments))
     err = require(arguments, "system_id", "control_id", "framework_id")
     if err:
         return format_error(err)

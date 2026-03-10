@@ -154,4 +154,10 @@ async def resolve_execution_scope(
         raise PretorianClientError("control_id is required")
     if normalized_control_id:
         await client.get_control(framework_id, normalized_control_id)
+    logger.debug(
+        "Resolved execution scope: system_id=%s, framework_id=%s, control_id=%s",
+        system_id,
+        framework_id,
+        normalized_control_id,
+    )
     return system_id, framework_id, normalized_control_id

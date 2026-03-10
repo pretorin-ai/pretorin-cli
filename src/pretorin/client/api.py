@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from typing import Any
 
 import httpx
@@ -34,6 +36,8 @@ from pretorin.client.models import (
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.markdown_quality import ensure_audit_markdown
 
+logger = logging.getLogger(__name__)
+
 
 class PretorianClientError(Exception):
     """Base exception for Pretorian client errors."""
@@ -62,6 +66,30 @@ class NotFoundError(PretorianClientError):
     pass
 
 
+class RateLimitError(PretorianClientError):
+    """Raised when the API returns HTTP 429 (Too Many Requests)."""
+
+    def __init__(
+        self,
+        message: str,
+        retry_after: float | None = None,
+        details: dict[str, Any] | None = None,
+    ):
+        super().__init__(message, status_code=429, details=details)
+        self.retry_after = retry_after
+
+
+# Transient HTTP status codes that are safe to retry.
+_RETRYABLE_STATUS_CODES = frozenset({429, 502, 503, 504})
+
+# Maximum number of retry attempts (including the initial request makes 4 total).
+_MAX_RETRIES = 3
+
+# Exponential-backoff base and multiplier: 1s, 2s, 4s …
+_BACKOFF_BASE = 1.0
+_BACKOFF_MULTIPLIER = 2.0
+
+
 class PretorianClient:
     """Async client for the Pretorin API."""
 
@@ -69,16 +97,19 @@ class PretorianClient:
         self,
         api_key: str | None = None,
         api_base_url: str | None = None,
+        timeout: float = 60.0,
     ) -> None:
         """Initialize the client.
 
         Args:
             api_key: API key for authentication. If not provided, will load from config.
             api_base_url: Base URL for the API. If not provided, will load from config.
+            timeout: HTTP request timeout in seconds. Defaults to 60.0.
         """
         config = Config()
         self._api_key = api_key or config.api_key
         self._api_base_url = (api_base_url or config.api_base_url).rstrip("/")
+        self._timeout = timeout
         self._client: httpx.AsyncClient | None = None
 
     @property
@@ -103,7 +134,7 @@ class PretorianClient:
             self._client = httpx.AsyncClient(
                 base_url=self._api_base_url,
                 headers=self._get_headers(),
-                timeout=60.0,
+                timeout=self._timeout,
             )
         return self._client
 
@@ -135,13 +166,29 @@ class PretorianClient:
             message = response.text or f"HTTP {response.status_code}"
             details = {}
 
+        if response.status_code in (401, 403):
+            logger.warning("Authentication failure: HTTP %d on %s", response.status_code, response.url.path)
         if response.status_code == 401:
             raise AuthenticationError(message, response.status_code, details)
         elif response.status_code == 403:
             raise AuthenticationError(f"Access denied: {message}", response.status_code, details)
         elif response.status_code == 404:
             raise NotFoundError(message, response.status_code, details)
+        elif response.status_code == 429:
+            retry_after_raw = response.headers.get("Retry-After")
+            retry_after: float | None = None
+            if retry_after_raw is not None:
+                try:
+                    retry_after = float(retry_after_raw)
+                except (ValueError, TypeError):
+                    retry_after = None
+            raise RateLimitError(
+                f"Rate limited: {message}",
+                retry_after=retry_after,
+                details=details,
+            )
         else:
+            logger.warning("API error: HTTP %d on %s — %s", response.status_code, response.url.path, message)
             raise PretorianClientError(message, response.status_code, details)
 
     async def _request(
@@ -150,7 +197,12 @@ class PretorianClient:
         path: str,
         **kwargs: Any,
     ) -> dict[str, Any] | list[Any]:
-        """Make an API request.
+        """Make an API request with automatic retry on transient failures.
+
+        Retries up to ``_MAX_RETRIES`` times on connection errors, timeouts,
+        and retryable HTTP status codes (429, 502, 503, 504).  For 429
+        responses the ``Retry-After`` header is respected when present.
+        Non-retryable 4xx errors are raised immediately.
 
         Args:
             method: HTTP method.
@@ -161,31 +213,103 @@ class PretorianClient:
             JSON response data.
 
         Raises:
-            PretorianClientError: If the request fails.
+            PretorianClientError: If the request fails after all retries.
+            RateLimitError: If rate-limited and retries are exhausted.
         """
-        client = await self._get_client()
-        try:
-            response = await client.request(method, path, **kwargs)
-        except httpx.ConnectError as exc:
-            raise PretorianClientError(
-                f"Could not connect to {self._api_base_url}{path} — is the API reachable? ({exc})",
-            ) from exc
-        except httpx.TimeoutException as exc:
-            raise PretorianClientError(
-                f"Request timed out connecting to {self._api_base_url}{path} ({exc})",
-            ) from exc
-        except httpx.HTTPError as exc:
-            raise PretorianClientError(
-                f"HTTP error contacting {self._api_base_url}{path}: {exc}",
-            ) from exc
+        last_exc: Exception | None = None
+        backoff = _BACKOFF_BASE
 
-        if not response.is_success:
-            self._handle_error(response)
+        for attempt in range(_MAX_RETRIES + 1):  # attempt 0 is the initial try
+            logger.debug("API request: %s %s (attempt %d/%d)", method, path, attempt + 1, _MAX_RETRIES + 1)
+            client = await self._get_client()
 
-        if response.status_code == 204:
-            return {}
+            try:
+                response = await client.request(method, path, **kwargs)
+            except httpx.ConnectError as exc:
+                last_exc = PretorianClientError(
+                    f"Could not connect to {self._api_base_url}{path} — is the API reachable? ({exc})",
+                )
+                last_exc.__cause__ = exc
+                if attempt < _MAX_RETRIES:
+                    logger.warning(
+                        "Connection failed: %s %s (attempt %d/%d), retrying in %.1fs",
+                        method, path, attempt + 1, _MAX_RETRIES + 1, backoff,
+                    )
+                    await asyncio.sleep(backoff)
+                    backoff *= _BACKOFF_MULTIPLIER
+                    continue
+                raise last_exc from exc
+            except httpx.TimeoutException as exc:
+                last_exc = PretorianClientError(
+                    f"Request timed out connecting to {self._api_base_url}{path} ({exc})",
+                )
+                last_exc.__cause__ = exc
+                if attempt < _MAX_RETRIES:
+                    logger.warning(
+                        "Request timeout: %s %s (attempt %d/%d), retrying in %.1fs",
+                        method, path, attempt + 1, _MAX_RETRIES + 1, backoff,
+                    )
+                    await asyncio.sleep(backoff)
+                    backoff *= _BACKOFF_MULTIPLIER
+                    continue
+                raise last_exc from exc
+            except httpx.HTTPError as exc:
+                last_exc = PretorianClientError(
+                    f"HTTP error contacting {self._api_base_url}{path}: {exc}",
+                )
+                last_exc.__cause__ = exc
+                logger.warning("HTTP error: %s %s — %s", method, path, exc)
+                raise last_exc from exc
 
-        return response.json()
+            # ---- Handle HTTP-level errors ----
+            if not response.is_success:
+                # Retryable server errors (502/503/504)
+                if response.status_code in _RETRYABLE_STATUS_CODES and response.status_code != 429:
+                    if attempt < _MAX_RETRIES:
+                        logger.warning(
+                            "Transient HTTP %d on %s %s (attempt %d/%d), retrying in %.1fs",
+                            response.status_code, method, path, attempt + 1, _MAX_RETRIES + 1, backoff,
+                        )
+                        await asyncio.sleep(backoff)
+                        backoff *= _BACKOFF_MULTIPLIER
+                        continue
+                    # Exhausted retries — fall through to _handle_error
+                    self._handle_error(response)
+
+                # Rate-limited (429) — respect Retry-After header
+                if response.status_code == 429:
+                    retry_after_hdr = response.headers.get("Retry-After")
+                    if retry_after_hdr is not None:
+                        try:
+                            wait_time = float(retry_after_hdr)
+                        except (ValueError, TypeError):
+                            wait_time = backoff
+                    else:
+                        wait_time = backoff
+
+                    if attempt < _MAX_RETRIES:
+                        logger.warning(
+                            "Rate limited (429) on %s %s (attempt %d/%d), retrying in %.1fs",
+                            method, path, attempt + 1, _MAX_RETRIES + 1, wait_time,
+                        )
+                        await asyncio.sleep(wait_time)
+                        backoff *= _BACKOFF_MULTIPLIER
+                        continue
+                    # Exhausted retries — raise RateLimitError via _handle_error
+                    self._handle_error(response)
+
+                # Non-retryable error (other 4xx, etc.) — raise immediately
+                self._handle_error(response)
+
+            # ---- Success ----
+            if response.status_code == 204:
+                return {}
+
+            return response.json()
+
+        # Should be unreachable, but satisfy the type checker.
+        assert last_exc is not None  # noqa: S101
+        raise last_exc
 
     @staticmethod
     def _normalize_control_id(control_id: str | None) -> str | None:
