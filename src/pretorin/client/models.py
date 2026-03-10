@@ -441,11 +441,17 @@ class ControlContext(BaseModel):
 class ScopeResponse(BaseModel):
     """System scope/policy information."""
 
-    system_id: str | None = None
-    scope_narrative: str | None = None
+    scope_status: str = "not_started"
+    scope_narrative: dict[str, Any] | None = None
+    scope_qa_responses: dict[str, Any] | None = None
     excluded_controls: list[str] = Field(default_factory=list)
-    qa_responses: list[dict[str, Any]] = Field(default_factory=list)
-    status: str | None = None
+    excluded_families: list[str] = Field(default_factory=list)
+    inherited_controls: list[str] = Field(default_factory=list)
+    scope_completed_at: str | None = None
+    scope_completed_by: str | None = None
+    scope_document_evidence_id: str | None = None
+    scope_review: dict[str, Any] | None = None
+    scope_reviewed_at: str | None = None
 
 
 class MonitoringEventCreate(BaseModel):

@@ -670,16 +670,21 @@ class PretorianClient:
         )
         return data
 
-    async def get_scope(self, system_id: str) -> ScopeResponse:
+    async def get_scope(self, system_id: str, framework_id: str) -> ScopeResponse:
         """Get system scope/policy information.
 
         Args:
             system_id: ID of the system.
+            framework_id: ID of the framework.
 
         Returns:
             ScopeResponse with scope details.
         """
-        data = await self._request("GET", f"/systems/{system_id}/scope")
+        data = await self._request(
+            "GET",
+            f"/systems/{system_id}/scope",
+            params={"framework_id": framework_id},
+        )
         return ScopeResponse(**data)
 
     async def add_control_note(
