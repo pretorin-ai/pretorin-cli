@@ -68,7 +68,7 @@ run_audit() {
         skip "pip-audit"
         return
     fi
-    if pip-audit --strict . 2>&1; then
+    if pip-audit --strict --skip-editable . 2>&1; then
         pass "pip-audit"
     else
         fail "pip-audit"

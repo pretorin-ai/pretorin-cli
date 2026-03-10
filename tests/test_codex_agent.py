@@ -732,8 +732,10 @@ class TestPatchCodexExecBufferLimit:
 
         mock_stderr = MagicMock()
 
+        stderr_reads = iter([b"something went wrong", b""])
+
         async def mock_stderr_read(n: int) -> bytes:
-            return b"something went wrong"
+            return next(stderr_reads)
 
         mock_stderr.read = mock_stderr_read
 

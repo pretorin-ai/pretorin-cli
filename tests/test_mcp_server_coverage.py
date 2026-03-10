@@ -134,18 +134,12 @@ class TestMainGuard:
 
     def test_main_guard(self):
         """Line 105: __name__ == '__main__' calls run_server."""
-        import importlib
+        import pretorin.mcp.server as mod
+        source_path = mod.__file__
 
-        with patch("pretorin.mcp.server.run_server") as mock_run:
-            # Simulate running as __main__ by exec-ing the module code
-            import pretorin.mcp.server as mod
-            source_path = mod.__file__
+        with open(source_path) as f:
+            code = f.read()
 
-            with open(source_path) as f:
-                code = f.read()
-
-            # Execute with __name__ = "__main__"
-            exec(compile(code, source_path, "exec"), {"__name__": "__main__"})
-            # The run_server in the exec namespace is the real one, not our mock.
-            # Instead, just verify the guard exists in the source.
-            assert 'if __name__ == "__main__"' in code
+        # Verify the guard exists and calls run_server
+        assert 'if __name__ == "__main__"' in code
+        assert "run_server()" in code

@@ -64,7 +64,7 @@ def login(
         rprint(
             "[dim]Sign up for early access:[/dim] [link=https://pretorin.com/early-access/]https://pretorin.com/early-access/[/link]\n"
         )
-        api_key = typer.prompt("Enter your API key", hide_input=True)
+        api_key = typer.prompt("Enter your API key", hide_input=True, default="")
 
     if not api_key:
         rprint("[#FF9010]→[/#FF9010] API key is required to continue.")

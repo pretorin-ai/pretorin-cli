@@ -17,6 +17,7 @@ from pretorin.cli.config import app as config_app
 from pretorin.cli.context import app as context_app
 from pretorin.cli.control import app as control_app
 from pretorin.cli.evidence import app as evidence_app
+from pretorin.cli.harness import app as harness_app
 from pretorin.cli.monitoring import app as monitoring_app
 from pretorin.cli.narrative import app as narrative_app
 from pretorin.cli.notes import app as notes_app
@@ -158,6 +159,7 @@ app.add_typer(narrative_app, name="narrative", help="Narrative management")
 app.add_typer(notes_app, name="notes", help="Control note management")
 app.add_typer(review_app, name="review", help="Review local artifacts against compliance controls")
 app.add_typer(agent_app, name="agent", help="Autonomous compliance agent")
+app.add_typer(harness_app, name="harness", help="[Deprecated] AI harness wrapper")
 
 # Add auth commands directly to root
 for command in auth_app.registered_commands:
