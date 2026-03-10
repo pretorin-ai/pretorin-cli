@@ -12,8 +12,8 @@ from pretorin.cli.agent import app as agent_app
 from pretorin.cli.auth import app as auth_app
 from pretorin.cli.commands import app as frameworks_app
 from pretorin.cli.config import app as config_app
-from pretorin.cli.control import app as control_app
 from pretorin.cli.context import app as context_app
+from pretorin.cli.control import app as control_app
 from pretorin.cli.evidence import app as evidence_app
 from pretorin.cli.harness import app as harness_app
 from pretorin.cli.monitoring import app as monitoring_app

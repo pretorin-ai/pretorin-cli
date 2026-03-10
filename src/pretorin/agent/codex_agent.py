@@ -6,8 +6,8 @@ a pinned, isolated Codex binary with Pretorin MCP tools auto-injected.
 
 from __future__ import annotations
 
-import asyncio
 import os
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -28,17 +28,21 @@ def _patch_codex_exec_buffer_limit() -> None:
     to use a 2 MB limit instead.
     """
     try:
-        from openai_codex_sdk.exec import CodexExec  # type: ignore[import-not-found]
+        from openai_codex_sdk.exec import CodexExec  # type: ignore[import-not-found,unused-ignore]
     except ImportError:
         return  # agent extras not installed — nothing to patch
 
     _original_run = CodexExec.run
 
-    async def _patched_run(self: Any, args: Any):  # type: ignore[override]
+    async def _patched_run(self: Any, args: Any) -> AsyncGenerator[str, None]:
         """Wrapper that increases the subprocess stdout buffer limit."""
         import asyncio as _aio
-        from openai_codex_sdk.abort import AbortError, _format_abort_reason  # type: ignore[import-not-found]
-        from openai_codex_sdk.errors import CodexExecError  # type: ignore[import-not-found]
+
+        from openai_codex_sdk.abort import (  # type: ignore[import-not-found,unused-ignore]
+            AbortError,
+            _format_abort_reason,
+        )
+        from openai_codex_sdk.errors import CodexExecError  # type: ignore[import-not-found,unused-ignore]
 
         if args.signal is not None and args.signal.aborted:
             raise AbortError(_format_abort_reason(args.signal.reason))
@@ -62,7 +66,7 @@ def _patch_codex_exec_buffer_limit() -> None:
             finally:
                 raise CodexExecError("Child process missing stdin/stdout")
 
-        async def _read_all(stream):  # type: ignore[no-untyped-def]
+        async def _read_all(stream: _aio.StreamReader | None) -> bytes:
             if stream is None:
                 return b""
             chunks: list[bytes] = []
@@ -76,7 +80,7 @@ def _patch_codex_exec_buffer_limit() -> None:
         stderr_task = _aio.create_task(_read_all(proc.stderr))
         abort_waiter = None
         if args.signal is not None:
-            from openai_codex_sdk.exec import _wait_abort  # type: ignore[import-not-found]
+            from openai_codex_sdk.exec import _wait_abort  # type: ignore[import-not-found,unused-ignore]
             abort_waiter = _aio.create_task(_wait_abort(args.signal))
 
         try:
@@ -131,7 +135,7 @@ def _patch_codex_exec_buffer_limit() -> None:
             stderr_task.cancel()
             await _aio.gather(stderr_task, return_exceptions=True)
 
-    CodexExec.run = _patched_run  # type: ignore[assignment]
+    CodexExec.run = _patched_run  # type: ignore[assignment,unused-ignore]
 
 
 _patch_codex_exec_buffer_limit()
