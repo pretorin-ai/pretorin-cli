@@ -1,0 +1,16 @@
+[book]
+authors = ["Pretorin"]
+language = "en"
+src = "src"
+title = "Pretorin CLI Documentation"
+description = "Documentation for the Pretorin CLI - compliance tools for developers and AI agents."
+
+[build]
+build-dir = "book"
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/pretorin-ai/pretorin-cli"
+edit-url-template = "https://github.com/pretorin-ai/pretorin-cli/edit/master/docs/{path}"
+additional-css = ["theme/custom.css"]

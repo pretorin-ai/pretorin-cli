@@ -1,0 +1,81 @@
+# Quick Start
+
+After [installing](./installation.md) and [authenticating](./authentication.md), here are some common first steps.
+
+## Browse Frameworks
+
+List all available compliance frameworks:
+
+```bash
+pretorin frameworks list
+```
+
+Get details on a specific control:
+
+```bash
+pretorin frameworks control nist-800-53-r5 ac-02 --references
+```
+
+## Set Up Context
+
+Set your active system and framework for platform operations:
+
+```bash
+# Interactive selection
+pretorin context set
+
+# Or explicit
+pretorin context set --system "My Application" --framework fedramp-moderate
+```
+
+## Create Evidence
+
+Create a local evidence file:
+
+```bash
+pretorin evidence create ac-02 fedramp-moderate \
+  --name "RBAC Configuration" \
+  --description "Role-based access control in Azure AD"
+```
+
+Push evidence to the platform:
+
+```bash
+pretorin evidence push
+```
+
+## Run an Agent Task
+
+Use the Codex agent for compliance analysis:
+
+```bash
+pretorin agent run "Assess AC-02 implementation gaps for my system"
+```
+
+Or use a predefined skill:
+
+```bash
+pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
+```
+
+## Connect Your AI Tool via MCP
+
+If you use Claude Code, Codex CLI, Cursor, or another MCP-compatible AI tool:
+
+```bash
+# Claude Code
+claude mcp add --transport stdio pretorin -- pretorin mcp-serve
+
+# Then ask your AI agent about compliance
+# "What controls are in the Access Control family for FedRAMP Moderate?"
+```
+
+See the [MCP Setup Guides](../mcp/setup.md) for other tools.
+
+## Run the Demo Walkthrough
+
+An interactive demo script is included in the repository:
+
+```bash
+bash scripts/demo-walkthrough.sh
+```

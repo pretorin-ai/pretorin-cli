@@ -1,0 +1,78 @@
+# MCP Integration Overview
+
+The Pretorin CLI includes a built-in [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that enables AI assistants to access compliance framework data directly during conversations.
+
+## Why MCP?
+
+The Model Context Protocol allows AI assistants to:
+
+- **Access real-time data** — Query the latest compliance frameworks, controls, and requirements
+- **Understand context** — Get detailed control guidance and related controls for better recommendations
+- **Reduce hallucination** — Work with authoritative compliance data instead of training knowledge
+- **Streamline workflows** — No need to copy-paste control requirements or switch between tools
+
+## How It Works
+
+The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with `pretorin mcp-serve`, your AI tool connects and gains access to 23 compliance tools.
+
+```
+┌──────────────┐     stdio      ┌──────────────┐     HTTPS     ┌──────────────┐
+│   AI Agent   │◄──────────────►│   Pretorin   │◄─────────────►│   Pretorin   │
+│ (Claude,     │   JSON-RPC    │   MCP Server  │              │   Platform   │
+│  Cursor,     │               │               │              │              │
+│  Codex)      │               │               │              │              │
+└──────────────┘               └──────────────┘              └──────────────┘
+```
+
+## Scope
+
+Scoped compliance execution tools on the MCP server run inside exactly one `system + framework` pair at a time. Set the active scope with `pretorin context set`, or pass both values explicitly. If a request spans multiple frameworks or systems, split it into separate runs.
+
+## Tool Categories
+
+The 23 MCP tools are organized into categories:
+
+| Category | Tools | Access |
+|----------|-------|--------|
+| Framework & Control Reference | 7 | Read-only, all users |
+| Systems | 3 | Read-only |
+| Evidence Management | 4 | Read/Write, requires beta |
+| Implementation Context | 6 | Read/Write, requires beta |
+| Compliance Updates | 3 | Write, requires beta |
+
+See [Tool Reference](./tools.md) for the complete list.
+
+## Quick Setup
+
+```bash
+# 1. Install
+uv tool install pretorin
+
+# 2. Authenticate
+pretorin login
+
+# 3. Add to your AI tool (example: Claude Code)
+claude mcp add --transport stdio pretorin -- pretorin mcp-serve
+```
+
+See [Setup Guides](./setup.md) for other AI tools.
+
+## Example Conversations
+
+### Getting Started with a Framework
+
+> **You:** What compliance frameworks are available for government systems?
+>
+> **Claude:** *Uses pretorin_list_frameworks* — I can see several frameworks available including NIST 800-53 Rev 5, NIST 800-171, and FedRAMP at various impact levels...
+
+### Understanding a Control
+
+> **You:** I need to implement Account Management for our FedRAMP Moderate system. What does it require?
+>
+> **Claude:** *Uses pretorin_get_control and pretorin_get_control_references* — Account Management requires organizations to manage system accounts including identifying account types, establishing conditions for membership, and specifying authorized users...
+
+### Control Family Overview
+
+> **You:** Give me an overview of the Audit controls in NIST 800-53
+>
+> **Claude:** *Uses pretorin_list_controls with family filter* — The Audit and Accountability family contains controls for audit events, content, storage, review, and reporting...

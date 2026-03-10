@@ -1,0 +1,2841 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Pretorin CLI Documentation</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Documentation for the Pretorin CLI - compliance tools for developers and AI agents.">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="shortcut icon" href="favicon-2b2c075a.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/custom-f48639da.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-a8894136.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-8de013d0.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Pretorin CLI Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/pretorin-ai/pretorin-cli" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="pretorin-cli"><a class="header" href="#pretorin-cli">Pretorin CLI</a></h1>
+<blockquote>
+<p><strong>Beta</strong> — Pretorin is currently in closed beta. Framework and control browsing works for everyone. Platform write features (evidence, narratives, monitoring) require a beta code. <a href="https://pretorin.com/early-access/">Sign up for early access</a>.</p>
+</blockquote>
+<p>Pretorin CLI gives developers and AI agents direct access to compliance data, implementation context, and evidence workflows. It supports NIST 800-53, NIST 800-171, FedRAMP, and CMMC frameworks with over 700 controls across 8 framework profiles.</p>
+<h2 id="two-usage-modes"><a class="header" href="#two-usage-modes">Two Usage Modes</a></h2>
+<p>Pretorin works in two modes depending on your setup:</p>
+<ol>
+<li>
+<p><strong>Pretorin-hosted model mode</strong> — Run <code>pretorin agent run</code> to route model calls through Pretorin’s <code>/v1</code> endpoints. Pretorin manages the AI runtime.</p>
+</li>
+<li>
+<p><strong>Bring-your-own-agent mode</strong> — Run <code>pretorin mcp-serve</code> and connect the MCP server to your existing AI tool (Claude Code, Codex CLI, Cursor, Windsurf, etc.). Your agent gets compliance tools without changing your workflow.</p>
+</li>
+</ol>
+<h2 id="what-you-can-do"><a class="header" href="#what-you-can-do">What You Can Do</a></h2>
+<ul>
+<li><strong>Browse compliance frameworks</strong> — Query controls, families, and document requirements from authoritative sources</li>
+<li><strong>Manage implementation context</strong> — Set an active system and framework, then track progress across controls</li>
+<li><strong>Create and manage evidence</strong> — Generate local evidence files, push them to the platform, and link them to controls</li>
+<li><strong>Write implementation narratives</strong> — Draft and push auditor-ready narratives for each control</li>
+<li><strong>Run AI-powered compliance tasks</strong> — Use the built-in Codex agent for gap analysis, narrative generation, evidence collection, and security review</li>
+<li><strong>Review code against controls</strong> — Analyze your codebase for control coverage</li>
+<li><strong>Track monitoring events</strong> — Record security scans, access reviews, configuration changes, and compliance checks</li>
+<li><strong>Generate compliance artifacts</strong> — Produce structured JSON artifacts documenting control implementations</li>
+</ul>
+<h2 id="architecture"><a class="header" href="#architecture">Architecture</a></h2>
+<pre><code>┌─────────────────────────────────────────────┐
+│                 Developer                    │
+│                                             │
+│   ┌──────────┐        ┌──────────────────┐  │
+│   │ CLI      │        │ AI Agent         │  │
+│   │ pretorin │        │ (Claude, Codex,  │  │
+│   │ commands │        │  Cursor, etc.)   │  │
+│   └────┬─────┘        └────────┬─────────┘  │
+│        │                       │             │
+│        │              ┌────────┴─────────┐   │
+│        │              │  MCP Server      │   │
+│        │              │  pretorin        │   │
+│        │              │  mcp-serve       │   │
+│        │              └────────┬─────────┘   │
+│        │                       │             │
+│        └───────────┬───────────┘             │
+│                    │                         │
+│           ┌────────┴─────────┐               │
+│           │  Pretorin API    │               │
+│           │  Client          │               │
+│           └────────┬─────────┘               │
+└────────────────────┼─────────────────────────┘
+                     │
+            ┌────────┴─────────┐
+            │  Pretorin        │
+            │  Platform        │
+            └──────────────────┘
+</code></pre>
+<h2 id="links"><a class="header" href="#links">Links</a></h2>
+<ul>
+<li><a href="https://github.com/pretorin-ai/pretorin-cli">GitHub Repository</a></li>
+<li><a href="https://platform.pretorin.com">Platform</a></li>
+<li><a href="https://pypi.org/project/pretorin/">PyPI Package</a></li>
+<li><a href="https://github.com/pretorin-ai/pretorin-cli/issues">Issue Tracker</a></li>
+<li><a href="https://platform.pretorin.com/api/docs">API Documentation</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<p>Pretorin CLI requires Python 3.10 or later.</p>
+<h2 id="recommended-uv"><a class="header" href="#recommended-uv">Recommended: uv</a></h2>
+<p><a href="https://docs.astral.sh/uv/">uv</a> installs the CLI as an isolated tool with its own dependencies:</p>
+<pre><code class="language-bash">uv tool install pretorin
+</code></pre>
+<h2 id="pip"><a class="header" href="#pip">pip</a></h2>
+<pre><code class="language-bash">pip install pretorin
+</code></pre>
+<h2 id="pipx"><a class="header" href="#pipx">pipx</a></h2>
+<p><a href="https://pipx.pypa.io/">pipx</a> provides isolated installation similar to uv:</p>
+<pre><code class="language-bash">pipx install pretorin
+</code></pre>
+<h2 id="docker"><a class="header" href="#docker">Docker</a></h2>
+<p>A Dockerfile and Docker Compose configuration are included in the repository:</p>
+<pre><code class="language-bash">git clone https://github.com/pretorin-ai/pretorin-cli.git
+cd pretorin-cli
+docker compose up
+</code></pre>
+<h2 id="verify-installation"><a class="header" href="#verify-installation">Verify Installation</a></h2>
+<pre><code class="language-bash">pretorin version
+</code></pre>
+<p>Expected output:</p>
+<pre><code>pretorin version 0.8.1
+</code></pre>
+<h2 id="updating"><a class="header" href="#updating">Updating</a></h2>
+<p>Check for and install the latest version:</p>
+<pre><code class="language-bash">pretorin update
+</code></pre>
+<p>The CLI also checks for updates automatically on startup and notifies you when a new version is available. To disable passive update notifications:</p>
+<pre><code class="language-bash">export PRETORIN_DISABLE_UPDATE_CHECK=1
+# or
+pretorin config set disable_update_check true
+</code></pre>
+<h2 id="development-installation"><a class="header" href="#development-installation">Development Installation</a></h2>
+<p>For contributing to Pretorin CLI:</p>
+<pre><code class="language-bash">git clone https://github.com/pretorin-ai/pretorin-cli.git
+cd pretorin-cli
+uv pip install -e ".[dev]"
+</code></pre>
+<p>This installs the package in editable mode with development dependencies (pytest, ruff, mypy, etc.).</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="authentication"><a class="header" href="#authentication">Authentication</a></h1>
+<h2 id="getting-an-api-key"><a class="header" href="#getting-an-api-key">Getting an API Key</a></h2>
+<p>Get your API key from <a href="https://platform.pretorin.com/">platform.pretorin.com</a>.</p>
+<blockquote>
+<p><strong>Beta Note:</strong> Framework and control browsing works for all authenticated users. Platform write features (evidence, narratives, monitoring) require a beta code. Systems can only be created on the platform, not through the CLI or MCP. <a href="https://pretorin.com/early-access/">Sign up for early access</a>.</p>
+</blockquote>
+<h2 id="login"><a class="header" href="#login">Login</a></h2>
+<pre><code class="language-bash">pretorin login
+</code></pre>
+<p>You’ll be prompted to enter your API key. Credentials are stored in <code>~/.pretorin/config.json</code>.</p>
+<p>If you’re already authenticated, <code>pretorin login</code> validates your existing key against the API and skips the prompt.</p>
+<h2 id="verify-authentication"><a class="header" href="#verify-authentication">Verify Authentication</a></h2>
+<pre><code class="language-bash">$ pretorin whoami
+[°~°] Checking your session...
+╭──────────────────────────────── Your Session ────────────────────────────────╮
+│ Status: Authenticated                                                        │
+│ API Key: 4MAS****...9v7o                                                     │
+│ API URL: https://platform.pretorin.com/api/v1                                │
+│ Frameworks Available: 8                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+</code></pre>
+<h2 id="logout"><a class="header" href="#logout">Logout</a></h2>
+<p>Clear stored credentials:</p>
+<pre><code class="language-bash">pretorin logout
+</code></pre>
+<h2 id="api-key-via-environment-variable"><a class="header" href="#api-key-via-environment-variable">API Key via Environment Variable</a></h2>
+<p>You can set your API key via environment variable instead of <code>pretorin login</code>. The environment variable takes precedence over stored config:</p>
+<pre><code class="language-bash">export PRETORIN_API_KEY=pretorin_your_key_here
+</code></pre>
+<p>This is useful for CI/CD pipelines and containerized environments.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h1>
+<p>After <a href="#installation">installing</a> and <a href="#authentication">authenticating</a>, here are some common first steps.</p>
+<h2 id="browse-frameworks"><a class="header" href="#browse-frameworks">Browse Frameworks</a></h2>
+<p>List all available compliance frameworks:</p>
+<pre><code class="language-bash">pretorin frameworks list
+</code></pre>
+<p>Get details on a specific control:</p>
+<pre><code class="language-bash">pretorin frameworks control nist-800-53-r5 ac-02 --references
+</code></pre>
+<h2 id="set-up-context"><a class="header" href="#set-up-context">Set Up Context</a></h2>
+<p>Set your active system and framework for platform operations:</p>
+<pre><code class="language-bash"># Interactive selection
+pretorin context set
+
+# Or explicit
+pretorin context set --system "My Application" --framework fedramp-moderate
+</code></pre>
+<h2 id="create-evidence"><a class="header" href="#create-evidence">Create Evidence</a></h2>
+<p>Create a local evidence file:</p>
+<pre><code class="language-bash">pretorin evidence create ac-02 fedramp-moderate \
+  --name "RBAC Configuration" \
+  --description "Role-based access control in Azure AD"
+</code></pre>
+<p>Push evidence to the platform:</p>
+<pre><code class="language-bash">pretorin evidence push
+</code></pre>
+<h2 id="run-an-agent-task"><a class="header" href="#run-an-agent-task">Run an Agent Task</a></h2>
+<p>Use the Codex agent for compliance analysis:</p>
+<pre><code class="language-bash">pretorin agent run "Assess AC-02 implementation gaps for my system"
+</code></pre>
+<p>Or use a predefined skill:</p>
+<pre><code class="language-bash">pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
+</code></pre>
+<h2 id="connect-your-ai-tool-via-mcp"><a class="header" href="#connect-your-ai-tool-via-mcp">Connect Your AI Tool via MCP</a></h2>
+<p>If you use Claude Code, Codex CLI, Cursor, or another MCP-compatible AI tool:</p>
+<pre><code class="language-bash"># Claude Code
+claude mcp add --transport stdio pretorin -- pretorin mcp-serve
+
+# Then ask your AI agent about compliance
+# "What controls are in the Access Control family for FedRAMP Moderate?"
+</code></pre>
+<p>See the <a href="#mcp-setup-guides">MCP Setup Guides</a> for other tools.</p>
+<h2 id="run-the-demo-walkthrough"><a class="header" href="#run-the-demo-walkthrough">Run the Demo Walkthrough</a></h2>
+<p>An interactive demo script is included in the repository:</p>
+<pre><code class="language-bash">bash scripts/demo-walkthrough.sh
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="framework-browsing"><a class="header" href="#framework-browsing">Framework Browsing</a></h1>
+<p>The <code>frameworks</code> command group lets you browse compliance frameworks, control families, and individual controls. These commands are read-only and available to all authenticated users.</p>
+<h2 id="list-all-frameworks"><a class="header" href="#list-all-frameworks">List All Frameworks</a></h2>
+<pre><code class="language-bash">$ pretorin frameworks list
+[°~°] Consulting the compliance archives...
+                        Available Compliance Frameworks
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━┓
+┃ ID          ┃ Title       ┃ Version     ┃ Tier         ┃ Families ┃ Controls ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━┩
+│ cmmc-l1     │ CMMC 2.0    │ 2.0         │ tier1_essen… │        6 │       17 │
+│             │ Level 1     │             │              │          │          │
+│ cmmc-l2     │ CMMC 2.0    │ 2.0         │ tier1_essen… │       14 │      110 │
+│             │ Level 2     │             │              │          │          │
+│ ...         │             │             │              │          │          │
+└─────────────┴─────────────┴─────────────┴──────────────┴──────────┴──────────┘
+
+Total: 8 framework(s)
+</code></pre>
+<p>The <strong>ID</strong> column is what you use in all other commands.</p>
+<h2 id="get-framework-details"><a class="header" href="#get-framework-details">Get Framework Details</a></h2>
+<pre><code class="language-bash">$ pretorin frameworks get fedramp-moderate
+[°~°] Gathering framework details...
+╭───────────────── Framework: FedRAMP Rev 5 Moderate Baseline ─────────────────╮
+│ ID: fedramp-moderate                                                         │
+│ Title: FedRAMP Rev 5 Moderate Baseline                                       │
+│ Version: fedramp2.1.0-oscal1.0.4                                             │
+│ OSCAL Version: 1.0.4                                                         │
+│ Tier: tier1_essential                                                        │
+│ Category: government                                                         │
+│ Published: 2024-09-24T02:24:00Z                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+</code></pre>
+<h2 id="list-control-families"><a class="header" href="#list-control-families">List Control Families</a></h2>
+<pre><code class="language-bash">$ pretorin frameworks families nist-800-53-r5
+[°~°] Gathering control families...
+                       Control Families - nist-800-53-r5
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━┓
+┃ ID                          ┃ Title                       ┃ Class ┃ Controls ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━┩
+│ access-control              │ Access Control              │ ac    │       25 │
+│ audit-and-accountability    │ Audit and Accountability    │ au    │       16 │
+│ awareness-and-training      │ Awareness and Training      │ at    │        6 │
+│ configuration-management    │ Configuration Management    │ cm    │       14 │
+│ ...                         │                             │       │          │
+└─────────────────────────────┴─────────────────────────────┴───────┴──────────┘
+</code></pre>
+<blockquote>
+<p><strong>Important:</strong> Family IDs are slugs like <code>access-control</code>, not short codes like <code>ac</code>. The short code is shown in the <strong>Class</strong> column for reference, but commands require the full slug ID.</p>
+</blockquote>
+<h3 id="cmmc-family-ids"><a class="header" href="#cmmc-family-ids">CMMC Family IDs</a></h3>
+<p>CMMC frameworks use level-specific family slugs:</p>
+<pre><code class="language-bash">$ pretorin frameworks families cmmc-l2
+</code></pre>
+<p>CMMC family IDs include the level suffix, e.g., <code>access-control-level-2</code> instead of <code>access-control</code>.</p>
+<h2 id="get-family-details"><a class="header" href="#get-family-details">Get Family Details</a></h2>
+<pre><code class="language-bash">pretorin frameworks family nist-800-53-r5 access-control
+</code></pre>
+<h2 id="list-controls"><a class="header" href="#list-controls">List Controls</a></h2>
+<pre><code class="language-bash">$ pretorin frameworks controls nist-800-53-r5 --family access-control --limit 10
+[°~°] Searching for controls...
+   Controls - nist-800-53-r5 (Family: access-control)
+┏━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ ID    ┃ Title                        ┃ Family         ┃
+┡━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ ac-01 │ Policy and Procedures        │ ACCESS-CONTROL │
+│ ac-02 │ Account Management           │ ACCESS-CONTROL │
+│ ac-03 │ Access Enforcement           │ ACCESS-CONTROL │
+│ ...   │                              │                │
+└───────┴──────────────────────────────┴────────────────┘
+
+Showing 10 of 25 controls. Use --limit to see more.
+</code></pre>
+<p>Without <code>--family</code>, all controls for the framework are listed. Without <code>--limit</code>, all matching controls are shown.</p>
+<blockquote>
+<p><strong>Important:</strong> Control IDs are zero-padded — use <code>ac-01</code>, not <code>ac-1</code>. See <a href="#control-id-formats">Control ID Formats</a> for details.</p>
+</blockquote>
+<h2 id="get-control-details"><a class="header" href="#get-control-details">Get Control Details</a></h2>
+<pre><code class="language-bash">$ pretorin frameworks control nist-800-53-r5 ac-02
+[°~°] Looking up control details...
+╭─────────────────────────────── Control: AC-02 ───────────────────────────────╮
+│ ID: ac-02                                                                    │
+│ Title: Account Management                                                    │
+│ Class: SP800-53                                                              │
+│ Type: organizational                                                         │
+│                                                                              │
+│ AI Guidance: Available                                                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Parameters:
+  - ac-02_odp.01: prerequisites and criteria
+  - ac-02_odp.02: attributes (as required)
+  - ac-02_odp.03: personnel or roles
+  - ac-02_odp.04: policy, procedures, prerequisites, and criteria
+  - ac-02_odp.05: personnel or roles
+</code></pre>
+<h3 id="with-references"><a class="header" href="#with-references">With References</a></h3>
+<p>Add <code>--references</code> to include the statement text, guidance, and related controls:</p>
+<pre><code class="language-bash">$ pretorin frameworks control nist-800-53-r5 ac-02 --references
+</code></pre>
+<p>This adds:</p>
+<ul>
+<li><strong>Statement</strong> — the formal control requirement text</li>
+<li><strong>Guidance</strong> — implementation guidance from the framework</li>
+<li><strong>Related Controls</strong> — other controls that relate to this one</li>
+</ul>
+<h3 id="common-mistakes"><a class="header" href="#common-mistakes">Common Mistakes</a></h3>
+<p>Using the wrong ID format produces an error:</p>
+<pre><code class="language-bash">$ pretorin frameworks control nist-800-53-r5 ac-1
+[°~°] Looking up control details...
+[°︵°] Couldn't find control ac-1 in nist-800-53-r5
+Try pretorin frameworks controls nist-800-53-r5 to see available controls.
+</code></pre>
+<p>Use zero-padded IDs: <code>ac-01</code>, not <code>ac-1</code>.</p>
+<h2 id="document-requirements"><a class="header" href="#document-requirements">Document Requirements</a></h2>
+<pre><code class="language-bash">pretorin frameworks documents fedramp-moderate
+</code></pre>
+<p>Returns explicit and implicit document requirements for the framework.</p>
+<h2 id="framework-metadata"><a class="header" href="#framework-metadata">Framework Metadata</a></h2>
+<p>Get per-control metadata for a framework:</p>
+<pre><code class="language-bash">pretorin frameworks metadata nist-800-53-r5
+</code></pre>
+<h2 id="submit-artifacts"><a class="header" href="#submit-artifacts">Submit Artifacts</a></h2>
+<p>Submit a compliance artifact JSON file:</p>
+<pre><code class="language-bash">pretorin frameworks submit-artifact artifact.json
+</code></pre>
+<p>See <a href="#artifact-generation">Artifact Generation</a> for the artifact schema.</p>
+<h2 id="json-output"><a class="header" href="#json-output">JSON Output</a></h2>
+<p>All framework commands support JSON output for scripting and AI agents:</p>
+<pre><code class="language-bash">pretorin --json frameworks list
+pretorin --json frameworks control nist-800-53-r5 ac-02
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="context-management"><a class="header" href="#context-management">Context Management</a></h1>
+<p>The <code>context</code> command group manages your active system and framework scope. Platform-backed compliance operations (evidence, narratives, notes, monitoring, control status) run inside exactly one <code>system + framework</code> pair at a time.</p>
+<p>This works similarly to <code>kubectl config use-context</code> — set your scope once, then run commands within it.</p>
+<h2 id="list-available-systems"><a class="header" href="#list-available-systems">List Available Systems</a></h2>
+<pre><code class="language-bash">$ pretorin context list
+[°~°] Fetching your systems...
+                              Your Systems
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━┓
+┃ System           ┃ Framework ID       ┃ Progress % ┃ Status    ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━┩
+│ My Application   │ nist-800-53-r5     │        42% │ in_progress │
+│ My Application   │ fedramp-moderate   │        28% │ in_progress │
+│ Internal Tool    │ cmmc-l2            │        75% │ implemented │
+└──────────────────┴────────────────────┴────────────┴───────────┘
+</code></pre>
+<h2 id="set-active-context"><a class="header" href="#set-active-context">Set Active Context</a></h2>
+<pre><code class="language-bash"># Interactive — prompts for system and framework selection
+pretorin context set
+
+# Explicit
+pretorin context set --system "My Application" --framework nist-800-53-r5
+</code></pre>
+<h2 id="show-current-context"><a class="header" href="#show-current-context">Show Current Context</a></h2>
+<pre><code class="language-bash">$ pretorin context show
+╭──────────────────────── Active Context ─────────────────────────╮
+│ System: My Application                                          │
+│ Framework: NIST SP 800-53 Rev 5                                │
+│ Progress: 42% (136/324 implemented, 45 in progress)            │
+╰─────────────────────────────────────────────────────────────────╯
+</code></pre>
+<h2 id="clear-context"><a class="header" href="#clear-context">Clear Context</a></h2>
+<pre><code class="language-bash">pretorin context clear
+</code></pre>
+<h2 id="single-scope-enforcement"><a class="header" href="#single-scope-enforcement">Single-Scope Enforcement</a></h2>
+<p>All platform write operations must target exactly one system + framework pair. This includes:</p>
+<ul>
+<li>Evidence creation and push</li>
+<li>Narrative updates</li>
+<li>Control notes</li>
+<li>Monitoring events</li>
+<li>Control status updates</li>
+</ul>
+<p>If you need to work across multiple frameworks (e.g., <code>fedramp-low</code> and <code>fedramp-moderate</code>), run them as separate operations:</p>
+<pre><code class="language-bash"># Work on FedRAMP Moderate
+pretorin context set --system "My App" --framework fedramp-moderate
+pretorin evidence push
+
+# Switch to FedRAMP Low
+pretorin context set --system "My App" --framework fedramp-low
+pretorin evidence push
+</code></pre>
+<p>Some commands also accept explicit <code>--system</code> and <code>--framework</code> flags, which override the stored context for that invocation.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="evidence-commands"><a class="header" href="#evidence-commands">Evidence Commands</a></h1>
+<p>The <code>evidence</code> command group manages local evidence files and syncs them to the Pretorin platform.</p>
+<h2 id="create-local-evidence"><a class="header" href="#create-local-evidence">Create Local Evidence</a></h2>
+<pre><code class="language-bash">pretorin evidence create ac-02 fedramp-moderate \
+  --name "RBAC Configuration" \
+  --description "Role-based access control in Azure AD"
+</code></pre>
+<p>Creates a markdown file under <code>evidence/&lt;framework&gt;/&lt;control&gt;/</code> with YAML frontmatter containing metadata (control ID, framework, name, type, status).</p>
+<h2 id="list-local-evidence"><a class="header" href="#list-local-evidence">List Local Evidence</a></h2>
+<pre><code class="language-bash"># List all local evidence
+pretorin evidence list
+
+# Filter by framework
+pretorin evidence list --framework fedramp-moderate
+</code></pre>
+<h2 id="push-evidence-to-platform"><a class="header" href="#push-evidence-to-platform">Push Evidence to Platform</a></h2>
+<pre><code class="language-bash">pretorin evidence push
+</code></pre>
+<p>Pushes local evidence files to the platform using find-or-create upsert logic. Exact matches are reused and reported separately.</p>
+<p>Requires an active single scope from <code>pretorin context set</code>, unless both <code>--system</code> and <code>--framework</code> are provided explicitly.</p>
+<h2 id="search-platform-evidence"><a class="header" href="#search-platform-evidence">Search Platform Evidence</a></h2>
+<pre><code class="language-bash"># Search by control
+pretorin evidence search --control-id ac-02 --framework-id fedramp-moderate
+
+# Search by system
+pretorin evidence search --system "My Application" --framework-id fedramp-moderate --limit 100
+</code></pre>
+<h2 id="upsert-evidence"><a class="header" href="#upsert-evidence">Upsert Evidence</a></h2>
+<p>Find-or-create evidence and link it to a control:</p>
+<pre><code class="language-bash">pretorin evidence upsert ac-02 fedramp-moderate \
+  --name "RBAC Configuration" \
+  --description "Role mapping in IdP" \
+  --type configuration
+</code></pre>
+<p>This searches for an exact match on (name + description + type + control + framework) within the active system scope. If found, it reuses the existing item; otherwise, it creates a new one. It then ensures the evidence is linked to the specified control.</p>
+<h2 id="evidence-types"><a class="header" href="#evidence-types">Evidence Types</a></h2>
+<p>Valid evidence types:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>policy_document</code></td><td>Policy or procedure document (default)</td></tr>
+<tr><td><code>screenshot</code></td><td>Screenshot evidence</td></tr>
+<tr><td><code>screen_recording</code></td><td>Screen recording</td></tr>
+<tr><td><code>log_file</code></td><td>Log file extract</td></tr>
+<tr><td><code>configuration</code></td><td>Configuration file or setting</td></tr>
+<tr><td><code>test_result</code></td><td>Test output or report</td></tr>
+<tr><td><code>certificate</code></td><td>Certificate or attestation document</td></tr>
+<tr><td><code>attestation</code></td><td>Signed attestation</td></tr>
+<tr><td><code>code_snippet</code></td><td>Code excerpt</td></tr>
+<tr><td><code>repository_link</code></td><td>Link to source repository</td></tr>
+<tr><td><code>scan_result</code></td><td>Security scan output</td></tr>
+<tr><td><code>interview_notes</code></td><td>Interview or assessment notes</td></tr>
+<tr><td><code>other</code></td><td>Other evidence type</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="markdown-quality-requirements"><a class="header" href="#markdown-quality-requirements">Markdown Quality Requirements</a></h2>
+<p>Evidence descriptions must be auditor-ready markdown:</p>
+<ul>
+<li><strong>No markdown headings</strong> (<code>#</code>, <code>##</code>, etc.)</li>
+<li>At least <strong>one rich markdown element</strong> (fenced code block, table, list, or link)</li>
+<li><strong>No markdown images</strong> (temporarily disabled pending platform image upload support)</li>
+</ul>
+<p>These requirements are validated before push/upsert operations.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="narrative-commands"><a class="header" href="#narrative-commands">Narrative Commands</a></h1>
+<p>The <code>narrative</code> command group manages implementation narratives for controls. Narratives describe how a specific control is implemented within your system.</p>
+<h2 id="get-current-narrative"><a class="header" href="#get-current-narrative">Get Current Narrative</a></h2>
+<pre><code class="language-bash">pretorin narrative get ac-02 fedramp-moderate --system "My System"
+</code></pre>
+<p>Returns the current narrative text, status, and AI confidence metadata when present.</p>
+<h2 id="push-a-narrative-file"><a class="header" href="#push-a-narrative-file">Push a Narrative File</a></h2>
+<pre><code class="language-bash">pretorin narrative push ac-02 fedramp-moderate "My System" narrative-ac02.md
+</code></pre>
+<p>Reads a markdown or text file and submits it as the implementation narrative for the specified control.</p>
+<h2 id="markdown-quality-requirements-1"><a class="header" href="#markdown-quality-requirements-1">Markdown Quality Requirements</a></h2>
+<p>Narratives must be auditor-ready markdown:</p>
+<ul>
+<li><strong>No markdown headings</strong> (<code>#</code>, <code>##</code>, etc.)</li>
+<li>At least <strong>two rich markdown elements</strong> (fenced code blocks, tables, lists, or links)</li>
+<li>At least <strong>one structural element</strong> (code block, table, or list)</li>
+<li><strong>No markdown images</strong> (temporarily disabled pending platform image upload support)</li>
+</ul>
+<p>These requirements are validated before push.</p>
+<h2 id="generating-narratives-with-ai"><a class="header" href="#generating-narratives-with-ai">Generating Narratives with AI</a></h2>
+<p>To generate narratives using the agent runtime:</p>
+<pre><code class="language-bash">pretorin agent run --skill narrative-generation "Generate narrative for AC-02"
+</code></pre>
+<p>Or use the MCP server’s <code>pretorin_generate_control_artifacts</code> tool for read-only drafts through your AI agent.</p>
+<p>See <a href="#agent-skills">Skills</a> for more on agent-powered narrative generation.</p>
+<h2 id="no-hallucination-requirements"><a class="header" href="#no-hallucination-requirements">No-Hallucination Requirements</a></h2>
+<p>Generated narratives must only document observable facts. For missing information, use TODO placeholder blocks:</p>
+<pre><code class="language-text">[[PRETORIN_TODO]]
+missing_item: &lt;what is missing&gt;
+reason: Not observable from current workspace and connected MCP systems
+required_manual_action: &lt;what user must do on platform/integrations&gt;
+suggested_evidence_type: &lt;policy_document|configuration|...&gt;
+[[/PRETORIN_TODO]]
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="notes-commands"><a class="header" href="#notes-commands">Notes Commands</a></h1>
+<p>The <code>notes</code> command group manages control implementation notes. Notes are used to track gaps, manual follow-up items, and implementation context for specific controls.</p>
+<h2 id="list-notes"><a class="header" href="#list-notes">List Notes</a></h2>
+<pre><code class="language-bash">pretorin notes list ac-02 fedramp-moderate --system "My System"
+</code></pre>
+<h2 id="add-a-note"><a class="header" href="#add-a-note">Add a Note</a></h2>
+<pre><code class="language-bash">pretorin notes add ac-02 fedramp-moderate \
+  --content "Gap: Missing SSO evidence. Manual next step: collect IdP configuration screenshots."
+</code></pre>
+<h2 id="gap-note-format"><a class="header" href="#gap-note-format">Gap Note Format</a></h2>
+<p>When adding notes for unresolved gaps, use this structured format:</p>
+<pre><code class="language-text">Gap: &lt;short title&gt;
+Observed: &lt;what was verifiably found&gt;
+Missing: &lt;what could not be verified&gt;
+Why missing: &lt;access/system limitation&gt;
+Manual next step: &lt;explicit user/platform action&gt;
+</code></pre>
+<p>This format ensures consistency across CLI, MCP, and agent workflows when documenting compliance gaps.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="monitoring-commands"><a class="header" href="#monitoring-commands">Monitoring Commands</a></h1>
+<p>The <code>monitoring</code> command group records security and compliance events against a system.</p>
+<h2 id="push-a-monitoring-event"><a class="header" href="#push-a-monitoring-event">Push a Monitoring Event</a></h2>
+<pre><code class="language-bash">pretorin monitoring push --system "My System" --title "Quarterly Access Review" \
+  --event-type access_review --severity info
+</code></pre>
+<h2 id="event-types"><a class="header" href="#event-types">Event Types</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>security_scan</code></td><td>Automated security scan result</td></tr>
+<tr><td><code>configuration_change</code></td><td>Infrastructure or application configuration change</td></tr>
+<tr><td><code>access_review</code></td><td>Periodic access review or audit</td></tr>
+<tr><td><code>compliance_check</code></td><td>Compliance posture check or assessment</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="severity-levels"><a class="header" href="#severity-levels">Severity Levels</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Severity</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>critical</code></td><td>Requires immediate attention</td></tr>
+<tr><td><code>high</code></td><td>Significant finding</td></tr>
+<tr><td><code>medium</code></td><td>Moderate finding</td></tr>
+<tr><td><code>low</code></td><td>Minor finding</td></tr>
+<tr><td><code>info</code></td><td>Informational event</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="context-requirement"><a class="header" href="#context-requirement">Context Requirement</a></h2>
+<p>The <code>monitoring push</code> command requires an active system context. Set it with <code>pretorin context set</code> or pass <code>--system</code> explicitly.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="review-commands"><a class="header" href="#review-commands">Review Commands</a></h1>
+<p>The <code>review</code> command group helps you review local code against framework controls.</p>
+<h2 id="run-a-review"><a class="header" href="#run-a-review">Run a Review</a></h2>
+<pre><code class="language-bash"># Uses active context for system/framework
+pretorin review run --control-id ac-02 --path ./src
+
+# Explicit system/framework override
+pretorin review run --control-id ac-02 --framework-id nist-800-53-r5 --path ./src
+</code></pre>
+<p><code>pretorin review run</code> does not push narratives or evidence to the platform. In normal mode, it fetches control requirements and current implementation details for comparison. In <code>--local</code> mode, it writes a markdown review artifact under <code>.pretorin/reviews/</code> or the path specified with <code>--output-dir</code>.</p>
+<h2 id="check-implementation-status"><a class="header" href="#check-implementation-status">Check Implementation Status</a></h2>
+<pre><code class="language-bash">$ pretorin review status --control-id ac-02
+╭─────────────────── Control AC-02 Status ───────────────────────╮
+│ Status: in_progress                                             │
+│ Evidence items: 3                                               │
+│ Narrative: This control is implemented through centralized     │
+│ account management using Azure AD...                           │
+╰─────────────────────────────────────────────────────────────────╯
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
+<p>The <code>config</code> command group manages CLI configuration stored at <code>~/.pretorin/config.json</code>.</p>
+<h2 id="list-configuration"><a class="header" href="#list-configuration">List Configuration</a></h2>
+<pre><code class="language-bash">$ pretorin config list
+          Pretorin Configuration
+┏━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
+┃ Key     ┃ Value           ┃ Source      ┃
+┡━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
+│ api_key │ 4MAS****...9v7o │ config file │
+└─────────┴─────────────────┴─────────────┘
+
+Config file: /home/user/.pretorin/config.json
+</code></pre>
+<h2 id="get-a-config-value"><a class="header" href="#get-a-config-value">Get a Config Value</a></h2>
+<pre><code class="language-bash">pretorin config get api_key
+</code></pre>
+<h2 id="set-a-config-value"><a class="header" href="#set-a-config-value">Set a Config Value</a></h2>
+<pre><code class="language-bash">pretorin config set api_base_url https://custom-api.example.com/api/v1
+</code></pre>
+<h2 id="show-config-file-path"><a class="header" href="#show-config-file-path">Show Config File Path</a></h2>
+<pre><code class="language-bash">$ pretorin config path
+/home/user/.pretorin/config.json
+</code></pre>
+<h2 id="config-file-format"><a class="header" href="#config-file-format">Config File Format</a></h2>
+<p>The config file is JSON:</p>
+<pre><code class="language-json">{
+  "api_key": "pretorin_...",
+  "api_base_url": "https://platform.pretorin.com/api/v1/public",
+  "model_api_base_url": "https://platform.pretorin.com/v1",
+  "active_system": "My Application",
+  "active_framework": "nist-800-53-r5",
+  "disable_update_check": false
+}
+</code></pre>
+<h2 id="configuration-keys"><a class="header" href="#configuration-keys">Configuration Keys</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Key</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>api_key</code></td><td>Pretorin API key</td></tr>
+<tr><td><code>api_base_url</code></td><td>Platform REST API URL</td></tr>
+<tr><td><code>model_api_base_url</code></td><td>Model API URL for agent runtime</td></tr>
+<tr><td><code>openai_api_key</code></td><td>Optional model key for agent runtime</td></tr>
+<tr><td><code>active_system</code></td><td>Currently active system name</td></tr>
+<tr><td><code>active_framework</code></td><td>Currently active framework ID</td></tr>
+<tr><td><code>disable_update_check</code></td><td>Disable passive update notifications</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="environment-variable-overrides"><a class="header" href="#environment-variable-overrides">Environment Variable Overrides</a></h2>
+<p>Environment variables take precedence over config file values. See <a href="#environment-variables">Environment Variables</a> for the full list.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="complete-command-reference"><a class="header" href="#complete-command-reference">Complete Command Reference</a></h1>
+<h2 id="global-options"><a class="header" href="#global-options">Global Options</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--json</code></td><td>JSON output mode for scripting and AI agents</td></tr>
+<tr><td><code>--help</code></td><td>Show command help</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="root-commands"><a class="header" href="#root-commands">Root Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin login</code></td><td>Authenticate with the Pretorin API</td></tr>
+<tr><td><code>pretorin logout</code></td><td>Clear stored credentials</td></tr>
+<tr><td><code>pretorin whoami</code></td><td>Display authentication status</td></tr>
+<tr><td><code>pretorin version</code></td><td>Show CLI version</td></tr>
+<tr><td><code>pretorin update</code></td><td>Update to latest version</td></tr>
+<tr><td><code>pretorin mcp-serve</code></td><td>Start the MCP server (stdio transport)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="framework-commands"><a class="header" href="#framework-commands">Framework Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin frameworks list</code></td><td>List all frameworks</td></tr>
+<tr><td><code>pretorin frameworks get &lt;id&gt;</code></td><td>Get framework details</td></tr>
+<tr><td><code>pretorin frameworks families &lt;id&gt;</code></td><td>List control families</td></tr>
+<tr><td><code>pretorin frameworks family &lt;fw&gt; &lt;family&gt;</code></td><td>Get control family details</td></tr>
+<tr><td><code>pretorin frameworks controls &lt;id&gt;</code></td><td>List controls (<code>--family</code>, <code>--limit</code>)</td></tr>
+<tr><td><code>pretorin frameworks control &lt;fw&gt; &lt;ctrl&gt;</code></td><td>Get control details (<code>--references</code>)</td></tr>
+<tr><td><code>pretorin frameworks documents &lt;id&gt;</code></td><td>Get document requirements</td></tr>
+<tr><td><code>pretorin frameworks metadata &lt;id&gt;</code></td><td>Get per-control framework metadata</td></tr>
+<tr><td><code>pretorin frameworks submit-artifact &lt;file&gt;</code></td><td>Submit a compliance artifact JSON file</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="context-commands"><a class="header" href="#context-commands">Context Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin context list</code></td><td>List systems and frameworks with progress</td></tr>
+<tr><td><code>pretorin context set</code></td><td>Set active system/framework context (<code>--system</code>, <code>--framework</code>)</td></tr>
+<tr><td><code>pretorin context show</code></td><td>Display current active context</td></tr>
+<tr><td><code>pretorin context clear</code></td><td>Clear active context</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="evidence-commands-1"><a class="header" href="#evidence-commands-1">Evidence Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin evidence create &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Create a local evidence file (<code>--name</code>, <code>--description</code>)</td></tr>
+<tr><td><code>pretorin evidence list</code></td><td>List local evidence files (<code>--framework</code>)</td></tr>
+<tr><td><code>pretorin evidence push</code></td><td>Push local evidence to the platform</td></tr>
+<tr><td><code>pretorin evidence search</code></td><td>Search platform evidence (<code>--control-id</code>, <code>--framework-id</code>, <code>--system</code>, <code>--limit</code>)</td></tr>
+<tr><td><code>pretorin evidence upsert &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Find-or-create evidence and link it (<code>--name</code>, <code>--description</code>, <code>--type</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="narrative-commands-1"><a class="header" href="#narrative-commands-1">Narrative Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin narrative get &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Get current control narrative (<code>--system</code>)</td></tr>
+<tr><td><code>pretorin narrative push &lt;ctrl&gt; &lt;fw&gt; &lt;sys&gt; &lt;file&gt;</code></td><td>Push a narrative file to the platform</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="notes-commands-1"><a class="header" href="#notes-commands-1">Notes Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin notes list &lt;ctrl&gt; &lt;fw&gt;</code></td><td>List control notes (<code>--system</code>)</td></tr>
+<tr><td><code>pretorin notes add &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Add a control note (<code>--content</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="monitoring-commands-1"><a class="header" href="#monitoring-commands-1">Monitoring Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin monitoring push</code></td><td>Push a monitoring event (<code>--system</code>, <code>--title</code>, <code>--event-type</code>, <code>--severity</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="agent-commands"><a class="header" href="#agent-commands">Agent Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin agent run "&lt;task&gt;"</code></td><td>Run a compliance task (<code>--skill</code>, <code>--model</code>, <code>--base-url</code>, <code>--working-dir</code>, <code>--no-stream</code>, <code>--legacy</code>)</td></tr>
+<tr><td><code>pretorin agent doctor</code></td><td>Validate Codex runtime setup</td></tr>
+<tr><td><code>pretorin agent install</code></td><td>Download the pinned Codex binary</td></tr>
+<tr><td><code>pretorin agent version</code></td><td>Show pinned Codex version and install status</td></tr>
+<tr><td><code>pretorin agent skills</code></td><td>List available agent skills</td></tr>
+<tr><td><code>pretorin agent mcp-list</code></td><td>List configured MCP servers for the agent</td></tr>
+<tr><td><code>pretorin agent mcp-add &lt;name&gt; stdio &lt;cmd&gt;</code></td><td>Add an MCP server configuration (<code>--arg</code>)</td></tr>
+<tr><td><code>pretorin agent mcp-remove &lt;name&gt;</code></td><td>Remove an MCP server configuration</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="review-commands-1"><a class="header" href="#review-commands-1">Review Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin review run</code></td><td>Review code against a control (<code>--control-id</code>, <code>--framework-id</code>, <code>--path</code>, <code>--local</code>, <code>--output-dir</code>)</td></tr>
+<tr><td><code>pretorin review status</code></td><td>Check implementation status for a control (<code>--control-id</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="config-commands"><a class="header" href="#config-commands">Config Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin config list</code></td><td>List all configuration</td></tr>
+<tr><td><code>pretorin config get &lt;key&gt;</code></td><td>Get a config value</td></tr>
+<tr><td><code>pretorin config set &lt;key&gt; &lt;value&gt;</code></td><td>Set a config value</td></tr>
+<tr><td><code>pretorin config path</code></td><td>Show config file path</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="deprecated-commands"><a class="header" href="#deprecated-commands">Deprecated Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin harness init</code></td><td>Deprecated: initialize harness config</td></tr>
+<tr><td><code>pretorin harness doctor</code></td><td>Deprecated: validate harness setup</td></tr>
+<tr><td><code>pretorin harness run "&lt;task&gt;"</code></td><td>Deprecated: run task through harness backend</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="mcp-integration-overview"><a class="header" href="#mcp-integration-overview">MCP Integration Overview</a></h1>
+<p>The Pretorin CLI includes a built-in <a href="https://modelcontextprotocol.io">Model Context Protocol</a> (MCP) server that enables AI assistants to access compliance framework data directly during conversations.</p>
+<h2 id="why-mcp"><a class="header" href="#why-mcp">Why MCP?</a></h2>
+<p>The Model Context Protocol allows AI assistants to:</p>
+<ul>
+<li><strong>Access real-time data</strong> — Query the latest compliance frameworks, controls, and requirements</li>
+<li><strong>Understand context</strong> — Get detailed control guidance and related controls for better recommendations</li>
+<li><strong>Reduce hallucination</strong> — Work with authoritative compliance data instead of training knowledge</li>
+<li><strong>Streamline workflows</strong> — No need to copy-paste control requirements or switch between tools</li>
+</ul>
+<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
+<p>The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with <code>pretorin mcp-serve</code>, your AI tool connects and gains access to 23 compliance tools.</p>
+<pre><code>┌──────────────┐     stdio      ┌──────────────┐     HTTPS     ┌──────────────┐
+│   AI Agent   │◄──────────────►│   Pretorin   │◄─────────────►│   Pretorin   │
+│ (Claude,     │   JSON-RPC    │   MCP Server  │              │   Platform   │
+│  Cursor,     │               │               │              │              │
+│  Codex)      │               │               │              │              │
+└──────────────┘               └──────────────┘              └──────────────┘
+</code></pre>
+<h2 id="scope"><a class="header" href="#scope">Scope</a></h2>
+<p>Scoped compliance execution tools on the MCP server run inside exactly one <code>system + framework</code> pair at a time. Set the active scope with <code>pretorin context set</code>, or pass both values explicitly. If a request spans multiple frameworks or systems, split it into separate runs.</p>
+<h2 id="tool-categories"><a class="header" href="#tool-categories">Tool Categories</a></h2>
+<p>The 23 MCP tools are organized into categories:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Category</th><th>Tools</th><th>Access</th></tr>
+</thead>
+<tbody>
+<tr><td>Framework &amp; Control Reference</td><td>7</td><td>Read-only, all users</td></tr>
+<tr><td>Systems</td><td>3</td><td>Read-only</td></tr>
+<tr><td>Evidence Management</td><td>4</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Implementation Context</td><td>6</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Compliance Updates</td><td>3</td><td>Write, requires beta</td></tr>
+</tbody>
+</table>
+</div>
+<p>See <a href="#mcp-tool-reference">Tool Reference</a> for the complete list.</p>
+<h2 id="quick-setup"><a class="header" href="#quick-setup">Quick Setup</a></h2>
+<pre><code class="language-bash"># 1. Install
+uv tool install pretorin
+
+# 2. Authenticate
+pretorin login
+
+# 3. Add to your AI tool (example: Claude Code)
+claude mcp add --transport stdio pretorin -- pretorin mcp-serve
+</code></pre>
+<p>See <a href="#mcp-setup-guides">Setup Guides</a> for other AI tools.</p>
+<h2 id="example-conversations"><a class="header" href="#example-conversations">Example Conversations</a></h2>
+<h3 id="getting-started-with-a-framework"><a class="header" href="#getting-started-with-a-framework">Getting Started with a Framework</a></h3>
+<blockquote>
+<p><strong>You:</strong> What compliance frameworks are available for government systems?</p>
+<p><strong>Claude:</strong> <em>Uses pretorin_list_frameworks</em> — I can see several frameworks available including NIST 800-53 Rev 5, NIST 800-171, and FedRAMP at various impact levels…</p>
+</blockquote>
+<h3 id="understanding-a-control"><a class="header" href="#understanding-a-control">Understanding a Control</a></h3>
+<blockquote>
+<p><strong>You:</strong> I need to implement Account Management for our FedRAMP Moderate system. What does it require?</p>
+<p><strong>Claude:</strong> <em>Uses pretorin_get_control and pretorin_get_control_references</em> — Account Management requires organizations to manage system accounts including identifying account types, establishing conditions for membership, and specifying authorized users…</p>
+</blockquote>
+<h3 id="control-family-overview"><a class="header" href="#control-family-overview">Control Family Overview</a></h3>
+<blockquote>
+<p><strong>You:</strong> Give me an overview of the Audit controls in NIST 800-53</p>
+<p><strong>Claude:</strong> <em>Uses pretorin_list_controls with family filter</em> — The Audit and Accountability family contains controls for audit events, content, storage, review, and reporting…</p>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="mcp-setup-guides"><a class="header" href="#mcp-setup-guides">MCP Setup Guides</a></h1>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Install and authenticate the Pretorin CLI:</p>
+<pre><code class="language-bash">uv tool install pretorin
+pretorin login
+</code></pre>
+<h2 id="claude-code"><a class="header" href="#claude-code">Claude Code</a></h2>
+<p><strong>Quick setup</strong> — run a single command:</p>
+<pre><code class="language-bash">claude mcp add --transport stdio pretorin -- pretorin mcp-serve
+</code></pre>
+<p>This registers the server for your current project. To make it available across all your projects, add <code>--scope user</code>.</p>
+<p><strong>Team setup</strong> — add a <code>.mcp.json</code> file to your project root so every team member gets the server automatically:</p>
+<pre><code class="language-json">{
+  "mcpServers": {
+    "pretorin": {
+      "type": "stdio",
+      "command": "pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+</code></pre>
+<p>Claude Code detects the file automatically.</p>
+<h2 id="claude-desktop"><a class="header" href="#claude-desktop">Claude Desktop</a></h2>
+<p>Add to your Claude Desktop configuration file:</p>
+<ul>
+<li><strong>macOS</strong>: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code></li>
+<li><strong>Windows</strong>: <code>%APPDATA%\Claude\claude_desktop_config.json</code></li>
+<li><strong>Linux</strong>: <code>~/.config/Claude/claude_desktop_config.json</code></li>
+</ul>
+<pre><code class="language-json">{
+  "mcpServers": {
+    "pretorin": {
+      "command": "pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+</code></pre>
+<p>Restart Claude Desktop after saving.</p>
+<h2 id="cursor"><a class="header" href="#cursor">Cursor</a></h2>
+<p>Add to <code>~/.cursor/mcp.json</code>:</p>
+<pre><code class="language-json">{
+  "mcpServers": {
+    "pretorin": {
+      "command": "pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+</code></pre>
+<p>Restart Cursor after saving.</p>
+<h2 id="openai-codex-cli"><a class="header" href="#openai-codex-cli">OpenAI Codex CLI</a></h2>
+<p>Add to <code>~/.codex/config.toml</code>:</p>
+<pre><code class="language-toml">[mcp_servers.pretorin]
+command = "pretorin"
+args = ["mcp-serve"]
+</code></pre>
+<p>If you installed Pretorin with <code>uv tool install</code> or <code>pipx</code>, prefer pinning the absolute path from <code>command -v pretorin</code> to avoid PATH drift between shells and GUI apps.</p>
+<h2 id="windsurf"><a class="header" href="#windsurf">Windsurf</a></h2>
+<p>Add to <code>~/.codeium/windsurf/mcp_config.json</code>:</p>
+<pre><code class="language-json">{
+  "mcpServers": {
+    "pretorin": {
+      "command": "pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+</code></pre>
+<p>Restart Windsurf after saving.</p>
+<h2 id="other-mcp-clients"><a class="header" href="#other-mcp-clients">Other MCP Clients</a></h2>
+<p>The Pretorin MCP server follows the standard Model Context Protocol and works with any MCP-compatible client. The server communicates via stdio.</p>
+<p>To test the server manually:</p>
+<pre><code class="language-bash">pretorin mcp-serve
+</code></pre>
+<p>The server accepts JSON-RPC messages on stdin and responds on stdout.</p>
+<h2 id="path-considerations"><a class="header" href="#path-considerations">PATH Considerations</a></h2>
+<p>If your AI tool can’t find the <code>pretorin</code> command, use the full path:</p>
+<pre><code class="language-bash"># Find the full path
+command -v pretorin
+</code></pre>
+<p>Then use that path in your configuration:</p>
+<pre><code class="language-json">{
+  "mcpServers": {
+    "pretorin": {
+      "command": "/home/user/.local/bin/pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+</code></pre>
+<p>This is especially important for <code>uv tool</code> and <code>pipx</code> installations where the binary may not be on the PATH available to GUI applications.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="mcp-tool-reference"><a class="header" href="#mcp-tool-reference">MCP Tool Reference</a></h1>
+<p>The MCP server provides 23 tools organized by category.</p>
+<h2 id="framework--control-reference"><a class="header" href="#framework--control-reference">Framework &amp; Control Reference</a></h2>
+<p>These tools are read-only and available to all authenticated users.</p>
+<h3 id="pretorin_list_frameworks"><a class="header" href="#pretorin_list_frameworks">pretorin_list_frameworks</a></h3>
+<p>List all available compliance frameworks.</p>
+<p><strong>Parameters:</strong> None</p>
+<p><strong>Returns:</strong> List of frameworks with ID, title, version, tier, and control counts.</p>
+<hr>
+<h3 id="pretorin_get_framework"><a class="header" href="#pretorin_get_framework">pretorin_get_framework</a></h3>
+<p>Get detailed metadata about a specific framework including AI context (purpose, target audience, regulatory context).</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>framework_id</code> (required) — e.g., <code>nist-800-53-r5</code>, <code>fedramp-moderate</code></li>
+</ul>
+<p><strong>Returns:</strong> Framework details including description, version, OSCAL version, and dates.</p>
+<hr>
+<h3 id="pretorin_list_control_families"><a class="header" href="#pretorin_list_control_families">pretorin_list_control_families</a></h3>
+<p>List control families for a framework with AI context (domain summary, risk context, implementation priority).</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> List of control families with ID, title, class, and control count.</p>
+<hr>
+<h3 id="pretorin_list_controls"><a class="header" href="#pretorin_list_controls">pretorin_list_controls</a></h3>
+<p>List controls for a framework, optionally filtered by family.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>framework_id</code> (required)</li>
+<li><code>family_id</code> (optional) — Family IDs are slugs like <code>access-control</code>, not short codes. CMMC families include a level suffix (e.g., <code>access-control-level-2</code>).</li>
+</ul>
+<p><strong>Returns:</strong> List of controls with ID, title, and family.</p>
+<hr>
+<h3 id="pretorin_get_control"><a class="header" href="#pretorin_get_control">pretorin_get_control</a></h3>
+<p>Get detailed control information including AI guidance (summary, control intent, evidence expectations, implementation considerations, common failures, complexity).</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>framework_id</code> (required)</li>
+<li><code>control_id</code> (required) — NIST/FedRAMP: zero-padded (<code>ac-01</code>). CMMC: dotted (<code>AC.L2-3.1.1</code>).</li>
+</ul>
+<p><strong>Returns:</strong> Control details including parameters, parts, and enhancement count.</p>
+<hr>
+<h3 id="pretorin_get_control_references"><a class="header" href="#pretorin_get_control_references">pretorin_get_control_references</a></h3>
+<p>Get reference information including statement, guidance, objectives, and related controls.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>framework_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Statement, guidance, objectives, parameters, and related controls.</p>
+<hr>
+<h3 id="pretorin_get_document_requirements"><a class="header" href="#pretorin_get_document_requirements">pretorin_get_document_requirements</a></h3>
+<p>Get document requirements for a framework.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> List of explicit and implicit document requirements with control references.</p>
+<hr>
+<h2 id="systems"><a class="header" href="#systems">Systems</a></h2>
+<h3 id="pretorin_list_systems"><a class="header" href="#pretorin_list_systems">pretorin_list_systems</a></h3>
+<p>List systems in the current organization.</p>
+<p><strong>Parameters:</strong> None</p>
+<p><strong>Returns:</strong> System IDs, names, and summary metadata.</p>
+<hr>
+<h3 id="pretorin_get_system"><a class="header" href="#pretorin_get_system">pretorin_get_system</a></h3>
+<p>Get system metadata including attached frameworks and security impact level.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required) — System ID or name</li>
+</ul>
+<p><strong>Returns:</strong> System metadata.</p>
+<hr>
+<h3 id="pretorin_get_compliance_status"><a class="header" href="#pretorin_get_compliance_status">pretorin_get_compliance_status</a></h3>
+<p>Get framework progress and implementation posture for a system.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Framework status summaries and progress metrics.</p>
+<hr>
+<h2 id="evidence-management"><a class="header" href="#evidence-management">Evidence Management</a></h2>
+<h3 id="pretorin_search_evidence"><a class="header" href="#pretorin_search_evidence">pretorin_search_evidence</a></h3>
+<p>Search current evidence items.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (optional) — System context</li>
+<li><code>control_id</code> (optional) — Filter by control</li>
+<li><code>framework_id</code> (optional) — Filter by framework</li>
+</ul>
+<p><strong>Returns:</strong> Matching evidence items.</p>
+<hr>
+<h3 id="pretorin_create_evidence"><a class="header" href="#pretorin_create_evidence">pretorin_create_evidence</a></h3>
+<p>Upsert evidence on the platform (find-or-create by default). If <code>dedupe</code> is true, exact matching evidence in the active system/framework scope is reused; otherwise a new record is created.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>name</code> (required)</li>
+<li><code>description</code> (required) — Must be auditor-ready markdown (no headings, at least one rich element, no images)</li>
+<li><code>evidence_type</code> (optional) — Default: <code>policy_document</code></li>
+<li><code>control_id</code> (optional)</li>
+<li><code>framework_id</code> (optional)</li>
+<li><code>dedupe</code> (optional) — Default: <code>true</code></li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><code>evidence_id</code></li>
+<li><code>created</code> — true if new, false if reused</li>
+<li><code>linked</code> — whether control/system link succeeded</li>
+<li><code>match_basis</code> — <code>exact_name_desc_type_control_framework</code> or <code>none</code></li>
+</ul>
+<hr>
+<h3 id="pretorin_link_evidence"><a class="header" href="#pretorin_link_evidence">pretorin_link_evidence</a></h3>
+<p>Link an existing evidence item to a control.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>evidence_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> Link confirmation.</p>
+<hr>
+<h3 id="pretorin_get_narrative"><a class="header" href="#pretorin_get_narrative">pretorin_get_narrative</a></h3>
+<p>Get the current narrative record for a control.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Narrative text, status, and AI confidence metadata.</p>
+<hr>
+<h2 id="implementation-context"><a class="header" href="#implementation-context">Implementation Context</a></h2>
+<h3 id="pretorin_get_control_context"><a class="header" href="#pretorin_get_control_context">pretorin_get_control_context</a></h3>
+<p>Get rich context for a control including AI guidance, statement, objectives, scope status, and current implementation details.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Combined control metadata and implementation details.</p>
+<hr>
+<h3 id="pretorin_get_scope"><a class="header" href="#pretorin_get_scope">pretorin_get_scope</a></h3>
+<p>Get system scope and policy information including excluded controls and Q&amp;A responses.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Scope narrative, excluded controls, Q&amp;A responses, and scope status.</p>
+<hr>
+<h3 id="pretorin_get_control_implementation"><a class="header" href="#pretorin_get_control_implementation">pretorin_get_control_implementation</a></h3>
+<p>Get implementation details for a control in a system.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Current status, narrative, evidence count, and notes metadata.</p>
+<hr>
+<h3 id="pretorin_get_control_notes"><a class="header" href="#pretorin_get_control_notes">pretorin_get_control_notes</a></h3>
+<p>Get notes for a control implementation.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> Note list with <code>total</code> count.</p>
+<hr>
+<h3 id="pretorin_update_narrative"><a class="header" href="#pretorin_update_narrative">pretorin_update_narrative</a></h3>
+<p>Push a narrative text update for a control implementation.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>narrative</code> (required) — Must be auditor-ready markdown (no headings, 2+ rich elements, 1+ structural element, no images)</li>
+<li><code>is_ai_generated</code> (optional) — Default: <code>false</code></li>
+</ul>
+<p><strong>Returns:</strong> Update confirmation.</p>
+<hr>
+<h3 id="pretorin_add_control_note"><a class="header" href="#pretorin_add_control_note">pretorin_add_control_note</a></h3>
+<p>Add a note for unresolved gaps or manual follow-up actions.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>content</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> The created note record.</p>
+<hr>
+<h2 id="compliance-updates"><a class="header" href="#compliance-updates">Compliance Updates</a></h2>
+<h3 id="pretorin_update_control_status"><a class="header" href="#pretorin_update_control_status">pretorin_update_control_status</a></h3>
+<p>Update the implementation status for a control.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>status</code> (required)</li>
+<li><code>framework_id</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> Status update confirmation.</p>
+<hr>
+<h3 id="pretorin_push_monitoring_event"><a class="header" href="#pretorin_push_monitoring_event">pretorin_push_monitoring_event</a></h3>
+<p>Create a monitoring event for a system.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>title</code> (required)</li>
+<li><code>severity</code> (optional) — <code>critical</code>, <code>high</code>, <code>medium</code>, <code>low</code>, <code>info</code></li>
+<li><code>event_type</code> (optional) — <code>security_scan</code>, <code>configuration_change</code>, <code>access_review</code>, <code>compliance_check</code></li>
+<li><code>control_id</code> (optional)</li>
+<li><code>description</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> The created monitoring event.</p>
+<hr>
+<h3 id="pretorin_generate_control_artifacts"><a class="header" href="#pretorin_generate_control_artifacts">pretorin_generate_control_artifacts</a></h3>
+<p>Generate read-only AI drafts for a control narrative and evidence-gap assessment.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>working_directory</code> (optional) — Local workspace path for code-aware drafting</li>
+<li><code>model</code> (optional) — Model override</li>
+</ul>
+<p><strong>Returns:</strong> Draft narrative text plus evidence-gap analysis. Does not write to the platform.</p>
+<p>Use <code>pretorin_update_narrative</code>, <code>pretorin_create_evidence</code>, and <code>pretorin_add_control_note</code> to persist approved changes.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="mcp-resources"><a class="header" href="#mcp-resources">MCP Resources</a></h1>
+<p>The MCP server exposes read-only resources for analysis guidance.</p>
+<h2 id="available-resources"><a class="header" href="#available-resources">Available Resources</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Resource URI</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>analysis://schema</code></td><td>JSON schema for compliance artifacts</td></tr>
+<tr><td><code>analysis://guide/{framework_id}</code></td><td>Analysis guide for a specific framework</td></tr>
+<tr><td><code>analysis://control/{framework_id}/{control_id}</code></td><td>Analysis guidance for a specific control within one framework scope</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
+<p>Access these resources via <code>ReadMcpResourceTool</code> with <code>server: "pretorin"</code> in your MCP client.</p>
+<h3 id="analysis-schema"><a class="header" href="#analysis-schema">Analysis Schema</a></h3>
+<p><code>analysis://schema</code></p>
+<p>Returns the JSON schema for structured compliance artifacts. Use this when generating artifact JSON to ensure correct structure. See <a href="#artifact-schema-reference">Artifact Schema</a> for documentation.</p>
+<h3 id="framework-analysis-guide"><a class="header" href="#framework-analysis-guide">Framework Analysis Guide</a></h3>
+<p><code>analysis://guide/{framework_id}</code></p>
+<p>Available framework guides:</p>
+<ul>
+<li><code>analysis://guide/fedramp-moderate</code></li>
+<li><code>analysis://guide/nist-800-53-r5</code></li>
+<li><code>analysis://guide/nist-800-171-r3</code></li>
+</ul>
+<p>Returns framework-specific analysis guidance including purpose, target audience, scope, and assessment methodology.</p>
+<h3 id="control-analysis-guidance"><a class="header" href="#control-analysis-guidance">Control Analysis Guidance</a></h3>
+<p><code>analysis://control/{framework_id}/{control_id}</code></p>
+<p>Example: <code>analysis://control/fedramp-moderate/ac-02</code></p>
+<p>Returns control-specific analysis guidance including search patterns, evidence examples, and assessment criteria for one framework scope.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="mcp-troubleshooting"><a class="header" href="#mcp-troubleshooting">MCP Troubleshooting</a></h1>
+<h2 id="not-authenticated-error"><a class="header" href="#not-authenticated-error">“Not authenticated” Error</a></h2>
+<p>Ensure you’ve logged in:</p>
+<pre><code class="language-bash">pretorin login
+pretorin whoami  # Verify authentication
+</code></pre>
+<h2 id="mcp-server-not-found"><a class="header" href="#mcp-server-not-found">MCP Server Not Found</a></h2>
+<ol>
+<li>
+<p>Verify pretorin is installed and in your PATH:</p>
+<pre><code class="language-bash">which pretorin
+pretorin --version
+</code></pre>
+</li>
+<li>
+<p>Try using the full path in your configuration:</p>
+<pre><code class="language-json">{
+  "mcpServers": {
+    "pretorin": {
+      "command": "/path/to/pretorin",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+</code></pre>
+</li>
+<li>
+<p>For <code>uv tool</code> or <code>pipx</code> installations, find the path:</p>
+<pre><code class="language-bash">command -v pretorin
+</code></pre>
+</li>
+</ol>
+<h2 id="server-crashes-or-hangs"><a class="header" href="#server-crashes-or-hangs">Server Crashes or Hangs</a></h2>
+<p>Check the MCP server logs:</p>
+<pre><code class="language-bash">pretorin mcp-serve 2&gt;&amp;1 | tee mcp-debug.log
+</code></pre>
+<p>Ensure your API key is valid:</p>
+<pre><code class="language-bash">pretorin whoami
+</code></pre>
+<h2 id="framework-or-control-not-found"><a class="header" href="#framework-or-control-not-found">Framework or Control Not Found</a></h2>
+<ul>
+<li>Verify the framework ID exists: <code>pretorin frameworks list</code></li>
+<li>Verify the control ID exists: <code>pretorin frameworks controls &lt;framework_id&gt;</code></li>
+<li>Check <a href="#control-id-formats">Control ID Formats</a> for correct formatting</li>
+</ul>
+<h2 id="common-id-mistakes"><a class="header" href="#common-id-mistakes">Common ID Mistakes</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Error</th><th>Fix</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ac-1</code> not found</td><td>Use zero-padded: <code>ac-01</code></td></tr>
+<tr><td><code>ac</code> family not found</td><td>Use slug: <code>access-control</code></td></tr>
+<tr><td><code>AC.l2-3.1.1</code> not found</td><td>CMMC is case-sensitive: <code>AC.L2-3.1.1</code></td></tr>
+<tr><td><code>3.1.1</code> control not found</td><td>800-171 needs leading zeros: <code>03.01.01</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="no-systems-found"><a class="header" href="#no-systems-found">No Systems Found</a></h2>
+<p>If <code>pretorin_list_systems</code> returns no systems, you need a beta code to create one on the <a href="https://platform.pretorin.com">Pretorin platform</a>. Systems cannot be created through the CLI or MCP. <a href="https://pretorin.com/early-access/">Sign up for early access</a>.</p>
+<h2 id="rate-limiting"><a class="header" href="#rate-limiting">Rate Limiting</a></h2>
+<p>The API uses rate limiting. If you receive <code>429 Too Many Requests</code> errors, the client automatically retries with exponential backoff. For persistent issues, reduce request frequency.</p>
+<h2 id="support"><a class="header" href="#support">Support</a></h2>
+<ul>
+<li>Documentation: <a href="https://platform.pretorin.com/api/docs">platform.pretorin.com/api/docs</a></li>
+<li>Issues: <a href="https://github.com/pretorin-ai/pretorin-cli/issues">github.com/pretorin-ai/pretorin-cli/issues</a></li>
+<li>Platform: <a href="https://platform.pretorin.com">platform.pretorin.com</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="agent-overview"><a class="header" href="#agent-overview">Agent Overview</a></h1>
+<p>The <code>agent</code> command group runs autonomous compliance tasks using the Codex agent runtime. This is the <strong>Pretorin-hosted model mode</strong> — Pretorin manages the AI runtime and routes model calls through its <code>/v1</code> endpoints.</p>
+<p>If you already use another AI agent (Claude Code, Cursor, etc.), use the <strong>MCP mode</strong> instead (<code>pretorin mcp-serve</code>) and connect Pretorin tools to your existing agent.</p>
+<h2 id="running-a-compliance-task"><a class="header" href="#running-a-compliance-task">Running a Compliance Task</a></h2>
+<pre><code class="language-bash"># Free-form task
+pretorin agent run "Assess AC-02 implementation gaps for my system"
+
+# Use a predefined skill
+pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
+</code></pre>
+<h2 id="options"><a class="header" href="#options">Options</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--skill &lt;name&gt;</code></td><td>Use a predefined skill template</td></tr>
+<tr><td><code>--model &lt;model&gt;</code></td><td>Model override</td></tr>
+<tr><td><code>--base-url &lt;url&gt;</code></td><td>Custom model API endpoint</td></tr>
+<tr><td><code>--working-dir &lt;path&gt;</code></td><td>Working directory for code analysis</td></tr>
+<tr><td><code>--no-stream</code></td><td>Disable streaming output</td></tr>
+<tr><td><code>--legacy</code></td><td>Use legacy OpenAI Agents SDK (deprecated)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="hosted-model-setup"><a class="header" href="#hosted-model-setup">Hosted Model Setup</a></h2>
+<p>Use this setup when you want <code>pretorin agent run</code> to call Pretorin-hosted model endpoints.</p>
+<pre><code class="language-bash"># 1. Login with your Pretorin API key
+pretorin login
+
+# 2. Optional: custom/self-hosted Pretorin model endpoint
+pretorin config set model_api_base_url https://platform.pretorin.com/v1
+
+# 3. Validate runtime
+pretorin agent doctor
+pretorin agent install
+
+# 4. Run a task
+pretorin agent run "Assess AC-02 implementation gaps for my system"
+</code></pre>
+<h2 id="model-key-precedence"><a class="header" href="#model-key-precedence">Model Key Precedence</a></h2>
+<p>The agent runtime resolves model keys in this order:</p>
+<ol>
+<li><code>OPENAI_API_KEY</code> environment variable</li>
+<li><code>config.api_key</code> (from <code>pretorin login</code>)</li>
+<li><code>config.openai_api_key</code></li>
+</ol>
+<p>If <code>OPENAI_API_KEY</code> is set in your shell, it overrides the stored Pretorin login key.</p>
+<h2 id="custom-model-endpoints"><a class="header" href="#custom-model-endpoints">Custom Model Endpoints</a></h2>
+<p>The agent supports any OpenAI-spec LLM endpoint, including:</p>
+<ul>
+<li>Azure OpenAI</li>
+<li>vLLM</li>
+<li>LiteLLM</li>
+<li>Ollama</li>
+</ul>
+<p>Configure via <code>--base-url</code> flag or the <code>model_api_base_url</code> config key.</p>
+<h2 id="how-it-works-1"><a class="header" href="#how-it-works-1">How It Works</a></h2>
+<p>The agent runtime uses the Codex SDK with an isolated binary managed under <code>~/.pretorin/codex</code>. The agent:</p>
+<ol>
+<li>Downloads and pins a specific Codex binary version</li>
+<li>Runs in an isolated <code>CODEX_HOME</code> environment</li>
+<li>Automatically injects the Pretorin MCP server for compliance tool access</li>
+<li>Streams events and output in real-time (unless <code>--no-stream</code> is passed)</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="agent-skills"><a class="header" href="#agent-skills">Agent Skills</a></h1>
+<p>Skills are predefined task templates that guide the agent through specific compliance workflows.</p>
+<h2 id="available-skills"><a class="header" href="#available-skills">Available Skills</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Skill</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>gap-analysis</code></td><td>Assess codebase against framework controls, identify gaps, and prioritize remediation</td></tr>
+<tr><td><code>narrative-generation</code></td><td>Generate auditor-ready implementation narratives for controls</td></tr>
+<tr><td><code>evidence-collection</code></td><td>Collect and map evidence from codebase to controls</td></tr>
+<tr><td><code>security-review</code></td><td>Review codebase for security controls and compliance posture</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="using-skills"><a class="header" href="#using-skills">Using Skills</a></h2>
+<pre><code class="language-bash"># Gap analysis
+pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
+
+# Narrative generation
+pretorin agent run --skill narrative-generation "Generate narratives for all AC controls"
+
+# Evidence collection
+pretorin agent run --skill evidence-collection "Collect evidence for AC-02 in this repo"
+
+# Security review
+pretorin agent run --skill security-review "Review this codebase for AC-02 coverage"
+</code></pre>
+<h2 id="list-skills"><a class="header" href="#list-skills">List Skills</a></h2>
+<pre><code class="language-bash">pretorin agent skills
+</code></pre>
+<h2 id="skill-details"><a class="header" href="#skill-details">Skill Details</a></h2>
+<h3 id="gap-analysis"><a class="header" href="#gap-analysis">Gap Analysis</a></h3>
+<p>Systematically assesses a codebase against a framework’s controls. The agent:</p>
+<ol>
+<li>Scopes the assessment to relevant control families</li>
+<li>Prioritizes families with code evidence (Access Control, Audit, IA, SC, CM)</li>
+<li>Searches the codebase for evidence matching AI guidance expectations</li>
+<li>Assigns implementation status per control</li>
+<li>Produces a report with findings and priority remediation items</li>
+</ol>
+<p>See <a href="#gap-analysis-workflow">Gap Analysis Workflow</a> for the detailed methodology.</p>
+<h3 id="narrative-generation"><a class="header" href="#narrative-generation">Narrative Generation</a></h3>
+<p>Generates control implementation narratives that meet auditor-readiness requirements:</p>
+<ul>
+<li>No markdown headings</li>
+<li>At least two rich markdown elements (code blocks, tables, lists, links)</li>
+<li>At least one structural element (code block, table, or list)</li>
+<li>TODO placeholders for missing information</li>
+<li>Only documents observable facts (no hallucination)</li>
+</ul>
+<h3 id="evidence-collection"><a class="header" href="#evidence-collection">Evidence Collection</a></h3>
+<p>Searches the codebase for evidence that maps to specific controls:</p>
+<ul>
+<li>Identifies relevant files and code patterns</li>
+<li>Creates evidence items with auditor-ready descriptions</li>
+<li>Links evidence to controls via the platform</li>
+<li>Flags gaps where evidence is missing</li>
+</ul>
+<h3 id="security-review"><a class="header" href="#security-review">Security Review</a></h3>
+<p>Reviews the codebase against specific controls:</p>
+<ul>
+<li>Analyzes code for control coverage</li>
+<li>Identifies implementation strengths and weaknesses</li>
+<li>Documents findings with file paths and line numbers</li>
+<li>Produces remediation recommendations</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="agent-runtime-management"><a class="header" href="#agent-runtime-management">Agent Runtime Management</a></h1>
+<p>The agent runtime uses a managed Codex binary with isolated configuration.</p>
+<h2 id="check-runtime-health"><a class="header" href="#check-runtime-health">Check Runtime Health</a></h2>
+<pre><code class="language-bash">pretorin agent doctor
+</code></pre>
+<p>Validates that the Codex runtime is properly installed and configured.</p>
+<h2 id="install-codex-binary"><a class="header" href="#install-codex-binary">Install Codex Binary</a></h2>
+<pre><code class="language-bash">pretorin agent install
+</code></pre>
+<p>Downloads the pinned Codex binary to <code>~/.pretorin/bin/</code>. The version is pinned by the CLI to ensure compatibility.</p>
+<h2 id="check-version"><a class="header" href="#check-version">Check Version</a></h2>
+<pre><code class="language-bash">pretorin agent version
+</code></pre>
+<p>Shows the pinned Codex version and whether it’s currently installed.</p>
+<h2 id="manage-mcp-servers"><a class="header" href="#manage-mcp-servers">Manage MCP Servers</a></h2>
+<p>The agent can connect to additional MCP servers beyond Pretorin. This lets the agent access other tools (filesystem, databases, etc.) during compliance tasks.</p>
+<h3 id="list-configured-servers"><a class="header" href="#list-configured-servers">List Configured Servers</a></h3>
+<pre><code class="language-bash">pretorin agent mcp-list
+</code></pre>
+<h3 id="add-a-server"><a class="header" href="#add-a-server">Add a Server</a></h3>
+<pre><code class="language-bash">pretorin agent mcp-add &lt;name&gt; stdio &lt;command&gt; --arg &lt;arg1&gt; --arg &lt;arg2&gt;
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-bash">pretorin agent mcp-add filesystem stdio node --arg /path/to/fs-server
+</code></pre>
+<h3 id="remove-a-server"><a class="header" href="#remove-a-server">Remove a Server</a></h3>
+<pre><code class="language-bash">pretorin agent mcp-remove &lt;name&gt;
+</code></pre>
+<h2 id="runtime-architecture"><a class="header" href="#runtime-architecture">Runtime Architecture</a></h2>
+<p>The Codex runtime is fully isolated:</p>
+<ul>
+<li><strong>Binary location:</strong> <code>~/.pretorin/bin/</code></li>
+<li><strong>Configuration:</strong> <code>~/.pretorin/codex/</code> (<code>CODEX_HOME</code>)</li>
+<li><strong>Version pinning:</strong> The CLI pins a specific Codex version for compatibility</li>
+<li><strong>MCP injection:</strong> Pretorin MCP server is automatically available to the agent</li>
+</ul>
+<p>This isolation ensures the agent runtime never interferes with any user-installed Codex instances.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="supported-frameworks"><a class="header" href="#supported-frameworks">Supported Frameworks</a></h1>
+<p>Pretorin provides access to 8 compliance framework profiles spanning federal, contractor, and defense industrial base requirements.</p>
+<h2 id="framework-overview"><a class="header" href="#framework-overview">Framework Overview</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>ID</th><th>Title</th><th>Version</th><th>Families</th><th>Controls</th></tr>
+</thead>
+<tbody>
+<tr><td><code>nist-800-53-r5</code></td><td>NIST SP 800-53 Rev 5</td><td>5.2.0</td><td>20</td><td>324</td></tr>
+<tr><td><code>nist-800-171-r3</code></td><td>NIST SP 800-171 Revision 3</td><td>1.0.0</td><td>17</td><td>130</td></tr>
+<tr><td><code>fedramp-low</code></td><td>FedRAMP Rev 5 Low Baseline</td><td>fedramp2.1.0</td><td>18</td><td>135</td></tr>
+<tr><td><code>fedramp-moderate</code></td><td>FedRAMP Rev 5 Moderate Baseline</td><td>fedramp2.1.0</td><td>18</td><td>181</td></tr>
+<tr><td><code>fedramp-high</code></td><td>FedRAMP Rev 5 High Baseline</td><td>fedramp2.1.0</td><td>18</td><td>191</td></tr>
+<tr><td><code>cmmc-l1</code></td><td>CMMC 2.0 Level 1 (Foundational)</td><td>2.0</td><td>6</td><td>17</td></tr>
+<tr><td><code>cmmc-l2</code></td><td>CMMC 2.0 Level 2 (Advanced)</td><td>2.0</td><td>14</td><td>110</td></tr>
+<tr><td><code>cmmc-l3</code></td><td>CMMC 2.0 Level 3 (Expert)</td><td>2.0</td><td>10</td><td>24</td></tr>
+</tbody>
+</table>
+</div>
+<p>Always call <code>pretorin frameworks list</code> to get the current list from the API.</p>
+<h2 id="framework-relationships"><a class="header" href="#framework-relationships">Framework Relationships</a></h2>
+<p>Understanding how frameworks relate helps with cross-compliance:</p>
+<pre><code>NIST 800-53 Rev 5 (full catalog, 324 controls)
+├── FedRAMP Low/Moderate/High (800-53 subset + cloud requirements)
+├── NIST 800-171 Rev 3 (800-53 subset for CUI in non-federal systems)
+│   └── CMMC Level 2 (maps to 800-171 requirements)
+└── CMMC Level 3 (advanced controls beyond 800-171)
+</code></pre>
+<p>If an organization is already compliant with a parent framework, many child framework controls are already satisfied.</p>
+<h2 id="nist-sp-800-53-rev-5"><a class="header" href="#nist-sp-800-53-rev-5">NIST SP 800-53 Rev 5</a></h2>
+<p>The foundational catalog for federal information systems. Contains 324 controls across 20 families covering all aspects of information security. All other US government frameworks derive from it.</p>
+<p><strong>Target audience:</strong> Federal agencies</p>
+<h2 id="nist-sp-800-171-rev-3"><a class="header" href="#nist-sp-800-171-rev-3">NIST SP 800-171 Rev 3</a></h2>
+<p>Protects Controlled Unclassified Information (CUI) in non-federal systems. A focused subset of 800-53 with 130 requirements.</p>
+<p><strong>Target audience:</strong> Federal contractors, universities, and other non-federal entities handling CUI under DFARS 252.204-7012 or similar requirements.</p>
+<h2 id="fedramp"><a class="header" href="#fedramp">FedRAMP</a></h2>
+<p>Based on NIST 800-53 with additional cloud-specific requirements. Required for cloud services used by federal agencies.</p>
+<p><strong>Impact levels:</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Level</th><th>ID</th><th>Controls</th><th>Use When</th></tr>
+</thead>
+<tbody>
+<tr><td>Low</td><td><code>fedramp-low</code></td><td>135</td><td>Public, non-sensitive data. Limited adverse effect from loss.</td></tr>
+<tr><td>Moderate</td><td><code>fedramp-moderate</code></td><td>181</td><td>CUI, PII, sensitive data. Serious adverse effect from loss. Most common level.</td></tr>
+<tr><td>High</td><td><code>fedramp-high</code></td><td>191</td><td>Life-safety, financial, law enforcement data. Severe/catastrophic effect from loss.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Target audience:</strong> Cloud service providers to government</p>
+<h2 id="cmmc-20"><a class="header" href="#cmmc-20">CMMC 2.0</a></h2>
+<p>Cybersecurity Maturity Model Certification for defense contractors. Required by DoD contracts.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Level</th><th>ID</th><th>Controls</th><th>Use When</th></tr>
+</thead>
+<tbody>
+<tr><td>Level 1</td><td><code>cmmc-l1</code></td><td>17</td><td>Handles only Federal Contract Information (FCI). Basic cyber hygiene.</td></tr>
+<tr><td>Level 2</td><td><code>cmmc-l2</code></td><td>110</td><td>Handles CUI. Aligns with NIST 800-171. Most defense contractors need this.</td></tr>
+<tr><td>Level 3</td><td><code>cmmc-l3</code></td><td>24</td><td>Highest sensitivity CUI. Advanced practices <strong>on top of</strong> Level 2.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Target audience:</strong> Defense industrial base organizations</p>
+<blockquote>
+<p><strong>Note:</strong> CMMC Level 3 controls are in addition to Level 2. An organization at Level 3 must also satisfy all Level 2 controls.</p>
+</blockquote>
+<p>See <a href="#framework-selection-guide">Framework Selection Guide</a> for help choosing the right framework.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="control-id-formats"><a class="header" href="#control-id-formats">Control ID Formats</a></h1>
+<p>Correct ID formatting is critical. The Pretorin API returns errors on malformed IDs. When unsure, discover IDs first with <code>pretorin frameworks families &lt;id&gt;</code> or <code>pretorin frameworks controls &lt;id&gt;</code>.</p>
+<h2 id="nist-800-53-rev-5--fedramp"><a class="header" href="#nist-800-53-rev-5--fedramp">NIST 800-53 Rev 5 / FedRAMP</a></h2>
+<p><strong>Framework IDs:</strong> <code>nist-800-53-r5</code>, <code>fedramp-low</code>, <code>fedramp-moderate</code>, <code>fedramp-high</code></p>
+<h3 id="family-ids"><a class="header" href="#family-ids">Family IDs</a></h3>
+<p>Family IDs are <strong>lowercase slugs</strong>, not short codes:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Correct</th><th>Incorrect</th></tr>
+</thead>
+<tbody>
+<tr><td><code>access-control</code></td><td><code>ac</code></td></tr>
+<tr><td><code>audit-and-accountability</code></td><td><code>au</code></td></tr>
+<tr><td><code>identification-and-authentication</code></td><td><code>ia</code></td></tr>
+<tr><td><code>system-and-communications-protection</code></td><td><code>sc</code></td></tr>
+<tr><td><code>configuration-management</code></td><td><code>cm</code></td></tr>
+<tr><td><code>incident-response</code></td><td><code>ir</code></td></tr>
+<tr><td><code>risk-assessment</code></td><td><code>ra</code></td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="control-ids"><a class="header" href="#control-ids">Control IDs</a></h3>
+<p>Control IDs are <strong>zero-padded</strong> with a hyphen:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Correct</th><th>Incorrect</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ac-01</code></td><td><code>ac-1</code>, <code>AC-1</code>, <code>ac1</code></td></tr>
+<tr><td><code>ac-02</code></td><td><code>ac-2</code>, <code>AC-2</code>, <code>ac2</code></td></tr>
+<tr><td><code>au-02</code></td><td><code>au-2</code>, <code>AU-2</code></td></tr>
+<tr><td><code>sc-07</code></td><td><code>sc-7</code>, <code>SC-7</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="cmmc-20-1"><a class="header" href="#cmmc-20-1">CMMC 2.0</a></h2>
+<p><strong>Framework IDs:</strong> <code>cmmc-l1</code>, <code>cmmc-l2</code>, <code>cmmc-l3</code></p>
+<h3 id="family-ids-1"><a class="header" href="#family-ids-1">Family IDs</a></h3>
+<p>CMMC family IDs include a <strong>level suffix</strong>:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Correct</th><th>Incorrect</th></tr>
+</thead>
+<tbody>
+<tr><td><code>access-control-level-1</code></td><td><code>access-control</code>, <code>ac</code></td></tr>
+<tr><td><code>access-control-level-2</code></td><td><code>access-control</code>, <code>ac-l2</code></td></tr>
+<tr><td><code>incident-response-level-2</code></td><td><code>incident-response</code>, <code>ir</code></td></tr>
+<tr><td><code>system-and-communications-protection-level-3</code></td><td><code>sc</code>, <code>sc-l3</code></td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="control-ids-1"><a class="header" href="#control-ids-1">Control IDs</a></h3>
+<p>CMMC control IDs use <strong>dotted notation with a level prefix</strong> and are <strong>case-sensitive</strong>:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Correct</th><th>Incorrect</th></tr>
+</thead>
+<tbody>
+<tr><td><code>AC.L2-3.1.1</code></td><td><code>ac-01</code>, <code>3.1.1</code></td></tr>
+<tr><td><code>SC.L3-3.13.2</code></td><td><code>sc-07</code>, <code>3.13.2</code></td></tr>
+<tr><td><code>AC.L1-3.1.22</code></td><td><code>ac.l1-3.1.22</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Use uppercase for the family prefix (e.g., <code>AC</code>, not <code>ac</code>).</p>
+<h2 id="nist-800-171-rev-3"><a class="header" href="#nist-800-171-rev-3">NIST 800-171 Rev 3</a></h2>
+<p><strong>Framework ID:</strong> <code>nist-800-171-r3</code></p>
+<h3 id="family-ids-2"><a class="header" href="#family-ids-2">Family IDs</a></h3>
+<p>Family IDs use the same <strong>lowercase slug</strong> convention as NIST 800-53:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Correct</th><th>Incorrect</th></tr>
+</thead>
+<tbody>
+<tr><td><code>access-control</code></td><td><code>ac</code>, <code>3.1</code></td></tr>
+<tr><td><code>incident-response</code></td><td><code>ir</code>, <code>3.6</code></td></tr>
+<tr><td><code>identification-and-authentication</code></td><td><code>ia</code>, <code>3.5</code></td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="control-ids-2"><a class="header" href="#control-ids-2">Control IDs</a></h3>
+<p>Control IDs use <strong>dotted notation with leading zeros</strong>:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Correct</th><th>Incorrect</th></tr>
+</thead>
+<tbody>
+<tr><td><code>03.01.01</code></td><td><code>3.1.1</code>, <code>ac-01</code></td></tr>
+<tr><td><code>03.01.02</code></td><td><code>3.1.2</code>, <code>ac-02</code></td></tr>
+<tr><td><code>03.13.01</code></td><td><code>3.13.1</code>, <code>sc-01</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="discovery-workflow"><a class="header" href="#discovery-workflow">Discovery Workflow</a></h2>
+<p>When a user provides an informal control reference (e.g., “AC-2” or “access control”):</p>
+<ol>
+<li>Call <code>pretorin frameworks families &lt;framework_id&gt;</code> to find the correct family slug</li>
+<li>Call <code>pretorin frameworks controls &lt;framework_id&gt; --family &lt;family_slug&gt;</code> to find the correct control ID</li>
+<li>Use the discovered ID in subsequent calls</li>
+</ol>
+<h2 id="quick-reference"><a class="header" href="#quick-reference">Quick Reference</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Framework</th><th>Family Format</th><th>Control Format</th><th>Example</th></tr>
+</thead>
+<tbody>
+<tr><td>NIST 800-53</td><td><code>access-control</code></td><td><code>ac-01</code></td><td><code>pretorin frameworks control nist-800-53-r5 ac-02</code></td></tr>
+<tr><td>FedRAMP</td><td><code>access-control</code></td><td><code>ac-01</code></td><td><code>pretorin frameworks control fedramp-moderate ac-02</code></td></tr>
+<tr><td>CMMC</td><td><code>access-control-level-2</code></td><td><code>AC.L2-3.1.1</code></td><td><code>pretorin frameworks control cmmc-l2 AC.L2-3.1.1</code></td></tr>
+<tr><td>800-171</td><td><code>access-control</code></td><td><code>03.01.01</code></td><td><code>pretorin frameworks control nist-800-171-r3 03.01.01</code></td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="framework-selection-guide"><a class="header" href="#framework-selection-guide">Framework Selection Guide</a></h1>
+<p>Use this decision tree to identify the right compliance framework for your situation.</p>
+<h2 id="decision-tree"><a class="header" href="#decision-tree">Decision Tree</a></h2>
+<h3 id="1-federal-agency-us-government"><a class="header" href="#1-federal-agency-us-government">1. Federal Agency (US Government)</a></h3>
+<p><strong>Use: NIST 800-53 Rev 5</strong> (<code>nist-800-53-r5</code>)</p>
+<p>The foundational catalog for federal information systems. All other US government frameworks derive from it. Contains 324 controls across 20 families. Use this when the organization IS a federal agency and needs the full control catalog.</p>
+<h3 id="2-federal-contractor-handling-cui"><a class="header" href="#2-federal-contractor-handling-cui">2. Federal Contractor Handling CUI</a></h3>
+<p><strong>Use: NIST 800-171 Rev 3</strong> (<code>nist-800-171-r3</code>)</p>
+<p>Protects Controlled Unclassified Information (CUI) in non-federal systems. A focused subset of 800-53 with 130 requirements. Use this when the organization is a contractor, university, or other non-federal entity that handles CUI under DFARS 252.204-7012 or similar requirements.</p>
+<h3 id="3-cloud-service-provider-to-government"><a class="header" href="#3-cloud-service-provider-to-government">3. Cloud Service Provider to Government</a></h3>
+<p><strong>Use: FedRAMP</strong> (<code>fedramp-low</code>, <code>fedramp-moderate</code>, <code>fedramp-high</code>)</p>
+<p>Based on NIST 800-53 with additional cloud-specific requirements. Required for cloud services used by federal agencies.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Level</th><th>ID</th><th>Controls</th><th>Use When</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Low</strong></td><td><code>fedramp-low</code></td><td>135</td><td>Public, non-sensitive data. Loss would have limited adverse effect.</td></tr>
+<tr><td><strong>Moderate</strong></td><td><code>fedramp-moderate</code></td><td>181</td><td>CUI, PII, sensitive but not critical data. Loss would have serious adverse effect. Most common level.</td></tr>
+<tr><td><strong>High</strong></td><td><code>fedramp-high</code></td><td>191</td><td>Life-safety, financial, law enforcement, or emergency services data. Loss would have severe or catastrophic effect.</td></tr>
+</tbody>
+</table>
+</div>
+<p>When unsure, <strong>FedRAMP Moderate</strong> is the most common starting point for cloud services handling government data.</p>
+<h3 id="4-defense-industrial-base-dib"><a class="header" href="#4-defense-industrial-base-dib">4. Defense Industrial Base (DIB)</a></h3>
+<p><strong>Use: CMMC</strong> (<code>cmmc-l1</code>, <code>cmmc-l2</code>, <code>cmmc-l3</code>)</p>
+<p>Cybersecurity Maturity Model Certification for defense contractors. Required by DoD contracts.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Level</th><th>ID</th><th>Controls</th><th>Use When</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Level 1</strong></td><td><code>cmmc-l1</code></td><td>17</td><td>Handles only Federal Contract Information (FCI). Basic cyber hygiene.</td></tr>
+<tr><td><strong>Level 2</strong></td><td><code>cmmc-l2</code></td><td>110</td><td>Handles CUI. Aligns with NIST 800-171. Most defense contractors need this.</td></tr>
+<tr><td><strong>Level 3</strong></td><td><code>cmmc-l3</code></td><td>24</td><td>Highest sensitivity CUI. Advanced/progressive practices on top of Level 2.</td></tr>
+</tbody>
+</table>
+</div>
+<p>Note: CMMC Level 3 controls are <strong>in addition to</strong> Level 2.</p>
+<h2 id="quick-reference-1"><a class="header" href="#quick-reference-1">Quick Reference</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Situation</th><th>Framework</th><th>ID</th></tr>
+</thead>
+<tbody>
+<tr><td>We’re a federal agency</td><td>NIST 800-53</td><td><code>nist-800-53-r5</code></td></tr>
+<tr><td>We handle CUI as a contractor</td><td>NIST 800-171</td><td><code>nist-800-171-r3</code></td></tr>
+<tr><td>We’re a cloud service for government</td><td>FedRAMP</td><td><code>fedramp-moderate</code></td></tr>
+<tr><td>We have a DoD contract</td><td>CMMC</td><td><code>cmmc-l2</code></td></tr>
+<tr><td>We need to handle both CUI and cloud</td><td>FedRAMP + 800-171</td><td>Start with <code>fedramp-moderate</code></td></tr>
+<tr><td>We’re not sure yet</td><td>Start with NIST 800-53</td><td><code>nist-800-53-r5</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="using-ai-context-for-selection"><a class="header" href="#using-ai-context-for-selection">Using AI Context for Selection</a></h2>
+<p>Call <code>pretorin_get_framework</code> (MCP) or <code>pretorin frameworks get &lt;id&gt;</code> (CLI) to get AI context including purpose, target audience, regulatory context, scope, and key concepts. This helps confirm whether a framework is the right fit.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="narrative--evidence-workflow"><a class="header" href="#narrative--evidence-workflow">Narrative &amp; Evidence Workflow</a></h1>
+<p>This is the core workflow for updating control implementations on the platform. Follow this sequence for any control update.</p>
+<h2 id="workflow-steps"><a class="header" href="#workflow-steps">Workflow Steps</a></h2>
+<h3 id="1-resolve-the-target"><a class="header" href="#1-resolve-the-target">1. Resolve the Target</a></h3>
+<p>Identify the <code>system_id</code>, <code>control_id</code>, and <code>framework_id</code> for your update. Set the active context:</p>
+<pre><code class="language-bash">pretorin context set --system "My Application" --framework fedramp-moderate
+</code></pre>
+<h3 id="2-read-current-state"><a class="header" href="#2-read-current-state">2. Read Current State</a></h3>
+<p>Before making changes, understand what’s already there:</p>
+<pre><code class="language-bash"># Get full control context (requirements + current implementation)
+# Via MCP: pretorin_get_control_context
+
+# Get current narrative
+pretorin narrative get ac-02 fedramp-moderate
+
+# Search existing evidence
+pretorin evidence search --control-id ac-02 --framework-id fedramp-moderate
+
+# List existing notes
+pretorin notes list ac-02 fedramp-moderate
+</code></pre>
+<h3 id="3-collect-observable-facts"><a class="header" href="#3-collect-observable-facts">3. Collect Observable Facts</a></h3>
+<p>Search your codebase and connected systems for evidence. Only document what is directly observable — never assume or fabricate implementation details.</p>
+<h3 id="4-draft-updates"><a class="header" href="#4-draft-updates">4. Draft Updates</a></h3>
+<p>Prepare three types of updates:</p>
+<p><strong>Narrative</strong> — How the control is implemented. Include TODO placeholders for unknowns:</p>
+<pre><code class="language-text">[[PRETORIN_TODO]]
+missing_item: SSO configuration details
+reason: Not observable from current workspace and connected MCP systems
+required_manual_action: Export IdP SAML configuration
+suggested_evidence_type: configuration
+[[/PRETORIN_TODO]]
+</code></pre>
+<p><strong>Evidence</strong> — Specific artifacts demonstrating implementation (config files, code, policies).</p>
+<p><strong>Gap Notes</strong> — Unresolved items requiring manual follow-up:</p>
+<pre><code class="language-text">Gap: Missing MFA enforcement evidence
+Observed: TOTP library imported in auth module
+Missing: MFA policy enforcement configuration
+Why missing: IdP admin console not accessible via codebase
+Manual next step: Screenshot MFA policy from Azure AD admin portal
+</code></pre>
+<h3 id="5-push-updates"><a class="header" href="#5-push-updates">5. Push Updates</a></h3>
+<pre><code class="language-bash"># Push narrative
+pretorin narrative push ac-02 fedramp-moderate "My Application" narrative-ac02.md
+
+# Upsert evidence (finds or creates, then links)
+pretorin evidence upsert ac-02 fedramp-moderate \
+  --name "RBAC Configuration" \
+  --description "Role mapping in IdP" \
+  --type configuration
+
+# Add gap notes
+pretorin notes add ac-02 fedramp-moderate \
+  --content "Gap: Missing MFA evidence..."
+</code></pre>
+<h2 id="read-only-draft-workflow"><a class="header" href="#read-only-draft-workflow">Read-Only Draft Workflow</a></h2>
+<p>When you want AI drafts before any platform writes:</p>
+<ol>
+<li>Resolve scope (system, control, framework)</li>
+<li>Read current state (context, narrative, evidence, notes)</li>
+<li>Generate drafts via <code>pretorin agent run --skill narrative-generation</code> or the MCP <code>pretorin_generate_control_artifacts</code> tool</li>
+<li>Review the draft — clearly separate candidate narrative, evidence gaps, and manual follow-up actions</li>
+<li>Only push to the platform after explicit approval</li>
+</ol>
+<h2 id="markdown-quality-rules"><a class="header" href="#markdown-quality-rules">Markdown Quality Rules</a></h2>
+<p>All narratives and evidence must pass markdown quality validation:</p>
+<h3 id="narratives"><a class="header" href="#narratives">Narratives</a></h3>
+<ul>
+<li>No markdown headings (<code>#</code>, <code>##</code>, etc.)</li>
+<li>At least 2 rich markdown elements (code blocks, tables, lists, links)</li>
+<li>At least 1 structural element (code block, table, or list)</li>
+<li>No markdown images</li>
+</ul>
+<h3 id="evidence"><a class="header" href="#evidence">Evidence</a></h3>
+<ul>
+<li>No markdown headings</li>
+<li>At least 1 rich markdown element</li>
+<li>No markdown images</li>
+</ul>
+<h2 id="evidence-deduplication"><a class="header" href="#evidence-deduplication">Evidence Deduplication</a></h2>
+<p><code>pretorin evidence upsert</code> and the MCP <code>pretorin_create_evidence</code> tool use find-or-create logic by default (<code>dedupe: true</code>):</p>
+<ol>
+<li>Search for an exact match on (name + description + type + control + framework) within the active system scope</li>
+<li>If found, reuse the existing evidence item</li>
+<li>If not found, create a new one</li>
+<li>Ensure the evidence is linked to the specified control</li>
+</ol>
+<p>The response indicates whether the evidence was <code>created</code> (new) or reused, along with the <code>match_basis</code>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="gap-analysis-workflow"><a class="header" href="#gap-analysis-workflow">Gap Analysis Workflow</a></h1>
+<p>A systematic approach to assessing a codebase against a compliance framework’s controls.</p>
+<h2 id="step-1-scope-the-assessment"><a class="header" href="#step-1-scope-the-assessment">Step 1: Scope the Assessment</a></h2>
+<p>Determine which framework and control families to assess.</p>
+<pre><code class="language-bash"># List frameworks if not specified
+pretorin frameworks list
+
+# List control families for the chosen framework
+pretorin frameworks families fedramp-moderate
+</code></pre>
+<p>Not all families will have code evidence. Prioritize based on evidence likelihood.</p>
+<h2 id="step-2-prioritize-control-families"><a class="header" href="#step-2-prioritize-control-families">Step 2: Prioritize Control Families</a></h2>
+<h3 id="high-priority-direct-code-evidence"><a class="header" href="#high-priority-direct-code-evidence">High Priority (Direct Code Evidence)</a></h3>
+<p>These families typically have strong evidence in source code:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Family</th><th>What to Search For</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Access Control (AC)</strong></td><td>Authentication systems, RBAC/ABAC, session management, user provisioning</td></tr>
+<tr><td><strong>Audit &amp; Accountability (AU)</strong></td><td>Logging frameworks, audit trails, log retention, structured logging</td></tr>
+<tr><td><strong>Identification &amp; Authentication (IA)</strong></td><td>Login flows, MFA, password hashing, credential storage, OAuth/SAML</td></tr>
+<tr><td><strong>System &amp; Communications Protection (SC)</strong></td><td>TLS config, encryption, network boundaries, CORS, API security</td></tr>
+<tr><td><strong>Configuration Management (CM)</strong></td><td>Config files, env handling, version pinning, baseline settings, IaC</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="medium-priority-mixed-codepolicy"><a class="header" href="#medium-priority-mixed-codepolicy">Medium Priority (Mixed Code/Policy)</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Family</th><th>What to Search For</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>System Acquisition (SA)</strong></td><td>Secure development practices, dependency management, SAST/DAST configs</td></tr>
+<tr><td><strong>System Integrity (SI)</strong></td><td>Input validation, error handling, malware protection configs</td></tr>
+<tr><td><strong>Assessment (CA)</strong></td><td>Security testing configs, vulnerability scanning, CI/CD security gates</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="lower-priority-mostly-policy"><a class="header" href="#lower-priority-mostly-policy">Lower Priority (Mostly Policy)</a></h3>
+<p>Primarily documentation-based, unlikely to have code evidence:</p>
+<ul>
+<li>Awareness &amp; Training (AT)</li>
+<li>Planning (PL)</li>
+<li>Personnel Security (PS)</li>
+<li>Physical Protection (PE)</li>
+<li>Program Management (PM)</li>
+</ul>
+<h2 id="step-3-collect-evidence"><a class="header" href="#step-3-collect-evidence">Step 3: Collect Evidence</a></h2>
+<p>For each high-priority family:</p>
+<ol>
+<li>
+<p>List controls filtered by family:</p>
+<pre><code class="language-bash">pretorin frameworks controls fedramp-moderate --family access-control
+</code></pre>
+</li>
+<li>
+<p>For each relevant control, get AI guidance:</p>
+<pre><code class="language-bash">pretorin frameworks control fedramp-moderate ac-02 --references
+</code></pre>
+<p>The <code>ai_guidance</code> field provides evidence expectations, implementation considerations, and common failures.</p>
+</li>
+<li>
+<p>Search the codebase using guidance-informed patterns:</p>
+</li>
+</ol>
+<p><strong>File patterns:</strong></p>
+<pre><code>**/auth/**          **/users/**         **/accounts/**
+**/logging/**       **/audit/**         **/security/**
+**/config/**        **/settings/**      **/crypto/**
+**/identity/**      **/iam/**           **/rbac/**
+**/middleware/**     **/terraform/**     **/k8s/**
+</code></pre>
+<p><strong>Keyword patterns:</strong></p>
+<pre><code>authenticate, authorize, permission, role, session
+log, audit, event, trace, record
+encrypt, tls, ssl, https, certificate
+config, setting, baseline, default
+password, credential, hash, mfa, token
+</code></pre>
+<ol start="4">
+<li>For each piece of evidence, note the file path, line numbers, and what it demonstrates.</li>
+</ol>
+<h2 id="step-4-assess-implementation-status"><a class="header" href="#step-4-assess-implementation-status">Step 4: Assess Implementation Status</a></h2>
+<p>For each control, assign a status:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Status</th><th>Criteria</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Implemented</strong></td><td>Full requirements met with clear code evidence</td></tr>
+<tr><td><strong>Partial</strong></td><td>Some requirements met, others missing or incomplete</td></tr>
+<tr><td><strong>Planned</strong></td><td>Architecture supports it but feature not built yet</td></tr>
+<tr><td><strong>Not Applicable</strong></td><td>Control doesn’t apply to this component</td></tr>
+<tr><td><strong>Gap</strong></td><td>Control requirements not addressed at all</td></tr>
+</tbody>
+</table>
+</div>
+<p>Use <code>ai_guidance.common_failures</code> to calibrate your assessment — if the codebase exhibits a known failure pattern, it’s likely a gap or partial implementation.</p>
+<h2 id="step-5-produce-the-report"><a class="header" href="#step-5-produce-the-report">Step 5: Produce the Report</a></h2>
+<p>Structure the gap analysis output as:</p>
+<h3 id="summary"><a class="header" href="#summary">Summary</a></h3>
+<ul>
+<li>Framework assessed and total controls in scope</li>
+<li>Counts by status (implemented, partial, planned, not applicable, gap)</li>
+<li>Overall compliance posture assessment</li>
+</ul>
+<h3 id="family-by-family-findings"><a class="header" href="#family-by-family-findings">Family-by-Family Findings</a></h3>
+<p>For each assessed family:</p>
+<ul>
+<li>Family name and total controls</li>
+<li>Status breakdown</li>
+<li>Key findings with evidence references</li>
+<li>Gaps with remediation recommendations</li>
+</ul>
+<h3 id="priority-remediation-items"><a class="header" href="#priority-remediation-items">Priority Remediation Items</a></h3>
+<p>Rank gaps by:</p>
+<ol>
+<li>Controls with the highest security impact</li>
+<li>Controls that are prerequisites for other controls (check related controls)</li>
+<li>Controls that are easiest to implement (quick wins)</li>
+</ol>
+<h3 id="evidence-summary"><a class="header" href="#evidence-summary">Evidence Summary</a></h3>
+<p>For each assessed control:</p>
+<ul>
+<li>Control ID and title</li>
+<li>Implementation status</li>
+<li>Evidence file paths and descriptions</li>
+<li>Recommendations if partial or gap</li>
+</ul>
+<h2 id="example-output"><a class="header" href="#example-output">Example Output</a></h2>
+<p>See the <a href="#example-gap-analysis-report">example gap analysis</a> for a complete sample report.</p>
+<h2 id="tips"><a class="header" href="#tips">Tips</a></h2>
+<ul>
+<li>Start broad (family level) and drill into specific controls where evidence exists</li>
+<li>Use <code>pretorin frameworks control &lt;fw&gt; &lt;ctrl&gt;</code> for AI guidance — it provides the richest context</li>
+<li>Use <code>--references</code> for formal statement, objectives, and related controls</li>
+<li>Check related controls to identify dependencies</li>
+<li>For infrastructure evidence, look at Terraform, CloudFormation, Dockerfiles, Helm charts, and CI/CD configs</li>
+<li>For application evidence, focus on auth, logging, crypto, and configuration code</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="example-gap-analysis-report"><a class="header" href="#example-gap-analysis-report">Example: Gap Analysis Report</a></h1>
+<p>This example shows a gap analysis for a hypothetical web application assessed against FedRAMP Moderate.</p>
+<h2 id="gap-analysis-acme-web-platform--fedramp-moderate"><a class="header" href="#gap-analysis-acme-web-platform--fedramp-moderate">Gap Analysis: Acme Web Platform — FedRAMP Moderate</a></h2>
+<h3 id="summary-1"><a class="header" href="#summary-1">Summary</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Metric</th><th>Value</th></tr>
+</thead>
+<tbody>
+<tr><td>Framework</td><td>FedRAMP Rev 5 Moderate (<code>fedramp-moderate</code>)</td></tr>
+<tr><td>Component</td><td>Acme Web Platform</td></tr>
+<tr><td>Families Assessed</td><td>5 of 18 (high-priority code-evidenced families)</td></tr>
+<tr><td>Controls in Scope</td><td>47</td></tr>
+<tr><td>Implemented</td><td>18 (38%)</td></tr>
+<tr><td>Partial</td><td>14 (30%)</td></tr>
+<tr><td>Planned</td><td>3 (6%)</td></tr>
+<tr><td>Not Applicable</td><td>4 (9%)</td></tr>
+<tr><td>Gap</td><td>8 (17%)</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Overall Posture</strong>: Partial compliance. Strong authentication and logging foundations, but gaps in account lifecycle management, boundary protection, and baseline configuration documentation.</p>
+<hr>
+<h3 id="access-control-ac--12-controls-assessed"><a class="header" href="#access-control-ac--12-controls-assessed">Access Control (AC) — 12 controls assessed</a></h3>
+<p><strong>Status</strong>: 5 implemented, 4 partial, 1 planned, 2 gap</p>
+<p><strong>Key Findings:</strong></p>
+<ul>
+<li><strong>AC-02 (Account Management)</strong> — Partial. User creation with role assignment exists in <code>src/auth/users.py:45-72</code>, but no account expiration, dormant account handling, or manager approval workflow.</li>
+<li><strong>AC-03 (Access Enforcement)</strong> — Implemented. RBAC middleware in <code>src/middleware/auth.py:12-38</code> enforces role-based access on all API routes.</li>
+<li><strong>AC-07 (Unsuccessful Logon Attempts)</strong> — Implemented. Account lockout after 5 failed attempts in <code>src/auth/login.py:89-105</code>.</li>
+<li><strong>AC-17 (Remote Access)</strong> — Gap. No VPN or remote access controls documented.</li>
+</ul>
+<p><strong>Recommendations:</strong></p>
+<ol>
+<li>Add account expiration and dormant account cleanup (addresses AC-02 gaps)</li>
+<li>Implement remote access policy and controls for administrative access (addresses AC-17)</li>
+</ol>
+<hr>
+<h3 id="audit--accountability-au--8-controls-assessed"><a class="header" href="#audit--accountability-au--8-controls-assessed">Audit &amp; Accountability (AU) — 8 controls assessed</a></h3>
+<p><strong>Status</strong>: 5 implemented, 2 partial, 1 gap</p>
+<p><strong>Key Findings:</strong></p>
+<ul>
+<li><strong>AU-02 (Audit Events)</strong> — Implemented. Structured JSON logging for auth events, data access, and admin actions.</li>
+<li><strong>AU-03 (Content of Audit Records)</strong> — Implemented. Logs include timestamp, user ID, action, outcome, and source IP.</li>
+<li><strong>AU-06 (Audit Record Review)</strong> — Gap. No automated log review or alerting configured.</li>
+</ul>
+<p><strong>Recommendations:</strong></p>
+<ol>
+<li>Configure CloudWatch alarms for security events (addresses AU-06)</li>
+<li>Add log review procedures and alerting rules</li>
+</ol>
+<hr>
+<h3 id="system--communications-protection-sc--10-controls-assessed"><a class="header" href="#system--communications-protection-sc--10-controls-assessed">System &amp; Communications Protection (SC) — 10 controls assessed</a></h3>
+<p><strong>Status</strong>: 2 implemented, 4 partial, 2 planned, 2 not applicable</p>
+<p><strong>Key Findings:</strong></p>
+<ul>
+<li><strong>SC-07 (Boundary Protection)</strong> — Partial. TLS 1.3 and CORS configured, but security groups allow broad ingress.</li>
+<li><strong>SC-08 (Transmission Confidentiality)</strong> — Implemented. All traffic encrypted via TLS 1.3 with HSTS.</li>
+<li><strong>SC-28 (Protection of Information at Rest)</strong> — Planned. Database encryption not yet enabled.</li>
+</ul>
+<hr>
+<h3 id="priority-remediation"><a class="header" href="#priority-remediation">Priority Remediation</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Priority</th><th>Control</th><th>Gap</th><th>Effort</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>SC-28</td><td>Enable RDS encryption at rest</td><td>Low — Terraform change</td></tr>
+<tr><td>2</td><td>AU-06</td><td>Add CloudWatch alerting for security events</td><td>Medium — alerting rules</td></tr>
+<tr><td>3</td><td>AC-02</td><td>Account lifecycle management</td><td>Medium — new feature</td></tr>
+<tr><td>4</td><td>CM-02/CM-06</td><td>Baseline configuration documentation</td><td>Medium — documentation</td></tr>
+<tr><td>5</td><td>AC-17</td><td>Remote access controls for admin access</td><td>High — new infrastructure</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="artifact-generation"><a class="header" href="#artifact-generation">Artifact Generation</a></h1>
+<p>Compliance artifacts are structured JSON documents that describe how a specific control is implemented within a component.</p>
+<h2 id="generating-artifacts"><a class="header" href="#generating-artifacts">Generating Artifacts</a></h2>
+<h3 id="via-agent"><a class="header" href="#via-agent">Via Agent</a></h3>
+<pre><code class="language-bash">pretorin agent run --skill evidence-collection "Generate artifact for AC-02 in my system"
+</code></pre>
+<h3 id="via-mcp"><a class="header" href="#via-mcp">Via MCP</a></h3>
+<p>Use the <code>pretorin_generate_control_artifacts</code> tool for read-only AI drafts.</p>
+<h3 id="submit-to-platform"><a class="header" href="#submit-to-platform">Submit to Platform</a></h3>
+<pre><code class="language-bash">pretorin frameworks submit-artifact artifact.json
+</code></pre>
+<h2 id="artifact-schema"><a class="header" href="#artifact-schema">Artifact Schema</a></h2>
+<pre><code class="language-json">{
+  "framework_id": "fedramp-moderate",
+  "control_id": "ac-02",
+  "component": {
+    "component_id": "my-application",
+    "title": "My Application",
+    "description": "A web application that handles user data",
+    "type": "software",
+    "control_implementations": [
+      {
+        "control_id": "ac-02",
+        "description": "2-3 sentence narrative explaining HOW the control is implemented",
+        "implementation_status": "implemented",
+        "responsible_roles": ["System Administrator", "Security Team"],
+        "evidence": [
+          {
+            "description": "What this evidence demonstrates",
+            "file_path": "src/auth/users.py",
+            "line_numbers": "45-72",
+            "code_snippet": "def create_user(username, role):\n    ..."
+          }
+        ],
+        "remarks": "Optional additional context"
+      }
+    ]
+  },
+  "confidence": "high"
+}
+</code></pre>
+<p>See <a href="#artifact-schema-reference">Artifact Schema Reference</a> for the full field documentation.</p>
+<h2 id="implementation-status-values"><a class="header" href="#implementation-status-values">Implementation Status Values</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Status</th><th>Criteria</th></tr>
+</thead>
+<tbody>
+<tr><td><code>implemented</code></td><td>Fully implemented and operational. Clear, direct code evidence.</td></tr>
+<tr><td><code>partial</code></td><td>Some aspects implemented, others pending.</td></tr>
+<tr><td><code>planned</code></td><td>Not yet implemented but scheduled. Architecture supports it.</td></tr>
+<tr><td><code>not-applicable</code></td><td>Control doesn’t apply to this component.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="confidence-levels"><a class="header" href="#confidence-levels">Confidence Levels</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Level</th><th>Criteria</th></tr>
+</thead>
+<tbody>
+<tr><td><code>high</code></td><td>Clear, direct evidence in code. Specific file paths and line numbers.</td></tr>
+<tr><td><code>medium</code></td><td>Reasonable evidence with some inference required.</td></tr>
+<tr><td><code>low</code></td><td>Limited evidence. Significant assumptions made.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="evidence-quality"><a class="header" href="#evidence-quality">Evidence Quality</a></h2>
+<p>Good evidence shows HOW a control is implemented with specifics. Weak evidence merely shows that relevant code exists.</p>
+<p><strong>Good:</strong></p>
+<blockquote>
+<p>User creation requires role assignment and manager approval via the <code>create_user()</code> function which validates roles against an allowlist and triggers an approval workflow.</p>
+</blockquote>
+<p><strong>Weak:</strong></p>
+<blockquote>
+<p>Has a User class in the models file.</p>
+</blockquote>
+<h3 id="guidelines"><a class="header" href="#guidelines">Guidelines</a></h3>
+<ul>
+<li>Call <code>pretorin frameworks control &lt;fw&gt; &lt;ctrl&gt;</code> first — the AI guidance describes exactly what evidence assessors expect</li>
+<li>Include specific file paths and line numbers</li>
+<li>Keep code snippets brief (under 10 lines)</li>
+<li>Focus on the most relevant evidence, not exhaustive listing</li>
+<li>Describe what the evidence demonstrates in relation to the control requirement</li>
+</ul>
+<h2 id="example-good-artifact"><a class="header" href="#example-good-artifact">Example: Good Artifact</a></h2>
+<pre><code class="language-json">{
+  "framework_id": "fedramp-moderate",
+  "control_id": "ac-02",
+  "component": {
+    "component_id": "acme-web-platform",
+    "title": "Acme Web Platform",
+    "description": "A web application with multi-tenant user management",
+    "type": "software",
+    "control_implementations": [
+      {
+        "control_id": "ac-02",
+        "description": "The application implements account management through a provisioning system that requires role assignment during user creation, enforces manager approval for elevated roles, and automatically disables accounts after 90 days of inactivity.",
+        "implementation_status": "implemented",
+        "responsible_roles": ["System Administrator", "Security Team", "Team Managers"],
+        "evidence": [
+          {
+            "description": "User creation requires role assignment and manager approval for admin roles",
+            "file_path": "src/users/provisioning.py",
+            "line_numbers": "45-72",
+            "code_snippet": "def create_user(username, role, manager_id):\n    validate_role(role)\n    if role in ELEVATED_ROLES:\n        require_approval(manager_id)\n    user = User.create(username=username, role=role)"
+          },
+          {
+            "description": "Automated dormant account detection and deactivation after 90 days",
+            "file_path": "src/users/lifecycle.py",
+            "line_numbers": "120-145",
+            "code_snippet": "def check_dormant_accounts():\n    threshold = datetime.utcnow() - timedelta(days=90)\n    dormant = User.query.filter(User.last_login &lt; threshold)"
+          }
+        ],
+        "remarks": "Account removal via soft delete to maintain audit trail."
+      }
+    ]
+  },
+  "confidence": "high"
+}
+</code></pre>
+<h2 id="example-partial-implementation"><a class="header" href="#example-partial-implementation">Example: Partial Implementation</a></h2>
+<pre><code class="language-json">{
+  "framework_id": "fedramp-moderate",
+  "control_id": "sc-07",
+  "component": {
+    "component_id": "acme-web-platform",
+    "title": "Acme Web Platform",
+    "description": "A web application with multi-tenant user management",
+    "type": "software",
+    "control_implementations": [
+      {
+        "control_id": "sc-07",
+        "description": "TLS 1.3 enforced and CORS restricted to specific origins. However, security group ingress allows broad access from 0.0.0.0/0 on port 443, and no WAF is configured.",
+        "implementation_status": "partial",
+        "responsible_roles": ["System Administrator", "DevOps Team"],
+        "evidence": [
+          {
+            "description": "CORS restricted to application origins only",
+            "file_path": "src/api/middleware.py",
+            "line_numbers": "8-15",
+            "code_snippet": "app.add_middleware(\n    CORSMiddleware,\n    allow_origins=['https://app.acme.com'])"
+          },
+          {
+            "description": "Security group allows unrestricted ingress — overly permissive",
+            "file_path": "terraform/security.tf",
+            "line_numbers": "12-25",
+            "code_snippet": "ingress {\n    from_port = 443\n    cidr_blocks = [\"0.0.0.0/0\"]\n}"
+          }
+        ],
+        "remarks": "Recommend restricting security group ingress and adding WAF."
+      }
+    ]
+  },
+  "confidence": "medium"
+}
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="cross-framework-mapping"><a class="header" href="#cross-framework-mapping">Cross-Framework Mapping</a></h1>
+<p>Map controls across related frameworks to identify overlaps, reduce duplicate work, and understand framework relationships.</p>
+<h2 id="when-to-use-cross-framework-mapping"><a class="header" href="#when-to-use-cross-framework-mapping">When to Use Cross-Framework Mapping</a></h2>
+<ul>
+<li><strong>Dual compliance</strong> — Organization needs FedRAMP + CMMC. Map overlapping controls to avoid duplicate work.</li>
+<li><strong>Framework migration</strong> — Moving from 800-171 to FedRAMP. Identify which controls already satisfy FedRAMP requirements.</li>
+<li><strong>Gap identification</strong> — Already compliant with 800-53 and need CMMC. Find the delta.</li>
+<li><strong>Audit preparation</strong> — Show auditors how controls in one framework map to another.</li>
+</ul>
+<h2 id="workflow"><a class="header" href="#workflow">Workflow</a></h2>
+<h3 id="step-1-start-with-the-source-control"><a class="header" href="#step-1-start-with-the-source-control">Step 1: Start with the Source Control</a></h3>
+<p>Query the control with references to discover relationships:</p>
+<pre><code class="language-bash">pretorin frameworks control nist-800-53-r5 ac-02 --references
+</code></pre>
+<p>The <strong>Related Controls</strong> field reveals connections to other controls and frameworks.</p>
+<h3 id="step-2-build-the-mapping"><a class="header" href="#step-2-build-the-mapping">Step 2: Build the Mapping</a></h3>
+<p>Look up the equivalent control in each target framework:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Framework</th><th>Control ID</th><th>Title</th></tr>
+</thead>
+<tbody>
+<tr><td>NIST 800-53 Rev 5</td><td><code>ac-02</code></td><td>Account Management</td></tr>
+<tr><td>FedRAMP Moderate</td><td><code>ac-02</code></td><td>Account Management</td></tr>
+<tr><td>NIST 800-171 Rev 3</td><td><code>03.01.01</code></td><td>Account Management</td></tr>
+<tr><td>CMMC Level 2</td><td><code>AC.L2-3.1.1</code></td><td>Authorized Access Control</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="step-3-compare-requirements"><a class="header" href="#step-3-compare-requirements">Step 3: Compare Requirements</a></h3>
+<p>Get details for each framework’s version of the control:</p>
+<pre><code class="language-bash">pretorin frameworks control nist-800-53-r5 ac-02 --references
+pretorin frameworks control fedramp-moderate ac-02 --references
+pretorin frameworks control nist-800-171-r3 03.01.01 --references
+pretorin frameworks control cmmc-l2 AC.L2-3.1.1 --references
+</code></pre>
+<p>Compare what each framework emphasizes. For Account Management:</p>
+<ul>
+<li><strong>NIST 800-53</strong> — Full control with 13 enhancements. Covers account types, conditions, authorized users, managers, CRUD, monitoring, and atypical usage.</li>
+<li><strong>FedRAMP Moderate</strong> — Same base control with FedRAMP-specific parameter values (e.g., specific timeframes for disabling inactive accounts).</li>
+<li><strong>NIST 800-171</strong> — Streamlined from 800-53. Core requirements: defining types, assigning managers, establishing conditions, authorizing access, monitoring.</li>
+<li><strong>CMMC Level 2</strong> — Maps directly to 800-171 03.01.01. Same core requirements framed as maturity practices.</li>
+</ul>
+<h3 id="step-4-identify-gaps-and-overlaps"><a class="header" href="#step-4-identify-gaps-and-overlaps">Step 4: Identify Gaps and Overlaps</a></h3>
+<pre><code>NIST 800-53 AC-02 (most comprehensive)
+  ├── Includes all FedRAMP Moderate AC-02 requirements ✓
+  ├── Includes all NIST 800-171 03.01.01 requirements ✓
+  └── Includes all CMMC L2 AC.L2-3.1.1 requirements ✓
+
+FedRAMP Moderate AC-02
+  ├── Satisfies NIST 800-171 03.01.01 ✓
+  └── Satisfies CMMC L2 AC.L2-3.1.1 ✓
+
+NIST 800-171 03.01.01
+  └── Satisfies CMMC L2 AC.L2-3.1.1 ✓
+</code></pre>
+<p><strong>Key insight:</strong> Compliance with a parent framework generally satisfies the child framework’s corresponding control. Always verify with <code>pretorin frameworks control &lt;fw&gt; &lt;ctrl&gt; --references</code> to check for framework-specific parameters or additional requirements.</p>
+<h2 id="using-mcp-for-cross-framework-mapping"><a class="header" href="#using-mcp-for-cross-framework-mapping">Using MCP for Cross-Framework Mapping</a></h2>
+<p>With an MCP-connected AI agent, ask questions like:</p>
+<blockquote>
+<p>“Map Account Management controls across NIST 800-53, FedRAMP Moderate, and CMMC Level 2. Show me the overlaps and any unique requirements.”</p>
+</blockquote>
+<p>The agent will use <code>pretorin_get_control</code> and <code>pretorin_get_control_references</code> to discover and compare related controls across frameworks.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="environment-variables"><a class="header" href="#environment-variables">Environment Variables</a></h1>
+<p>Environment variables override stored configuration values.</p>
+<h2 id="authentication--api"><a class="header" href="#authentication--api">Authentication &amp; API</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Description</th><th>Default</th></tr>
+</thead>
+<tbody>
+<tr><td><code>PRETORIN_API_KEY</code></td><td>API key for platform access. Overrides <code>api_key</code> in config file.</td><td>—</td></tr>
+<tr><td><code>PRETORIN_PLATFORM_API_BASE_URL</code></td><td>Platform REST API base URL</td><td><code>https://platform.pretorin.com/api/v1/public</code></td></tr>
+<tr><td><code>PRETORIN_API_BASE_URL</code></td><td>Backward-compatible alias for <code>PRETORIN_PLATFORM_API_BASE_URL</code></td><td>—</td></tr>
+<tr><td><code>PRETORIN_MODEL_API_BASE_URL</code></td><td>Model API URL for agent runtime</td><td><code>https://platform.pretorin.com/v1</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="agent-runtime"><a class="header" href="#agent-runtime">Agent Runtime</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Description</th><th>Default</th></tr>
+</thead>
+<tbody>
+<tr><td><code>OPENAI_API_KEY</code></td><td>Model key override for agent runtime. Takes precedence over stored Pretorin login key.</td><td>—</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="behavior"><a class="header" href="#behavior">Behavior</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Description</th><th>Default</th></tr>
+</thead>
+<tbody>
+<tr><td><code>PRETORIN_DISABLE_UPDATE_CHECK</code></td><td>Set to <code>1</code> to disable passive update notifications</td><td>—</td></tr>
+<tr><td><code>PRETORIN_LOG_LEVEL</code></td><td>Logging level (<code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>)</td><td><code>WARNING</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="precedence"><a class="header" href="#precedence">Precedence</a></h2>
+<p>For the API key:</p>
+<ol>
+<li><code>PRETORIN_API_KEY</code> environment variable (highest)</li>
+<li><code>api_key</code> in <code>~/.pretorin/config.json</code></li>
+</ol>
+<p>For the model key (agent runtime):</p>
+<ol>
+<li><code>OPENAI_API_KEY</code> environment variable (highest)</li>
+<li><code>config.api_key</code> (from <code>pretorin login</code>)</li>
+<li><code>config.openai_api_key</code></li>
+</ol>
+<h2 id="cicd-example"><a class="header" href="#cicd-example">CI/CD Example</a></h2>
+<pre><code class="language-bash">export PRETORIN_API_KEY=pretorin_your_key_here
+export PRETORIN_DISABLE_UPDATE_CHECK=1
+
+pretorin frameworks list
+pretorin evidence push
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="artifact-schema-reference"><a class="header" href="#artifact-schema-reference">Artifact Schema Reference</a></h1>
+<p>Complete field reference for compliance artifact JSON documents.</p>
+<h2 id="top-level-fields"><a class="header" href="#top-level-fields">Top-Level Fields</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>framework_id</code></td><td>string</td><td>Yes</td><td>The compliance framework (e.g., <code>fedramp-moderate</code>, <code>nist-800-53-r5</code>)</td></tr>
+<tr><td><code>control_id</code></td><td>string</td><td>Yes</td><td>The control being addressed (e.g., <code>ac-02</code>, <code>au-02</code>)</td></tr>
+<tr><td><code>component</code></td><td>object</td><td>Yes</td><td>The system component being assessed</td></tr>
+<tr><td><code>confidence</code></td><td>string</td><td>Yes</td><td>Confidence in the analysis: <code>high</code>, <code>medium</code>, or <code>low</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="component-fields"><a class="header" href="#component-fields">Component Fields</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>component_id</code></td><td>string</td><td>Yes</td><td>Source identifier (repository name, package name)</td></tr>
+<tr><td><code>title</code></td><td>string</td><td>Yes</td><td>Human-readable component name</td></tr>
+<tr><td><code>description</code></td><td>string</td><td>Yes</td><td>Brief description of what the component does</td></tr>
+<tr><td><code>type</code></td><td>string</td><td>Yes</td><td>One of: <code>software</code>, <code>hardware</code>, <code>service</code>, <code>policy</code>, <code>process</code></td></tr>
+<tr><td><code>control_implementations</code></td><td>array</td><td>Yes</td><td>How the control is implemented</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="control-implementation-fields"><a class="header" href="#control-implementation-fields">Control Implementation Fields</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>control_id</code></td><td>string</td><td>Yes</td><td>Must match parent <code>control_id</code></td></tr>
+<tr><td><code>description</code></td><td>string</td><td>Yes</td><td>2-3 sentence narrative of HOW the control is implemented</td></tr>
+<tr><td><code>implementation_status</code></td><td>string</td><td>Yes</td><td><code>implemented</code>, <code>partial</code>, <code>planned</code>, or <code>not-applicable</code></td></tr>
+<tr><td><code>responsible_roles</code></td><td>array</td><td>No</td><td>Roles responsible (default: <code>["System Administrator"]</code>)</td></tr>
+<tr><td><code>evidence</code></td><td>array</td><td>No</td><td>Supporting evidence items</td></tr>
+<tr><td><code>remarks</code></td><td>string</td><td>No</td><td>Additional notes or caveats</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="evidence-fields"><a class="header" href="#evidence-fields">Evidence Fields</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>description</code></td><td>string</td><td>Yes</td><td>Narrative of what this evidence shows</td></tr>
+<tr><td><code>file_path</code></td><td>string</td><td>No</td><td>Path to the source file</td></tr>
+<tr><td><code>line_numbers</code></td><td>string</td><td>No</td><td>Line range (e.g., <code>"10-25"</code>)</td></tr>
+<tr><td><code>code_snippet</code></td><td>string</td><td>No</td><td>Relevant code excerpt (keep under 10 lines)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="implementation-status-definitions"><a class="header" href="#implementation-status-definitions">Implementation Status Definitions</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Status</th><th>Definition</th></tr>
+</thead>
+<tbody>
+<tr><td><code>implemented</code></td><td>Control is fully implemented and operational. Clear, direct evidence exists in the codebase.</td></tr>
+<tr><td><code>partial</code></td><td>Some aspects are implemented, others are pending. Example: user CRUD exists but no account expiration or manager approval.</td></tr>
+<tr><td><code>planned</code></td><td>Not yet implemented but scheduled. The architecture supports it but the feature isn’t built.</td></tr>
+<tr><td><code>not-applicable</code></td><td>Control doesn’t apply to this component. Example: a pure API service with no user accounts doesn’t need account management controls.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="confidence-levels-1"><a class="header" href="#confidence-levels-1">Confidence Levels</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Level</th><th>Definition</th></tr>
+</thead>
+<tbody>
+<tr><td><code>high</code></td><td>Clear, direct evidence in code. Well-documented implementations with specific file paths and line numbers.</td></tr>
+<tr><td><code>medium</code></td><td>Reasonable evidence but some inference required. The implementation likely satisfies the control but some aspects aren’t explicitly documented.</td></tr>
+<tr><td><code>low</code></td><td>Limited evidence. Significant assumptions made. The codebase has relevant code but the connection to the control requirement is indirect.</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="contributing"><a class="header" href="#contributing">Contributing</a></h1>
+<p>Thank you for your interest in contributing to the Pretorin CLI!</p>
+<h2 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h2>
+<ol>
+<li>Fork the repository</li>
+<li>Clone your fork:
+<pre><code class="language-bash">git clone https://github.com/YOUR_USERNAME/pretorin-cli.git
+cd pretorin-cli
+</code></pre>
+</li>
+<li>Install development dependencies:
+<pre><code class="language-bash">uv pip install -e ".[dev]"
+</code></pre>
+</li>
+</ol>
+<h2 id="development-workflow"><a class="header" href="#development-workflow">Development Workflow</a></h2>
+<h3 id="running-tests"><a class="header" href="#running-tests">Running Tests</a></h3>
+<pre><code class="language-bash">pytest
+</code></pre>
+<p>Integration tests require an API key and are marked with <code>@pytest.mark.integration</code>:</p>
+<pre><code class="language-bash">pytest -m integration
+</code></pre>
+<h3 id="type-checking"><a class="header" href="#type-checking">Type Checking</a></h3>
+<pre><code class="language-bash">mypy src/pretorin
+</code></pre>
+<h3 id="linting"><a class="header" href="#linting">Linting</a></h3>
+<pre><code class="language-bash">ruff check src/pretorin
+ruff format src/pretorin
+</code></pre>
+<h3 id="full-ci-check"><a class="header" href="#full-ci-check">Full CI Check</a></h3>
+<p>Run the same checks as the CI pipeline:</p>
+<pre><code class="language-bash">ruff check src/pretorin &amp;&amp; ruff format --check src/pretorin &amp;&amp; mypy src/pretorin &amp;&amp; pytest
+</code></pre>
+<h2 id="submitting-changes"><a class="header" href="#submitting-changes">Submitting Changes</a></h2>
+<ol>
+<li>Create a feature branch from <code>master</code></li>
+<li>Make your changes</li>
+<li>Ensure tests pass and code is properly formatted</li>
+<li>Submit a pull request</li>
+</ol>
+<h2 id="code-style"><a class="header" href="#code-style">Code Style</a></h2>
+<ul>
+<li>Follow PEP 8 guidelines</li>
+<li>Use type hints for all function signatures</li>
+<li>Write docstrings for public functions and classes</li>
+<li>Keep functions focused and small</li>
+</ul>
+<h2 id="ci-pipeline"><a class="header" href="#ci-pipeline">CI Pipeline</a></h2>
+<p>The CI pipeline runs on Python 3.10, 3.11, and 3.12:</p>
+<ul>
+<li><strong>Lint</strong> — Ruff check + format</li>
+<li><strong>Audit</strong> — pip-audit (dependency vulnerability scan)</li>
+<li><strong>Type check</strong> — mypy strict mode</li>
+<li><strong>Test</strong> — pytest</li>
+</ul>
+<h2 id="reporting-issues"><a class="header" href="#reporting-issues">Reporting Issues</a></h2>
+<p>Use <a href="https://github.com/pretorin-ai/pretorin-cli/issues">GitHub Issues</a> to report bugs or request features. Include:</p>
+<ul>
+<li>Clear description of the issue</li>
+<li>Steps to reproduce (for bugs)</li>
+<li>Expected vs actual behavior</li>
+<li>CLI version (<code>pretorin version</code>)</li>
+</ul>
+<h2 id="questions"><a class="header" href="#questions">Questions?</a></h2>
+<ul>
+<li>API documentation: <a href="https://platform.pretorin.com/api/docs">platform.pretorin.com/api/docs</a></li>
+<li>Platform: <a href="https://platform.pretorin.com">platform.pretorin.com</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
+<p>All notable changes to the Pretorin CLI are documented here. The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h2 id="080---2026-03-07"><a class="header" href="#080---2026-03-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.7.0...v0.8.0">0.8.0</a> - 2026-03-07</a></h2>
+<h3 id="added"><a class="header" href="#added">Added</a></h3>
+<ul>
+<li>MCP <code>pretorin_generate_control_artifacts</code> for read-only AI drafting of control narratives and evidence-gap assessments</li>
+<li>Shared AI drafting workflow helper for structured MCP/CLI parity</li>
+</ul>
+<h3 id="changed"><a class="header" href="#changed">Changed</a></h3>
+<ul>
+<li>MCP system-scoped tools now resolve friendly system names the same way the CLI does</li>
+<li>Codex Desktop MCP configuration can be pinned to the UV-managed Pretorin wrapper</li>
+</ul>
+<h2 id="070---2026-03-07"><a class="header" href="#070---2026-03-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.1...v0.7.0">0.7.0</a> - 2026-03-07</a></h2>
+<h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
+<ul>
+<li>Control implementation parsing tolerant of <code>notes: null</code> deployments</li>
+<li>Compatibility fallback for control note reads when <code>/notes</code> endpoint returns <code>405</code></li>
+<li>Compatibility fallback for evidence search on system-scoped evidence routes</li>
+<li>Agent <code>--no-stream</code> crash on literal <code>[[PRETORIN_TODO]]</code> blocks</li>
+</ul>
+<h3 id="changed-1"><a class="header" href="#changed-1">Changed</a></h3>
+<ul>
+<li>MCP and legacy agent evidence search tools accept optional <code>system_id</code> context</li>
+</ul>
+<h2 id="061---2026-03-05"><a class="header" href="#061---2026-03-05"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.0...v0.6.1">0.6.1</a> - 2026-03-05</a></h2>
+<h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
+<ul>
+<li>Added required MCP registry ownership marker for PyPI validation</li>
+</ul>
+<h2 id="060---2026-03-05"><a class="header" href="#060---2026-03-05"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.6...v0.6.0">0.6.0</a> - 2026-03-05</a></h2>
+<h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
+<ul>
+<li>Shared markdown quality validator for auditor-readable artifacts</li>
+<li>Dedicated tests for markdown quality guardrails</li>
+<li>CLI/MCP/agent parity for reading notes via dedicated endpoint</li>
+</ul>
+<h3 id="changed-2"><a class="header" href="#changed-2">Changed</a></h3>
+<ul>
+<li>Narrative and evidence update flows enforce markdown quality checks before push/upsert</li>
+<li>Agent prompts require auditor-ready markdown (lists/tables/code/links)</li>
+<li>Source tagging normalized to <code>cli</code> across write paths</li>
+</ul>
+<h3 id="removed"><a class="header" href="#removed">Removed</a></h3>
+<ul>
+<li>Markdown image usage from narrative/evidence authoring contract (temporarily)</li>
+</ul>
+<h2 id="054---2026-03-05"><a class="header" href="#054---2026-03-05"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.3...v0.5.4">0.5.4</a> - 2026-03-05</a></h2>
+<h3 id="added-2"><a class="header" href="#added-2">Added</a></h3>
+<ul>
+<li><code>pretorin narrative get</code> to read current control narratives</li>
+<li><code>pretorin notes list</code> and <code>pretorin notes add</code> for control-note management</li>
+<li><code>pretorin evidence search</code> for platform evidence visibility</li>
+<li><code>pretorin evidence upsert</code> for find-or-create evidence with control linking</li>
+<li>Shared compliance workflow helpers (system resolution, evidence dedupe/upsert, TODO blocks, gap notes)</li>
+<li>MCP <code>pretorin_get_control_notes</code> tool</li>
+</ul>
+<h3 id="changed-3"><a class="header" href="#changed-3">Changed</a></h3>
+<ul>
+<li><code>pretorin_create_evidence</code> now upserts by default (<code>dedupe: true</code>)</li>
+<li><code>pretorin evidence push</code> uses find-or-create upsert logic</li>
+<li>Agent skill prompts include no-hallucination guidance and gap note format</li>
+</ul>
+<h3 id="removed-1"><a class="header" href="#removed-1">Removed</a></h3>
+<ul>
+<li>Automatic control status updates from CLI evidence push workflow</li>
+</ul>
+<h2 id="053---2026-03-02"><a class="header" href="#053---2026-03-02"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.2...v0.5.3">0.5.3</a> - 2026-03-02</a></h2>
+<h3 id="fixed-2"><a class="header" href="#fixed-2">Fixed</a></h3>
+<ul>
+<li>CI lint failure formatting</li>
+<li>CLI model key precedence: <code>OPENAI_API_KEY</code> → <code>config.api_key</code> → <code>config.openai_api_key</code></li>
+</ul>
+<h2 id="052---2026-02-27"><a class="header" href="#052---2026-02-27"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.0...v0.5.2">0.5.2</a> - 2026-02-27</a></h2>
+<h3 id="fixed-3"><a class="header" href="#fixed-3">Fixed</a></h3>
+<ul>
+<li>Rich markup <code>MarkupError</code> crash in login flow</li>
+<li>Evidence type mismatch (<code>documentation</code> → <code>policy_document</code>)</li>
+<li>CMMC control ID casing preserved (no longer incorrectly lowercased)</li>
+<li><code>monitoring push</code> checks active context before requiring <code>--system</code></li>
+<li><code>pretorin login</code> skips prompt when already authenticated</li>
+<li>Demo script <code>--json</code> flag position and stdin handling</li>
+</ul>
+<h3 id="changed-4"><a class="header" href="#changed-4">Changed</a></h3>
+<ul>
+<li>Default evidence type changed to <code>policy_document</code></li>
+<li>Valid evidence types aligned with API</li>
+<li>Added <code>.pretorin/</code> and <code>evidence/</code> to <code>.gitignore</code></li>
+</ul>
+<h2 id="050---2026-02-27"><a class="header" href="#050---2026-02-27"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.3.1...v0.5.0">0.5.0</a> - 2026-02-27</a></h2>
+<h3 id="added-3"><a class="header" href="#added-3">Added</a></h3>
+<ul>
+<li>Context management (<code>context list/set/show/clear</code>)</li>
+<li>Evidence commands (<code>evidence create/list/push/search/upsert</code>)</li>
+<li>Narrative push (<code>narrative push</code>)</li>
+<li>Monitoring events (<code>monitoring push</code>)</li>
+<li>Codex agent runtime (<code>agent run</code> with skills, <code>agent doctor/install/version/skills</code>)</li>
+<li>Agent MCP management (<code>agent mcp-list/mcp-add/mcp-remove</code>)</li>
+<li>Code review (<code>review run/status</code>)</li>
+<li>14 new MCP tools for system, evidence, narrative, monitoring, notes, and control operations</li>
+<li>Control ID normalization (zero-padding)</li>
+<li>Interactive demo walkthrough script</li>
+<li>Beta messaging across CLI, MCP, and README</li>
+</ul>
+<h3 id="changed-5"><a class="header" href="#changed-5">Changed</a></h3>
+<ul>
+<li>Platform API base URL changed to <code>/api/v1/public</code></li>
+<li>Evidence and linking scoped to system</li>
+<li><code>update_control_status()</code> changed from PATCH to POST</li>
+</ul>
+<h3 id="removed-2"><a class="header" href="#removed-2">Removed</a></h3>
+<ul>
+<li><code>pretorin narrative generate</code> — use <code>pretorin agent run --skill narrative-generation</code></li>
+<li><code>pretorin_generate_narrative</code> MCP tool</li>
+</ul>
+<h3 id="security"><a class="header" href="#security">Security</a></h3>
+<ul>
+<li>MCP mutation handler parameter validation</li>
+<li>Client-side enum validation</li>
+<li>Path traversal protection in evidence writer</li>
+<li>TOML injection prevention in Codex config writer</li>
+<li>Connection error URL display</li>
+</ul>
+<h2 id="020---2026-02-06"><a class="header" href="#020---2026-02-06"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.1.0...v0.2.0">0.2.0</a> - 2026-02-06</a></h2>
+<h3 id="added-4"><a class="header" href="#added-4">Added</a></h3>
+<ul>
+<li><code>--json</code> flag for machine-readable output</li>
+<li><code>pretorin frameworks family/metadata/submit-artifact</code> commands</li>
+<li>Full AI Guidance rendering on control detail view</li>
+<li><code>.mcp.json</code> for Claude Code auto-discovery</li>
+<li>Usage examples in command docstrings</li>
+</ul>
+<h3 id="changed-6"><a class="header" href="#changed-6">Changed</a></h3>
+<ul>
+<li>Control references shown by default (replaced <code>--references</code> with <code>--brief</code>)</li>
+<li>Default controls limit changed to 0 (show all)</li>
+</ul>
+<h2 id="010---2025-02-03"><a class="header" href="#010---2025-02-03"><a href="https://github.com/pretorin-ai/pretorin-cli/releases/tag/v0.1.0">0.1.0</a> - 2025-02-03</a></h2>
+<h3 id="added-5"><a class="header" href="#added-5">Added</a></h3>
+<ul>
+<li>Initial public release</li>
+<li>CLI commands for browsing compliance frameworks</li>
+<li>Authentication commands (login, logout, whoami)</li>
+<li>Configuration management</li>
+<li>MCP server with 7 tools and analysis resources</li>
+<li>Self-update functionality</li>
+<li>Rich terminal output with Rome-bot mascot</li>
+<li>Docker support</li>
+<li>GitHub Actions CI/CD</li>
+<li>Integration test suite</li>
+</ul>
+<h3 id="supported-frameworks-1"><a class="header" href="#supported-frameworks-1">Supported Frameworks</a></h3>
+<ul>
+<li>NIST SP 800-53 Rev 5</li>
+<li>NIST SP 800-171 Rev 2/3</li>
+<li>FedRAMP (Low, Moderate, High)</li>
+<li>CMMC Level 1, 2, and 3</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+
+    </div>
+    </body>
+</html>

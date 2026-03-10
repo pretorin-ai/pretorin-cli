@@ -152,10 +152,31 @@ Credentials are stored at `~/.pretorin/config.json`.
 
 ## Documentation
 
-- CLI reference: [docs/CLI.md](docs/CLI.md)
-- MCP integration guide: [docs/MCP.md](docs/MCP.md)
-- Bundled skill guide: [pretorin-skill/SKILL.md](pretorin-skill/SKILL.md)
-- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
+Full documentation is built with [mdbook](https://rust-lang.github.io/mdBook/). To view it locally:
+
+```bash
+# Install mdbook (if you don't have it)
+cargo install mdbook
+
+# Serve the docs and open in your browser
+cd docs && mdbook serve --open
+```
+
+This starts a local server at `http://localhost:3000` with live-reload.
+
+To build static HTML without serving:
+
+```bash
+cd docs && mdbook build
+# Output is in docs/book/
+```
+
+### Quick links
+
+- [CLI reference](docs/src/cli/command-reference.md)
+- [MCP integration guide](docs/src/mcp/overview.md)
+- [Bundled skill guide](pretorin-skill/SKILL.md)
+- [Contributing](CONTRIBUTING.md)
 
 ## Development
 
