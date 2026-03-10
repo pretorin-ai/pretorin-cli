@@ -650,8 +650,16 @@ async def list_tools() -> list[Tool]:
                 "type": "object",
                 "properties": {
                     "system_id": _system_id_property(),
+                    "framework_id": {
+                        "type": "string",
+                        "description": (
+                            "Framework external ID string"
+                            " (e.g. 'cmmc-l1', 'nist-800-53-r5', 'fedramp-moderate')"
+                            " — NOT a UUID"
+                        ),
+                    },
                 },
-                "required": ["system_id"],
+                "required": ["system_id", "framework_id"],
             },
         ),
         Tool(
@@ -1269,6 +1277,7 @@ async def _handle_get_scope(
     assert system_id is not None
     scope = await client.get_scope(
         system_id=system_id,
+        framework_id=arguments.get("framework_id", ""),
     )
     return _format_json(scope.model_dump())
 
