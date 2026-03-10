@@ -725,8 +725,7 @@ async def list_tools() -> list[Tool]:
         Tool(
             name="pretorin_update_control_status",
             description=(
-                "Update the implementation status of a control within exactly one active "
-                "system/framework scope"
+                "Update the implementation status of a control within exactly one active system/framework scope"
             ),
             inputSchema={
                 "type": "object",

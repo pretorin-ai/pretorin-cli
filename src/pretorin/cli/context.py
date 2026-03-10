@@ -47,8 +47,7 @@ def _ensure_single_framework_scope(framework_id: str) -> str:
         return candidate
     if _MULTI_SCOPE_FRAMEWORK_PATTERN.search(candidate):
         raise ValueError(
-            "Framework scope must target exactly one framework. "
-            "Split multi-level requests into separate runs."
+            "Framework scope must target exactly one framework. Split multi-level requests into separate runs."
         )
     return candidate
 
