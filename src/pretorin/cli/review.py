@@ -179,6 +179,10 @@ async def _run_review(
                 rprint(f"[red]{e.message}[/red]")
                 raise typer.Exit(1)
 
+        if resolved_framework_id is None:
+            rprint("[red]Framework scope could not be resolved.[/red]")
+            raise typer.Exit(1)
+
         # --- Fetch control details ---
         if not is_json_mode():
             rprint(f"\n  {ROMEBOT_WORKING}  Fetching control {control_id.upper()} from {resolved_framework_id}...\n")

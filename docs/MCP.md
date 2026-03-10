@@ -525,7 +525,7 @@ The MCP server also exposes resources for analysis guidance:
 |--------------|-------------|
 | `analysis://schema` | JSON schema for compliance artifacts |
 | `analysis://guide/{framework_id}` | Analysis guide for a specific framework |
-| `analysis://control/{control_id}` | Analysis guidance for a specific control |
+| `analysis://control/{framework_id}/{control_id}` | Analysis guidance for a specific control within one framework scope |
 
 ## Example Conversations
 

@@ -204,17 +204,18 @@ async def list_resources() -> list[Resource]:
             )
         )
 
-    # Add control analysis prompts for available controls
-    for control_id in get_available_controls():
-        summary = get_control_summary(control_id)
-        resources.append(
-            Resource(
-                uri=f"analysis://control/{control_id}",
-                name=f"Control {control_id.upper()} Analysis",
-                description=f"Analysis guidance for {summary}",
-                mimeType="text/markdown",
+    # Add control analysis prompts for common framework scopes.
+    for framework_id, title in framework_guides:
+        for control_id in get_available_controls():
+            summary = get_control_summary(control_id)
+            resources.append(
+                Resource(
+                    uri=f"analysis://control/{framework_id}/{control_id}",
+                    name=f"{title} {control_id.upper()} Analysis",
+                    description=f"Analysis guidance for {summary} in {title}",
+                    mimeType="text/markdown",
+                )
             )
-        )
 
     return resources
 
@@ -723,7 +724,10 @@ async def list_tools() -> list[Tool]:
         # === Control Implementation Tools ===
         Tool(
             name="pretorin_update_control_status",
-            description="Update the implementation status of a control within exactly one active system/framework scope",
+            description=(
+                "Update the implementation status of a control within exactly one active "
+                "system/framework scope"
+            ),
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -1222,7 +1226,6 @@ async def _handle_push_monitoring_event(
     if enum_err:
         return _format_error(enum_err)
 
-    raw_control_id = arguments.get("control_id")
     system_id, framework_id, normalized_control_id = await _resolve_execution_scope(client, arguments)
     event = MonitoringEventCreate(
         event_type=event_type,

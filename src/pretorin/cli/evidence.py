@@ -278,8 +278,8 @@ async def _search_evidence(
     limit: int,
 ) -> None:
     from pretorin.cli.commands import require_auth
-    from pretorin.client.api import PretorianClient, PretorianClientError
     from pretorin.cli.context import resolve_execution_context
+    from pretorin.client.api import PretorianClient, PretorianClientError
 
     control_filter = normalize_control_id(control_id) if control_id else None
 
