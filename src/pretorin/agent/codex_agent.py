@@ -81,6 +81,7 @@ def _patch_codex_exec_buffer_limit() -> None:
         abort_waiter = None
         if args.signal is not None:
             from openai_codex_sdk.exec import _wait_abort  # type: ignore[import-not-found,unused-ignore]
+
             abort_waiter = _aio.create_task(_wait_abort(args.signal))
 
         try:

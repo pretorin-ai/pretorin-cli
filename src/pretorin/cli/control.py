@@ -34,10 +34,7 @@ def control_status(
 ) -> None:
     """Update the implementation status of a control."""
     if status not in _VALID_STATUSES:
-        rprint(
-            f"[red]Invalid status: {status}. "
-            f"Choose one of: {', '.join(sorted(_VALID_STATUSES))}[/red]"
-        )
+        rprint(f"[red]Invalid status: {status}. Choose one of: {', '.join(sorted(_VALID_STATUSES))}[/red]")
         raise typer.Exit(1)
 
     asyncio.run(_update_status(normalize_control_id(control_id), status, framework_id, system))
