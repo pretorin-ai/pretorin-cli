@@ -253,6 +253,83 @@ async def _push_evidence(dry_run: bool) -> None:
             rprint("[dim]Nothing to push — all evidence is already synced.[/dim]")
 
 
+@app.command("link")
+def evidence_link(
+    evidence_id: str = typer.Argument(..., help="Evidence item ID"),
+    control_id: str = typer.Argument(..., help="Control ID to link to (e.g., ac-02)"),
+    framework_id: str | None = typer.Option(None, "--framework-id", "-f", help="Framework ID."),
+    system: str | None = typer.Option(None, "--system", "-s", help="System name or ID."),
+) -> None:
+    """Link an existing evidence item to a control.
+
+    Examples:
+        pretorin evidence link abc123 ac-02
+        pretorin evidence link abc123 sc-07 --framework-id fedramp-moderate
+    """
+    asyncio.run(
+        _link_evidence(
+            evidence_id=evidence_id,
+            control_id=normalize_control_id(control_id),
+            framework_id=framework_id,
+            system=system,
+        )
+    )
+
+
+async def _link_evidence(
+    evidence_id: str,
+    control_id: str,
+    framework_id: str | None,
+    system: str | None,
+) -> None:
+    from pretorin.cli.commands import require_auth
+    from pretorin.cli.context import resolve_execution_context
+    from pretorin.client.api import PretorianClient, PretorianClientError
+
+    async with PretorianClient() as client:
+        require_auth(client)
+        try:
+            system_id, resolved_framework_id = await resolve_execution_context(
+                client,
+                system=system,
+                framework=framework_id,
+            )
+            system_name = (await client.get_system(system_id)).name
+            result = await client.link_evidence_to_control(
+                evidence_id=evidence_id,
+                control_id=control_id,
+                system_id=system_id,
+                framework_id=resolved_framework_id,
+            )
+        except PretorianClientError as e:
+            rprint(f"[red]Link failed: {e.message}[/red]")
+            raise typer.Exit(1)
+
+        payload = {
+            "system_id": system_id,
+            "system_name": system_name,
+            "evidence_id": evidence_id,
+            "control_id": control_id,
+            "framework_id": resolved_framework_id,
+            "result": result,
+        }
+        if is_json_mode():
+            print_json(payload)
+            return
+
+        rprint(
+            Panel(
+                f"  [bold]System:[/bold]      {system_name}\n"
+                f"  [bold]Evidence ID:[/bold] {evidence_id}\n"
+                f"  [bold]Control:[/bold]     {control_id.upper()}\n"
+                f"  [bold]Framework:[/bold]   {resolved_framework_id}",
+                title=f"{ROMEBOT_EVIDENCE}  Evidence Linked",
+                border_style="#95D7E0",
+                padding=(1, 2),
+            )
+        )
+
+
 @app.command("search")
 def evidence_search(
     control_id: str | None = typer.Option(None, "--control-id", "-c", help="Optional control ID filter."),

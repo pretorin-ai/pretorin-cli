@@ -62,6 +62,7 @@ SKILLS: dict[str, Skill] = {
             "get_system",
             "get_compliance_status",
             "list_frameworks",
+            "list_controls",
             "get_control",
             "get_control_implementation",
             "get_control_context",
@@ -91,6 +92,7 @@ SKILLS: dict[str, Skill] = {
         tool_names=[
             "list_systems",
             "get_system",
+            "list_frameworks",
             "get_control",
             "get_control_implementation",
             "get_control_context",
@@ -132,6 +134,7 @@ SKILLS: dict[str, Skill] = {
             "get_scope",
             "search_evidence",
             "create_evidence",
+            "create_evidence_batch",
             "link_evidence",
             "get_control_notes",
             "add_control_note",

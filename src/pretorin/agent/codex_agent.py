@@ -6,6 +6,7 @@ a pinned, isolated Codex binary with Pretorin MCP tools auto-injected.
 
 from __future__ import annotations
 
+import asyncio
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -15,6 +16,125 @@ from rich import print as rprint
 
 from pretorin.agent.codex_runtime import CodexRuntime
 from pretorin.client.config import Config
+
+
+def _patch_codex_exec_buffer_limit() -> None:
+    """Raise the asyncio subprocess stdout buffer limit in the Codex SDK.
+
+    The SDK uses ``asyncio.create_subprocess_exec`` with the default 64 KB
+    line-read limit.  Compliance tool responses (e.g. control context JSON)
+    routinely exceed that, causing ``ValueError: Separator is found, but
+    chunk is longer than limit``.  We monkey-patch the SDK's ``run`` method
+    to use a 2 MB limit instead.
+    """
+    try:
+        from openai_codex_sdk.exec import CodexExec  # type: ignore[import-not-found]
+    except ImportError:
+        return  # agent extras not installed — nothing to patch
+
+    _original_run = CodexExec.run
+
+    async def _patched_run(self: Any, args: Any):  # type: ignore[override]
+        """Wrapper that increases the subprocess stdout buffer limit."""
+        import asyncio as _aio
+        from openai_codex_sdk.abort import AbortError, _format_abort_reason  # type: ignore[import-not-found]
+        from openai_codex_sdk.errors import CodexExecError  # type: ignore[import-not-found]
+
+        if args.signal is not None and args.signal.aborted:
+            raise AbortError(_format_abort_reason(args.signal.reason))
+
+        command_args = self._build_command_args(args)
+        env = self._build_env(args)
+
+        proc = await _aio.create_subprocess_exec(
+            self.executable_path,
+            *command_args,
+            stdin=_aio.subprocess.PIPE,
+            stdout=_aio.subprocess.PIPE,
+            stderr=_aio.subprocess.PIPE,
+            env=env,
+            limit=2 * 1024 * 1024,  # 2 MB line buffer
+        )
+
+        if proc.stdin is None or proc.stdout is None:
+            try:
+                proc.kill()
+            finally:
+                raise CodexExecError("Child process missing stdin/stdout")
+
+        async def _read_all(stream):  # type: ignore[no-untyped-def]
+            if stream is None:
+                return b""
+            chunks: list[bytes] = []
+            while True:
+                chunk = await stream.read(4096)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+            return b"".join(chunks)
+
+        stderr_task = _aio.create_task(_read_all(proc.stderr))
+        abort_waiter = None
+        if args.signal is not None:
+            from openai_codex_sdk.exec import _wait_abort  # type: ignore[import-not-found]
+            abort_waiter = _aio.create_task(_wait_abort(args.signal))
+
+        try:
+            proc.stdin.write(args.input.encode("utf-8"))
+            await proc.stdin.drain()
+            proc.stdin.close()
+
+            while True:
+                line_task = _aio.create_task(proc.stdout.readline())
+
+                if abort_waiter is None:
+                    done, _ = await _aio.wait({line_task}, return_when=_aio.FIRST_COMPLETED)
+                else:
+                    done, _ = await _aio.wait({line_task, abort_waiter}, return_when=_aio.FIRST_COMPLETED)
+
+                if abort_waiter is not None and abort_waiter in done:
+                    line_task.cancel()
+                    await _aio.gather(line_task, return_exceptions=True)
+                    try:
+                        proc.kill()
+                    except ProcessLookupError:
+                        pass
+                    await proc.wait()
+                    raise AbortError(_format_abort_reason(args.signal.reason if args.signal else None))
+
+                line = line_task.result()
+                if not line:
+                    break
+
+                yield line.decode("utf-8").rstrip("\n")
+
+            returncode = await proc.wait()
+            stderr = await stderr_task
+
+            if returncode != 0:
+                raise CodexExecError(
+                    f"Codex Exec exited with code {returncode}: {stderr.decode('utf-8', errors='replace')}"
+                )
+        finally:
+            if abort_waiter is not None:
+                abort_waiter.cancel()
+                await _aio.gather(abort_waiter, return_exceptions=True)
+            if proc.returncode is None:
+                try:
+                    proc.kill()
+                except ProcessLookupError:
+                    pass
+                try:
+                    await proc.wait()
+                except Exception:
+                    pass
+            stderr_task.cancel()
+            await _aio.gather(stderr_task, return_exceptions=True)
+
+    CodexExec.run = _patched_run  # type: ignore[assignment]
+
+
+_patch_codex_exec_buffer_limit()
 
 
 @dataclass
@@ -39,6 +159,7 @@ class CodexAgent:
     ) -> None:
         self.runtime = runtime or CodexRuntime()
         self._config = Config()
+        self._explicit_base_url = base_url is not None
 
         # Resolve model settings: explicit arg -> config -> defaults
         self.model = model or self._config.openai_model
@@ -46,26 +167,41 @@ class CodexAgent:
         self.api_key = api_key or self._resolve_api_key()
 
     def _resolve_api_key(self) -> str:
-        """Resolve model API key from env/config, preferring explicit env overrides."""
+        """Resolve model API key for the Codex subprocess.
+
+        When using the platform model proxy (default), the platform API token
+        from ``pretorin login`` is sent as the bearer key.  When the user
+        explicitly overrides ``--base-url`` (e.g. to hit OpenAI directly), we
+        fall back to ``OPENAI_API_KEY`` from the environment.
+        """
 
         def _valid(value: object) -> str | None:
             return value.strip() if isinstance(value, str) and value.strip() else None
 
-        key = os.environ.get("OPENAI_API_KEY")
-        resolved = _valid(key)
-        if resolved:
-            return resolved
+        # Explicit --base-url means the user wants a non-platform provider;
+        # prefer the OPENAI_API_KEY env var in that case.
+        if self._explicit_base_url:
+            env_key = _valid(os.environ.get("OPENAI_API_KEY"))
+            if env_key:
+                return env_key
+            # Fall through to config keys as a last resort.
 
-        config_key = _valid(getattr(self._config, "api_key", None))
-        if config_key:
-            return config_key
+        # Default path: use the platform API token (works with platform proxy).
+        platform_key = _valid(getattr(self._config, "api_key", None))
+        if platform_key:
+            return platform_key
+
+        # Fallback: raw OpenAI key from env or config.
+        env_key = _valid(os.environ.get("OPENAI_API_KEY"))
+        if env_key:
+            return env_key
         config_key = _valid(getattr(self._config, "openai_api_key", None))
         if config_key:
             return config_key
+
         raise RuntimeError(
-            "OPENAI_API_KEY is not set. Export it in your shell:\n"
-            "  export OPENAI_API_KEY='sk-...'\n"
-            "or run `pretorin login` to configure your API key."
+            "No API key found. Either run `pretorin login` to configure your\n"
+            "platform API key, or export OPENAI_API_KEY in your shell."
         )
 
     async def run(
@@ -113,6 +249,8 @@ class CodexAgent:
         thread = codex.start_thread(
             {
                 "working_directory": str(working_directory or Path.cwd()),
+                "sandbox_mode": "danger-full-access",
+                "approval_policy": "never",
             }
         )
 
@@ -132,18 +270,39 @@ class CodexAgent:
         streamed = await thread.run_streamed(prompt)
         items: list[Any] = []
         response_text = ""
+        usage: dict[str, int] | None = None
 
         async for event in streamed.events:
             if event.type == "text.delta":
+                # Streaming text deltas (if supported by future SDK versions)
                 rprint(event.text, end="")
                 response_text += event.text
             elif event.type == "item.completed":
                 items.append(event.item)
+                item = event.item
+                if getattr(item, "type", None) == "agent_message":
+                    text = getattr(item, "text", "")
+                    rprint(text)
+                    response_text = text
+                elif getattr(item, "type", None) == "mcp_tool_call":
+                    tool = getattr(item, "tool", "unknown")
+                    status = getattr(item, "status", "")
+                    error = getattr(item, "error", None)
+                    if error:
+                        rprint(f"  [red]tool {tool}: {error.message}[/red]")
+                    else:
+                        rprint(f"  [dim]tool {tool}: {status}[/dim]")
+                elif getattr(item, "type", None) == "command_execution":
+                    cmd = getattr(item, "command", "")
+                    rprint(f"  [dim]shell: {cmd[:80]}[/dim]")
             elif event.type == "turn.completed":
-                # Token usage could be captured here
-                pass
+                if hasattr(event, "usage") and event.usage:
+                    usage = {
+                        "input_tokens": event.usage.input_tokens,
+                        "output_tokens": event.usage.output_tokens,
+                    }
 
-        return AgentResult(response=response_text, items=items)
+        return AgentResult(response=response_text, items=items, usage=usage)
 
     def _build_prompt(self, task: str, skill: str | None) -> str:
         """Build compliance-focused prompt, optionally with skill guidance."""

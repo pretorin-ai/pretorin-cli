@@ -59,7 +59,10 @@ def validate_audit_markdown(content: str, artifact_type: ArtifactType) -> Markdo
         result.errors.append("content is empty")
         return result
 
-    result.heading_count = len(_HEADING_RE.findall(text))
+    # Strip fenced code blocks before checking for headings so that
+    # comments like ``# cron job`` inside code blocks are not flagged.
+    text_without_code = _FENCED_CODE_RE.sub("", text)
+    result.heading_count = len(_HEADING_RE.findall(text_without_code))
     if result.heading_count:
         result.errors.append("markdown headings are not allowed; use lists, tables, code blocks, and links")
 
