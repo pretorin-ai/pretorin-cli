@@ -600,6 +600,14 @@ Check for and install the latest version:
 pretorin update
 ```
 
+Passive update notifications are shown only for interactive runs. To disable them:
+
+```bash
+export PRETORIN_DISABLE_UPDATE_CHECK=1
+# or
+pretorin config set disable_update_check true
+```
+
 The CLI also checks for updates automatically on startup and notifies you when a new version is available.
 
 ### Logout

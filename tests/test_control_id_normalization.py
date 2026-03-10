@@ -8,13 +8,11 @@ from unittest.mock import AsyncMock
 import pytest
 
 from pretorin.agent.tools import create_platform_tools
-from pretorin.client.api import NotFoundError, PretorianClient, PretorianClientError
+from pretorin.client.api import PretorianClient
 from pretorin.client.models import (
     ComplianceArtifact,
     ComponentDefinition,
-    ControlImplementationResponse,
     EvidenceCreate,
-    EvidenceItemResponse,
     ImplementationStatement,
 )
 from pretorin.utils import normalize_control_id
