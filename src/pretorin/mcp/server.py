@@ -652,7 +652,11 @@ async def list_tools() -> list[Tool]:
                     "system_id": _system_id_property(),
                     "framework_id": {
                         "type": "string",
-                        "description": "Framework external ID string (e.g. 'cmmc-l1', 'nist-800-53-r5', 'fedramp-moderate') — NOT a UUID",
+                        "description": (
+                            "Framework external ID string"
+                            " (e.g. 'cmmc-l1', 'nist-800-53-r5', 'fedramp-moderate')"
+                            " — NOT a UUID"
+                        ),
                     },
                 },
                 "required": ["system_id", "framework_id"],

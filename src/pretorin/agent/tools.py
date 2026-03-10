@@ -640,8 +640,18 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
             parameters={
                 "type": "object",
                 "properties": {
-                    "system_id": {"type": "string", "description": "System UUID (not the system name — use list_systems first to get the UUID)"},
-                    "framework_id": {"type": "string", "description": "Framework external ID string (e.g. 'cmmc-l1', 'nist-800-53-r5', 'fedramp-moderate') — NOT a UUID"},
+                    "system_id": {
+                        "type": "string",
+                        "description": ("System UUID (not the system name — use list_systems first to get the UUID)"),
+                    },
+                    "framework_id": {
+                        "type": "string",
+                        "description": (
+                            "Framework external ID string"
+                            " (e.g. 'cmmc-l1', 'nist-800-53-r5', 'fedramp-moderate')"
+                            " — NOT a UUID"
+                        ),
+                    },
                 },
                 "required": ["system_id", "framework_id"],
             },
