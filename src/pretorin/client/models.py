@@ -138,6 +138,27 @@ class ControlReferences(BaseModel):
     related_controls: list[RelatedControl] = Field(default_factory=list)
 
 
+class ControlBatchItem(BaseModel):
+    """Detailed control data returned from the batch controls endpoint."""
+
+    id: str
+    title: str
+    family_id: str
+    control_type: str | None = None
+    statement: str | None = None
+    guidance: str | None = None
+    objectives: list[str] = Field(default_factory=list)
+    parameters: list[dict[str, Any]] | None = None
+    ai_guidance: dict[str, Any] | None = None
+
+
+class ControlBatchResponse(BaseModel):
+    """Batch response for one-framework control retrieval."""
+
+    controls: list[ControlBatchItem] = Field(default_factory=list)
+    total: int = 0
+
+
 # =============================================================================
 # Document Requirement Models
 # =============================================================================
@@ -322,6 +343,36 @@ class EvidenceCreate(BaseModel):
     framework_id: str | None = Field(default=None, description="Associated framework ID")
 
 
+class EvidenceBatchItemCreate(BaseModel):
+    """One scoped evidence item in a batch create request."""
+
+    name: str
+    description: str
+    control_id: str
+    evidence_type: str = Field(default="policy_document")
+    relevance_notes: str | None = None
+
+
+class EvidenceBatchItemResult(BaseModel):
+    """Per-item result from the batch evidence endpoint."""
+
+    index: int
+    status: str
+    evidence_id: str | None = None
+    mapping_id: str | None = None
+    control_id: str | None = None
+    framework_id: str | None = None
+    error: str | None = None
+
+
+class EvidenceBatchResponse(BaseModel):
+    """Batch evidence response for a single system/framework scope."""
+
+    framework_id: str
+    total: int
+    results: list[EvidenceBatchItemResult] = Field(default_factory=list)
+
+
 # =============================================================================
 # Narrative Models
 # =============================================================================
@@ -405,6 +456,7 @@ class MonitoringEventCreate(BaseModel):
     description: str = Field(default="", description="Event description")
     severity: str = Field(default="high", description="Event severity")
     control_id: str | None = Field(default=None, description="Associated control ID")
+    framework_id: str | None = Field(default=None, description="Associated framework ID")
     event_data: dict[str, Any] = Field(default_factory=dict, description="Additional event data")
 
 
@@ -417,5 +469,6 @@ class MonitoringEventResponse(BaseModel):
     description: str | None = None
     severity: str | None = None
     control_id: str | None = None
+    framework_id: str | None = None
     status: str | None = None
     created_at: str | None = None

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from typing import Any
 
 import typer
@@ -25,6 +26,66 @@ app = typer.Typer(
 ROMEBOT_HAPPY = "[#EAB536]\\[°◡°]/[/#EAB536]"
 ROMEBOT_THINKING = "[#EAB536]\\[°~°][/#EAB536]"
 ROMEBOT_SAD = "[#EAB536]\\[°︵°][/#EAB536]"
+_MULTI_SCOPE_FRAMEWORK_PATTERN = re.compile(r"(,|/|\\|\band\b|&)", re.IGNORECASE)
+
+
+def _resolve_context_values(
+    system: str | None = None,
+    framework: str | None = None,
+) -> tuple[str | None, str | None]:
+    """Resolve context values from flags or stored config without side effects."""
+    from pretorin.client.config import Config
+
+    config = Config()
+    return system or config.get("active_system_id"), framework or config.get("active_framework_id")
+
+
+def _ensure_single_framework_scope(framework_id: str) -> str:
+    """Reject obvious multi-framework selections in execution mode."""
+    candidate = framework_id.strip()
+    if not candidate:
+        return candidate
+    if _MULTI_SCOPE_FRAMEWORK_PATTERN.search(candidate):
+        raise ValueError(
+            "Framework scope must target exactly one framework. "
+            "Split multi-level requests into separate runs."
+        )
+    return candidate
+
+
+async def resolve_execution_context(
+    client: Any,
+    *,
+    system: str | None = None,
+    framework: str | None = None,
+) -> tuple[str, str]:
+    """Resolve and validate a single execution scope against the platform."""
+    from pretorin.client.api import PretorianClientError
+    from pretorin.workflows.compliance_updates import resolve_system
+
+    system_value, framework_value = _resolve_context_values(system=system, framework=framework)
+    if not system_value or not framework_value:
+        raise PretorianClientError(
+            "No system/framework context set. Run 'pretorin context set' or pass --system and --framework-id."
+        )
+
+    try:
+        framework_id = _ensure_single_framework_scope(framework_value)
+    except ValueError as exc:
+        raise PretorianClientError(str(exc)) from exc
+    system_id, _ = await resolve_system(client, system_value)
+    status = await client.get_system_compliance_status(system_id)
+    available_frameworks = [fw.get("framework_id") for fw in status.get("frameworks", []) if fw.get("framework_id")]
+    if not available_frameworks:
+        raise PretorianClientError(
+            f"System '{system_id}' has no configured frameworks. Add one in the Pretorin platform first."
+        )
+    if framework_id not in available_frameworks:
+        raise PretorianClientError(
+            f"Framework '{framework_id}' is not associated with system '{system_id}'. "
+            f"Available frameworks: {', '.join(sorted(available_frameworks))}"
+        )
+    return system_id, framework_id
 
 
 def resolve_context(
@@ -35,12 +96,7 @@ def resolve_context(
 
     Priority: explicit flags > stored context > error
     """
-    from pretorin.client.config import Config
-
-    config = Config()
-
-    system_id = system or config.get("active_system_id")
-    framework_id = framework or config.get("active_framework_id")
+    system_id, framework_id = _resolve_context_values(system=system, framework=framework)
 
     if not system_id or not framework_id:
         rprint("[red]No system/framework context set.[/red]")

@@ -45,17 +45,22 @@ async def _list_notes(
     system: str | None,
 ) -> None:
     from pretorin.cli.commands import require_auth
+    from pretorin.cli.context import resolve_execution_context
     from pretorin.client.api import PretorianClient, PretorianClientError
-    from pretorin.workflows.compliance_updates import resolve_system
 
     async with PretorianClient() as client:
         require_auth(client)
         try:
-            system_id, system_name = await resolve_system(client, system)
+            system_id, resolved_framework_id = await resolve_execution_context(
+                client,
+                system=system,
+                framework=framework_id,
+            )
+            system_name = (await client.get_system(system_id)).name
             notes = await client.list_control_notes(
                 system_id=system_id,
                 control_id=control_id,
-                framework_id=framework_id,
+                framework_id=resolved_framework_id,
             )
         except PretorianClientError as e:
             rprint(f"[red]List failed: {e.message}[/red]")
@@ -65,7 +70,7 @@ async def _list_notes(
             "system_id": system_id,
             "system_name": system_name,
             "control_id": control_id,
-            "framework_id": framework_id,
+            "framework_id": resolved_framework_id,
             "total": len(notes),
             "notes": notes,
         }
@@ -83,7 +88,7 @@ async def _list_notes(
         for idx, note in enumerate(notes, start=1):
             table.add_row(str(idx), str(note.get("content", "")))
         rprint(f"[bold]System:[/bold] {system_name}")
-        rprint(f"[bold]Framework:[/bold] {framework_id}\n")
+        rprint(f"[bold]Framework:[/bold] {resolved_framework_id}\n")
         rprint(table)
 
 
@@ -94,17 +99,22 @@ async def _add_note(
     system: str | None,
 ) -> None:
     from pretorin.cli.commands import require_auth
+    from pretorin.cli.context import resolve_execution_context
     from pretorin.client.api import PretorianClient, PretorianClientError
-    from pretorin.workflows.compliance_updates import resolve_system
 
     async with PretorianClient() as client:
         require_auth(client)
         try:
-            system_id, system_name = await resolve_system(client, system)
+            system_id, resolved_framework_id = await resolve_execution_context(
+                client,
+                system=system,
+                framework=framework_id,
+            )
+            system_name = (await client.get_system(system_id)).name
             result = await client.add_control_note(
                 system_id=system_id,
                 control_id=control_id,
-                framework_id=framework_id,
+                framework_id=resolved_framework_id,
                 content=content,
                 source="cli",
             )
@@ -116,7 +126,7 @@ async def _add_note(
             "system_id": system_id,
             "system_name": system_name,
             "control_id": control_id,
-            "framework_id": framework_id,
+            "framework_id": resolved_framework_id,
             "note": result,
         }
         if is_json_mode():

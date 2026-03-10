@@ -85,6 +85,11 @@ async def test_client_submit_artifact_normalizes_root_and_nested_control_ids() -
 @pytest.mark.asyncio
 async def test_agent_tool_update_control_status_normalizes_control_id() -> None:
     mock_client = AsyncMock()
+    mock_client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Test System"}])
+    mock_client.get_system_compliance_status = AsyncMock(
+        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
+    )
+    mock_client.get_control = AsyncMock(return_value=AsyncMock())
     mock_client.update_control_status = AsyncMock(return_value={"ok": True})
 
     tools = {tool.name: tool for tool in create_platform_tools(mock_client)}
@@ -106,15 +111,25 @@ async def test_agent_tool_update_control_status_normalizes_control_id() -> None:
 @pytest.mark.asyncio
 async def test_agent_tool_search_evidence_normalizes_control_id_filter() -> None:
     mock_client = AsyncMock()
-    mock_client.search_evidence_with_fallback = AsyncMock(return_value=[])
+    mock_client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Test System"}])
+    mock_client.get_system_compliance_status = AsyncMock(
+        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
+    )
+    mock_client.get_control = AsyncMock(return_value=AsyncMock())
+    mock_client.list_evidence = AsyncMock(return_value=[])
 
     tools = {tool.name: tool for tool in create_platform_tools(mock_client)}
-    await tools["search_evidence"].handler(control_id="ac-2", framework_id="fedramp-moderate", limit=10)
-
-    mock_client.search_evidence_with_fallback.assert_awaited_once_with(
-        system_id=None,
-        control_id="ac-02",
+    await tools["search_evidence"].handler(
+        system_id="sys-1",
+        control_id="ac-2",
         framework_id="fedramp-moderate",
+        limit=10,
+    )
+
+    mock_client.list_evidence.assert_awaited_once_with(
+        system_id="sys-1",
+        framework_id="fedramp-moderate",
+        control_id="ac-02",
         limit=10,
     )
 
@@ -144,6 +159,11 @@ async def test_agent_tool_add_control_note_normalizes_control_id() -> None:
 @pytest.mark.asyncio
 async def test_agent_tool_get_control_notes_normalizes_control_id() -> None:
     mock_client = AsyncMock()
+    mock_client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Test System"}])
+    mock_client.get_system_compliance_status = AsyncMock(
+        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
+    )
+    mock_client.get_control = AsyncMock(return_value=AsyncMock())
     mock_client.list_control_notes = AsyncMock(return_value=[])
 
     tools = {tool.name: tool for tool in create_platform_tools(mock_client)}
@@ -163,6 +183,11 @@ async def test_agent_tool_get_control_notes_normalizes_control_id() -> None:
 @pytest.mark.asyncio
 async def test_agent_tool_link_evidence_normalizes_control_id() -> None:
     mock_client = AsyncMock()
+    mock_client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Test System"}])
+    mock_client.get_system_compliance_status = AsyncMock(
+        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
+    )
+    mock_client.get_control = AsyncMock(return_value=AsyncMock())
     mock_client.link_evidence_to_control = AsyncMock(return_value={"linked": True})
 
     tools = {tool.name: tool for tool in create_platform_tools(mock_client)}
@@ -208,14 +233,6 @@ def test_normalize_passes_cmmc_and_800_171_ids_unchanged(raw: str, expected: str
 
 
 @pytest.mark.asyncio
-async def test_client_get_control_implementation_requires_framework_id() -> None:
-    client = PretorianClient(api_key="test", api_base_url="https://api.example.com")
-
-    with pytest.raises(PretorianClientError, match="framework_id is required"):
-        await client.get_control_implementation("sys-1", "AC.L1-3.1.1")
-
-
-@pytest.mark.asyncio
 async def test_client_get_control_implementation_cmmc_with_framework_id() -> None:
     client = PretorianClient(api_key="test", api_base_url="https://api.example.com")
     client._request = AsyncMock(return_value={"control_id": "ac.l1-3.1.1", "status": "not_started"})  # type: ignore[method-assign]
@@ -230,18 +247,17 @@ async def test_client_get_control_implementation_cmmc_with_framework_id() -> Non
 
 
 @pytest.mark.asyncio
-async def test_client_get_narrative_405_requires_framework_id_for_fallback() -> None:
+async def test_client_get_narrative_uses_scoped_endpoint() -> None:
     client = PretorianClient(api_key="test", api_base_url="https://api.example.com")
+    client._request = AsyncMock(return_value={"control_id": "ac-02", "framework_id": "fedramp-moderate"})  # type: ignore[method-assign]
 
-    async def fake_request(method: str, path: str, **kwargs: Any) -> dict[str, Any]:
-        if path.endswith("/narrative"):
-            raise PretorianClientError("Method not allowed", status_code=405)
-        return {"control_id": "ac-02", "status": "not_started"}
+    await client.get_narrative("sys-1", "ac-2", "fedramp-moderate")
 
-    client._request = fake_request  # type: ignore[method-assign]
-
-    with pytest.raises(PretorianClientError, match="framework_id is required to look up narrative"):
-        await client.get_narrative("sys-1", "ac-2")
+    client._request.assert_awaited_once_with(
+        "GET",
+        "/systems/sys-1/controls/ac-02/narrative",
+        params={"framework_id": "fedramp-moderate"},
+    )
 
 
 @pytest.mark.asyncio
@@ -266,64 +282,30 @@ async def test_agent_tool_get_control_implementation_requires_framework_id() -> 
 
 
 @pytest.mark.asyncio
-async def test_client_list_control_notes_falls_back_to_implementation_on_405() -> None:
+async def test_client_list_control_notes_uses_scoped_endpoint() -> None:
     client = PretorianClient(api_key="test", api_base_url="https://api.example.com")
-    client._request = AsyncMock(side_effect=PretorianClientError("Method Not Allowed", status_code=405))  # type: ignore[method-assign]
-    client.get_control_implementation = AsyncMock(  # type: ignore[method-assign]
-        return_value=ControlImplementationResponse(
-            control_id="ac-02",
-            status="partial",
-            implementation_narrative="Narrative",
-            notes=[{"content": "Recovered note"}],
-        )
-    )
+    client._request = AsyncMock(return_value={"notes": [{"content": "Scoped note"}]})  # type: ignore[method-assign]
 
     notes = await client.list_control_notes("sys-1", "ac-2", "fedramp-moderate")
 
-    assert notes == [{"content": "Recovered note"}]
-    client.get_control_implementation.assert_awaited_once_with("sys-1", "ac-02", "fedramp-moderate")
+    assert notes == [{"content": "Scoped note"}]
+    client._request.assert_awaited_once_with(
+        "GET",
+        "/systems/sys-1/controls/ac-02/notes",
+        params={"framework_id": "fedramp-moderate"},
+    )
 
 
 @pytest.mark.asyncio
-async def test_client_search_evidence_falls_back_to_system_scoped_queries() -> None:
+async def test_client_list_evidence_uses_scoped_public_endpoint() -> None:
     client = PretorianClient(api_key="test", api_base_url="https://api.example.com")
-    client.list_evidence = AsyncMock(  # type: ignore[method-assign]
-        side_effect=[
-            NotFoundError("Not Found", status_code=404),
-            [
-                EvidenceItemResponse(
-                    id="ev-1",
-                    name="RBAC Config",
-                    description="- Role mapping",
-                    evidence_type="configuration",
-                )
-            ],
-            [
-                EvidenceItemResponse(
-                    id="ev-1",
-                    name="RBAC Config",
-                    description="- Role mapping",
-                    evidence_type="configuration",
-                ),
-                EvidenceItemResponse(
-                    id="ev-2",
-                    name="Approval Export",
-                    description="- IAM approval workflow",
-                    evidence_type="report",
-                ),
-            ],
-        ]
-    )
-    client.list_systems = AsyncMock(  # type: ignore[method-assign]
-        return_value=[{"id": "sys-1"}, {"id": "sys-2"}]
-    )
+    client._request = AsyncMock(return_value={"evidence": []})  # type: ignore[method-assign]
 
-    evidence = await client.search_evidence_with_fallback(control_id="ac-2", framework_id="fedramp-moderate", limit=10)
+    evidence = await client.list_evidence("sys-1", "fedramp-moderate", control_id="ac-2", limit=10)
 
-    assert [item.id for item in evidence] == ["ev-1", "ev-2"]
-    assert client.list_evidence.await_args_list[0].kwargs == {
-        "system_id": None,
-        "control_id": "ac-2",
-        "framework_id": "fedramp-moderate",
-        "limit": 10,
-    }
+    assert evidence == []
+    client._request.assert_awaited_once_with(
+        "GET",
+        "/systems/sys-1/evidence",
+        params={"limit": 10, "framework_id": "fedramp-moderate", "control_id": "ac-02"},
+    )

@@ -326,6 +326,8 @@ pretorin context set
 pretorin context set --system "My Application" --framework nist-800-53-r5
 ```
 
+Platform-backed compliance execution is single-scope. Commands that create or update evidence, notes, monitoring events, narratives, or control state operate within exactly one active `system + framework` pair. If you need to work across `fedramp-low` and `fedramp-moderate`, run them separately.
+
 ### Show Current Context
 
 ```bash
@@ -370,13 +372,13 @@ pretorin evidence push
 ```
 
 Pushes local evidence files to the platform using find-or-create upsert logic.
-Requires an active system context (`pretorin context set`) unless `--system` is provided via `evidence upsert`.
+Requires an active single scope from `pretorin context set` unless both `--system` and `--framework` are provided via `evidence upsert`.
 
 ### Search Platform Evidence
 
 ```bash
 pretorin evidence search --control-id ac-02 --framework-id fedramp-moderate
-pretorin evidence search --org-level --limit 100
+pretorin evidence search --system "My Application" --framework-id fedramp-moderate --limit 100
 ```
 
 ### Upsert Evidence
@@ -388,8 +390,9 @@ pretorin evidence upsert ac-02 fedramp-moderate \
   --type configuration
 ```
 
-Finds and reuses exact matching org-level evidence by default, otherwise creates a new item, then ensures system/control linking.
+Finds and reuses exact matching evidence within the active system/framework scope by default, otherwise creates a new item, then ensures control linking.
 Evidence descriptions must be auditor-ready markdown with no headings and at least one rich element (code block, table, list, or link). Markdown images are currently disallowed.
+When `control_id` is involved, `framework_id` is required and the CLI validates that the framework belongs to the selected system before pushing.
 
 ## Narrative Commands
 

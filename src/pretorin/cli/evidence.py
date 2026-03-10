@@ -256,18 +256,16 @@ async def _push_evidence(dry_run: bool) -> None:
 @app.command("search")
 def evidence_search(
     control_id: str | None = typer.Option(None, "--control-id", "-c", help="Optional control ID filter."),
-    framework_id: str | None = typer.Option(None, "--framework-id", "-f", help="Optional framework filter."),
+    framework_id: str | None = typer.Option(None, "--framework-id", "-f", help="Framework ID."),
     system: str | None = typer.Option(None, "--system", "-s", help="System name or ID."),
-    org_level: bool = typer.Option(False, "--org-level", help="Search org-level evidence instead of one system."),
     limit: int = typer.Option(50, "--limit", "-n", help="Max results."),
 ) -> None:
-    """Search platform evidence items."""
+    """Search platform evidence items within one active system/framework scope."""
     asyncio.run(
         _search_evidence(
             control_id=control_id,
             framework_id=framework_id,
             system=system,
-            org_level=org_level,
             limit=limit,
         )
     )
@@ -277,12 +275,11 @@ async def _search_evidence(
     control_id: str | None,
     framework_id: str | None,
     system: str | None,
-    org_level: bool,
     limit: int,
 ) -> None:
     from pretorin.cli.commands import require_auth
     from pretorin.client.api import PretorianClient, PretorianClientError
-    from pretorin.workflows.compliance_updates import resolve_system
+    from pretorin.cli.context import resolve_execution_context
 
     control_filter = normalize_control_id(control_id) if control_id else None
 
@@ -290,14 +287,16 @@ async def _search_evidence(
         require_auth(client)
 
         try:
-            system_id = None
-            system_name = None
-            if not org_level:
-                system_id, system_name = await resolve_system(client, system)
+            system_id, resolved_framework_id = await resolve_execution_context(
+                client,
+                system=system,
+                framework=framework_id,
+            )
+            system_name = (await client.get_system(system_id)).name
             items = await client.list_evidence(
                 system_id=system_id,
+                framework_id=resolved_framework_id,
                 control_id=control_filter,
-                framework_id=framework_id,
                 limit=limit,
             )
         except PretorianClientError as e:
@@ -307,15 +306,16 @@ async def _search_evidence(
         if is_json_mode():
             print_json(
                 {
-                    "scope": "org" if org_level else f"system:{system_id}",
+                    "scope": f"system:{system_id}/framework:{resolved_framework_id}",
                     "system_name": system_name,
+                    "framework_id": resolved_framework_id,
                     "total": len(items),
                     "evidence": [item.model_dump() for item in items],
                 }
             )
             return
 
-        scope = "[bold]Organization[/bold]" if org_level else f"[bold]{system_name}[/bold]"
+        scope = f"[bold]{system_name}[/bold] / [bold]{resolved_framework_id}[/bold]"
         rprint(f"\n  {ROMEBOT_EVIDENCE}  Evidence Search Scope: {scope}\n")
         if not items:
             rprint("[dim]No evidence found for the current filters.[/dim]")
@@ -380,13 +380,19 @@ async def _upsert_evidence(
     system: str | None,
 ) -> None:
     from pretorin.cli.commands import require_auth
+    from pretorin.cli.context import resolve_execution_context
     from pretorin.client.api import PretorianClient, PretorianClientError
-    from pretorin.workflows.compliance_updates import resolve_system, upsert_evidence
+    from pretorin.workflows.compliance_updates import upsert_evidence
 
     async with PretorianClient() as client:
         require_auth(client)
         try:
-            system_id, system_name = await resolve_system(client, system)
+            system_id, resolved_framework_id = await resolve_execution_context(
+                client,
+                system=system,
+                framework=framework_id,
+            )
+            system_name = (await client.get_system(system_id)).name
             result = await upsert_evidence(
                 client,
                 system_id=system_id,
@@ -394,7 +400,7 @@ async def _upsert_evidence(
                 description=description,
                 evidence_type=evidence_type,
                 control_id=control_id,
-                framework_id=framework_id,
+                framework_id=resolved_framework_id,
                 source="cli",
                 dedupe=True,
             )
@@ -411,7 +417,7 @@ async def _upsert_evidence(
                 "system_id": system_id,
                 "system_name": system_name,
                 "control_id": control_id,
-                "framework_id": framework_id,
+                "framework_id": resolved_framework_id,
             }
         )
         if is_json_mode():
@@ -426,7 +432,7 @@ async def _upsert_evidence(
                 f"  [bold]Evidence ID:[/bold] {result.evidence_id}\n"
                 f"  [bold]System:[/bold]    {system_name}\n"
                 f"  [bold]Control:[/bold]   {control_id.upper()}\n"
-                f"  [bold]Framework:[/bold] {framework_id}\n"
+                f"  [bold]Framework:[/bold] {resolved_framework_id}\n"
                 f"  [bold]Link:[/bold]      {link_state}\n",
                 title=f"{ROMEBOT_EVIDENCE}  Evidence Upserted",
                 border_style="#95D7E0",

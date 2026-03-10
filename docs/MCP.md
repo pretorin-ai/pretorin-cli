@@ -2,6 +2,8 @@
 
 The Pretorin CLI includes a built-in MCP server that enables AI assistants like Claude, Codex, Cursor, and Windsurf to access compliance framework data directly during conversations.
 
+Scoped compliance execution tools on the MCP server run inside exactly one `system + framework` pair at a time. Set the active scope with `pretorin context set`, or pass both values explicitly. If a request spans multiple framework levels or systems, split it into separate runs.
+
 ## Why MCP?
 
 The Model Context Protocol allows AI assistants to:
@@ -397,7 +399,7 @@ Validation rules:
 
 #### pretorin_create_evidence
 
-Upsert evidence on the platform (find-or-create by default). If `dedupe` is true, exact matching org-level evidence is reused; otherwise a new record is created. The tool then attempts to ensure control/system linking.
+Upsert evidence on the platform (find-or-create by default). If `dedupe` is true, exact matching evidence in the active system/framework scope is reused; otherwise a new record is created. The tool then ensures control linking inside that same scope.
 
 **Parameters:**
 - `system_id` (required): The system ID

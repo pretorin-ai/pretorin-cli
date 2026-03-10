@@ -19,8 +19,10 @@ from mcp.types import (
     Tool,
 )
 
+from pretorin.cli.context import resolve_execution_context
 from pretorin.client import PretorianClient
 from pretorin.client.api import AuthenticationError, NotFoundError, PretorianClientError
+from pretorin.client.models import EvidenceBatchItemCreate
 from pretorin.mcp.analysis_prompts import (
     format_control_analysis_prompt,
     get_artifact_schema,
@@ -147,6 +149,27 @@ async def _resolve_system_id(
     return system_id
 
 
+async def _resolve_execution_scope(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+    *,
+    control_required: bool = False,
+) -> tuple[str, str, str | None]:
+    """Resolve one validated execution scope and optionally validate a control within it."""
+    system_id, framework_id = await resolve_execution_context(
+        client,
+        system=arguments.get("system_id"),
+        framework=arguments.get("framework_id"),
+    )
+    raw_control_id = arguments.get("control_id")
+    normalized_control_id = normalize_control_id(raw_control_id) if raw_control_id else None
+    if control_required and not normalized_control_id:
+        raise PretorianClientError("control_id is required")
+    if normalized_control_id:
+        await client.get_control(framework_id, normalized_control_id)
+    return system_id, framework_id, normalized_control_id
+
+
 # =============================================================================
 # MCP Resources for Analysis
 # =============================================================================
@@ -225,17 +248,10 @@ async def read_resource(uri: str) -> str:
     elif resource_type == "control":
         if not path_parts:
             raise ValueError("Control ID required for control resource")
-        # Support both analysis://control/ac-2 and analysis://control/fedramp-moderate/ac-2
-        if len(path_parts) == 1:
-            control_id = normalize_control_id(path_parts[0])
-            framework_id = "fedramp-moderate"  # Default framework
-            logger.warning(
-                "No framework specified for control resource '%s', defaulting to fedramp-moderate",
-                control_id,
-            )
-        else:
-            framework_id = path_parts[0]
-            control_id = normalize_control_id(path_parts[1])
+        if len(path_parts) != 2:
+            raise ValueError("Control resources require framework_id and control_id")
+        framework_id = path_parts[0]
+        control_id = normalize_control_id(path_parts[1])
 
         return format_control_analysis_prompt(framework_id, control_id)
 
@@ -328,6 +344,25 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="pretorin_get_controls_batch",
+            description="Get detailed control data for many controls in a single framework-scoped request",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "framework_id": {
+                        "type": "string",
+                        "description": "The framework ID (e.g., nist-800-53-r5)",
+                    },
+                    "control_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Optional: list of control IDs to retrieve; omit to retrieve all controls",
+                    },
+                },
+                "required": ["framework_id"],
+            },
+        ),
+        Tool(
             name="pretorin_get_control_references",
             description="Get control references: statement, guidance, objectives, and related controls",
             inputSchema={
@@ -393,7 +428,7 @@ async def list_tools() -> list[Tool]:
         # === Evidence Tools ===
         Tool(
             name="pretorin_search_evidence",
-            description="Search evidence items, optionally filtered by control or framework",
+            description="Search evidence items within exactly one active system/framework scope",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -401,7 +436,7 @@ async def list_tools() -> list[Tool]:
                     "control_id": _control_id_property(optional=True),
                     "framework_id": {
                         "type": "string",
-                        "description": "Optional: Filter by framework ID",
+                        "description": "Optional: Framework ID; defaults to active scope",
                     },
                     "limit": {
                         "type": "integer",
@@ -416,12 +451,12 @@ async def list_tools() -> list[Tool]:
             name="pretorin_create_evidence",
             description=(
                 "Upsert an evidence item on the platform (find-or-create by default) "
-                "using auditor-ready markdown descriptions"
+                "using auditor-ready markdown descriptions within one active system/framework scope"
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": _system_id_property(),
+                    "system_id": _system_id_property(optional=True),
                     "name": {
                         "type": "string",
                         "description": "Evidence name",
@@ -442,7 +477,7 @@ async def list_tools() -> list[Tool]:
                     "control_id": _control_id_property(optional=True),
                     "framework_id": {
                         "type": "string",
-                        "description": "Optional: Associated framework ID",
+                        "description": "Optional: Associated framework ID; defaults to active scope",
                     },
                     "dedupe": {
                         "type": "boolean",
@@ -450,16 +485,49 @@ async def list_tools() -> list[Tool]:
                         "default": True,
                     },
                 },
-                "required": ["system_id", "name", "description"],
+                "required": ["name", "description"],
+            },
+        ),
+        Tool(
+            name="pretorin_create_evidence_batch",
+            description="Create and link multiple evidence items within exactly one active system/framework scope",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": _system_id_property(optional=True),
+                    "framework_id": {
+                        "type": "string",
+                        "description": "Optional: Framework ID; defaults to active scope",
+                    },
+                    "items": {
+                        "type": "array",
+                        "description": "Scoped evidence items to create and link",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "description": {"type": "string"},
+                                "control_id": _control_id_property(),
+                                "evidence_type": {
+                                    "type": "string",
+                                    "enum": sorted(_VALID_EVIDENCE_TYPES),
+                                },
+                                "relevance_notes": {"type": "string"},
+                            },
+                            "required": ["name", "description", "control_id"],
+                        },
+                    },
+                },
+                "required": ["items"],
             },
         ),
         Tool(
             name="pretorin_link_evidence",
-            description="Link an existing evidence item to a control",
+            description="Link an existing evidence item to a control within exactly one active system/framework scope",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": _system_id_property(),
+                    "system_id": _system_id_property(optional=True),
                     "evidence_id": {
                         "type": "string",
                         "description": "The evidence item ID",
@@ -467,10 +535,10 @@ async def list_tools() -> list[Tool]:
                     "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
-                        "description": "Optional: Framework context for the link",
+                        "description": "Optional: Framework context for the link; defaults to active scope",
                     },
                 },
-                "required": ["system_id", "evidence_id", "control_id"],
+                "required": ["evidence_id", "control_id"],
             },
         ),
         # === Narrative Tools ===
@@ -520,11 +588,15 @@ async def list_tools() -> list[Tool]:
         # === Monitoring Tools ===
         Tool(
             name="pretorin_push_monitoring_event",
-            description="Push a monitoring event to a system (security scan, config change, access review, etc.)",
+            description="Push a monitoring event within exactly one active system/framework scope",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": _system_id_property(),
+                    "system_id": _system_id_property(optional=True),
+                    "framework_id": {
+                        "type": "string",
+                        "description": "Optional: Framework ID; defaults to active scope",
+                    },
                     "title": {
                         "type": "string",
                         "description": "Event title",
@@ -547,7 +619,7 @@ async def list_tools() -> list[Tool]:
                         "description": "Optional: Detailed event description",
                     },
                 },
-                "required": ["system_id", "title"],
+                "required": ["title"],
             },
         ),
         # === Control Context Tools ===
@@ -555,19 +627,19 @@ async def list_tools() -> list[Tool]:
             name="pretorin_get_control_context",
             description=(
                 "Get rich context for a control including AI guidance, statement,"
-                " objectives, scope status, and implementation details"
+                " objectives, scope status, and implementation details within one active system/framework scope"
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": _system_id_property(),
+                    "system_id": _system_id_property(optional=True),
                     "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
-                        "description": "The framework ID (e.g., nist-800-53-r5)",
+                        "description": "Optional: Framework ID; defaults to active scope",
                     },
                 },
-                "required": ["system_id", "control_id", "framework_id"],
+                "required": ["control_id"],
             },
         ),
         Tool(
@@ -634,31 +706,28 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_get_control_notes",
-            description="Get notes for a control implementation in a system",
+            description="Get notes for a control implementation within exactly one active system/framework scope",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": {
-                        "type": "string",
-                        "description": "The system ID",
-                    },
+                    "system_id": _system_id_property(optional=True),
                     "control_id": _control_id_property(),
                     "framework_id": {
                         "type": "string",
-                        "description": "Optional: Framework ID filter",
+                        "description": "Optional: Framework ID; defaults to active scope",
                     },
                 },
-                "required": ["system_id", "control_id"],
+                "required": ["control_id"],
             },
         ),
         # === Control Implementation Tools ===
         Tool(
             name="pretorin_update_control_status",
-            description="Update the implementation status of a control in a system",
+            description="Update the implementation status of a control within exactly one active system/framework scope",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": _system_id_property(),
+                    "system_id": _system_id_property(optional=True),
                     "control_id": _control_id_property(),
                     "status": {
                         "type": "string",
@@ -667,10 +736,10 @@ async def list_tools() -> list[Tool]:
                     },
                     "framework_id": {
                         "type": "string",
-                        "description": "Optional: Framework context",
+                        "description": "Optional: Framework ID; defaults to active scope",
                     },
                 },
-                "required": ["system_id", "control_id", "status"],
+                "required": ["control_id", "status"],
             },
         ),
         Tool(
@@ -835,6 +904,18 @@ async def _handle_get_control(
     )
 
 
+async def _handle_get_controls_batch(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent]:
+    """Handle the get_controls_batch tool."""
+    framework_id = arguments.get("framework_id", "")
+    control_ids = arguments.get("control_ids")
+    normalized_control_ids = [normalize_control_id(control_id) for control_id in control_ids] if control_ids else None
+    controls = await client.get_controls_batch(framework_id, normalized_control_ids)
+    return _format_json(controls.model_dump() if hasattr(controls, "model_dump") else controls)
+
+
 async def _handle_get_control_references(
     client: PretorianClient,
     arguments: dict[str, Any],
@@ -957,18 +1038,18 @@ async def _handle_search_evidence(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the search_evidence tool."""
-    raw_control_id = arguments.get("control_id")
-    system_id = await _resolve_system_id(client, arguments, required=False)
-    evidence = await client.search_evidence_with_fallback(
+    system_id, framework_id, normalized_control_id = await _resolve_execution_scope(client, arguments)
+    evidence = await client.list_evidence(
         system_id=system_id,
-        control_id=normalize_control_id(raw_control_id) if raw_control_id else None,
-        framework_id=arguments.get("framework_id"),
+        framework_id=framework_id,
+        control_id=normalized_control_id,
         limit=arguments.get("limit", 20),
     )
     return _format_json(
         {
             "total": len(evidence),
             "system_id": system_id,
+            "framework_id": framework_id,
             "evidence": [
                 {
                     "id": e.id,
@@ -989,7 +1070,7 @@ async def _handle_create_evidence(
     arguments: dict[str, Any],
 ) -> list[TextContent] | CallToolResult:
     """Handle the create_evidence tool."""
-    err = _require(arguments, "system_id", "name", "description")
+    err = _require(arguments, "name", "description")
     if err:
         return _format_error(err)
 
@@ -999,9 +1080,7 @@ async def _handle_create_evidence(
         return _format_error(enum_err)
 
     dedupe = arguments.get("dedupe", True)
-    raw_control_id = arguments.get("control_id")
-    system_id = await _resolve_system_id(client, arguments)
-    assert system_id is not None
+    system_id, framework_id, normalized_control_id = await _resolve_execution_scope(client, arguments)
     try:
         result = await upsert_evidence(
             client,
@@ -1009,8 +1088,8 @@ async def _handle_create_evidence(
             name=arguments.get("name", ""),
             description=arguments.get("description", ""),
             evidence_type=evidence_type,
-            control_id=normalize_control_id(raw_control_id) if raw_control_id else None,
-            framework_id=arguments.get("framework_id"),
+            control_id=normalized_control_id,
+            framework_id=framework_id,
             source="cli",
             dedupe=bool(dedupe),
         )
@@ -1021,20 +1100,56 @@ async def _handle_create_evidence(
     return _format_json(payload)
 
 
+async def _handle_create_evidence_batch(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Handle the create_evidence_batch tool."""
+    err = _require(arguments, "items")
+    if err:
+        return _format_error(err)
+
+    system_id, framework_id, _ = await _resolve_execution_scope(client, arguments)
+    items = arguments.get("items", [])
+    payload_items = []
+    for item in items:
+        evidence_type = item.get("evidence_type", "policy_document")
+        enum_err = _validate_enum(evidence_type, _VALID_EVIDENCE_TYPES, "evidence_type")
+        if enum_err:
+            return _format_error(enum_err)
+        payload_items.append(
+            EvidenceBatchItemCreate(
+                name=item["name"],
+                description=item["description"],
+                control_id=normalize_control_id(item["control_id"]),
+                evidence_type=evidence_type,
+                relevance_notes=item.get("relevance_notes"),
+            )
+        )
+
+    result = await client.create_evidence_batch(system_id, framework_id, payload_items)
+    return _format_json(result.model_dump() if hasattr(result, "model_dump") else result)
+
+
 async def _handle_link_evidence(
     client: PretorianClient,
     arguments: dict[str, Any],
 ) -> list[TextContent] | CallToolResult:
     """Handle the link_evidence tool."""
-    err = _require(arguments, "system_id", "evidence_id", "control_id")
+    err = _require(arguments, "evidence_id", "control_id")
     if err:
         return _format_error(err)
 
+    system_id, framework_id, normalized_control_id = await _resolve_execution_scope(
+        client,
+        arguments,
+        control_required=True,
+    )
     result = await client.link_evidence_to_control(
         evidence_id=arguments["evidence_id"],
-        control_id=normalize_control_id(arguments["control_id"]),
-        system_id=await _resolve_system_id(client, arguments) or "",
-        framework_id=arguments.get("framework_id"),
+        control_id=normalized_control_id or "",
+        system_id=system_id,
+        framework_id=framework_id,
     )
     return _format_json(result)
 
@@ -1108,14 +1223,14 @@ async def _handle_push_monitoring_event(
         return _format_error(enum_err)
 
     raw_control_id = arguments.get("control_id")
-    system_id = await _resolve_system_id(client, arguments)
-    assert system_id is not None
+    system_id, framework_id, normalized_control_id = await _resolve_execution_scope(client, arguments)
     event = MonitoringEventCreate(
         event_type=event_type,
         title=arguments["title"],
         description=arguments.get("description", ""),
         severity=severity,
-        control_id=normalize_control_id(raw_control_id) if raw_control_id else None,
+        control_id=normalized_control_id,
+        framework_id=framework_id,
         event_data={"source": "cli"},
     )
     result = await client.create_monitoring_event(
@@ -1130,12 +1245,15 @@ async def _handle_get_control_context(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_control_context tool."""
-    system_id = await _resolve_system_id(client, arguments)
-    assert system_id is not None
+    system_id, framework_id, normalized_control_id = await _resolve_execution_scope(
+        client,
+        arguments,
+        control_required=True,
+    )
     ctx = await client.get_control_context(
         system_id=system_id,
-        control_id=normalize_control_id(arguments.get("control_id", "")),
-        framework_id=arguments.get("framework_id", ""),
+        control_id=normalized_control_id or "",
+        framework_id=framework_id,
     )
     return _format_json(ctx.model_dump())
 
@@ -1179,19 +1297,21 @@ async def _handle_get_control_notes(
     arguments: dict[str, Any],
 ) -> list[TextContent]:
     """Handle the get_control_notes tool."""
-    normalized_control_id = normalize_control_id(arguments.get("control_id", ""))
-    system_id = await _resolve_system_id(client, arguments)
-    assert system_id is not None
+    system_id, framework_id, normalized_control_id = await _resolve_execution_scope(
+        client,
+        arguments,
+        control_required=True,
+    )
     notes = await client.list_control_notes(
         system_id=system_id,
-        control_id=normalized_control_id,
-        framework_id=arguments.get("framework_id"),
+        control_id=normalized_control_id or "",
+        framework_id=framework_id,
     )
     return _format_json(
         {
             "control_id": normalized_control_id,
             "system_id": system_id,
-            "framework_id": arguments.get("framework_id"),
+            "framework_id": framework_id,
             "total": len(notes),
             "notes": notes,
         }
@@ -1235,13 +1355,16 @@ async def _handle_update_control_status(
     if enum_err:
         return _format_error(enum_err)
 
-    system_id = await _resolve_system_id(client, arguments)
-    assert system_id is not None
+    system_id, framework_id, normalized_control_id = await _resolve_execution_scope(
+        client,
+        arguments,
+        control_required=True,
+    )
     result = await client.update_control_status(
         system_id=system_id,
-        control_id=normalize_control_id(arguments["control_id"]),
+        control_id=normalized_control_id or "",
         status=arguments["status"],
-        framework_id=arguments.get("framework_id"),
+        framework_id=framework_id,
     )
     return _format_json(result)
 
@@ -1281,6 +1404,7 @@ _TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pretorin_list_control_families": _handle_list_control_families,
     "pretorin_list_controls": _handle_list_controls,
     "pretorin_get_control": _handle_get_control,
+    "pretorin_get_controls_batch": _handle_get_controls_batch,
     "pretorin_get_control_references": _handle_get_control_references,
     "pretorin_get_document_requirements": _handle_get_document_requirements,
     "pretorin_list_systems": _handle_list_systems,
@@ -1288,6 +1412,7 @@ _TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pretorin_get_compliance_status": _handle_get_compliance_status,
     "pretorin_search_evidence": _handle_search_evidence,
     "pretorin_create_evidence": _handle_create_evidence,
+    "pretorin_create_evidence_batch": _handle_create_evidence_batch,
     "pretorin_link_evidence": _handle_link_evidence,
     "pretorin_get_narrative": _handle_get_narrative,
     "pretorin_generate_control_artifacts": _handle_generate_control_artifacts,

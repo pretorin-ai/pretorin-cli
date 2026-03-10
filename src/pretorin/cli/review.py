@@ -12,7 +12,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from pretorin.cli.context import resolve_context
+from pretorin.cli.context import resolve_execution_context
 from pretorin.cli.output import is_json_mode, print_json
 
 console = Console()
@@ -121,8 +121,10 @@ def run(
     """Review local artifacts against a compliance control.
 
     Fetches control requirements and displays them alongside your
-    local codebase context. Use --local to save control context
-    as markdown files without requiring a system.
+    local codebase context. Platform-backed runs require one active
+    system/framework scope from `pretorin context set` or explicit
+    `--system` plus `--framework-id`. Use --local to save control
+    context as markdown files without requiring a system.
 
     Examples:
         pretorin review run -c ac-02
@@ -157,25 +159,7 @@ async def _run_review(
     system_id: str | None = None
     resolved_framework_id: str | None = framework_id
 
-    if not local:
-        try:
-            system_id, resolved_framework_id = resolve_context(
-                system=system,
-                framework=framework_id,
-            )
-        except SystemExit:
-            # Context resolution failed — fall back to local mode
-            if framework_id:
-                resolved_framework_id = framework_id
-                local = True
-                if not is_json_mode():
-                    rprint(f"\n  {ROMEBOT_WORKING}  No system context — falling back to local mode.\n")
-            else:
-                # No framework at all — re-raise
-                rprint("[red]No framework specified and no active context.[/red]")
-                rprint("Use [bold]--framework-id[/bold] or run [bold]pretorin context set[/bold] first.")
-                raise typer.Exit(1)
-    else:
+    if local:
         # Local mode: framework is required
         if not resolved_framework_id:
             rprint("[red]--framework-id is required in --local mode.[/red]")
@@ -183,6 +167,17 @@ async def _run_review(
 
     async with PretorianClient() as client:
         require_auth(client)
+
+        if not local:
+            try:
+                system_id, resolved_framework_id = await resolve_execution_context(
+                    client,
+                    system=system,
+                    framework=framework_id,
+                )
+            except PretorianClientError as e:
+                rprint(f"[red]{e.message}[/red]")
+                raise typer.Exit(1)
 
         # --- Fetch control details ---
         if not is_json_mode():
@@ -349,6 +344,9 @@ def status(
 ) -> None:
     """Show the implementation status for a specific control.
 
+    Requires one active system/framework scope from `pretorin context set`
+    or explicit `--system` plus `--framework-id`.
+
     Examples:
         pretorin review status -c ac-02
         pretorin review status -c sc-07 -f fedramp-moderate -s my-system
@@ -371,13 +369,21 @@ async def _review_status(
     from pretorin.cli.commands import require_auth
     from pretorin.client.api import PretorianClient, PretorianClientError
 
-    system_id, resolved_framework_id = resolve_context(
-        system=system,
-        framework=framework_id,
-    )
-
     async with PretorianClient() as client:
         require_auth(client)
+
+        try:
+            system_id, resolved_framework_id = await resolve_execution_context(
+                client,
+                system=system,
+                framework=framework_id,
+            )
+        except PretorianClientError as e:
+            if is_json_mode():
+                print_json({"error": e.message, "control_id": control_id})
+            else:
+                rprint(f"[red]{e.message}[/red]")
+            raise typer.Exit(1)
 
         if not is_json_mode():
             rprint(f"\n  {ROMEBOT_WORKING}  Fetching implementation for {control_id.upper()}...\n")
