@@ -10,7 +10,9 @@ from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from typing import Any
 
+from pretorin.cli.context import resolve_execution_context
 from pretorin.client.api import PretorianClient
+from pretorin.client.models import EvidenceBatchItemCreate
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.compliance_updates import upsert_evidence
 
@@ -63,6 +65,26 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         if control_id is None:
             return None
         return normalize_control_id(control_id)
+
+    async def _resolve_scope(
+        system_id: str | None = None,
+        framework_id: str | None = None,
+    ) -> tuple[str, str]:
+        return await resolve_execution_context(
+            client,
+            system=system_id,
+            framework=framework_id,
+        )
+
+    async def _resolve_scoped_control(
+        control_id: str,
+        system_id: str | None = None,
+        framework_id: str | None = None,
+    ) -> tuple[str, str, str]:
+        resolved_system_id, resolved_framework_id = await _resolve_scope(system_id, framework_id)
+        normalized_control_id = _normalize(control_id) or control_id
+        await client.get_control(resolved_framework_id, normalized_control_id)
+        return resolved_system_id, resolved_framework_id, normalized_control_id
 
     # --- Systems ---
 
@@ -132,6 +154,11 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         control = await client.get_control(framework_id, _normalize(control_id) or control_id)
         return json.dumps(control.model_dump(), default=str)
 
+    async def get_controls_batch(framework_id: str, control_ids: list[str] | None = None) -> str:
+        normalized_control_ids = [_normalize(control_id) or control_id for control_id in (control_ids or [])]
+        controls = await client.get_controls_batch(framework_id, normalized_control_ids or None)
+        return json.dumps(controls.model_dump(), default=str)
+
     tools.append(
         ToolDefinition(
             name="get_control",
@@ -147,6 +174,25 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
             handler=get_control,
         )
     )
+    tools.append(
+        ToolDefinition(
+            name="get_controls_batch",
+            description="Get detailed information for many controls in one framework-scoped request",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "framework_id": {"type": "string", "description": "Framework ID"},
+                    "control_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Optional control IDs to fetch; omit to fetch all controls in the framework",
+                    },
+                },
+                "required": ["framework_id"],
+            },
+            handler=get_controls_batch,
+        )
+    )
 
     # --- Evidence ---
 
@@ -156,10 +202,14 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
         framework_id: str | None = None,
         limit: int = 20,
     ) -> str:
-        evidence = await client.search_evidence_with_fallback(
-            system_id=system_id,
-            control_id=_normalize(control_id),
-            framework_id=framework_id,
+        resolved_system_id, resolved_framework_id = await _resolve_scope(system_id, framework_id)
+        normalized_control_id = _normalize(control_id)
+        if normalized_control_id:
+            await client.get_control(resolved_framework_id, normalized_control_id)
+        evidence = await client.list_evidence(
+            system_id=resolved_system_id,
+            framework_id=resolved_framework_id,
+            control_id=normalized_control_id,
             limit=limit,
         )
         return json.dumps([e.model_dump() for e in evidence], default=str)
@@ -167,13 +217,13 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     tools.append(
         ToolDefinition(
             name="search_evidence",
-            description="Search evidence items by control or framework",
+            description="Search evidence items within one active system/framework scope",
             parameters={
                 "type": "object",
                 "properties": {
-                    "system_id": {"type": "string", "description": "Optional system ID for system-scoped search"},
+                    "system_id": {"type": "string", "description": "System ID (defaults to active scope)"},
                     "control_id": {"type": "string", "description": "Control ID filter"},
-                    "framework_id": {"type": "string", "description": "Framework ID filter"},
+                    "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
                     "limit": {"type": "integer", "description": "Max results", "default": 20},
                 },
                 "required": [],
@@ -183,23 +233,27 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     )
 
     async def create_evidence(
-        system_id: str,
         name: str,
         description: str,
+        system_id: str | None = None,
         evidence_type: str = "policy_document",
         control_id: str | None = None,
         framework_id: str | None = None,
         dedupe: bool = True,
     ) -> str:
         try:
+            resolved_system_id, resolved_framework_id = await _resolve_scope(system_id, framework_id)
+            normalized_control_id = _normalize(control_id)
+            if normalized_control_id:
+                await client.get_control(resolved_framework_id, normalized_control_id)
             result = await upsert_evidence(
                 client,
-                system_id=system_id,
+                system_id=resolved_system_id,
                 name=name,
                 description=description,
                 evidence_type=evidence_type,
-                control_id=_normalize(control_id),
-                framework_id=framework_id,
+                control_id=normalized_control_id,
+                framework_id=resolved_framework_id,
                 source="cli",
                 dedupe=dedupe,
             )
@@ -212,11 +266,11 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     tools.append(
         ToolDefinition(
             name="create_evidence",
-            description="Create a new evidence item on the platform",
+            description="Create a new evidence item on the platform within one active system/framework scope",
             parameters={
                 "type": "object",
                 "properties": {
-                    "system_id": {"type": "string", "description": "System ID"},
+                    "system_id": {"type": "string", "description": "System ID (defaults to active scope)"},
                     "name": {"type": "string", "description": "Evidence name"},
                     "description": {
                         "type": "string",
@@ -227,42 +281,102 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
                     },
                     "evidence_type": {"type": "string", "description": "Type of evidence"},
                     "control_id": {"type": "string", "description": "Associated control"},
-                    "framework_id": {"type": "string", "description": "Associated framework"},
+                    "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
                     "dedupe": {"type": "boolean", "description": "Reuse exact-matching evidence", "default": True},
                 },
-                "required": ["system_id", "name", "description"],
+                "required": ["name", "description"],
             },
             handler=create_evidence,
         )
     )
 
-    async def link_evidence(
-        system_id: str,
-        evidence_id: str,
-        control_id: str,
+    async def create_evidence_batch(
+        items: list[dict[str, Any]],
+        system_id: str | None = None,
         framework_id: str | None = None,
     ) -> str:
+        resolved_system_id, resolved_framework_id = await _resolve_scope(system_id, framework_id)
+        payload_items = [
+            EvidenceBatchItemCreate(
+                name=item["name"],
+                description=item["description"],
+                control_id=_normalize(str(item["control_id"])) or str(item["control_id"]),
+                evidence_type=str(item.get("evidence_type", "policy_document")),
+                relevance_notes=item.get("relevance_notes"),
+            )
+            for item in items
+        ]
+        for item in payload_items:
+            await client.get_control(resolved_framework_id, item.control_id)
+        result = await client.create_evidence_batch(
+            resolved_system_id,
+            resolved_framework_id,
+            payload_items,
+        )
+        return json.dumps(result.model_dump(), default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="create_evidence_batch",
+            description="Create and link multiple evidence items within one active system/framework scope",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "system_id": {"type": "string", "description": "System ID (defaults to active scope)"},
+                    "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "description": {"type": "string"},
+                                "control_id": {"type": "string"},
+                                "evidence_type": {"type": "string"},
+                                "relevance_notes": {"type": "string"},
+                            },
+                            "required": ["name", "description", "control_id"],
+                        },
+                    },
+                },
+                "required": ["items"],
+            },
+            handler=create_evidence_batch,
+        )
+    )
+
+    async def link_evidence(
+        evidence_id: str,
+        control_id: str,
+        system_id: str | None = None,
+        framework_id: str | None = None,
+    ) -> str:
+        resolved_system_id, resolved_framework_id, normalized_control_id = await _resolve_scoped_control(
+            control_id,
+            system_id,
+            framework_id,
+        )
         result = await client.link_evidence_to_control(
             evidence_id=evidence_id,
-            control_id=_normalize(control_id) or control_id,
-            system_id=system_id,
-            framework_id=framework_id,
+            control_id=normalized_control_id,
+            system_id=resolved_system_id,
+            framework_id=resolved_framework_id,
         )
         return json.dumps(result, default=str)
 
     tools.append(
         ToolDefinition(
             name="link_evidence",
-            description="Link an existing evidence item to a control",
+            description="Link an existing evidence item to a control within one active system/framework scope",
             parameters={
                 "type": "object",
                 "properties": {
-                    "system_id": {"type": "string", "description": "System ID"},
+                    "system_id": {"type": "string", "description": "System ID (defaults to active scope)"},
                     "evidence_id": {"type": "string", "description": "Evidence item ID"},
                     "control_id": {"type": "string", "description": "Control ID"},
-                    "framework_id": {"type": "string", "description": "Framework context"},
+                    "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
                 },
-                "required": ["system_id", "evidence_id", "control_id"],
+                "required": ["evidence_id", "control_id"],
             },
             handler=link_evidence,
         )
@@ -329,19 +443,23 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     )
 
     async def get_control_notes(
-        system_id: str,
         control_id: str,
+        system_id: str | None = None,
         framework_id: str | None = None,
     ) -> str:
-        normalized_control_id = _normalize(control_id) or control_id
+        resolved_system_id, resolved_framework_id, normalized_control_id = await _resolve_scoped_control(
+            control_id,
+            system_id,
+            framework_id,
+        )
         notes = await client.list_control_notes(
-            system_id=system_id,
+            system_id=resolved_system_id,
             control_id=normalized_control_id,
-            framework_id=framework_id,
+            framework_id=resolved_framework_id,
         )
         payload = {
             "control_id": normalized_control_id,
-            "framework_id": framework_id,
+            "framework_id": resolved_framework_id,
             "total": len(notes),
             "notes": notes,
         }
@@ -350,15 +468,15 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     tools.append(
         ToolDefinition(
             name="get_control_notes",
-            description="Get notes for a control implementation",
+            description="Get notes for a control implementation within one active system/framework scope",
             parameters={
                 "type": "object",
                 "properties": {
-                    "system_id": {"type": "string", "description": "System ID"},
+                    "system_id": {"type": "string", "description": "System ID (defaults to active scope)"},
                     "control_id": {"type": "string", "description": "Control ID"},
-                    "framework_id": {"type": "string", "description": "Framework ID filter"},
+                    "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
                 },
-                "required": ["system_id", "control_id"],
+                "required": ["control_id"],
             },
             handler=get_control_notes,
         )
@@ -367,8 +485,9 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     # --- Monitoring ---
 
     async def push_monitoring_event(
-        system_id: str,
         title: str,
+        system_id: str | None = None,
+        framework_id: str | None = None,
         severity: str = "medium",
         event_type: str = "security_scan",
         control_id: str | None = None,
@@ -376,32 +495,38 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     ) -> str:
         from pretorin.client.models import MonitoringEventCreate
 
+        resolved_system_id, resolved_framework_id = await _resolve_scope(system_id, framework_id)
+        normalized_control_id = _normalize(control_id)
+        if normalized_control_id:
+            await client.get_control(resolved_framework_id, normalized_control_id)
         event = MonitoringEventCreate(
             event_type=event_type,
             title=title,
             description=description,
             severity=severity,
-            control_id=_normalize(control_id),
+            control_id=normalized_control_id,
+            framework_id=resolved_framework_id,
             event_data={"source": "cli"},
         )
-        result = await client.create_monitoring_event(system_id, event)
+        result = await client.create_monitoring_event(resolved_system_id, event)
         return json.dumps(result, default=str)
 
     tools.append(
         ToolDefinition(
             name="push_monitoring_event",
-            description="Push a monitoring event to a system",
+            description="Push a monitoring event within one active system/framework scope",
             parameters={
                 "type": "object",
                 "properties": {
-                    "system_id": {"type": "string", "description": "System ID"},
+                    "system_id": {"type": "string", "description": "System ID (defaults to active scope)"},
+                    "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
                     "title": {"type": "string", "description": "Event title"},
                     "severity": {"type": "string", "description": "Severity level"},
                     "event_type": {"type": "string", "description": "Event type"},
                     "control_id": {"type": "string", "description": "Associated control"},
                     "description": {"type": "string", "description": "Event description"},
                 },
-                "required": ["system_id", "title"],
+                "required": ["title"],
             },
             handler=push_monitoring_event,
         )
@@ -410,32 +535,37 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
     # --- Control Implementation ---
 
     async def update_control_status(
-        system_id: str,
         control_id: str,
         status: str,
+        system_id: str | None = None,
         framework_id: str | None = None,
     ) -> str:
-        result = await client.update_control_status(
+        resolved_system_id, resolved_framework_id, normalized_control_id = await _resolve_scoped_control(
+            control_id,
             system_id,
-            _normalize(control_id) or control_id,
-            status,
             framework_id,
+        )
+        result = await client.update_control_status(
+            resolved_system_id,
+            normalized_control_id,
+            status,
+            resolved_framework_id,
         )
         return json.dumps(result, default=str)
 
     tools.append(
         ToolDefinition(
             name="update_control_status",
-            description="Update the implementation status of a control",
+            description="Update the implementation status of a control within one active system/framework scope",
             parameters={
                 "type": "object",
                 "properties": {
-                    "system_id": {"type": "string", "description": "System ID"},
+                    "system_id": {"type": "string", "description": "System ID (defaults to active scope)"},
                     "control_id": {"type": "string", "description": "Control ID"},
                     "status": {"type": "string", "description": "New status"},
-                    "framework_id": {"type": "string", "description": "Framework context"},
+                    "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
                 },
-                "required": ["system_id", "control_id", "status"],
+                "required": ["control_id", "status"],
             },
             handler=update_control_status,
         )

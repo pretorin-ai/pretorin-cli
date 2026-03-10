@@ -67,8 +67,8 @@ async def _push_narrative(
 ) -> None:
     """Push narrative content to the platform."""
     from pretorin.cli.commands import require_auth
+    from pretorin.cli.context import resolve_execution_context
     from pretorin.client.api import PretorianClient, PretorianClientError
-    from pretorin.workflows.compliance_updates import resolve_system
     from pretorin.workflows.markdown_quality import ensure_audit_markdown
 
     try:
@@ -81,7 +81,12 @@ async def _push_narrative(
         require_auth(client)
 
         try:
-            system_id, system_name = await resolve_system(client, system)
+            system_id, resolved_framework_id = await resolve_execution_context(
+                client,
+                system=system,
+                framework=framework_id,
+            )
+            system_name = (await client.get_system(system_id)).name
         except PretorianClientError as e:
             rprint(f"[red]Failed to resolve system: {e.message}[/red]")
             raise typer.Exit(1)
@@ -90,7 +95,7 @@ async def _push_narrative(
             result = await client.update_narrative(
                 system_id=system_id,
                 control_id=control_id,
-                framework_id=framework_id,
+                framework_id=resolved_framework_id,
                 narrative=content,
                 is_ai_generated=False,
             )
@@ -112,18 +117,23 @@ async def _get_narrative(
 ) -> None:
     """Get current narrative content from the platform."""
     from pretorin.cli.commands import require_auth
+    from pretorin.cli.context import resolve_execution_context
     from pretorin.client.api import PretorianClient, PretorianClientError
-    from pretorin.workflows.compliance_updates import resolve_system
 
     async with PretorianClient() as client:
         require_auth(client)
 
         try:
-            system_id, system_name = await resolve_system(client, system)
+            system_id, resolved_framework_id = await resolve_execution_context(
+                client,
+                system=system,
+                framework=framework_id,
+            )
+            system_name = (await client.get_system(system_id)).name
             narrative = await client.get_narrative(
                 system_id=system_id,
                 control_id=control_id,
-                framework_id=framework_id,
+                framework_id=resolved_framework_id,
             )
         except PretorianClientError as e:
             rprint(f"[red]Fetch failed: {e.message}[/red]")
@@ -133,7 +143,7 @@ async def _get_narrative(
             "system_id": system_id,
             "system_name": system_name,
             "control_id": narrative.control_id,
-            "framework_id": narrative.framework_id or framework_id,
+            "framework_id": narrative.framework_id or resolved_framework_id,
             "narrative": narrative.narrative or "",
             "ai_confidence_score": narrative.ai_confidence_score,
             "status": narrative.status,
@@ -144,5 +154,5 @@ async def _get_narrative(
 
         rprint(f"\n[bold]System:[/bold] {system_name}")
         rprint(f"[bold]Control:[/bold] {control_id.upper()}")
-        rprint(f"[bold]Framework:[/bold] {framework_id}\n")
+        rprint(f"[bold]Framework:[/bold] {resolved_framework_id}\n")
         rprint(payload["narrative"] or "[dim]No narrative set yet.[/dim]")

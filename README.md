@@ -113,6 +113,8 @@ For Claude Desktop, Cursor, and Windsurf setup, see [docs/MCP.md](docs/MCP.md).
 
 ## Core Commands
 
+Platform-backed review and update workflows are single-scope: set one active `system + framework` first with `pretorin context set`, then run evidence, note, monitoring, narrative, or MCP-assisted compliance commands inside that scope. Multi-framework work must be split into separate runs.
+
 | Command | Purpose |
 |---------|---------|
 | `pretorin frameworks list` | List available frameworks |

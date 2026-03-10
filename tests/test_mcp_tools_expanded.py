@@ -28,15 +28,17 @@ class TestToolListing:
             "pretorin_list_control_families",
             "pretorin_list_controls",
             "pretorin_get_control",
+            "pretorin_get_controls_batch",
             "pretorin_get_control_references",
             "pretorin_get_document_requirements",
             # System & compliance 3
             "pretorin_list_systems",
             "pretorin_get_system",
             "pretorin_get_compliance_status",
-            # Evidence 3
+            # Evidence 4
             "pretorin_search_evidence",
             "pretorin_create_evidence",
+            "pretorin_create_evidence_batch",
             "pretorin_link_evidence",
             # Narrative 2
             "pretorin_get_narrative",
@@ -55,7 +57,7 @@ class TestToolListing:
             "pretorin_get_control_implementation",
         ]
 
-        assert len(tools) == 23
+        assert len(tools) == 25
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 
@@ -97,6 +99,10 @@ def _make_mock_client(**overrides: Any) -> AsyncMock:
     client = AsyncMock()
     client.is_configured = True
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Test System"}])
+    client.get_system_compliance_status = AsyncMock(
+        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
+    )
+    client.get_control = AsyncMock(return_value=AsyncMock(id="ac-02"))
     for attr, val in overrides.items():
         setattr(client, attr, AsyncMock(return_value=val))
     return client
@@ -184,53 +190,83 @@ class TestEvidenceTools:
                 evidence_type="configuration",
             ),
         ]
-        client = _make_mock_client(search_evidence_with_fallback=evidence)
-        result = _run_tool("pretorin_search_evidence", {"control_id": "ac-2"}, client)
+        client = _make_mock_client(list_evidence=evidence)
+        result = _run_tool(
+            "pretorin_search_evidence",
+            {
+                "system_id": "sys-1",
+                "framework_id": "fedramp-moderate",
+                "control_id": "ac-2",
+            },
+            client,
+        )
         data = _parse_result(result)
         assert data["total"] == 1
         assert data["evidence"][0]["name"] == "RBAC Config"
-        client.search_evidence_with_fallback.assert_awaited_once_with(
-            system_id=None,
+        client.list_evidence.assert_awaited_once_with(
+            system_id="sys-1",
+            framework_id="fedramp-moderate",
             control_id="ac-02",
-            framework_id=None,
             limit=20,
         )
 
     def test_search_evidence_accepts_system_id(self) -> None:
-        client = _make_mock_client(search_evidence_with_fallback=[])
-        _run_tool("pretorin_search_evidence", {"system_id": "sys-1", "control_id": "ac-2"}, client)
-        client.search_evidence_with_fallback.assert_awaited_once_with(
+        client = _make_mock_client(list_evidence=[])
+        _run_tool(
+            "pretorin_search_evidence",
+            {
+                "system_id": "sys-1",
+                "framework_id": "fedramp-moderate",
+                "control_id": "ac-2",
+            },
+            client,
+        )
+        client.list_evidence.assert_awaited_once_with(
             system_id="sys-1",
+            framework_id="fedramp-moderate",
             control_id="ac-02",
-            framework_id=None,
             limit=20,
         )
 
     def test_search_evidence_resolves_system_name(self) -> None:
-        client = _make_mock_client(search_evidence_with_fallback=[])
-        _run_tool("pretorin_search_evidence", {"system_id": "test", "control_id": "ac-2"}, client)
-        client.search_evidence_with_fallback.assert_awaited_once_with(
+        client = _make_mock_client(list_evidence=[])
+        _run_tool(
+            "pretorin_search_evidence",
+            {
+                "system_id": "test",
+                "framework_id": "fedramp-moderate",
+                "control_id": "ac-2",
+            },
+            client,
+        )
+        client.list_evidence.assert_awaited_once_with(
             system_id="sys-1",
+            framework_id="fedramp-moderate",
             control_id="ac-02",
-            framework_id=None,
             limit=20,
         )
 
     def test_create_evidence(self) -> None:
         client = _make_mock_client(
             list_evidence=[],
-            create_evidence={"id": "ev-new", "name": "New Evidence"},
+            create_evidence={"id": "ev-new", "name": "New Evidence", "linked": True, "mapping_id": "map-1"},
             link_evidence_to_control={"linked": True},
         )
         result = _run_tool(
             "pretorin_create_evidence",
-            {"system_id": "sys-1", "name": "New Evidence", "description": "- Test"},
+            {
+                "system_id": "sys-1",
+                "framework_id": "fedramp-moderate",
+                "name": "New Evidence",
+                "description": "- Test",
+            },
             client,
         )
         data = _parse_result(result)
         assert data["evidence_id"] == "ev-new"
         assert data["created"] is True
         assert data["linked"] is False
+        client.link_evidence_to_control.assert_not_called()
 
     def test_create_evidence_reuses_duplicate(self) -> None:
         from pretorin.client.models import EvidenceItemResponse
@@ -251,10 +287,10 @@ class TestEvidenceTools:
             "pretorin_create_evidence",
             {
                 "system_id": "sys-1",
+                "framework_id": "fedramp-moderate",
                 "name": "New Evidence",
                 "description": "- Test",
                 "control_id": "ac-2",
-                "framework_id": "fedramp-moderate",
             },
             client,
         )
@@ -264,17 +300,57 @@ class TestEvidenceTools:
         assert data["linked"] is True
         assert data["match_basis"] == "exact_name_desc_type_control_framework"
 
-    def test_create_evidence_missing_system_id(self) -> None:
+    def test_create_evidence_missing_scope(self) -> None:
         client = _make_mock_client()
-        result = _run_tool("pretorin_create_evidence", {"name": "New Evidence", "description": "- Test"}, client)
+        with patch(
+            "pretorin.mcp.server.resolve_execution_context",
+            new=AsyncMock(side_effect=PretorianClientError("No system/framework context set")),
+        ):
+            result = _run_tool(
+                "pretorin_create_evidence",
+                {"name": "New Evidence", "description": "- Test"},
+                client,
+            )
         assert result.isError is True
-        assert any("Missing required" in c.text for c in result.content)
+        assert any("No system/framework context set" in c.text for c in result.content)
+
+    def test_create_evidence_batch(self) -> None:
+        client = _make_mock_client(
+            create_evidence_batch={
+                "framework_id": "fedramp-moderate",
+                "total": 1,
+                "results": [{"index": 0, "status": "created", "evidence_id": "ev-1"}],
+            }
+        )
+        result = _run_tool(
+            "pretorin_create_evidence_batch",
+            {
+                "system_id": "sys-1",
+                "framework_id": "fedramp-moderate",
+                "items": [
+                    {
+                        "name": "Batch Evidence",
+                        "description": "- Batch test",
+                        "control_id": "ac-2",
+                    }
+                ],
+            },
+            client,
+        )
+        data = _parse_result(result)
+        assert data["total"] == 1
+        client.create_evidence_batch.assert_awaited_once()
 
     def test_link_evidence(self) -> None:
         client = _make_mock_client(link_evidence_to_control={"linked": True})
         result = _run_tool(
             "pretorin_link_evidence",
-            {"system_id": "sys-1", "evidence_id": "ev-1", "control_id": "ac-2"},
+            {
+                "system_id": "sys-1",
+                "framework_id": "fedramp-moderate",
+                "evidence_id": "ev-1",
+                "control_id": "ac-2",
+            },
             client,
         )
         data = _parse_result(result)
@@ -283,14 +359,22 @@ class TestEvidenceTools:
             evidence_id="ev-1",
             control_id="ac-02",
             system_id="sys-1",
-            framework_id=None,
+            framework_id="fedramp-moderate",
         )
 
-    def test_link_evidence_missing_system_id(self) -> None:
+    def test_link_evidence_missing_scope(self) -> None:
         client = _make_mock_client()
-        result = _run_tool("pretorin_link_evidence", {"evidence_id": "ev-1", "control_id": "ac-2"}, client)
+        with patch(
+            "pretorin.mcp.server.resolve_execution_context",
+            new=AsyncMock(side_effect=PretorianClientError("No system/framework context set")),
+        ):
+            result = _run_tool(
+                "pretorin_link_evidence",
+                {"evidence_id": "ev-1", "control_id": "ac-2"},
+                client,
+            )
         assert result.isError is True
-        assert any("Missing required" in c.text for c in result.content)
+        assert any("No system/framework context set" in c.text for c in result.content)
 
 
 class TestNarrativeTools:
@@ -395,14 +479,22 @@ class TestNarrativeTools:
         client = _make_mock_client(
             list_control_notes=[{"content": "Manual SSO evidence upload required"}],
         )
-        result = _run_tool("pretorin_get_control_notes", {"system_id": "sys-1", "control_id": "ac-2"}, client)
+        result = _run_tool(
+            "pretorin_get_control_notes",
+            {
+                "system_id": "sys-1",
+                "framework_id": "fedramp-moderate",
+                "control_id": "ac-2",
+            },
+            client,
+        )
         data = _parse_result(result)
         assert data["total"] == 1
         assert data["notes"][0]["content"] == "Manual SSO evidence upload required"
         client.list_control_notes.assert_awaited_once_with(
             system_id="sys-1",
             control_id="ac-02",
-            framework_id=None,
+            framework_id="fedramp-moderate",
         )
 
 
@@ -421,6 +513,7 @@ class TestMonitoringTools:
             "pretorin_push_monitoring_event",
             {
                 "system_id": "sys-1",
+                "framework_id": "fedramp-moderate",
                 "title": "Scan Complete",
                 "severity": "high",
             },
@@ -444,6 +537,7 @@ class TestControlImplementationTools:
             "pretorin_update_control_status",
             {
                 "system_id": "sys-1",
+                "framework_id": "fedramp-moderate",
                 "control_id": "ac-2",
                 "status": "implemented",
             },
@@ -455,7 +549,7 @@ class TestControlImplementationTools:
             system_id="sys-1",
             control_id="ac-02",
             status="implemented",
-            framework_id=None,
+            framework_id="fedramp-moderate",
         )
 
     def test_get_control_implementation(self) -> None:

@@ -179,4 +179,4 @@ Access these via `ReadMcpResourceTool` with `server: "pretorin"`:
 |---|---|
 | `analysis://schema` | JSON schema for compliance artifacts |
 | `analysis://guide/{framework_id}` | Framework-specific analysis guidance (`fedramp-moderate`, `nist-800-53-r5`, `nist-800-171-r3`) |
-| `analysis://control/{control_id}` | Control-specific analysis guidance with search patterns and evidence examples |
+| `analysis://control/{framework_id}/{control_id}` | Control-specific analysis guidance with search patterns and evidence examples for one framework scope |

@@ -1,6 +1,7 @@
 """Main CLI application setup for Pretorin."""
 
 import json
+import sys
 
 import typer
 from rich import print as rprint
@@ -43,29 +44,52 @@ BANNER = """
 
 def show_banner(check_updates: bool = True) -> None:
     """Display the branded welcome banner."""
-    from pretorin.cli.version_check import get_update_message
-
     rprint(BANNER)
     rprint(f"  [dim]v{__version__}[/dim]\n")
 
     # Show update message if available
     if check_updates:
-        update_msg = get_update_message()
-        if update_msg:
-            rprint(update_msg)
-            rprint()
+        _maybe_print_update_notice()
+
+
+def _should_show_update_notice(
+    *,
+    json_output: bool = False,
+    invoked_subcommand: str | None = None,
+) -> bool:
+    """Return True when passive update notices should be shown."""
+    if json_output:
+        return False
+    if invoked_subcommand in {"update", "mcp-serve"}:
+        return False
+    return bool(getattr(sys.stdout, "isatty", lambda: False)())
+
+
+def _maybe_print_update_notice(
+    *,
+    json_output: bool = False,
+    invoked_subcommand: str | None = None,
+) -> None:
+    """Print a passive update notice when appropriate."""
+    if not _should_show_update_notice(
+        json_output=json_output,
+        invoked_subcommand=invoked_subcommand,
+    ):
+        return
+
+    from pretorin.cli.version_check import get_update_message
+
+    update_msg = get_update_message()
+    if update_msg:
+        rprint(update_msg)
+        rprint()
 
 
 def _version_callback(value: bool) -> None:
     """Print version and exit."""
     if value:
-        from pretorin.cli.version_check import get_update_message
-
         rprint(f"[#FF9010]pretorin[/#FF9010] version {__version__}")
-        update_msg = get_update_message()
-        if update_msg:
-            rprint()
-            rprint(update_msg)
+        _maybe_print_update_notice()
         raise typer.Exit()
 
 
@@ -105,6 +129,12 @@ def main(
             show_banner()
             # Show the help text after the banner
             rprint(ctx.get_help())
+        return
+
+    _maybe_print_update_notice(
+        json_output=json_output,
+        invoked_subcommand=ctx.invoked_subcommand,
+    )
 
 
 # Add sub-command groups
@@ -127,17 +157,8 @@ for command in auth_app.registered_commands:
 @app.command()
 def version() -> None:
     """Show the CLI version."""
-    from rich import print as rprint
-
-    from pretorin.cli.version_check import get_update_message
-
     rprint(f"[#FF9010]pretorin[/#FF9010] version {__version__}")
-
-    # Check for updates
-    update_msg = get_update_message()
-    if update_msg:
-        rprint()
-        rprint(update_msg)
+    _maybe_print_update_notice()
 
 
 @app.command()
@@ -148,8 +169,14 @@ def update() -> None:
 
     from pretorin.cli.version_check import check_for_updates
 
-    latest = check_for_updates()
-    if not latest:
+    result = check_for_updates(force=True)
+    if not result.checked:
+        rprint("[#FF9010]→[/#FF9010] Unable to check for updates right now.")
+        rprint("  [dim]Try again later or run:[/dim] [bold]pip install --upgrade pretorin[/bold]")
+        raise typer.Exit(1)
+
+    latest = result.latest_version
+    if not result.update_available or not latest:
         rprint(f"[#95D7E0]✓[/#95D7E0] You're already on the latest version ({__version__})")
         return
 

@@ -4,17 +4,30 @@ from __future__ import annotations
 
 import json
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from pretorin import __version__
+from pretorin.client.config import Config
 
 # Cache file for version check (avoid hitting PyPI every time)
 CACHE_DIR = Path.home() / ".pretorin"
 VERSION_CACHE_FILE = CACHE_DIR / ".version_cache.json"
 CACHE_TTL_SECONDS = 86400  # 24 hours
+FAILURE_CACHE_TTL_SECONDS = 3600  # 1 hour
+REQUEST_TIMEOUT_SECONDS = 1.0
 
 PYPI_URL = "https://pypi.org/pypi/pretorin/json"
+
+
+@dataclass(frozen=True)
+class VersionCheckResult:
+    """Outcome of a passive version check."""
+
+    latest_version: str | None
+    update_available: bool
+    checked: bool
 
 
 def _parse_version(version: str) -> tuple[int, ...]:
@@ -58,57 +71,94 @@ def _fetch_latest_version() -> str | None:
             PYPI_URL,
             headers={"Accept": "application/json", "User-Agent": f"pretorin-cli/{__version__}"},
         )
-        with urllib.request.urlopen(req, timeout=3) as response:
+        with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT_SECONDS) as response:
             data = json.loads(response.read().decode())
             return data.get("info", {}).get("version")
     except Exception:
         return None
 
 
-def check_for_updates() -> str | None:
-    """Check if a newer version is available.
+def _cache_fresh(cache: dict[str, Any], now: float) -> bool:
+    """Check whether cached version-check data is still usable."""
+    next_check_at = cache.get("next_check_at")
+    if isinstance(next_check_at, (int, float)):
+        return now < float(next_check_at)
 
-    Returns the latest version string if an update is available,
-    or None if the CLI is up to date (or if the check fails).
-
-    Results are cached for 24 hours to avoid excessive API calls.
-    """
-    # Check cache first
     cache = _load_cache()
     cached_time = cache.get("checked_at", 0)
     cached_version = cache.get("latest_version")
+    last_result = cache.get("last_result", "success" if cached_version else "failure")
+    ttl = CACHE_TTL_SECONDS if last_result == "success" else FAILURE_CACHE_TTL_SECONDS
+    return (now - float(cached_time)) < ttl
+
+
+def update_notifications_enabled() -> bool:
+    """Return whether passive update notifications should be shown."""
+    return not Config().disable_update_check
+
+
+def check_for_updates(*, force: bool = False) -> VersionCheckResult:
+    """Check whether a newer version is available.
+
+    Passive checks fail closed: network/cache issues return a non-fatal
+    result with ``checked=False`` and no update notification.
+    """
+    cache = _load_cache()
 
     now = time.time()
 
     # Use cached result if still fresh
-    if cached_version and (now - cached_time) < CACHE_TTL_SECONDS:
-        latest = cached_version
+    if not force and _cache_fresh(cache, now):
+        if cache.get("last_result") == "failure":
+            return VersionCheckResult(latest_version=None, update_available=False, checked=False)
+        latest = cache.get("latest_version")
     else:
         # Fetch from PyPI
         latest = _fetch_latest_version()
         if latest:
-            _save_cache({"latest_version": latest, "checked_at": now})
+            _save_cache(
+                {
+                    "latest_version": latest,
+                    "checked_at": now,
+                    "next_check_at": now + CACHE_TTL_SECONDS,
+                    "last_result": "success",
+                }
+            )
+        else:
+            _save_cache(
+                {
+                    "latest_version": None,
+                    "checked_at": now,
+                    "next_check_at": now + FAILURE_CACHE_TTL_SECONDS,
+                    "last_result": "failure",
+                }
+            )
+            return VersionCheckResult(latest_version=None, update_available=False, checked=False)
 
     if not latest:
-        return None
+        return VersionCheckResult(latest_version=None, update_available=False, checked=False)
 
     # Compare versions
     current_tuple = _parse_version(__version__)
     latest_tuple = _parse_version(latest)
 
-    if latest_tuple > current_tuple:
-        return latest
-
-    return None
+    return VersionCheckResult(
+        latest_version=latest,
+        update_available=latest_tuple > current_tuple,
+        checked=True,
+    )
 
 
 def get_update_message() -> str | None:
     """Get a formatted update message if an update is available."""
-    latest = check_for_updates()
-    if latest:
+    if not update_notifications_enabled():
+        return None
+
+    result = check_for_updates()
+    if result.update_available and result.latest_version:
         return (
             f"[#FF9010]→[/#FF9010] A newer version of Pretorin CLI is available "
-            f"([#EAB536]{latest}[/#EAB536])\n"
+            f"([#EAB536]{result.latest_version}[/#EAB536])\n"
             f"  [dim]Run:[/dim] [bold]pip install --upgrade pretorin[/bold]"
         )
     return None

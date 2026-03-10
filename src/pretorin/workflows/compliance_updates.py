@@ -162,29 +162,23 @@ async def upsert_evidence(
     dedupe: bool = True,
     search_limit: int = 200,
 ) -> EvidenceUpsertResult:
-    """Find-or-create org-level evidence and ensure system/control link."""
+    """Find-or-create scoped evidence and ensure system/control link."""
     ensure_audit_markdown(description, artifact_type="evidence_description")
 
     normalized_control_id = normalize_control_id(control_id) if control_id else None
+    if not framework_id:
+        raise ValueError("framework_id is required for scoped evidence updates")
+
     candidate_id: str | None = None
 
     if dedupe:
         key = _evidence_key(name, description, evidence_type, normalized_control_id, framework_id)
-        try:
-            existing = await client.list_evidence(
-                system_id=None,
-                control_id=normalized_control_id,
-                framework_id=framework_id,
-                limit=search_limit,
-            )
-        except PretorianClientError:
-            # Some deployments only expose system-scoped evidence listing.
-            existing = await client.list_evidence(
-                system_id=system_id,
-                control_id=normalized_control_id,
-                framework_id=framework_id,
-                limit=search_limit,
-            )
+        existing = await client.list_evidence(
+            system_id=system_id,
+            framework_id=framework_id or "",
+            control_id=normalized_control_id,
+            limit=search_limit,
+        )
         matches = [
             item
             for item in existing
@@ -225,16 +219,19 @@ async def upsert_evidence(
     linked = False
     link_error: str | None = None
     if evidence_id and normalized_control_id:
-        try:
-            await client.link_evidence_to_control(
-                evidence_id=evidence_id,
-                control_id=normalized_control_id,
-                system_id=system_id,
-                framework_id=framework_id,
-            )
-            linked = True
-        except Exception as exc:  # noqa: BLE001
-            link_error = str(exc)
+        if created:
+            linked = bool(platform_response.get("linked")) or bool(platform_response.get("mapping_id"))
+        else:
+            try:
+                await client.link_evidence_to_control(
+                    evidence_id=evidence_id,
+                    control_id=normalized_control_id,
+                    system_id=system_id,
+                    framework_id=framework_id or "",
+                )
+                linked = True
+            except Exception as exc:  # noqa: BLE001
+                link_error = str(exc)
 
     return EvidenceUpsertResult(
         evidence_id=evidence_id,

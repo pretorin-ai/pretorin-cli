@@ -10,6 +10,7 @@ from pretorin import __version__
 from pretorin.client.config import Config
 from pretorin.client.models import (
     ComplianceArtifact,
+    ControlBatchResponse,
     ControlContext,
     ControlDetail,
     ControlFamilyDetail,
@@ -19,6 +20,8 @@ from pretorin.client.models import (
     ControlReferences,
     ControlSummary,
     DocumentRequirementList,
+    EvidenceBatchItemCreate,
+    EvidenceBatchResponse,
     EvidenceCreate,
     EvidenceItemResponse,
     FrameworkList,
@@ -304,6 +307,20 @@ class PretorianClient:
         data = await self._request("GET", f"/frameworks/{framework_id}/controls/{normalized_control_id}")
         return ControlDetail(**data)
 
+    async def get_controls_batch(
+        self,
+        framework_id: str,
+        control_ids: list[str] | None = None,
+        *,
+        include_references: bool = False,
+    ) -> ControlBatchResponse:
+        """Get detailed control data for one framework in a single request."""
+        payload: dict[str, Any] = {"include_references": include_references}
+        if control_ids:
+            payload["control_ids"] = [normalize_control_id(control_id) for control_id in control_ids]
+        data = await self._request("POST", f"/frameworks/{framework_id}/controls/batch", json=payload)
+        return ControlBatchResponse(**data)
+
     async def get_control_references(self, framework_id: str, control_id: str) -> ControlReferences:
         """Get reference data for a control including guidance and objectives.
 
@@ -436,78 +453,29 @@ class PretorianClient:
 
     async def list_evidence(
         self,
-        system_id: str | None = None,
+        system_id: str,
+        framework_id: str,
         control_id: str | None = None,
-        framework_id: str | None = None,
         limit: int = 20,
     ) -> list[EvidenceItemResponse]:
         """Search/list evidence items for a system.
 
         Args:
-            system_id: System ID (required for system-scoped queries).
+            system_id: System ID.
+            framework_id: Framework ID for the active execution scope.
             control_id: Optional control filter.
-            framework_id: Optional framework filter.
             limit: Maximum results to return.
 
         Returns:
             List of evidence items.
         """
         params: dict[str, Any] = {"limit": limit}
+        params["framework_id"] = framework_id
         if control_id:
             params["control_id"] = normalize_control_id(control_id)
-        if framework_id:
-            params["framework_id"] = framework_id
-
-        path = f"/systems/{system_id}/evidence" if system_id else "/evidence"
-        data = await self._request("GET", path, params=params)
+        data = await self._request("GET", f"/systems/{system_id}/evidence", params=params)
         items = data if isinstance(data, list) else data.get("items", data.get("evidence", []))
         return [EvidenceItemResponse(**item) for item in items]
-
-    async def search_evidence_with_fallback(
-        self,
-        system_id: str | None = None,
-        control_id: str | None = None,
-        framework_id: str | None = None,
-        limit: int = 20,
-    ) -> list[EvidenceItemResponse]:
-        """Search evidence with compatibility fallbacks for system-only deployments."""
-        try:
-            return await self.list_evidence(
-                system_id=system_id,
-                control_id=control_id,
-                framework_id=framework_id,
-                limit=limit,
-            )
-        except NotFoundError:
-            if system_id is not None:
-                raise
-        except PretorianClientError as exc:
-            if exc.status_code not in {404, 405} or system_id is not None:
-                raise
-
-        systems = await self.list_systems()
-        results: list[EvidenceItemResponse] = []
-        seen_ids: set[str] = set()
-        for system in systems:
-            candidate_id = str(system.get("id", ""))
-            if not candidate_id:
-                continue
-            try:
-                scoped = await self.list_evidence(
-                    system_id=candidate_id,
-                    control_id=control_id,
-                    framework_id=framework_id,
-                    limit=limit,
-                )
-            except PretorianClientError:
-                continue
-            for item in scoped:
-                if item.id not in seen_ids:
-                    seen_ids.add(item.id)
-                    results.append(item)
-                    if len(results) >= limit:
-                        return results
-        return results
 
     async def get_evidence(self, evidence_id: str) -> EvidenceItemResponse:
         """Get a specific evidence item.
@@ -545,12 +513,32 @@ class PretorianClient:
         )
         return data
 
+    async def create_evidence_batch(
+        self,
+        system_id: str,
+        framework_id: str,
+        items: list[EvidenceBatchItemCreate],
+    ) -> EvidenceBatchResponse:
+        """Create and link multiple evidence items within one system/framework scope."""
+        payload = {
+            "framework_id": framework_id,
+            "items": [
+                {
+                    **item.model_dump(exclude_none=True),
+                    "control_id": normalize_control_id(item.control_id),
+                }
+                for item in items
+            ],
+        }
+        data = await self._request("POST", f"/systems/{system_id}/evidence/batch", json=payload)
+        return EvidenceBatchResponse(**data)
+
     async def link_evidence_to_control(
         self,
         evidence_id: str,
         control_id: str,
-        system_id: str | None = None,
-        framework_id: str | None = None,
+        system_id: str,
+        framework_id: str,
     ) -> dict[str, Any]:
         """Link an evidence item to a control.
 
@@ -558,16 +546,16 @@ class PretorianClient:
             evidence_id: ID of the evidence item.
             control_id: ID of the control to link to.
             system_id: System ID for routing.
-            framework_id: Optional framework context.
+            framework_id: Framework context.
 
         Returns:
             Link result.
         """
-        payload: dict[str, Any] = {"control_id": normalize_control_id(control_id)}
-        if framework_id:
-            payload["framework_id"] = framework_id
-        path = f"/systems/{system_id}/evidence/{evidence_id}/link" if system_id else f"/evidence/{evidence_id}/link"
-        data = await self._request("POST", path, json=payload)
+        payload: dict[str, Any] = {
+            "control_id": normalize_control_id(control_id),
+            "framework_id": framework_id,
+        }
+        data = await self._request("POST", f"/systems/{system_id}/evidence/{evidence_id}/link", json=payload)
         return data
 
     # =========================================================================
@@ -578,47 +566,26 @@ class PretorianClient:
         self,
         system_id: str,
         control_id: str,
-        framework_id: str | None = None,
+        framework_id: str,
     ) -> NarrativeResponse:
         """Get an existing narrative for a control.
 
         Args:
             system_id: ID of the system.
             control_id: ID of the control.
-            framework_id: Optional framework filter.
+            framework_id: Framework filter.
 
         Returns:
             Narrative response.
         """
-        params: dict[str, Any] = {}
-        if framework_id:
-            params["framework_id"] = framework_id
+        params: dict[str, Any] = {"framework_id": framework_id}
         normalized_control_id = self._normalize_control_id(control_id)
-        try:
-            data = await self._request(
-                "GET",
-                f"/systems/{system_id}/controls/{normalized_control_id}/narrative",
-                params=params,
-            )
-            return NarrativeResponse(**data)
-        except PretorianClientError as exc:
-            if exc.status_code != 405:
-                raise
-            # Compatibility fallback for deployments that expose narrative
-            # through control implementation instead of the dedicated endpoint.
-            if not framework_id:
-                raise PretorianClientError(
-                    f"framework_id is required to look up narrative for '{control_id}' "
-                    "when the dedicated narrative endpoint is unavailable"
-                ) from exc
-            impl = await self.get_control_implementation(system_id, normalized_control_id or "", framework_id)
-            return NarrativeResponse(
-                control_id=impl.control_id,
-                framework_id=framework_id,
-                narrative=impl.narrative,
-                ai_confidence_score=impl.ai_confidence_score,
-                status=impl.status,
-            )
+        data = await self._request(
+            "GET",
+            f"/systems/{system_id}/controls/{normalized_control_id}/narrative",
+            params=params,
+        )
+        return NarrativeResponse(**data)
 
     # =========================================================================
     # Control Implementation Endpoints
@@ -628,7 +595,7 @@ class PretorianClient:
         self,
         system_id: str,
         control_id: str,
-        framework_id: str | None = None,
+        framework_id: str,
     ) -> ControlImplementationResponse:
         """Get implementation details for a control in a system.
 
@@ -640,8 +607,6 @@ class PretorianClient:
         Returns:
             Control implementation details.
         """
-        if not framework_id:
-            raise PretorianClientError(f"framework_id is required to look up control implementation for '{control_id}'")
         params: dict[str, Any] = {"framework_id": framework_id}
         normalized_control_id = self._normalize_control_id(control_id)
         data = await self._request(
@@ -751,34 +716,26 @@ class PretorianClient:
         self,
         system_id: str,
         control_id: str,
-        framework_id: str | None = None,
+        framework_id: str,
     ) -> list[dict[str, Any]]:
         """List notes for a control implementation."""
-        params: dict[str, Any] = {}
-        if framework_id:
-            params["framework_id"] = framework_id
+        params: dict[str, Any] = {"framework_id": framework_id}
         normalized_control_id = self._normalize_control_id(control_id)
-        try:
-            data = await self._request(
-                "GET",
-                f"/systems/{system_id}/controls/{normalized_control_id}/notes",
-                params=params,
-            )
-            if isinstance(data, list):
-                return data
-            return data.get("notes", data.get("items", []))
-        except PretorianClientError as exc:
-            if exc.status_code != 405:
-                raise
-            impl = await self.get_control_implementation(system_id, normalized_control_id or "", framework_id)
-            return impl.notes
+        data = await self._request(
+            "GET",
+            f"/systems/{system_id}/controls/{normalized_control_id}/notes",
+            params=params,
+        )
+        if isinstance(data, list):
+            return data
+        return data.get("notes", data.get("items", []))
 
     async def update_control_status(
         self,
         system_id: str,
         control_id: str,
         status: str,
-        framework_id: str | None = None,
+        framework_id: str,
     ) -> dict[str, Any]:
         """Update the implementation status of a control.
 
@@ -786,14 +743,12 @@ class PretorianClient:
             system_id: ID of the system.
             control_id: ID of the control.
             status: New status value.
-            framework_id: Optional framework context.
+            framework_id: Framework context.
 
         Returns:
             Updated control response.
         """
-        params: dict[str, Any] = {}
-        if framework_id:
-            params["framework_id"] = framework_id
+        params: dict[str, Any] = {"framework_id": framework_id}
         normalized_control_id = self._normalize_control_id(control_id)
         data = await self._request(
             "POST",

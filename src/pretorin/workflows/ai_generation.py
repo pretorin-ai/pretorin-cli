@@ -6,10 +6,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+from pretorin.cli.context import resolve_execution_context
 from pretorin.client import PretorianClient
 from pretorin.client.api import PretorianClientError
 from pretorin.utils import normalize_control_id
-from pretorin.workflows.compliance_updates import resolve_system
 
 
 def _strip_json_fence(text: str) -> str:
@@ -102,12 +102,22 @@ async def draft_control_artifacts(
     from pretorin.agent.codex_agent import CodexAgent
 
     normalized_control_id = normalize_control_id(control_id)
-    system_id, system_name = await resolve_system(client, system)
+    system_id, resolved_framework_id = await resolve_execution_context(
+        client,
+        system=system,
+        framework=framework_id,
+    )
+    system_name = (await client.get_system(system_id)).name
 
     try:
         agent = CodexAgent(model=model)
         result = await agent.run(
-            task=_build_generation_task(system_id, system_name, framework_id, normalized_control_id),
+            task=_build_generation_task(
+                system_id,
+                system_name,
+                resolved_framework_id,
+                normalized_control_id,
+            ),
             working_directory=working_directory,
             skill="narrative-generation",
             stream=False,
@@ -119,7 +129,7 @@ async def draft_control_artifacts(
     response: dict[str, Any] = {
         "system_id": system_id,
         "system_name": system_name,
-        "framework_id": framework_id,
+        "framework_id": resolved_framework_id,
         "control_id": normalized_control_id,
         "raw_response": result.response,
         "parse_status": "raw_fallback",

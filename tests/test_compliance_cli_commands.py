@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -31,10 +32,18 @@ def _run_with_mock_client(args: list[str], client: AsyncMock) -> object:
         return runner.invoke(app, args)
 
 
+def _mock_scoped_client(client: AsyncMock) -> None:
+    client.get_system_compliance_status = AsyncMock(
+        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
+    )
+    client.get_system = AsyncMock(return_value=SimpleNamespace(name="Primary"))
+
+
 def test_narrative_get_json() -> None:
     client = AsyncMock()
     client.is_configured = True
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary"}])
+    _mock_scoped_client(client)
     client.get_narrative = AsyncMock(
         return_value=NarrativeResponse(
             control_id="ac-02",
@@ -44,7 +53,10 @@ def test_narrative_get_json() -> None:
         )
     )
 
-    result = _run_with_mock_client(["--json", "narrative", "get", "ac-2", "fedramp-moderate"], client)
+    result = _run_with_mock_client(
+        ["--json", "narrative", "get", "ac-2", "fedramp-moderate", "--system", "Primary"],
+        client,
+    )
     assert result.exit_code == 0
     payload = json.loads(result.stdout)
     assert payload["control_id"] == "ac-02"
@@ -55,9 +67,13 @@ def test_notes_list_json() -> None:
     client = AsyncMock()
     client.is_configured = True
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary"}])
+    _mock_scoped_client(client)
     client.list_control_notes = AsyncMock(return_value=[{"content": "Manual SSO evidence upload required"}])
 
-    result = _run_with_mock_client(["--json", "notes", "list", "ac-2", "fedramp-moderate"], client)
+    result = _run_with_mock_client(
+        ["--json", "notes", "list", "ac-2", "fedramp-moderate", "--system", "Primary"],
+        client,
+    )
     assert result.exit_code == 0
     payload = json.loads(result.stdout)
     assert payload["total"] == 1
@@ -72,6 +88,7 @@ def test_evidence_upsert_reuses_duplicate_json() -> None:
     client = AsyncMock()
     client.is_configured = True
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary"}])
+    _mock_scoped_client(client)
     client.list_evidence = AsyncMock(
         return_value=[
             EvidenceItemResponse(
@@ -98,6 +115,8 @@ def test_evidence_upsert_reuses_duplicate_json() -> None:
             "- Role mapping",
             "--type",
             "configuration",
+            "--system",
+            "Primary",
         ],
         client,
     )
@@ -111,6 +130,7 @@ def test_evidence_upsert_rejects_plain_description() -> None:
     client = AsyncMock()
     client.is_configured = True
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary"}])
+    _mock_scoped_client(client)
 
     result = _run_with_mock_client(
         [
@@ -124,6 +144,8 @@ def test_evidence_upsert_rejects_plain_description() -> None:
             "Role mapping",
             "--type",
             "configuration",
+            "--system",
+            "Primary",
         ],
         client,
     )
@@ -139,6 +161,7 @@ def test_narrative_push_rejects_heading_markdown(tmp_path: Path) -> None:
     client = AsyncMock()
     client.is_configured = True
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary"}])
+    _mock_scoped_client(client)
 
     result = _run_with_mock_client(
         [

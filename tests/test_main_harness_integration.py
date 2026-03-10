@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from unittest.mock import patch
 
 from pytest import MonkeyPatch, fixture
 from typer.testing import CliRunner
@@ -99,3 +100,23 @@ def test_root_cli_json_mode_flows_into_harness(monkeypatch: MonkeyPatch, tmp_pat
     assert payload["ok"] is True
     assert payload["provider"] == "pretorin"
     assert payload["mcp_enabled"] is True
+
+
+def test_root_cli_shows_update_notice_for_interactive_subcommands() -> None:
+    with patch("pretorin.cli.main._should_show_update_notice", return_value=True):
+        with patch("pretorin.cli.version_check.get_update_message", return_value="Update available"):
+            result = runner.invoke(main_app, ["config", "path"])
+
+    assert result.exit_code == 0
+    assert "Update available" in result.stdout
+
+
+def test_root_cli_suppresses_update_notice_for_json_mode() -> None:
+    with patch("pretorin.cli.main._should_show_update_notice", return_value=True):
+        with patch("pretorin.cli.version_check.get_update_message", return_value="Update available"):
+            result = runner.invoke(main_app, ["--json"])
+
+    assert result.exit_code == 0
+    assert "Update available" not in result.stdout
+    payload = json.loads(result.stdout)
+    assert payload["version"]

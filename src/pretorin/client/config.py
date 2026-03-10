@@ -18,9 +18,19 @@ ENV_API_KEY = "PRETORIN_API_KEY"
 ENV_API_BASE_URL = "PRETORIN_API_BASE_URL"
 ENV_PLATFORM_API_BASE_URL = "PRETORIN_PLATFORM_API_BASE_URL"
 ENV_MODEL_API_BASE_URL = "PRETORIN_MODEL_API_BASE_URL"
+ENV_DISABLE_UPDATE_CHECK = "PRETORIN_DISABLE_UPDATE_CHECK"
 ENV_OPENAI_API_KEY = "OPENAI_API_KEY"
 ENV_OPENAI_BASE_URL = "OPENAI_BASE_URL"
 ENV_OPENAI_MODEL = "OPENAI_MODEL"
+
+
+def _as_bool(value: Any) -> bool:
+    """Interpret common truthy string values."""
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
 
 
 class Config:
@@ -66,6 +76,10 @@ class Config:
         elif key in {"model_api_base_url", "harness_base_url", "codex_base_url"}:
             env_value = os.environ.get(ENV_MODEL_API_BASE_URL)
             if env_value:
+                return env_value
+        elif key == "disable_update_check":
+            env_value = os.environ.get(ENV_DISABLE_UPDATE_CHECK)
+            if env_value is not None:
                 return env_value
 
         return self._config.get(key, default)
@@ -172,6 +186,11 @@ class Config:
             self.delete("active_framework_id")
         else:
             self.set("active_framework_id", value)
+
+    @property
+    def disable_update_check(self) -> bool:
+        """Disable passive update notifications."""
+        return _as_bool(self.get("disable_update_check", False))
 
     @property
     def is_configured(self) -> bool:
