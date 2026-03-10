@@ -1,0 +1,285 @@
+"""Coverage tests for src/pretorin/cli/notes.py.
+
+Targets: notes list, notes add — both JSON and normal output paths plus error
+handling.
+"""
+
+from __future__ import annotations
+
+import json
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+import pytest
+from typer.testing import CliRunner
+
+from pretorin.cli.main import app
+from pretorin.cli.output import set_json_mode
+from pretorin.client.api import PretorianClientError
+
+runner = CliRunner()
+
+
+@pytest.fixture(autouse=True)
+def _reset_json_mode():
+    set_json_mode(False)
+    yield
+    set_json_mode(False)
+
+
+def _run_with_mock_client(args: list[str], client: AsyncMock) -> object:
+    ctx = AsyncMock()
+    ctx.__aenter__ = AsyncMock(return_value=client)
+    ctx.__aexit__ = AsyncMock(return_value=None)
+    with patch("pretorin.client.api.PretorianClient", return_value=ctx):
+        return runner.invoke(app, args)
+
+
+def _base_client() -> AsyncMock:
+    """Build a fully wired mock client for notes commands.
+
+    Wires up list_systems, get_system_compliance_status and get_system so that
+    resolve_execution_context succeeds for system="Primary" /
+    framework="fedramp-moderate".
+    """
+    client = AsyncMock()
+    client.is_configured = True
+    client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary"}])
+    client.get_system_compliance_status = AsyncMock(
+        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
+    )
+    client.get_system = AsyncMock(return_value=SimpleNamespace(name="Primary"))
+    return client
+
+
+# =============================================================================
+# notes list
+# =============================================================================
+
+
+def test_notes_list_normal_with_notes() -> None:
+    """notes list renders a table when notes are present."""
+    client = _base_client()
+    client.list_control_notes = AsyncMock(
+        return_value=[
+            {"content": "Manual SSO evidence upload required"},
+            {"content": "Reviewed by auditor 2026-01-15"},
+        ]
+    )
+
+    result = _run_with_mock_client(
+        ["notes", "list", "ac-02", "fedramp-moderate", "--system", "Primary"],
+        client,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "AC-02" in result.output
+    assert "Manual SSO" in result.output or "Reviewed" in result.output
+
+
+def test_notes_list_normal_empty() -> None:
+    """notes list shows the empty-state message when there are no notes."""
+    client = _base_client()
+    client.list_control_notes = AsyncMock(return_value=[])
+
+    result = _run_with_mock_client(
+        ["notes", "list", "ac-02", "fedramp-moderate", "--system", "Primary"],
+        client,
+    )
+
+    assert result.exit_code == 0
+    assert "No notes" in result.output
+
+
+def test_notes_list_json_mode() -> None:
+    """notes list --json emits a structured payload with total and notes."""
+    client = _base_client()
+    client.list_control_notes = AsyncMock(
+        return_value=[{"content": "Manual SSO evidence upload required"}]
+    )
+
+    result = _run_with_mock_client(
+        ["--json", "notes", "list", "ac-02", "fedramp-moderate", "--system", "Primary"],
+        client,
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.stdout)
+    assert payload["total"] == 1
+    assert payload["control_id"] == "ac-02"
+    assert payload["framework_id"] == "fedramp-moderate"
+    assert payload["system_id"] == "sys-1"
+    # Notes list should have been called with correct keyword args
+    client.list_control_notes.assert_awaited_once_with(
+        system_id="sys-1",
+        control_id="ac-02",
+        framework_id="fedramp-moderate",
+    )
+
+
+def test_notes_list_json_empty() -> None:
+    """notes list --json returns total:0 and empty notes list."""
+    client = _base_client()
+    client.list_control_notes = AsyncMock(return_value=[])
+
+    result = _run_with_mock_client(
+        ["--json", "notes", "list", "ac-02", "fedramp-moderate", "--system", "Primary"],
+        client,
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["total"] == 0
+    assert payload["notes"] == []
+
+
+def test_notes_list_error() -> None:
+    """notes list exits 1 on PretorianClientError."""
+    client = _base_client()
+    client.list_control_notes = AsyncMock(
+        side_effect=PretorianClientError("Not authorized")
+    )
+
+    result = _run_with_mock_client(
+        ["notes", "list", "ac-02", "fedramp-moderate", "--system", "Primary"],
+        client,
+    )
+
+    assert result.exit_code == 1
+    assert "List failed" in result.output
+    assert "Not authorized" in result.output
+
+
+def test_notes_list_resolve_context_error() -> None:
+    """notes list exits 1 when context resolution raises PretorianClientError."""
+    client = _base_client()
+    # Simulate missing framework in compliance status so resolve_execution_context fails
+    client.get_system_compliance_status = AsyncMock(
+        return_value={"frameworks": []}
+    )
+
+    result = _run_with_mock_client(
+        ["notes", "list", "ac-02", "fedramp-moderate", "--system", "Primary"],
+        client,
+    )
+
+    assert result.exit_code == 1
+
+
+# =============================================================================
+# notes add
+# =============================================================================
+
+
+def test_notes_add_normal_mode() -> None:
+    """notes add shows a success message in normal mode."""
+    client = _base_client()
+    client.add_control_note = AsyncMock(return_value={"id": "note-1", "content": "Deploy audit log"})
+
+    result = _run_with_mock_client(
+        [
+            "notes",
+            "add",
+            "ac-02",
+            "fedramp-moderate",
+            "--content",
+            "Deploy audit log",
+            "--system",
+            "Primary",
+        ],
+        client,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "AC-02" in result.output
+
+
+def test_notes_add_json_mode() -> None:
+    """notes add --json emits a payload with system_id, note, control_id."""
+    client = _base_client()
+    client.add_control_note = AsyncMock(return_value={"id": "note-1", "content": "Deploy audit log"})
+
+    result = _run_with_mock_client(
+        [
+            "--json",
+            "notes",
+            "add",
+            "ac-02",
+            "fedramp-moderate",
+            "--content",
+            "Deploy audit log",
+            "--system",
+            "Primary",
+        ],
+        client,
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.stdout)
+    assert payload["control_id"] == "ac-02"
+    assert payload["framework_id"] == "fedramp-moderate"
+    assert payload["system_id"] == "sys-1"
+    assert payload["note"] == {"id": "note-1", "content": "Deploy audit log"}
+    client.add_control_note.assert_awaited_once_with(
+        system_id="sys-1",
+        control_id="ac-02",
+        framework_id="fedramp-moderate",
+        content="Deploy audit log",
+        source="cli",
+    )
+
+
+def test_notes_add_error() -> None:
+    """notes add exits 1 when the API call raises PretorianClientError."""
+    client = _base_client()
+    client.add_control_note = AsyncMock(
+        side_effect=PretorianClientError("Control not found")
+    )
+
+    result = _run_with_mock_client(
+        [
+            "notes",
+            "add",
+            "ac-02",
+            "fedramp-moderate",
+            "--content",
+            "Audit note",
+            "--system",
+            "Primary",
+        ],
+        client,
+    )
+
+    assert result.exit_code == 1
+    assert "Add failed" in result.output
+    assert "Control not found" in result.output
+
+
+def test_notes_add_normalises_control_id() -> None:
+    """notes add normalises the control ID before sending to the API."""
+    client = _base_client()
+    client.add_control_note = AsyncMock(return_value={"id": "note-2", "content": "Check"})
+
+    _run_with_mock_client(
+        [
+            "--json",
+            "notes",
+            "add",
+            "ac-2",  # abbreviated form
+            "fedramp-moderate",
+            "--content",
+            "Check",
+            "--system",
+            "Primary",
+        ],
+        client,
+    )
+
+    # The normalised control id should be "ac-02"
+    client.add_control_note.assert_awaited_once_with(
+        system_id="sys-1",
+        control_id="ac-02",
+        framework_id="fedramp-moderate",
+        content="Check",
+        source="cli",
+    )
