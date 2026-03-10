@@ -589,7 +589,7 @@ $ pretorin config path
 
 ```bash
 $ pretorin version
-pretorin version 0.8.0
+pretorin version 0.8.1
 ```
 
 ### Update
