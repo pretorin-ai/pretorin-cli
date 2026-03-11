@@ -303,7 +303,7 @@ class TestEvidenceTools:
     def test_create_evidence_missing_scope(self) -> None:
         client = _make_mock_client()
         with patch(
-            "pretorin.mcp.server.resolve_execution_context",
+            "pretorin.mcp.helpers.resolve_execution_context",
             new=AsyncMock(side_effect=PretorianClientError("No system/framework context set")),
         ):
             result = _run_tool(
@@ -365,7 +365,7 @@ class TestEvidenceTools:
     def test_link_evidence_missing_scope(self) -> None:
         client = _make_mock_client()
         with patch(
-            "pretorin.mcp.server.resolve_execution_context",
+            "pretorin.mcp.helpers.resolve_execution_context",
             new=AsyncMock(side_effect=PretorianClientError("No system/framework context set")),
         ):
             result = _run_tool(
@@ -443,7 +443,7 @@ class TestNarrativeTools:
     def test_generate_control_artifacts(self) -> None:
         client = _make_mock_client()
         with patch(
-            "pretorin.mcp.server.draft_control_artifacts",
+            "pretorin.mcp.handlers.compliance.draft_control_artifacts",
             new=AsyncMock(
                 return_value={
                     "system_id": "sys-1",

@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from pretorin.client.api import PretorianClient
 from pretorin.evidence.writer import EvidenceWriter, LocalEvidence, _format_frontmatter
 from pretorin.workflows.compliance_updates import upsert_evidence
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -57,9 +60,11 @@ class EvidenceSync:
         """
         result = SyncResult()
         evidence_items = self.writer.list_local()
+        logger.debug("Starting evidence sync: %d local items found", len(evidence_items))
 
         for ev in evidence_items:
             if ev.platform_id:
+                logger.debug("Skipping already-synced evidence: %s/%s/%s", ev.framework_id, ev.control_id, ev.name)
                 result.skipped.append(f"{ev.framework_id}/{ev.control_id}/{ev.name}")
                 continue
 
@@ -95,8 +100,16 @@ class EvidenceSync:
                     result.errors.append(f"{label} link: {sync_result.link_error}")
 
             except Exception as e:
+                logger.warning("Evidence sync error for %s/%s/%s: %s", ev.framework_id, ev.control_id, ev.name, e)
                 result.errors.append(f"{ev.framework_id}/{ev.control_id}/{ev.name}: {e}")
 
+        logger.debug(
+            "Evidence sync complete: created=%d reused=%d skipped=%d errors=%d",
+            len(result.created),
+            len(result.reused),
+            len(result.skipped),
+            len(result.errors),
+        )
         return result
 
     @staticmethod

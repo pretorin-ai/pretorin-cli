@@ -1,6 +1,8 @@
 """Main CLI application setup for Pretorin."""
 
 import json
+import logging
+import os
 import sys
 
 import typer
@@ -119,6 +121,14 @@ def main(
 
     Making compliance the best part of your day.
     """
+    # Configure stdlib logging: default WARNING, overridable via PRETORIN_LOG_LEVEL
+    log_level = os.environ.get("PRETORIN_LOG_LEVEL", "WARNING").upper()
+    logging.basicConfig(
+        stream=sys.stderr,
+        level=getattr(logging, log_level, logging.WARNING),
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+    )
+
     if json_output:
         set_json_mode(True)
 
@@ -149,7 +159,7 @@ app.add_typer(narrative_app, name="narrative", help="Narrative management")
 app.add_typer(notes_app, name="notes", help="Control note management")
 app.add_typer(review_app, name="review", help="Review local artifacts against compliance controls")
 app.add_typer(agent_app, name="agent", help="Autonomous compliance agent")
-app.add_typer(harness_app, name="harness", help="AI harness wrapper with Pretorin policy defaults")
+app.add_typer(harness_app, name="harness", help="[Deprecated] AI harness wrapper")
 
 # Add auth commands directly to root
 for command in auth_app.registered_commands:

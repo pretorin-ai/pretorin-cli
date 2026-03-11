@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -12,6 +13,8 @@ from pretorin.client.config import Config
 from pretorin.client.models import EvidenceCreate, EvidenceItemResponse
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.markdown_quality import ensure_audit_markdown
+
+logger = logging.getLogger(__name__)
 
 MATCH_BASIS_EXACT = "exact_name_desc_type_control_framework"
 MATCH_BASIS_NONE = "none"
@@ -233,7 +236,7 @@ async def upsert_evidence(
             except Exception as exc:  # noqa: BLE001
                 link_error = str(exc)
 
-    return EvidenceUpsertResult(
+    result = EvidenceUpsertResult(
         evidence_id=evidence_id,
         created=created,
         linked=linked,
@@ -241,3 +244,13 @@ async def upsert_evidence(
         platform_response=platform_response,
         link_error=link_error,
     )
+    logger.debug(
+        "Evidence upsert result: id=%s created=%s linked=%s match_basis=%s",
+        result.evidence_id,
+        result.created,
+        result.linked,
+        result.match_basis,
+    )
+    if link_error:
+        logger.warning("Evidence link error for %s: %s", evidence_id, link_error)
+    return result

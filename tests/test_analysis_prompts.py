@@ -1,6 +1,6 @@
 """Tests for analysis prompts and templates."""
 
-from pretorin.mcp.analysis_prompts import (
+from pretorin.mcp.prompts import (
     CONTROL_ANALYSIS_PROMPTS,
     FRAMEWORK_GUIDES,
     format_control_analysis_prompt,
