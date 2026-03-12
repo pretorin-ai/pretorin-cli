@@ -69,7 +69,7 @@ mcp-publisher
 
 # Pretorin local data (API keys, evidence drafts)
 .pretorin/
-evidence/
+/evidence/
 
 # OS
 .DS_Store
