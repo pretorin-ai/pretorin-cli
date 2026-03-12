@@ -33,9 +33,7 @@ def _run_with_mock_client(args: list[str], client: AsyncMock) -> object:
 
 
 def _mock_scoped_client(client: AsyncMock) -> None:
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]})
     client.get_system = AsyncMock(return_value=SimpleNamespace(name="Primary"))
 
 
@@ -166,7 +164,7 @@ def test_narrative_push_rejects_heading_markdown(tmp_path: Path) -> None:
     result = _run_with_mock_client(
         [
             "narrative",
-            "push",
+            "push-file",
             "ac-2",
             "fedramp-moderate",
             "Primary",

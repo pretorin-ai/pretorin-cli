@@ -14,19 +14,24 @@ DIM='\033[2m'
 BOLD='\033[1m'
 RESET='\033[0m'
 
-TEMP_NARRATIVE=""
 DEMO_EVIDENCE_DIR=""
+DEMO_NARRATIVES_DIR=""
+DEMO_NOTES_DIR=""
 
 cleanup() {
     echo ""
     echo -e "${GOLD}${BOLD}── Cleanup ─────────────────────────────────────────${RESET}"
-    if [[ -n "$TEMP_NARRATIVE" && -f "$TEMP_NARRATIVE" ]]; then
-        rm -f "$TEMP_NARRATIVE"
-        echo -e "  Removed temp narrative file: ${DIM}${TEMP_NARRATIVE}${RESET}"
-    fi
     if [[ -n "$DEMO_EVIDENCE_DIR" && -d "$DEMO_EVIDENCE_DIR" ]]; then
         rm -rf "$DEMO_EVIDENCE_DIR"
-        echo -e "  Removed demo evidence dir:   ${DIM}${DEMO_EVIDENCE_DIR}${RESET}"
+        echo -e "  Removed demo evidence dir:    ${DIM}${DEMO_EVIDENCE_DIR}${RESET}"
+    fi
+    if [[ -n "$DEMO_NARRATIVES_DIR" && -d "$DEMO_NARRATIVES_DIR" ]]; then
+        rm -rf "$DEMO_NARRATIVES_DIR"
+        echo -e "  Removed demo narratives dir:  ${DIM}${DEMO_NARRATIVES_DIR}${RESET}"
+    fi
+    if [[ -n "$DEMO_NOTES_DIR" && -d "$DEMO_NOTES_DIR" ]]; then
+        rm -rf "$DEMO_NOTES_DIR"
+        echo -e "  Removed demo notes dir:       ${DIM}${DEMO_NOTES_DIR}${RESET}"
     fi
     echo -e "${GOLD}Done.${RESET}"
 }
@@ -225,7 +230,7 @@ SECTION3_OK=true
 
 echo -e "  ${BOLD}Create a local evidence file for AC-02:${RESET}"
 if ! run_cmd pretorin evidence create ac-02 fedramp-moderate \
-    -d "Role-based access control audit completed for demo walkthrough. All users verified against approved role matrix." \
+    -d "- Role-based access control audit completed for demo walkthrough\n- All users verified against approved role matrix" \
     -n "Demo RBAC Evidence"; then
     echo -e "  ${GOLD}⚠ Evidence creation failed — skipping rest of Section 3.${RESET}"
     SECTION3_OK=false
@@ -243,55 +248,73 @@ fi
 
 # ── Section 4: Narrative Workflow ────────────────────────────────────────────
 
-pause "Section 4: Push an implementation narrative"
+pause "Section 4: Create and push narratives"
 
-TEMP_NARRATIVE=$(mktemp /tmp/pretorin-demo-narrative-XXXXXX.md)
+DEMO_NARRATIVES_DIR="./narratives"
 
-cat > "$TEMP_NARRATIVE" <<'NARRATIVE'
-# AC-02 Account Management — Implementation Narrative
+SECTION4_OK=true
 
-## Overview
-
-The organization manages information system accounts through a centralized identity
-provider (IdP) integrated with role-based access control (RBAC). Account lifecycle
-events — creation, modification, disabling, and removal — are automated via
-provisioning workflows tied to HR onboarding and offboarding processes.
-
-## Key Controls
-
-- **Account Creation**: Accounts are provisioned automatically when HR completes
-  onboarding. Each account is assigned a role from the approved role matrix.
+NARRATIVE_CONTENT='- **Account Creation**: Accounts are provisioned automatically when HR completes onboarding. Each account is assigned a role from the approved role matrix.
 - **Periodic Review**: Quarterly access reviews are conducted by system owners.
-  Results are documented and submitted to the compliance team.
-- **Account Termination**: Accounts are disabled within 24 hours of separation
-  notification from HR and removed after a 30-day retention period.
+- **Account Termination**: Accounts are disabled within 24 hours of separation notification.
 
-## Evidence
+```yaml
+# IdP provisioning config
+auto_provision: true
+role_assignment: matrix-based
+review_cadence: quarterly
+termination_sla: 24h
+```
 
-- Quarterly access review reports
-- IdP provisioning audit logs
-- HR separation workflow records
-NARRATIVE
+[IdP Documentation](https://docs.example.com/idp)'
 
-echo -e "  ${BOLD}Created temp narrative at:${RESET} ${DIM}${TEMP_NARRATIVE}${RESET}"
-echo ""
-echo -e "  ${DIM}--- narrative content ---${RESET}"
-cat "$TEMP_NARRATIVE"
-echo -e "  ${DIM}--- end ---${RESET}"
-
-pause "Push narrative to the platform"
-
-if [[ -n "$ACTIVE_SYSTEM" ]]; then
-    echo -e "  ${BOLD}Push narrative to platform:${RESET}"
-    run_cmd pretorin narrative push ac-02 fedramp-moderate "$ACTIVE_SYSTEM" "$TEMP_NARRATIVE" || true
-else
-    echo -e "  ${GOLD}Skipping narrative push — could not detect active system name.${RESET}"
-    echo -e "  ${DIM}Run manually: pretorin narrative push ac-02 fedramp-moderate <system> ${TEMP_NARRATIVE}${RESET}"
+echo -e "  ${BOLD}Create a local narrative for AC-02:${RESET}"
+if ! run_cmd pretorin narrative create ac-02 fedramp-moderate \
+    -c "$NARRATIVE_CONTENT" \
+    -n "ac-02-account-management"; then
+    echo -e "  ${GOLD}⚠ Narrative creation failed — skipping rest of Section 4.${RESET}"
+    SECTION4_OK=false
 fi
 
-# ── Section 5: Monitoring ────────────────────────────────────────────────────
+if $SECTION4_OK; then
+    echo -e "  ${BOLD}List local narratives:${RESET}"
+    run_cmd pretorin narrative list || true
 
-pause "Section 5: Push a monitoring event"
+    pause "Push narratives to the platform"
+
+    echo -e "  ${BOLD}Push narratives to the platform:${RESET}"
+    run_cmd pretorin narrative push || true
+fi
+
+# ── Section 5: Notes Workflow ────────────────────────────────────────────────
+
+pause "Section 5: Create and push notes"
+
+DEMO_NOTES_DIR="./notes"
+
+SECTION5_OK=true
+
+echo -e "  ${BOLD}Create a local note for AC-02:${RESET}"
+if ! run_cmd pretorin notes create ac-02 fedramp-moderate \
+    -c "Gap: Missing SSO evidence. Manual next step: collect IdP configuration screenshots from Okta admin console." \
+    -n "sso-evidence-gap"; then
+    echo -e "  ${GOLD}⚠ Note creation failed — skipping rest of Section 5.${RESET}"
+    SECTION5_OK=false
+fi
+
+if $SECTION5_OK; then
+    echo -e "  ${BOLD}List local notes:${RESET}"
+    run_cmd pretorin notes list --local || true
+
+    pause "Push notes to the platform"
+
+    echo -e "  ${BOLD}Push notes to the platform:${RESET}"
+    run_cmd pretorin notes push || true
+fi
+
+# ── Section 6: Monitoring ────────────────────────────────────────────────────
+
+pause "Section 6: Push a monitoring event"
 
 echo -e "  ${BOLD}Push an access-review event:${RESET}"
 run_cmd pretorin monitoring push \
@@ -300,9 +323,9 @@ run_cmd pretorin monitoring push \
     --control ac-02 \
     --event-type access_review || true
 
-# ── Section 6: Agent Skills (informational) ──────────────────────────────────
+# ── Section 7: Agent Skills (informational) ──────────────────────────────────
 
-pause "Section 6: Agent skills (informational)"
+pause "Section 7: Agent skills (informational)"
 
 echo -e "  ${BOLD}List available agent skills:${RESET}"
 run_cmd pretorin agent skills || true
@@ -316,9 +339,9 @@ echo ""
 echo -e "  ${DIM}Skills include: gap-analysis, narrative-generation,${RESET}"
 echo -e "  ${DIM}evidence-collection, security-review.${RESET}"
 
-# ── Section 7: MCP Integration (informational) ───────────────────────────────
+# ── Section 8: MCP Integration (informational) ───────────────────────────────
 
-pause "Section 7: MCP integration (informational)"
+pause "Section 8: MCP integration (informational)"
 
 echo -e "  ${BOLD}Pretorin ships an MCP server for AI coding agents.${RESET}"
 echo ""
@@ -340,9 +363,9 @@ echo ""
 echo -e "  Once configured, Claude Code can browse frameworks, manage evidence,"
 echo -e "  push narratives, and run compliance checks interactively."
 
-# ── Section 8: Summary ───────────────────────────────────────────────────────
+# ── Section 9: Summary ───────────────────────────────────────────────────────
 
-pause "Section 8: Summary"
+pause "Section 9: Summary"
 
 echo -e "  ${GOLD}${BOLD}What we covered:${RESET}"
 echo ""
@@ -350,10 +373,11 @@ echo -e "    1. ${BOLD}Authentication${RESET}     — login, whoami"
 echo -e "    2. ${BOLD}Frameworks${RESET}         — list, get, families, controls, control detail"
 echo -e "    3. ${BOLD}System context${RESET}     — list, set, show"
 echo -e "    4. ${BOLD}Evidence${RESET}           — create, list, push"
-echo -e "    5. ${BOLD}Narratives${RESET}         — write markdown, push to platform"
-echo -e "    6. ${BOLD}Monitoring${RESET}         — push events (access reviews, scans, etc.)"
-echo -e "    7. ${BOLD}Agent skills${RESET}       — gap-analysis, narrative-generation, and more"
-echo -e "    8. ${BOLD}MCP integration${RESET}    — plug into Claude Code or any MCP-aware agent"
+echo -e "    5. ${BOLD}Narratives${RESET}         — create, list, push (local-first workflow)"
+echo -e "    6. ${BOLD}Notes${RESET}              — create, list --local, push (local-first workflow)"
+echo -e "    7. ${BOLD}Monitoring${RESET}         — push events (access reviews, scans, etc.)"
+echo -e "    8. ${BOLD}Agent skills${RESET}       — gap-analysis, narrative-generation, and more"
+echo -e "    9. ${BOLD}MCP integration${RESET}    — plug into Claude Code or any MCP-aware agent"
 echo ""
 echo -e "  ${ORANGE}Docs:${RESET}      https://docs.pretorin.com"
 echo -e "  ${ORANGE}Platform:${RESET}  https://platform.pretorin.com"

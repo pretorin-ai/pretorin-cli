@@ -56,9 +56,7 @@ def _base_client() -> AsyncMock:
     client = AsyncMock()
     client.is_configured = True
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary"}])
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]})
     client.get_system = AsyncMock(return_value=SimpleNamespace(name="Primary"))
     return client
 
@@ -116,9 +114,7 @@ def test_narrative_get_normal_no_narrative_set() -> None:
 def test_narrative_get_error() -> None:
     """narrative get exits 1 on PretorianClientError."""
     client = _base_client()
-    client.get_narrative = AsyncMock(
-        side_effect=PretorianClientError("Not found")
-    )
+    client.get_narrative = AsyncMock(side_effect=PretorianClientError("Not found"))
 
     result = _run_with_mock_client(
         ["narrative", "get", "ac-02", "fedramp-moderate", "--system", "Primary"],
@@ -160,7 +156,7 @@ def test_narrative_push_success_normal_mode(tmp_path: Path) -> None:
     result = _run_with_mock_client(
         [
             "narrative",
-            "push",
+            "push-file",
             "ac-02",
             "fedramp-moderate",
             "Primary",
@@ -184,15 +180,13 @@ def test_narrative_push_json_mode(tmp_path: Path) -> None:
     narrative_file.write_text(VALID_NARRATIVE_CONTENT)
 
     client = _base_client()
-    client.update_narrative = AsyncMock(
-        return_value={"status": "ok", "narrative_id": "narr-001"}
-    )
+    client.update_narrative = AsyncMock(return_value={"status": "ok", "narrative_id": "narr-001"})
 
     result = _run_with_mock_client(
         [
             "--json",
             "narrative",
-            "push",
+            "push-file",
             "ac-02",
             "fedramp-moderate",
             "Primary",
@@ -216,7 +210,7 @@ def test_narrative_push_empty_file(tmp_path: Path) -> None:
     result = _run_with_mock_client(
         [
             "narrative",
-            "push",
+            "push-file",
             "ac-02",
             "fedramp-moderate",
             "Primary",
@@ -240,7 +234,7 @@ def test_narrative_push_fails_markdown_quality_heading(tmp_path: Path) -> None:
     result = _run_with_mock_client(
         [
             "narrative",
-            "push",
+            "push-file",
             "ac-02",
             "fedramp-moderate",
             "Primary",
@@ -264,7 +258,7 @@ def test_narrative_push_fails_markdown_quality_no_rich_elements(tmp_path: Path) 
     result = _run_with_mock_client(
         [
             "narrative",
-            "push",
+            "push-file",
             "ac-02",
             "fedramp-moderate",
             "Primary",
@@ -283,14 +277,12 @@ def test_narrative_push_update_narrative_client_error(tmp_path: Path) -> None:
     narrative_file.write_text(VALID_NARRATIVE_CONTENT)
 
     client = _base_client()
-    client.update_narrative = AsyncMock(
-        side_effect=PretorianClientError("Server error", status_code=500)
-    )
+    client.update_narrative = AsyncMock(side_effect=PretorianClientError("Server error", status_code=500))
 
     result = _run_with_mock_client(
         [
             "narrative",
-            "push",
+            "push-file",
             "ac-02",
             "fedramp-moderate",
             "Primary",
@@ -316,7 +308,7 @@ def test_narrative_push_resolve_context_client_error(tmp_path: Path) -> None:
     result = _run_with_mock_client(
         [
             "narrative",
-            "push",
+            "push-file",
             "ac-02",
             "fedramp-moderate",
             "Primary",
@@ -341,7 +333,7 @@ def test_narrative_push_normalises_control_id(tmp_path: Path) -> None:
         [
             "--json",
             "narrative",
-            "push",
+            "push-file",
             "ac-2",  # abbreviated — should normalise to ac-02
             "fedramp-moderate",
             "Primary",

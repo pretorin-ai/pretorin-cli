@@ -87,6 +87,8 @@ SKILLS: dict[str, Skill] = {
             "generating narratives. Reference specific evidence items in the narrative. "
             "After pushing a narrative, add a note if there are manual steps needed "
             "or additional systems that should be connected.\n\n"
+            "Alternative local workflow: use `pretorin narrative create` to draft locally, "
+            "then `pretorin narrative push` to batch-push all unsynced narratives.\n\n"
             f"{_WORKFLOW_GUARDRAILS}"
         ),
         tool_names=[
@@ -123,6 +125,9 @@ SKILLS: dict[str, Skill] = {
             "control_id unless it is genuinely framework-level with no specific "
             "control. After collecting evidence, add notes for any evidence that "
             "can't be collected programmatically.\n\n"
+            "Alternative local workflow: use `pretorin evidence create` to draft locally "
+            "(description is validated for rich markdown), then `pretorin evidence push` "
+            "to batch-push all unsynced evidence.\n\n"
             f"{_WORKFLOW_GUARDRAILS}"
         ),
         tool_names=[
@@ -156,6 +161,8 @@ SKILLS: dict[str, Skill] = {
             "then use platform tools to record your findings. "
             "Push monitoring events for critical or high-severity findings. "
             "Add notes for any findings that require manual intervention.\n\n"
+            "Alternative local workflow for notes: use `pretorin notes create` to draft locally, "
+            "then `pretorin notes push` to batch-push all unsynced notes.\n\n"
             f"{_WORKFLOW_GUARDRAILS}"
         ),
         tool_names=[
