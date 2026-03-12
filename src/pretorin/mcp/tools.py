@@ -444,7 +444,8 @@ async def list_tools() -> list[Tool]:
             name="pretorin_add_control_note",
             description=(
                 "Add a note to a control implementation with suggestions such as"
-                " connecting systems not directly available or manually adding evidence"
+                " connecting systems not directly available or manually adding evidence."
+                " Notes are append-only. Content is plain text (no markdown validation required)."
             ),
             inputSchema={
                 "type": "object",

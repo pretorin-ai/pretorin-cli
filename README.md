@@ -113,7 +113,7 @@ For Claude Desktop, Cursor, and Windsurf setup, see [docs/MCP.md](docs/MCP.md).
 
 ## Core Commands
 
-Platform-backed review and update workflows are single-scope: set one active `system + framework` first with `pretorin context set`, then run evidence, note, monitoring, narrative, or MCP-assisted compliance commands inside that scope. Multi-framework work must be split into separate runs.
+Platform-backed review and update workflows are single-scope: set one active `system + framework` first with `pretorin context set`, then run evidence, note, monitoring, narrative, or MCP-assisted compliance commands inside that scope. Multi-framework work must be split into separate runs. Evidence, narratives, and notes all support a local-first workflow: create locally, list, then push to the platform.
 
 | Command | Purpose |
 |---------|---------|
@@ -121,13 +121,20 @@ Platform-backed review and update workflows are single-scope: set one active `sy
 | `pretorin frameworks control <framework> <control>` | Get control details and guidance |
 | `pretorin context set` | Set active system/framework context |
 | `pretorin evidence create` | Create local evidence file |
+| `pretorin evidence list` | List local evidence files |
 | `pretorin evidence push` | Push local evidence to Pretorin |
 | `pretorin evidence search` | Search platform evidence |
 | `pretorin evidence upsert <ctrl> <fw>` | Find-or-create evidence and link it |
+| `pretorin narrative create` | Create local narrative file |
+| `pretorin narrative list` | List local narrative files |
+| `pretorin narrative push` | Push local narratives to Pretorin |
 | `pretorin narrative get <ctrl> <fw>` | Get current control narrative |
-| `pretorin narrative push <ctrl> <fw> <sys> <file>` | Push a narrative file |
-| `pretorin notes list <ctrl> <fw>` | List control notes |
-| `pretorin notes add <ctrl> <fw> --content ...` | Add control note |
+| `pretorin narrative push-file <ctrl> <fw> <sys> <file>` | Push a single narrative file |
+| `pretorin notes create` | Create local note file |
+| `pretorin notes list --local` | List local note files |
+| `pretorin notes push` | Push local notes to Pretorin |
+| `pretorin notes list <ctrl> <fw>` | List platform control notes |
+| `pretorin notes add <ctrl> <fw> --content ...` | Add control note directly |
 | `pretorin monitoring push` | Push a monitoring event |
 | `pretorin agent run "<task>"` | Run Codex-powered compliance task |
 | `pretorin review run --control-id <id> --path <dir>` | Review local code for control coverage |

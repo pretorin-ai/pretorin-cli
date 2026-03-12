@@ -76,9 +76,15 @@ def evidence_create(
         pretorin evidence create sc-07 nist-800-53-r5 -d "Firewall rules" -t configuration
     """
     from pretorin.evidence.writer import EvidenceWriter, LocalEvidence
+    from pretorin.workflows.markdown_quality import validate_audit_markdown
 
     control_id = normalize_control_id(control_id)
     evidence_name = name or description[:60]
+
+    result = validate_audit_markdown(description, "evidence_description")
+    if not result.is_valid:
+        rprint(f"[red]Validation failed: {result.error_message()}[/red]")
+        raise typer.Exit(1)
 
     evidence = LocalEvidence(
         control_id=control_id,
