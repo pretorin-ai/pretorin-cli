@@ -150,11 +150,11 @@ class TestUpdateCommand:
     def test_update_already_up_to_date(self):
         mock_result = MagicMock()
         mock_result.checked = True
-        mock_result.update_available = False
         mock_result.latest_version = __version__
 
         with patch("pretorin.cli.version_check.check_for_updates", return_value=mock_result):
-            result = runner.invoke(app, ["update"])
+            with patch("subprocess.run"):
+                result = runner.invoke(app, ["update"])
 
         assert result.exit_code == 0
         assert "latest" in result.output.lower() or __version__ in result.output
@@ -174,27 +174,23 @@ class TestUpdateCommand:
         mock_run.assert_called_once()
         assert "99.9.9" in result.output
 
-    def test_update_check_fails_exits_one(self):
+    def test_update_version_check_fails_still_succeeds(self):
         mock_result = MagicMock()
         mock_result.checked = False
+        mock_result.latest_version = None
 
         with patch("pretorin.cli.version_check.check_for_updates", return_value=mock_result):
-            result = runner.invoke(app, ["update"])
+            with patch("subprocess.run"):
+                result = runner.invoke(app, ["update"])
 
-        assert result.exit_code == 1
-        assert "unable" in result.output.lower() or "try" in result.output.lower()
+        assert result.exit_code == 0
+        assert "update complete" in result.output.lower()
 
     def test_update_pip_fails_exits_one(self):
         import subprocess
 
-        mock_result = MagicMock()
-        mock_result.checked = True
-        mock_result.update_available = True
-        mock_result.latest_version = "99.9.9"
-
-        with patch("pretorin.cli.version_check.check_for_updates", return_value=mock_result):
-            with patch("subprocess.run", side_effect=subprocess.CalledProcessError(1, "pip")):
-                result = runner.invoke(app, ["update"])
+        with patch("subprocess.run", side_effect=subprocess.CalledProcessError(1, "pip")):
+            result = runner.invoke(app, ["update"])
 
         assert result.exit_code == 1
         assert "failed" in result.output.lower() or "manually" in result.output.lower()
