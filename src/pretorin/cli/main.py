@@ -181,18 +181,7 @@ def update() -> None:
 
     from pretorin.cli.version_check import check_for_updates
 
-    result = check_for_updates(force=True)
-    if not result.checked:
-        rprint("[#FF9010]→[/#FF9010] Unable to check for updates right now.")
-        rprint("  [dim]Try again later or run:[/dim] [bold]pip install --upgrade pretorin[/bold]")
-        raise typer.Exit(1)
-
-    latest = result.latest_version
-    if not result.update_available or not latest:
-        rprint(f"[#95D7E0]✓[/#95D7E0] You're already on the latest version ({__version__})")
-        return
-
-    rprint(f"[#FF9010]→[/#FF9010] Updating to version [#EAB536]{latest}[/#EAB536]...")
+    rprint(f"[#FF9010]→[/#FF9010] Updating pretorin from PyPI (current: [#EAB536]{__version__}[/#EAB536])...")
     rprint()
 
     try:
@@ -200,13 +189,22 @@ def update() -> None:
             [sys.executable, "-m", "pip", "install", "--upgrade", "pretorin"],
             check=True,
         )
-        rprint()
-        rprint(f"[#95D7E0]✓[/#95D7E0] Updated to version {latest}")
     except subprocess.CalledProcessError:
         rprint()
         rprint("[#FF9010]→[/#FF9010] Update failed. Try running manually:")
         rprint("  [bold]pip install --upgrade pretorin[/bold]")
         raise typer.Exit(1)
+
+    # Report what version was installed
+    result = check_for_updates(force=True)
+    latest = result.latest_version if result.checked else None
+    rprint()
+    if latest and latest != __version__:
+        rprint(f"[#95D7E0]✓[/#95D7E0] Updated to version {latest}")
+    elif latest:
+        rprint(f"[#95D7E0]✓[/#95D7E0] You're on the latest version ({latest})")
+    else:
+        rprint("[#95D7E0]✓[/#95D7E0] Update complete.")
 
 
 @app.command("mcp-serve")
