@@ -37,10 +37,11 @@ from pretorin.client.models import (
     FrameworkMetadata,
     MonitoringEventCreate,
     NarrativeResponse,
+    OrgPolicyListResponse,
+    OrgPolicyQuestionnaireResponse,
     ScopeResponse,
     SystemDetail,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -199,7 +200,105 @@ CONTROL_CONTEXT = {
 SCOPE_RESPONSE = {
     "scope_status": "complete",
     "scope_narrative": {"description": "This system manages user data."},
+    "scope_qa_responses": {
+        "questions": [
+            {
+                "id": "sd-1",
+                "question": "What does the system do?",
+                "answer": "Existing answer",
+                "section": "system_description",
+            }
+        ]
+    },
+    "scope_questions": [
+        {
+            "id": "sd-1",
+            "question": "What does the system do?",
+            "section": "system_description",
+            "section_title": "System Description",
+            "order": 0,
+            "guidance": {
+                "tips": ["Explain the mission."],
+                "example_response": "Example scope answer",
+                "common_mistakes": ["Being too vague"],
+            },
+        }
+    ],
     "excluded_controls": [],
+    "scope_review": {
+        "readiness": "needs_work",
+        "gaps": [{"area": "boundary", "severity": "medium", "description": "Clarify scope."}],
+        "recommended_changes": [
+            {"section": "System Description", "change": "Add user counts.", "priority": "high"}
+        ],
+    },
+    "scope_reviewed_at": "2026-03-02T00:00:00+00:00",
+}
+
+ORG_POLICY_LIST_RESPONSE = {
+    "policies": [
+        {
+            "id": "pol-001",
+            "name": "Access Control Policy",
+            "policy_template_id": "access-control-policy",
+            "status": "draft",
+            "policy_qa_status": "in_progress",
+            "policy_reviewed_at": "2026-03-02T00:00:00+00:00",
+        }
+    ],
+    "total": 1,
+}
+
+ORG_POLICY_QUESTIONNAIRE_RESPONSE = {
+    "policy_id": "pol-001",
+    "name": "Access Control Policy",
+    "policy_template_id": "access-control-policy",
+    "policy_qa_status": "in_progress",
+    "policy_qa_responses": {
+        "questions": [
+            {
+                "id": "q_purpose_1",
+                "question": "Why does this Access Control Policy exist?",
+                "answer": "Existing purpose answer",
+                "section_id": "purpose",
+            }
+        ]
+    },
+    "template": {
+        "template_id": "access-control-policy",
+        "template_name": "Access Control Policy",
+        "document_type": "policy",
+        "sections": [
+            {
+                "section_id": "purpose",
+                "title": "Purpose",
+                "order": 1,
+                "required_content": [],
+            }
+        ],
+        "questions": [
+            {
+                "question_id": "q_purpose_1",
+                "question": "Why does this Access Control Policy exist?",
+                "section_id": "purpose",
+                "additional_section_ids": [],
+                "guidance": {
+                    "tips": ["Tie the policy to least privilege."],
+                    "example_response": "This policy protects systems and data.",
+                    "common_mistakes": "Being too vague",
+                },
+                "order": 1,
+            }
+        ],
+    },
+    "policy_review": {
+        "readiness": "needs_work",
+        "gaps": [{"area": "scope", "severity": "medium", "description": "Clarify exclusions."}],
+        "recommended_changes": [
+            {"section": "Scope", "change": "Add service accounts.", "priority": "high"}
+        ],
+    },
+    "policy_reviewed_at": "2026-03-02T00:00:00+00:00",
 }
 
 EVIDENCE_BATCH_RESPONSE = {
@@ -230,9 +329,9 @@ class TestConfiguration:
         assert client.is_configured is True
 
     def test_is_not_configured_without_api_key(self):
-        with patch("pretorin.client.api.Config") as MockConfig:
-            MockConfig.return_value.api_key = None
-            MockConfig.return_value.api_base_url = TEST_BASE_URL
+        with patch("pretorin.client.api.Config") as mock_config:
+            mock_config.return_value.api_key = None
+            mock_config.return_value.api_base_url = TEST_BASE_URL
             client = PretorianClient(api_key=None, api_base_url=TEST_BASE_URL)
         assert client.is_configured is False
 
@@ -245,9 +344,9 @@ class TestConfiguration:
         assert "pretorin-cli/" in headers["User-Agent"]
 
     def test_headers_without_api_key(self):
-        with patch("pretorin.client.api.Config") as MockConfig:
-            MockConfig.return_value.api_key = None
-            MockConfig.return_value.api_base_url = TEST_BASE_URL
+        with patch("pretorin.client.api.Config") as mock_config:
+            mock_config.return_value.api_key = None
+            mock_config.return_value.api_base_url = TEST_BASE_URL
             client = PretorianClient(api_key=None, api_base_url=TEST_BASE_URL)
         headers = client._get_headers()
         assert "Authorization" not in headers
@@ -455,9 +554,9 @@ class TestValidateApiKey:
         assert result is True
 
     async def test_validate_api_key_missing_raises(self):
-        with patch("pretorin.client.api.Config") as MockConfig:
-            MockConfig.return_value.api_key = None
-            MockConfig.return_value.api_base_url = TEST_BASE_URL
+        with patch("pretorin.client.api.Config") as mock_config:
+            mock_config.return_value.api_key = None
+            mock_config.return_value.api_base_url = TEST_BASE_URL
             client = PretorianClient(api_key=None, api_base_url=TEST_BASE_URL)
         with pytest.raises(AuthenticationError, match="No API key configured"):
             await client.validate_api_key()
@@ -1033,6 +1132,73 @@ class TestControlImplementationEndpoints:
         result = await client.get_scope("sys-001", "nist-800-53-r5")
         assert isinstance(result, ScopeResponse)
         assert result.scope_status == "complete"
+        assert result.scope_questions[0].id == "sd-1"
+        assert result.scope_review is not None
+        assert result.scope_review.gaps[0].area == "boundary"
+
+    async def test_patch_scope_qa(self):
+        captured_body: dict[str, Any] = {}
+        captured_params: dict[str, str] = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            captured_body.update(json.loads(request.content))
+            for key, value in request.url.params.items():
+                captured_params[key] = value
+            return httpx.Response(200, json=SCOPE_RESPONSE)
+
+        client = _make_client(handler)
+        result = await client.patch_scope_qa(
+            "sys-001",
+            "nist-800-53-r5",
+            [{"question_id": "sd-1", "answer": "Updated answer"}],
+        )
+
+        assert isinstance(result, ScopeResponse)
+        assert captured_body == {"updates": [{"question_id": "sd-1", "answer": "Updated answer"}]}
+        assert captured_params["framework_id"] == "nist-800-53-r5"
+        assert result.scope_qa_responses["questions"][0]["answer"] == "Existing answer"
+
+    async def test_list_org_policies(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, json=ORG_POLICY_LIST_RESPONSE)
+
+        client = _make_client(handler)
+        result = await client.list_org_policies()
+
+        assert isinstance(result, OrgPolicyListResponse)
+        assert result.total == 1
+        assert result.policies[0].policy_template_id == "access-control-policy"
+
+    async def test_get_org_policy_questionnaire(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, json=ORG_POLICY_QUESTIONNAIRE_RESPONSE)
+
+        client = _make_client(handler)
+        result = await client.get_org_policy_questionnaire("pol-001")
+
+        assert isinstance(result, OrgPolicyQuestionnaireResponse)
+        assert result.policy_id == "pol-001"
+        assert result.template is not None
+        assert result.template.questions[0].guidance.common_mistakes == ["Being too vague"]
+        assert result.policy_review is not None
+        assert result.policy_review.recommended_changes[0].section == "Scope"
+
+    async def test_patch_org_policy_qa(self):
+        captured_body: dict[str, Any] = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            captured_body.update(json.loads(request.content))
+            return httpx.Response(200, json=ORG_POLICY_QUESTIONNAIRE_RESPONSE)
+
+        client = _make_client(handler)
+        result = await client.patch_org_policy_qa(
+            "pol-001",
+            [{"question_id": "q_purpose_1", "answer": "Updated purpose"}],
+        )
+
+        assert isinstance(result, OrgPolicyQuestionnaireResponse)
+        assert captured_body == {"updates": [{"question_id": "q_purpose_1", "answer": "Updated purpose"}]}
+        assert result.policy_qa_responses["questions"][0]["id"] == "q_purpose_1"
 
 
 class TestControlNotesEndpoints:

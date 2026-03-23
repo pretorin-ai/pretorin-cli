@@ -438,19 +438,87 @@ class ControlContext(BaseModel):
     user_context: str | None = None
 
 
+class ReviewGap(BaseModel):
+    """One persisted review gap."""
+
+    area: str
+    severity: str
+    description: str
+
+
+class ReviewChange(BaseModel):
+    """One persisted recommended change."""
+
+    section: str
+    change: str
+    suggested_bullet: str | None = None
+    priority: str
+
+
+class PersistedReview(BaseModel):
+    """Normalized persisted AI review payload."""
+
+    readiness: str | None = None
+    completeness: dict[str, Any] = Field(default_factory=dict)
+    accuracy: dict[str, Any] = Field(default_factory=dict)
+    gaps: list[ReviewGap] = Field(default_factory=list)
+    recommended_changes: list[ReviewChange] = Field(default_factory=list)
+
+
+class QuestionGuidance(BaseModel):
+    """Guidance metadata for a questionnaire item."""
+
+    tips: list[str] = Field(default_factory=list)
+    what_to_include: str | None = None
+    example_response: str | None = None
+    common_mistakes: list[str] = Field(default_factory=list)
+
+    @field_validator("common_mistakes", mode="before")
+    @classmethod
+    def _coerce_common_mistakes(cls, value: Any) -> list[str]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return [str(item) for item in value if item]
+        if isinstance(value, str):
+            return [value] if value.strip() else []
+        return []
+
+
+class ScopeQuestionDefinition(BaseModel):
+    """Canonical scope question definition from the platform."""
+
+    id: str
+    question: str
+    section: str
+    section_title: str
+    order: int
+    guidance: QuestionGuidance = Field(default_factory=QuestionGuidance)
+
+
+class ScopeQuestionResponse(BaseModel):
+    """Saved scope Q&A item."""
+
+    id: str
+    question: str
+    answer: str | None = None
+    section: str
+
+
 class ScopeResponse(BaseModel):
     """System scope/policy information."""
 
     scope_status: str = "not_started"
     scope_narrative: dict[str, Any] | None = None
     scope_qa_responses: dict[str, Any] | None = None
+    scope_questions: list[ScopeQuestionDefinition] = Field(default_factory=list)
     excluded_controls: list[str] = Field(default_factory=list)
     excluded_families: list[str] = Field(default_factory=list)
     inherited_controls: list[str] = Field(default_factory=list)
     scope_completed_at: str | None = None
     scope_completed_by: str | None = None
     scope_document_evidence_id: str | None = None
-    scope_review: dict[str, Any] | None = None
+    scope_review: PersistedReview | None = None
     scope_reviewed_at: str | None = None
 
 
@@ -478,3 +546,77 @@ class MonitoringEventResponse(BaseModel):
     framework_id: str | None = None
     status: str | None = None
     created_at: str | None = None
+
+
+class PolicyTemplateSection(BaseModel):
+    """Canonical policy template section."""
+
+    section_id: str
+    title: str
+    parent_section_id: str | None = None
+    order: int
+    template_guidance: str | None = None
+    required_content: list[str] = Field(default_factory=list)
+
+
+class PolicyQuestionDefinition(BaseModel):
+    """Canonical policy question definition."""
+
+    question_id: str
+    question: str
+    section_id: str
+    additional_section_ids: list[str] = Field(default_factory=list)
+    guidance: QuestionGuidance = Field(default_factory=QuestionGuidance)
+    order: int
+
+
+class PolicyTemplate(BaseModel):
+    """Merged policy template with sections and questions."""
+
+    template_id: str
+    template_name: str
+    document_type: str
+    description: str | None = None
+    version: str | None = None
+    sections: list[PolicyTemplateSection] = Field(default_factory=list)
+    questions: list[PolicyQuestionDefinition] = Field(default_factory=list)
+
+
+class PolicyQuestionResponse(BaseModel):
+    """Saved policy Q&A item."""
+
+    id: str
+    question: str
+    answer: str | None = None
+    section_id: str
+
+
+class OrgPolicySummary(BaseModel):
+    """Discovery metadata for one org policy."""
+
+    id: str
+    name: str
+    policy_template_id: str | None = None
+    status: str
+    policy_qa_status: str | None = None
+    policy_reviewed_at: str | None = None
+
+
+class OrgPolicyListResponse(BaseModel):
+    """List of org policies."""
+
+    policies: list[OrgPolicySummary] = Field(default_factory=list)
+    total: int = 0
+
+
+class OrgPolicyQuestionnaireResponse(BaseModel):
+    """Stateful questionnaire payload for one org policy."""
+
+    policy_id: str
+    name: str
+    policy_template_id: str | None = None
+    policy_qa_status: str | None = None
+    policy_qa_responses: dict[str, Any] | None = None
+    template: PolicyTemplate | None = None
+    policy_review: PersistedReview | None = None
+    policy_reviewed_at: str | None = None
