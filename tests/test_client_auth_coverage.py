@@ -12,12 +12,12 @@ import pytest
 
 from pretorin.client import config as config_module
 from pretorin.client.auth import (
+    _derive_model_api_base_url,
     clear_credentials,
     get_credentials,
     is_authenticated,
     store_credentials,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixture: redirect all config reads/writes to a tmp directory
@@ -60,11 +60,76 @@ def test_store_credentials_with_custom_url(isolated_config: Path) -> None:
     assert url == "https://custom.example.com/api/v1"
 
 
+def test_store_credentials_with_public_url_sets_matching_model_url(isolated_config: Path) -> None:
+    store_credentials("my-key", api_base_url="https://custom.example.com/api/v1/public")
+
+    cfg = config_module.Config()
+    assert cfg.model_api_base_url == "https://custom.example.com/v1"
+
+
+def test_derive_model_api_base_url_handles_non_api_root() -> None:
+    assert _derive_model_api_base_url("https://custom.example.com") == "https://custom.example.com/v1"
+
+
 def test_store_credentials_without_url_does_not_overwrite_default(isolated_config: Path) -> None:
     store_credentials("key-no-url")
     _, url = get_credentials()
     # No custom URL provided, should fall back to the default
     assert url == config_module.DEFAULT_PLATFORM_API_BASE_URL
+
+
+def test_store_credentials_without_url_resets_custom_endpoint_to_default(isolated_config: Path) -> None:
+    store_credentials("first-key", api_base_url="https://custom.example.com/api/v1/public")
+
+    store_credentials("second-key")
+
+    cfg = config_module.Config()
+    assert cfg.api_base_url == config_module.DEFAULT_PLATFORM_API_BASE_URL
+    assert cfg.model_api_base_url == config_module.DEFAULT_MODEL_API_BASE_URL
+
+
+def test_store_credentials_clears_active_context_when_api_key_changes(isolated_config: Path) -> None:
+    cfg = config_module.Config()
+    cfg.active_system_id = "system-local"
+    cfg.active_framework_id = "fedramp-moderate"
+    cfg.api_base_url = "http://localhost:8000/api/v1/public"
+    cfg.model_api_base_url = "http://localhost:8000/v1"
+    cfg.api_key = "old-key"
+
+    store_credentials("new-key", api_base_url="https://platform.pretorin.com/api/v1/public")
+
+    reloaded = config_module.Config()
+    assert reloaded.active_system_id is None
+    assert reloaded.active_framework_id is None
+
+
+def test_store_credentials_clears_active_context_when_api_url_changes(isolated_config: Path) -> None:
+    cfg = config_module.Config()
+    cfg.active_system_id = "system-local"
+    cfg.active_framework_id = "fedramp-moderate"
+    cfg.api_base_url = "http://localhost:8000/api/v1/public"
+    cfg.model_api_base_url = "http://localhost:8000/v1"
+    cfg.api_key = "same-key"
+
+    store_credentials("same-key", api_base_url="https://platform.pretorin.com/api/v1/public")
+
+    reloaded = config_module.Config()
+    assert reloaded.active_system_id is None
+    assert reloaded.active_framework_id is None
+
+
+def test_store_credentials_preserves_active_context_when_credentials_unchanged(isolated_config: Path) -> None:
+    store_credentials("same-key", api_base_url="https://platform.pretorin.com/api/v1/public")
+
+    cfg = config_module.Config()
+    cfg.active_system_id = "system-prod"
+    cfg.active_framework_id = "soc2"
+
+    store_credentials("same-key", api_base_url="https://platform.pretorin.com/api/v1/public")
+
+    reloaded = config_module.Config()
+    assert reloaded.active_system_id == "system-prod"
+    assert reloaded.active_framework_id == "soc2"
 
 
 def test_store_credentials_persists_to_file(isolated_config: Path) -> None:

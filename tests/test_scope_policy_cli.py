@@ -279,6 +279,53 @@ def test_scope_populate_apply_patches_only_changed_answers() -> None:
     )
 
 
+def test_scope_populate_json_apply_patches_changed_answers() -> None:
+    client = AsyncMock()
+    client.is_configured = True
+    client.get_scope = AsyncMock(return_value=_scope_response())
+    client.patch_scope_qa = AsyncMock(return_value=_scope_response())
+
+    proposal = {
+        "parse_status": "json",
+        "summary": "One answer updated.",
+        "questions": [
+            {
+                "question_id": "sd-3",
+                "proposed_answer": "The system handles CUI and audit logs.",
+                "confidence": "medium",
+                "evidence_summary": "Observed compliance artifacts and logging configuration.",
+                "needs_manual_input": False,
+                "manual_input_reason": None,
+            }
+        ],
+    }
+
+    with patch("pretorin.cli.scope.PretorianClient") as mock_ctor, patch(
+        "pretorin.cli.scope.resolve_execution_context",
+        AsyncMock(return_value=("sys-1", "fedramp-moderate")),
+    ), patch("pretorin.cli.scope.draft_scope_questionnaire", AsyncMock(return_value=proposal)), patch(
+        "pretorin.cli.scope.Config", return_value=_config_stub()
+    ):
+        ctx = AsyncMock()
+        ctx.__aenter__ = AsyncMock(return_value=client)
+        ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_ctor.return_value = ctx
+
+        result = runner.invoke(
+            app,
+            ["--json", "scope", "populate", "--system", "Primary", "--framework-id", "fedramp-moderate", "--apply"],
+        )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["applied"] is True
+    client.patch_scope_qa.assert_awaited_once_with(
+        "sys-1",
+        "fedramp-moderate",
+        [{"question_id": "sd-3", "answer": "The system handles CUI and audit logs."}],
+    )
+
+
 def test_policy_list_json() -> None:
     client = AsyncMock()
     client.is_configured = True
@@ -440,6 +487,50 @@ def test_policy_populate_apply_patches_only_changed_answers() -> None:
         result = runner.invoke(app, ["policy", "populate", "--policy", "access-control-policy", "--apply"])
 
     assert result.exit_code == 0
+    client.patch_org_policy_qa.assert_awaited_once_with(
+        "pol-001",
+        [{"question_id": "q_scope_2", "answer": "Production systems, CUI, and administrators."}],
+    )
+
+
+def test_policy_populate_json_apply_patches_changed_answers() -> None:
+    client = AsyncMock()
+    client.is_configured = True
+    client.list_org_policies = AsyncMock(return_value=_policy_list())
+    client.get_org_policy_questionnaire = AsyncMock(return_value=_policy_questionnaire())
+    client.patch_org_policy_qa = AsyncMock(return_value=_policy_questionnaire())
+
+    proposal = {
+        "parse_status": "json",
+        "summary": "Filled the missing scope answer.",
+        "questions": [
+            {
+                "question_id": "q_scope_2",
+                "proposed_answer": "Production systems, CUI, and administrators.",
+                "confidence": "medium",
+                "evidence_summary": "Observed repository and deployment boundaries.",
+                "needs_manual_input": False,
+                "manual_input_reason": None,
+            }
+        ],
+    }
+
+    with patch("pretorin.cli.policy.PretorianClient") as mock_ctor, patch(
+        "pretorin.cli.policy.draft_policy_questionnaire", AsyncMock(return_value=proposal)
+    ), patch("pretorin.cli.policy.Config", return_value=_config_stub()):
+        ctx = AsyncMock()
+        ctx.__aenter__ = AsyncMock(return_value=client)
+        ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_ctor.return_value = ctx
+
+        result = runner.invoke(
+            app,
+            ["--json", "policy", "populate", "--policy", "access-control-policy", "--apply"],
+        )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["applied"] is True
     client.patch_org_policy_qa.assert_awaited_once_with(
         "pol-001",
         [{"question_id": "q_scope_2", "answer": "Production systems, CUI, and administrators."}],

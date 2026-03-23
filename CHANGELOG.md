@@ -5,6 +5,14 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.5] - 2026-03-23
+
+### Fixed
+- Reset active system/framework context when logging into a different API endpoint or with a different API key, preventing stale localhost scope context from bleeding into prod usage
+- Align the model API base URL with the configured platform public API endpoint during login, so prod logins no longer keep talking to a localhost model proxy
+- Make `scope populate --json --apply` and `policy populate --json --apply` persist questionnaire updates instead of exiting after preview output
+- Raise the Codex subprocess line buffer to tolerate larger policy questionnaire responses without stream parsing failures
+
 ## [0.8.0] - 2026-03-07
 
 ### Added
