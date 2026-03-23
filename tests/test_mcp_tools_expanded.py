@@ -51,13 +51,18 @@ class TestToolListing:
             # Control context & scope 2
             "pretorin_get_control_context",
             "pretorin_get_scope",
+            # Scope & policy questionnaire 4
+            "pretorin_patch_scope_qa",
+            "pretorin_list_org_policies",
+            "pretorin_get_org_policy_questionnaire",
+            "pretorin_patch_org_policy_qa",
             # Control implementation 3
             "pretorin_update_narrative",
             "pretorin_update_control_status",
             "pretorin_get_control_implementation",
         ]
 
-        assert len(tools) == 25
+        assert len(tools) == 29
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 
@@ -99,9 +104,7 @@ def _make_mock_client(**overrides: Any) -> AsyncMock:
     client = AsyncMock()
     client.is_configured = True
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Test System"}])
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]})
     client.get_control = AsyncMock(return_value=AsyncMock(id="ac-02"))
     for attr, val in overrides.items():
         setattr(client, attr, AsyncMock(return_value=val))
@@ -523,6 +526,130 @@ class TestMonitoringTools:
         assert data["id"] == "evt-1"
 
 
+class TestQuestionnaireTools:
+    """Test scope and policy questionnaire MCP tools."""
+
+    def test_patch_scope_qa(self) -> None:
+        from pretorin.client.models import ScopeResponse
+
+        scope = ScopeResponse(
+            scope_status="in_progress",
+            scope_qa_responses={"sd-1": {"answer": "Handles CUI in production"}},
+        )
+        client = _make_mock_client(patch_scope_qa=scope)
+        result = _run_tool(
+            "pretorin_patch_scope_qa",
+            {
+                "system_id": "test",
+                "framework_id": "fedramp-moderate",
+                "updates": [{"question_id": "sd-1", "answer": "Handles CUI in production"}],
+            },
+            client,
+        )
+        data = _parse_result(result)
+        assert data["scope_status"] == "in_progress"
+        client.patch_scope_qa.assert_awaited_once_with(
+            system_id="sys-1",
+            framework_id="fedramp-moderate",
+            updates=[{"question_id": "sd-1", "answer": "Handles CUI in production"}],
+        )
+
+    def test_patch_scope_qa_rejects_empty_updates(self) -> None:
+        client = _make_mock_client()
+        result = _run_tool(
+            "pretorin_patch_scope_qa",
+            {
+                "system_id": "sys-1",
+                "framework_id": "fedramp-moderate",
+                "updates": [],
+            },
+            client,
+        )
+        assert result.isError is True
+        assert any("updates must be a non-empty list" in c.text for c in result.content)
+        client.patch_scope_qa.assert_not_called()
+
+    def test_list_org_policies(self) -> None:
+        from pretorin.client.models import OrgPolicyListResponse, OrgPolicySummary
+
+        listing = OrgPolicyListResponse(
+            policies=[
+                OrgPolicySummary(
+                    id="pol-1",
+                    name="Access Control Policy",
+                    policy_template_id="tpl-1",
+                    status="draft",
+                    policy_qa_status="in_progress",
+                )
+            ],
+            total=1,
+        )
+        client = _make_mock_client(list_org_policies=listing)
+        result = _run_tool("pretorin_list_org_policies", {}, client)
+        data = _parse_result(result)
+        assert data["total"] == 1
+        assert data["policies"][0]["name"] == "Access Control Policy"
+        client.list_org_policies.assert_awaited_once_with()
+
+    def test_get_org_policy_questionnaire(self) -> None:
+        from pretorin.client.models import OrgPolicyQuestionnaireResponse
+
+        questionnaire = OrgPolicyQuestionnaireResponse(
+            policy_id="pol-1",
+            name="Access Control Policy",
+            policy_template_id="tpl-1",
+            policy_qa_status="in_progress",
+            policy_qa_responses={"ac-1": {"answer": "MFA is required for admins"}},
+        )
+        client = _make_mock_client(get_org_policy_questionnaire=questionnaire)
+        result = _run_tool(
+            "pretorin_get_org_policy_questionnaire",
+            {"policy_id": "pol-1"},
+            client,
+        )
+        data = _parse_result(result)
+        assert data["policy_id"] == "pol-1"
+        assert data["policy_qa_status"] == "in_progress"
+        client.get_org_policy_questionnaire.assert_awaited_once_with("pol-1")
+
+    def test_patch_org_policy_qa(self) -> None:
+        from pretorin.client.models import OrgPolicyQuestionnaireResponse
+
+        questionnaire = OrgPolicyQuestionnaireResponse(
+            policy_id="pol-1",
+            name="Access Control Policy",
+            policy_template_id="tpl-1",
+            policy_qa_status="complete",
+            policy_qa_responses={"ac-1": {"answer": "MFA is required for all users"}},
+        )
+        client = _make_mock_client(patch_org_policy_qa=questionnaire)
+        result = _run_tool(
+            "pretorin_patch_org_policy_qa",
+            {
+                "policy_id": "pol-1",
+                "updates": [{"question_id": "ac-1", "answer": "MFA is required for all users"}],
+            },
+            client,
+        )
+        data = _parse_result(result)
+        assert data["policy_qa_status"] == "complete"
+        client.patch_org_policy_qa.assert_awaited_once_with(
+            policy_id="pol-1",
+            updates=[{"question_id": "ac-1", "answer": "MFA is required for all users"}],
+        )
+
+    def test_patch_org_policy_qa_rejects_empty_updates(self) -> None:
+        client = _make_mock_client()
+        result = _run_tool(
+            "pretorin_patch_org_policy_qa",
+            {"policy_id": "pol-1", "updates": []},
+            client,
+        )
+        assert result.isError is True
+        assert any("updates must be a non-empty list" in c.text for c in result.content)
+        client.patch_org_policy_qa.assert_not_called()
+
+
 class TestControlImplementationTools:
     """Test control implementation tools."""
 
@@ -580,7 +707,6 @@ class TestControlImplementationTools:
             control_id="ac-02",
             framework_id="fedramp-moderate",
         )
-
 
     def test_get_control_implementation_missing_framework_id(self) -> None:
         client = _make_mock_client()

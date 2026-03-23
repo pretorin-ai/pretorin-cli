@@ -412,6 +412,104 @@ async def list_tools() -> list[Tool]:
                 "required": ["system_id", "framework_id"],
             },
         ),
+        # === Scope & Policy Questionnaire Tools ===
+        Tool(
+            name="pretorin_patch_scope_qa",
+            description=(
+                "Update scope questionnaire answers for a system/framework. "
+                "Accepts a list of question_id/answer pairs to apply as partial updates."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "framework_id": {
+                        "type": "string",
+                        "description": "The framework ID (e.g., nist-800-53-r5, fedramp-moderate, soc2)",
+                    },
+                    "updates": {
+                        "type": "array",
+                        "description": "List of question/answer updates to apply",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "question_id": {
+                                    "type": "string",
+                                    "description": "The scope question ID (e.g., sd-1, ab-1, sc-1)",
+                                },
+                                "answer": {
+                                    "type": "string",
+                                    "description": "The updated answer text",
+                                },
+                            },
+                            "required": ["question_id", "answer"],
+                        },
+                    },
+                },
+                "required": ["system_id", "framework_id", "updates"],
+            },
+        ),
+        Tool(
+            name="pretorin_list_org_policies",
+            description="List organization policies available for questionnaire work",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        ),
+        Tool(
+            name="pretorin_get_org_policy_questionnaire",
+            description=(
+                "Get the canonical questionnaire state for one organization policy, "
+                "including template sections, questions, and saved answers"
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "policy_id": {
+                        "type": "string",
+                        "description": "The organization policy ID",
+                    },
+                },
+                "required": ["policy_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_patch_org_policy_qa",
+            description=(
+                "Update organization policy questionnaire answers. "
+                "Accepts a list of question_id/answer pairs to apply as partial updates."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "policy_id": {
+                        "type": "string",
+                        "description": "The organization policy ID",
+                    },
+                    "updates": {
+                        "type": "array",
+                        "description": "List of question/answer updates to apply",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "question_id": {
+                                    "type": "string",
+                                    "description": "The policy question ID",
+                                },
+                                "answer": {
+                                    "type": "string",
+                                    "description": "The updated answer text",
+                                },
+                            },
+                            "required": ["question_id", "answer"],
+                        },
+                    },
+                },
+                "required": ["policy_id", "updates"],
+            },
+        ),
         Tool(
             name="pretorin_update_narrative",
             description="Push a narrative text update for a control implementation",

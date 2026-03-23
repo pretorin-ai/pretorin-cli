@@ -2,6 +2,14 @@
 
 All notable changes to the Pretorin CLI are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.7] - 2026-03-23
+
+### Added
+- MCP questionnaire tooling for scope and organization policy workflows
+
+### Changed
+- MCP documentation now reflects the full 29-tool surface, including batch evidence support
+
 ## [0.8.6] - 2026-03-23
 
 ### Added
@@ -166,6 +174,7 @@ All notable changes to the Pretorin CLI are documented here. The format is based
 - FedRAMP (Low, Moderate, High)
 - CMMC Level 1, 2, and 3
 
+[0.8.7]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.6...v0.8.7
 [0.8.6]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.0...v0.8.5
 [0.8.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.7.0...v0.8.0

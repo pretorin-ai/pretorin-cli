@@ -158,7 +158,7 @@ Restart the application to load the new MCP server.
 
 ## Available Tools
 
-The MCP server provides 23 tools for accessing and managing compliance data.
+The MCP server provides 29 tools for accessing and managing compliance data.
 The current tool surface is:
 
 | Tool | Description |
@@ -168,6 +168,7 @@ The current tool surface is:
 | `pretorin_list_control_families` | List control families for a framework |
 | `pretorin_list_controls` | List controls, optionally filtered by family |
 | `pretorin_get_control` | Get detailed control information including parameters |
+| `pretorin_get_controls_batch` | Get detailed control data for many controls in one request |
 | `pretorin_get_control_references` | Get control guidance, objectives, and related controls |
 | `pretorin_get_document_requirements` | Get document requirements for a framework |
 | `pretorin_list_systems` | List systems in the current organization |
@@ -180,7 +181,12 @@ The current tool surface is:
 | `pretorin_get_control_notes` | Read notes for a control implementation |
 | `pretorin_search_evidence` | Search current evidence items |
 | `pretorin_create_evidence` | Upsert evidence (find-or-create by default) |
+| `pretorin_create_evidence_batch` | Create and link multiple evidence items in one scoped request |
 | `pretorin_link_evidence` | Link an existing evidence item to a control |
+| `pretorin_patch_scope_qa` | Update scope questionnaire answers for a system/framework |
+| `pretorin_list_org_policies` | List organization policies available for questionnaire work |
+| `pretorin_get_org_policy_questionnaire` | Get canonical questionnaire state for one organization policy |
+| `pretorin_patch_org_policy_qa` | Update organization policy questionnaire answers |
 | `pretorin_update_narrative` | Push a narrative text update for a control implementation |
 | `pretorin_add_control_note` | Add a control note with manual follow-up guidance |
 | `pretorin_update_control_status` | Update a control implementation status |
@@ -254,6 +260,20 @@ Get detailed information about a specific control.
 **Returns:** Control details including parameters, parts, and enhancement count.
 
 **Example prompt:** "Explain the Account Management control from NIST 800-53"
+
+---
+
+#### pretorin_get_controls_batch
+
+Get detailed control data for many controls in a single framework-scoped request.
+
+**Parameters:**
+- `framework_id` (required): The framework ID
+- `control_ids` (optional): A list of canonical control IDs to retrieve. Omit it to return all controls in the framework.
+
+**Returns:** Full control detail records for the requested controls.
+
+**Example prompt:** "Fetch the full details for AC-02, IA-02, and SC-07 in FedRAMP Moderate"
 
 ---
 
@@ -358,10 +378,65 @@ Get system scope and policy information including excluded controls and Q&A resp
 
 **Parameters:**
 - `system_id` (required): The system ID or name
+- `framework_id` (required): The framework ID
 
 **Returns:** Scope narrative, list of excluded controls, Q&A responses, and scope status.
 
 **Example prompt:** "Which controls are excluded from scope for my system?"
+
+---
+
+#### pretorin_patch_scope_qa
+
+Apply partial scope questionnaire updates for a system/framework.
+
+**Parameters:**
+- `system_id` (required): The system ID or name
+- `framework_id` (required): The framework ID
+- `updates` (required): A non-empty list of `{question_id, answer}` objects
+
+**Returns:** The updated scope questionnaire state including saved answers.
+
+**Example prompt:** "Set my scope answer for sd-1 to say the system handles CUI in production"
+
+---
+
+#### pretorin_list_org_policies
+
+List organization policies available for questionnaire work.
+
+**Parameters:** None
+
+**Returns:** Policy summaries with IDs, names, template IDs, and questionnaire status.
+
+**Example prompt:** "What organization policies can I work on?"
+
+---
+
+#### pretorin_get_org_policy_questionnaire
+
+Get the canonical questionnaire state for one organization policy.
+
+**Parameters:**
+- `policy_id` (required): The organization policy ID
+
+**Returns:** Policy metadata, saved answers, and template/question structure when available.
+
+**Example prompt:** "Show me the questionnaire for policy pol-123"
+
+---
+
+#### pretorin_patch_org_policy_qa
+
+Apply partial organization policy questionnaire updates.
+
+**Parameters:**
+- `policy_id` (required): The organization policy ID
+- `updates` (required): A non-empty list of `{question_id, answer}` objects
+
+**Returns:** The updated policy questionnaire state.
+
+**Example prompt:** "Update the Access Control policy questionnaire to say MFA is required for all users"
 
 ---
 
@@ -426,6 +501,21 @@ Validation rules:
 - `created` (true if new, false if reused)
 - `linked` (whether control/system link succeeded)
 - `match_basis` (`exact_name_desc_type_control_framework` or `none`)
+
+---
+
+#### pretorin_create_evidence_batch
+
+Create and link multiple evidence items within one active system/framework scope.
+
+**Parameters:**
+- `system_id` (required): The system ID
+- `framework_id` (required): The framework ID
+- `items` (required): Array of evidence payloads with `name`, `description`, and `control_id`; may also include `evidence_type` and `relevance_notes`
+
+**Returns:** Batch creation summary with per-item status and evidence IDs.
+
+**Example prompt:** "Create three evidence records for AC-02, AC-03, and IA-02 from these notes"
 
 ---
 

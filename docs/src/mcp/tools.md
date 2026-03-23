@@ -1,6 +1,6 @@
 # MCP Tool Reference
 
-The MCP server provides 23 tools organized by category.
+The MCP server provides 29 tools organized by category.
 
 ## Framework & Control Reference
 
@@ -59,6 +59,18 @@ Get detailed control information including AI guidance (summary, control intent,
 - `control_id` (required) — NIST/FedRAMP: zero-padded (`ac-01`). CMMC: dotted (`AC.L2-3.1.1`).
 
 **Returns:** Control details including parameters, parts, and enhancement count.
+
+---
+
+### pretorin_get_controls_batch
+
+Get detailed control data for many controls in one framework-scoped request.
+
+**Parameters:**
+- `framework_id` (required)
+- `control_ids` (optional) — List of canonical control IDs; omit to retrieve all controls in the framework
+
+**Returns:** Full control detail records for the requested controls.
 
 ---
 
@@ -155,6 +167,19 @@ Upsert evidence on the platform (find-or-create by default). If `dedupe` is true
 
 ---
 
+### pretorin_create_evidence_batch
+
+Create and link multiple evidence items within one system/framework scope in a single request.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+- `items` (required) — Array of evidence payloads with `name`, `description`, and `control_id`; may also include `evidence_type` and `relevance_notes`
+
+**Returns:** Batch creation summary with per-item results and created evidence IDs.
+
+---
+
 ### pretorin_link_evidence
 
 Link an existing evidence item to a control.
@@ -203,8 +228,55 @@ Get system scope and policy information including excluded controls and Q&A resp
 
 **Parameters:**
 - `system_id` (required)
+- `framework_id` (required)
 
 **Returns:** Scope narrative, excluded controls, Q&A responses, and scope status.
+
+---
+
+### pretorin_patch_scope_qa
+
+Apply partial scope questionnaire updates for a system/framework.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+- `updates` (required) — Non-empty list of `{question_id, answer}` objects
+
+**Returns:** Updated scope questionnaire state, including the saved responses.
+
+---
+
+### pretorin_list_org_policies
+
+List organization policies available for questionnaire work.
+
+**Parameters:** None
+
+**Returns:** Policy summaries including `id`, `name`, template linkage, and questionnaire status.
+
+---
+
+### pretorin_get_org_policy_questionnaire
+
+Get the canonical questionnaire state for one organization policy.
+
+**Parameters:**
+- `policy_id` (required)
+
+**Returns:** Policy metadata, saved answers, and the merged template/question set when available.
+
+---
+
+### pretorin_patch_org_policy_qa
+
+Apply partial questionnaire updates for one organization policy.
+
+**Parameters:**
+- `policy_id` (required)
+- `updates` (required) — Non-empty list of `{question_id, answer}` objects
+
+**Returns:** Updated organization policy questionnaire state.
 
 ---
 

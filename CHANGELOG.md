@@ -5,6 +5,14 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.7] - 2026-03-23
+
+### Added
+- MCP questionnaire tooling for scope and organization policy workflows: `pretorin_patch_scope_qa`, `pretorin_list_org_policies`, `pretorin_get_org_policy_questionnaire`, and `pretorin_patch_org_policy_qa`
+
+### Changed
+- MCP documentation now reflects the full 29-tool surface, including existing batch evidence support and the new questionnaire tools
+
 ## [0.8.6] - 2026-03-23
 
 ### Added
@@ -219,6 +227,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CMMC Level 1, 2, and 3
 - Additional frameworks available on the platform
 
+[0.8.7]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.6...v0.8.7
+[0.8.6]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.5...v0.8.6
+[0.8.5]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.0...v0.8.5
 [0.8.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.0...v0.6.1

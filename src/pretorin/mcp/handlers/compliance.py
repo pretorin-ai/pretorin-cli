@@ -129,6 +129,75 @@ async def handle_get_scope(
     return format_json(scope.model_dump())
 
 
+async def handle_patch_scope_qa(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Handle the patch_scope_qa tool."""
+    logger.debug("handle_patch_scope_qa called with %s", _safe_args(arguments))
+    err = require(arguments, "system_id", "framework_id")
+    if err:
+        return format_error(err)
+    if "updates" not in arguments:
+        return format_error("Missing required parameter(s): updates")
+    system_id = await resolve_system_id(client, arguments)
+    if system_id is None:
+        raise PretorianClientError("system_id is required")
+    updates = arguments["updates"]
+    if not isinstance(updates, list) or not updates:
+        return format_error("updates must be a non-empty list of {question_id, answer} objects")
+    scope = await client.patch_scope_qa(
+        system_id=system_id,
+        framework_id=arguments["framework_id"],
+        updates=updates,
+    )
+    return format_json(scope.model_dump())
+
+
+async def handle_list_org_policies(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Handle the list_org_policies tool."""
+    logger.debug("handle_list_org_policies called")
+    result = await client.list_org_policies()
+    return format_json(result.model_dump())
+
+
+async def handle_get_org_policy_questionnaire(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Handle the get_org_policy_questionnaire tool."""
+    logger.debug("handle_get_org_policy_questionnaire called with %s", _safe_args(arguments))
+    err = require(arguments, "policy_id")
+    if err:
+        return format_error(err)
+    result = await client.get_org_policy_questionnaire(arguments["policy_id"])
+    return format_json(result.model_dump())
+
+
+async def handle_patch_org_policy_qa(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Handle the patch_org_policy_qa tool."""
+    logger.debug("handle_patch_org_policy_qa called with %s", _safe_args(arguments))
+    err = require(arguments, "policy_id")
+    if err:
+        return format_error(err)
+    if "updates" not in arguments:
+        return format_error("Missing required parameter(s): updates")
+    updates = arguments["updates"]
+    if not isinstance(updates, list) or not updates:
+        return format_error("updates must be a non-empty list of {question_id, answer} objects")
+    result = await client.patch_org_policy_qa(
+        policy_id=arguments["policy_id"],
+        updates=updates,
+    )
+    return format_json(result.model_dump())
+
+
 async def handle_add_control_note(
     client: PretorianClient,
     arguments: dict[str, Any],
