@@ -305,8 +305,16 @@ async def _policy_populate(policy: str, path: str, apply: bool) -> None:
             "summary": proposal.get("summary"),
             "diffs": diffs,
             "updates": updates,
+            "applied": False,
             "handoff_url": handoff_url,
         }
+        if apply and proposal.get("parse_status") == "json" and updates:
+            try:
+                await client.patch_org_policy_qa(questionnaire.policy_id, updates)
+            except PretorianClientError as exc:
+                rprint(f"[red]{exc.message}[/red]")
+                raise typer.Exit(1)
+            payload["applied"] = True
         if is_json_mode():
             print_json(payload)
             return
@@ -320,13 +328,13 @@ async def _policy_populate(policy: str, path: str, apply: bool) -> None:
             rprint("\n[yellow]The model response could not be parsed into structured updates.[/yellow]")
             raise typer.Exit(1)
 
-        if apply and updates:
-            try:
-                await client.patch_org_policy_qa(questionnaire.policy_id, updates)
-            except PretorianClientError as exc:
-                rprint(f"[red]{exc.message}[/red]")
-                raise typer.Exit(1)
+        if payload["applied"]:
             rprint("\n[green]Saved updated policy answers to the platform.[/green]")
+        elif apply and updates:
+            rprint(
+                "\n[yellow]Skipped saving policy answers because the model output "
+                "was not valid structured JSON.[/yellow]"
+            )
         elif apply:
             rprint("\n[dim]No changed policy answers to save.[/dim]")
 

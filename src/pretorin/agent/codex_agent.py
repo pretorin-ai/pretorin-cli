@@ -25,7 +25,7 @@ def _patch_codex_exec_buffer_limit() -> None:
     line-read limit.  Compliance tool responses (e.g. control context JSON)
     routinely exceed that, causing ``ValueError: Separator is found, but
     chunk is longer than limit``.  We monkey-patch the SDK's ``run`` method
-    to use a 2 MB limit instead.
+    to use a 16 MB limit instead.
     """
     try:
         from openai_codex_sdk.exec import CodexExec  # type: ignore[import-not-found,unused-ignore]
@@ -57,7 +57,7 @@ def _patch_codex_exec_buffer_limit() -> None:
             stdout=_aio.subprocess.PIPE,
             stderr=_aio.subprocess.PIPE,
             env=env,
-            limit=2 * 1024 * 1024,  # 2 MB line buffer
+            limit=16 * 1024 * 1024,  # 16 MB line buffer
         )
 
         if proc.stdin is None or proc.stdout is None:
