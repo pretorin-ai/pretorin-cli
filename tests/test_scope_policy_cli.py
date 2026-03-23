@@ -160,10 +160,14 @@ def test_scope_show_json() -> None:
     client.is_configured = True
     client.get_scope = AsyncMock(return_value=_scope_response())
 
-    with patch("pretorin.cli.scope.PretorianClient") as mock_ctor, patch(
-        "pretorin.cli.scope.resolve_execution_context",
-        AsyncMock(return_value=("sys-1", "fedramp-moderate")),
-    ), patch("pretorin.cli.scope.Config", return_value=_config_stub()):
+    with (
+        patch("pretorin.cli.scope.PretorianClient") as mock_ctor,
+        patch(
+            "pretorin.cli.scope.resolve_execution_context",
+            AsyncMock(return_value=("sys-1", "fedramp-moderate")),
+        ),
+        patch("pretorin.cli.scope.Config", return_value=_config_stub()),
+    ):
         ctx = AsyncMock()
         ctx.__aenter__ = AsyncMock(return_value=client)
         ctx.__aexit__ = AsyncMock(return_value=None)
@@ -209,11 +213,14 @@ def test_scope_populate_json_reads_existing_state() -> None:
         ],
     }
 
-    with patch("pretorin.cli.scope.PretorianClient") as mock_ctor, patch(
-        "pretorin.cli.scope.resolve_execution_context",
-        AsyncMock(return_value=("sys-1", "fedramp-moderate")),
-    ), patch("pretorin.cli.scope.draft_scope_questionnaire", AsyncMock(return_value=proposal)), patch(
-        "pretorin.cli.scope.Config", return_value=_config_stub()
+    with (
+        patch("pretorin.cli.scope.PretorianClient") as mock_ctor,
+        patch(
+            "pretorin.cli.scope.resolve_execution_context",
+            AsyncMock(return_value=("sys-1", "fedramp-moderate")),
+        ),
+        patch("pretorin.cli.scope.draft_scope_questionnaire", AsyncMock(return_value=proposal)),
+        patch("pretorin.cli.scope.Config", return_value=_config_stub()),
     ):
         ctx = AsyncMock()
         ctx.__aenter__ = AsyncMock(return_value=client)
@@ -255,11 +262,14 @@ def test_scope_populate_apply_patches_only_changed_answers() -> None:
         ],
     }
 
-    with patch("pretorin.cli.scope.PretorianClient") as mock_ctor, patch(
-        "pretorin.cli.scope.resolve_execution_context",
-        AsyncMock(return_value=("sys-1", "fedramp-moderate")),
-    ), patch("pretorin.cli.scope.draft_scope_questionnaire", AsyncMock(return_value=proposal)), patch(
-        "pretorin.cli.scope.Config", return_value=_config_stub()
+    with (
+        patch("pretorin.cli.scope.PretorianClient") as mock_ctor,
+        patch(
+            "pretorin.cli.scope.resolve_execution_context",
+            AsyncMock(return_value=("sys-1", "fedramp-moderate")),
+        ),
+        patch("pretorin.cli.scope.draft_scope_questionnaire", AsyncMock(return_value=proposal)),
+        patch("pretorin.cli.scope.Config", return_value=_config_stub()),
     ):
         ctx = AsyncMock()
         ctx.__aenter__ = AsyncMock(return_value=client)
@@ -300,11 +310,14 @@ def test_scope_populate_json_apply_patches_changed_answers() -> None:
         ],
     }
 
-    with patch("pretorin.cli.scope.PretorianClient") as mock_ctor, patch(
-        "pretorin.cli.scope.resolve_execution_context",
-        AsyncMock(return_value=("sys-1", "fedramp-moderate")),
-    ), patch("pretorin.cli.scope.draft_scope_questionnaire", AsyncMock(return_value=proposal)), patch(
-        "pretorin.cli.scope.Config", return_value=_config_stub()
+    with (
+        patch("pretorin.cli.scope.PretorianClient") as mock_ctor,
+        patch(
+            "pretorin.cli.scope.resolve_execution_context",
+            AsyncMock(return_value=("sys-1", "fedramp-moderate")),
+        ),
+        patch("pretorin.cli.scope.draft_scope_questionnaire", AsyncMock(return_value=proposal)),
+        patch("pretorin.cli.scope.Config", return_value=_config_stub()),
     ):
         ctx = AsyncMock()
         ctx.__aenter__ = AsyncMock(return_value=client)
@@ -351,8 +364,9 @@ def test_policy_show_json() -> None:
     client.list_org_policies = AsyncMock(return_value=_policy_list())
     client.get_org_policy_questionnaire = AsyncMock(return_value=_policy_questionnaire())
 
-    with patch("pretorin.cli.policy.PretorianClient") as mock_ctor, patch(
-        "pretorin.cli.policy.Config", return_value=_config_stub()
+    with (
+        patch("pretorin.cli.policy.PretorianClient") as mock_ctor,
+        patch("pretorin.cli.policy.Config", return_value=_config_stub()),
     ):
         ctx = AsyncMock()
         ctx.__aenter__ = AsyncMock(return_value=client)
@@ -398,9 +412,11 @@ def test_policy_populate_json_resolves_by_template_and_builds_diffs() -> None:
         ],
     }
 
-    with patch("pretorin.cli.policy.PretorianClient") as mock_ctor, patch(
-        "pretorin.cli.policy.draft_policy_questionnaire", AsyncMock(return_value=proposal)
-    ), patch("pretorin.cli.policy.Config", return_value=_config_stub()):
+    with (
+        patch("pretorin.cli.policy.PretorianClient") as mock_ctor,
+        patch("pretorin.cli.policy.draft_policy_questionnaire", AsyncMock(return_value=proposal)),
+        patch("pretorin.cli.policy.Config", return_value=_config_stub()),
+    ):
         ctx = AsyncMock()
         ctx.__aenter__ = AsyncMock(return_value=client)
         ctx.__aexit__ = AsyncMock(return_value=None)
@@ -476,9 +492,11 @@ def test_policy_populate_apply_patches_only_changed_answers() -> None:
         ],
     }
 
-    with patch("pretorin.cli.policy.PretorianClient") as mock_ctor, patch(
-        "pretorin.cli.policy.draft_policy_questionnaire", AsyncMock(return_value=proposal)
-    ), patch("pretorin.cli.policy.Config", return_value=_config_stub()):
+    with (
+        patch("pretorin.cli.policy.PretorianClient") as mock_ctor,
+        patch("pretorin.cli.policy.draft_policy_questionnaire", AsyncMock(return_value=proposal)),
+        patch("pretorin.cli.policy.Config", return_value=_config_stub()),
+    ):
         ctx = AsyncMock()
         ctx.__aenter__ = AsyncMock(return_value=client)
         ctx.__aexit__ = AsyncMock(return_value=None)
@@ -515,9 +533,11 @@ def test_policy_populate_json_apply_patches_changed_answers() -> None:
         ],
     }
 
-    with patch("pretorin.cli.policy.PretorianClient") as mock_ctor, patch(
-        "pretorin.cli.policy.draft_policy_questionnaire", AsyncMock(return_value=proposal)
-    ), patch("pretorin.cli.policy.Config", return_value=_config_stub()):
+    with (
+        patch("pretorin.cli.policy.PretorianClient") as mock_ctor,
+        patch("pretorin.cli.policy.draft_policy_questionnaire", AsyncMock(return_value=proposal)),
+        patch("pretorin.cli.policy.Config", return_value=_config_stub()),
+    ):
         ctx = AsyncMock()
         ctx.__aenter__ = AsyncMock(return_value=client)
         ctx.__aexit__ = AsyncMock(return_value=None)
