@@ -30,6 +30,8 @@ from pretorin.client.models import (
     FrameworkMetadata,
     MonitoringEventCreate,
     NarrativeResponse,
+    OrgPolicyListResponse,
+    OrgPolicyQuestionnaireResponse,
     ScopeResponse,
     SystemDetail,
 )
@@ -827,6 +829,44 @@ class PretorianClient:
             params={"framework_id": framework_id},
         )
         return ScopeResponse(**data)
+
+    async def patch_scope_qa(
+        self,
+        system_id: str,
+        framework_id: str,
+        updates: list[dict[str, Any]],
+    ) -> ScopeResponse:
+        """Apply partial scope questionnaire updates keyed by question ID."""
+        data = await self._request(
+            "PATCH",
+            f"/systems/{system_id}/scope/qa",
+            params={"framework_id": framework_id},
+            json={"updates": updates},
+        )
+        return ScopeResponse(**data)
+
+    async def list_org_policies(self) -> OrgPolicyListResponse:
+        """List org policies for the current token's organization."""
+        data = await self._request("GET", "/org-policies")
+        return OrgPolicyListResponse(**data)
+
+    async def get_org_policy_questionnaire(self, policy_id: str) -> OrgPolicyQuestionnaireResponse:
+        """Get canonical questionnaire state for one org policy."""
+        data = await self._request("GET", f"/org-policies/{policy_id}/qa")
+        return OrgPolicyQuestionnaireResponse(**data)
+
+    async def patch_org_policy_qa(
+        self,
+        policy_id: str,
+        updates: list[dict[str, Any]],
+    ) -> OrgPolicyQuestionnaireResponse:
+        """Apply partial org-policy questionnaire updates keyed by question ID."""
+        data = await self._request(
+            "PATCH",
+            f"/org-policies/{policy_id}/qa",
+            json={"updates": updates},
+        )
+        return OrgPolicyQuestionnaireResponse(**data)
 
     async def add_control_note(
         self,

@@ -917,7 +917,7 @@ wheels = [
 
 [[package]]
 name = "pretorin"
-version = "0.8.1"
+version = "0.8.4"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
