@@ -5,6 +5,18 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.6] - 2026-03-23
+
+### Added
+- `pretorin context show --quiet` for a compact one-line context summary that works well in scripts and shell prompts
+- `pretorin context show --check` to fail fast when the stored system/framework scope is missing, stale, or cannot be verified
+
+### Changed
+- `context show` now caches and displays the last known system name so offline or stale context output stays human-friendly instead of falling back to a raw UUID
+
+### Fixed
+- `context show` now validates stored context against the platform and clearly reports invalid or unverified scope instead of silently treating deleted systems as active
+
 ## [0.8.5] - 2026-03-23
 
 ### Fixed

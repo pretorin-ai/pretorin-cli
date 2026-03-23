@@ -38,7 +38,7 @@
 |---------|-------------|
 | `pretorin context list` | List systems and frameworks with progress |
 | `pretorin context set` | Set active system/framework context (`--system`, `--framework`) |
-| `pretorin context show` | Display current active context |
+| `pretorin context show` | Display and validate current active context (`--quiet`, `--check`) |
 | `pretorin context clear` | Clear active context |
 
 ## Evidence Commands

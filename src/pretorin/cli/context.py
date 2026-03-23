@@ -52,6 +52,90 @@ def _ensure_single_framework_scope(framework_id: str) -> str:
     return candidate
 
 
+def _build_context_payload(
+    *,
+    system_id: str | None,
+    framework_id: str | None,
+    system_name: str | None = None,
+    progress: int = 0,
+    status: str = "unknown",
+    valid: bool | None = None,
+    validation_state: str = "unverified",
+    validation_error: str | None = None,
+) -> dict[str, Any]:
+    """Create a consistent payload for context display and JSON output."""
+    return {
+        "active_system_id": system_id,
+        "active_system_name": system_name or system_id,
+        "active_framework_id": framework_id,
+        "progress": progress,
+        "status": status,
+        "valid": valid,
+        "validation_state": validation_state,
+        "validation_error": validation_error,
+    }
+
+
+def _format_context_subject(payload: dict[str, Any]) -> str:
+    """Return a compact human-readable system label."""
+    system_id = payload.get("active_system_id")
+    system_name = payload.get("active_system_name")
+    if system_name and system_id and system_name != system_id:
+        return f"{system_name} ({system_id})"
+    return system_name or system_id or "-"
+
+
+def _format_quiet_context(payload: dict[str, Any]) -> str:
+    """Render a single-line context summary."""
+    subject = _format_context_subject(payload)
+    framework_id = payload.get("active_framework_id") or "-"
+    validation_state = payload.get("validation_state")
+    validation_error = payload.get("validation_error")
+    if validation_state == "valid":
+        return f"{subject} / {framework_id} [{payload.get('status', 'unknown')}, {payload.get('progress', 0)}%]"
+    if validation_state == "invalid" and validation_error:
+        return f"{subject} / {framework_id} [invalid: {validation_error}]"
+    if validation_error:
+        return f"{subject} / {framework_id} [unverified: {validation_error}]"
+    return f"{subject} / {framework_id}"
+
+
+def _show_context_payload(payload: dict[str, Any], *, quiet: bool = False) -> None:
+    """Render context payload in JSON, compact, or panel form."""
+    if is_json_mode():
+        print_json(payload)
+        return
+
+    validation_state = payload.get("validation_state")
+    validation_error = payload.get("validation_error")
+    if quiet:
+        console.print(_format_quiet_context(payload), markup=False)
+        return
+
+    status_line = (
+        f"  [bold]System:[/bold]    {_format_context_subject(payload)}\n"
+        f"  [bold]Framework:[/bold] {payload.get('active_framework_id')}\n"
+        f"  [bold]Progress:[/bold]  {payload.get('progress', 0)}%\n"
+        f"  [bold]Status:[/bold]    {payload.get('status', 'unknown')}"
+    )
+    if validation_state == "invalid" and validation_error:
+        status_line += f"\n  [bold]Validation:[/bold] invalid\n  [bold]Note:[/bold]      {validation_error}"
+    elif validation_error:
+        status_line += f"\n  [bold]Validation:[/bold] {validation_state}\n  [bold]Note:[/bold]      {validation_error}"
+
+    border_style = "#95D7E0" if validation_state == "valid" else "#EAB536"
+    title_bot = ROMEBOT_HAPPY if validation_state == "valid" else ROMEBOT_THINKING
+    rprint()
+    rprint(
+        Panel(
+            status_line,
+            title=f"{title_bot}  Active Context",
+            border_style=border_style,
+            padding=(1, 2),
+        )
+    )
+
+
 async def resolve_execution_context(
     client: Any,
     *,
@@ -348,6 +432,7 @@ async def _context_set(
         # --- Save context ---
         config = Config()
         config.set("active_system_id", system_id)
+        config.set("active_system_name", system_name)
         config.set("active_framework_id", target_framework_id)
 
         if is_json_mode():
@@ -372,90 +457,129 @@ async def _context_set(
 
 
 @app.command("show")
-def context_show() -> None:
+def context_show(
+    quiet: bool = typer.Option(
+        False,
+        "--quiet",
+        "-q",
+        help="Show a compact one-line summary instead of the rich panel.",
+    ),
+    check: bool = typer.Option(
+        False,
+        "--check",
+        help="Exit non-zero when the stored context is missing, stale, or cannot be verified.",
+    ),
+) -> None:
     """Show the currently active system and framework context."""
-    asyncio.run(_context_show())
+    asyncio.run(_context_show(quiet=quiet, check=check))
 
 
-async def _context_show() -> None:
+async def _context_show(*, quiet: bool = False, check: bool = False) -> None:
     """Display the current context with live status."""
     from pretorin.client.api import PretorianClient, PretorianClientError
     from pretorin.client.config import Config
 
     config = Config()
     system_id = config.get("active_system_id")
+    cached_system_name = config.get("active_system_name")
     framework_id = config.get("active_framework_id")
 
     if not system_id or not framework_id:
+        payload = _build_context_payload(
+            system_id=system_id,
+            framework_id=framework_id,
+            system_name=cached_system_name,
+            valid=False,
+            validation_state="invalid",
+            validation_error="No active context set.",
+        )
         if is_json_mode():
-            print_json({"active_system_id": None, "active_framework_id": None})
+            print_json(payload)
+        elif quiet:
+            rprint("no active context")
         else:
             rprint(f"\n  {ROMEBOT_SAD}  No active context set.\n")
             rprint("  Run [bold]pretorin context set[/bold] to select a system and framework.")
+        if check:
+            raise typer.Exit(1)
         return
 
     async with PretorianClient() as client:
         if not client.is_configured:
-            # Show stored context even without API access
-            if is_json_mode():
-                print_json({"active_system_id": system_id, "active_framework_id": framework_id})
-            else:
-                rprint(
-                    Panel(
-                        f"  [bold]System ID:[/bold]  {system_id}\n"
-                        f"  [bold]Framework:[/bold]  {framework_id}\n\n"
-                        "  [dim]Not logged in — showing stored context only.[/dim]",
-                        title=f"{ROMEBOT_THINKING}  Active Context",
-                        border_style="#EAB536",
-                        padding=(1, 2),
-                    )
-                )
+            payload = _build_context_payload(
+                system_id=system_id,
+                framework_id=framework_id,
+                system_name=cached_system_name,
+                valid=None,
+                validation_state="unverified",
+                validation_error="Not logged in — showing stored context only.",
+            )
+            _show_context_payload(payload, quiet=quiet)
+            if check:
+                raise typer.Exit(1)
             return
 
-        # Fetch live info
-        system_name = system_id
-        progress = 0
-        status = "unknown"
+        payload = _build_context_payload(
+            system_id=system_id,
+            framework_id=framework_id,
+            system_name=cached_system_name,
+            valid=None,
+            validation_state="unverified",
+        )
 
         try:
-            sys_detail = await client.get_system(system_id)
-            system_name = sys_detail.name
-        except PretorianClientError:
-            pass
+            systems = await client.list_systems()
+        except PretorianClientError as e:
+            payload["validation_error"] = f"Could not validate stored context: {e.message}"
+            _show_context_payload(payload, quiet=quiet)
+            if check:
+                raise typer.Exit(1)
+            return
+
+        matched_system = next((item for item in systems if item.get("id") == system_id), None)
+        if not matched_system:
+            payload["valid"] = False
+            payload["validation_state"] = "invalid"
+            payload["validation_error"] = f"Stored system '{system_id}' no longer exists on the platform."
+            _show_context_payload(payload, quiet=quiet)
+            if check:
+                raise typer.Exit(1)
+            return
+
+        payload["active_system_name"] = matched_system.get("name", system_id)
 
         try:
             compliance = await client.get_system_compliance_status(system_id)
-            for fw in compliance.get("frameworks", []):
-                if fw.get("framework_id") == framework_id:
-                    progress = fw.get("progress", 0)
-                    status = fw.get("status", "unknown")
-                    break
-        except PretorianClientError:
-            pass
+        except PretorianClientError as e:
+            payload["validation_error"] = f"Could not validate framework membership: {e.message}"
+            _show_context_payload(payload, quiet=quiet)
+            if check:
+                raise typer.Exit(1)
+            return
 
-        if is_json_mode():
-            print_json(
-                {
-                    "active_system_id": system_id,
-                    "active_system_name": system_name,
-                    "active_framework_id": framework_id,
-                    "progress": progress,
-                    "status": status,
-                }
-            )
-        else:
-            rprint()
-            rprint(
-                Panel(
-                    f"  [bold]System:[/bold]    {system_name} ({system_id[:8]}...)\n"
-                    f"  [bold]Framework:[/bold] {framework_id}\n"
-                    f"  [bold]Progress:[/bold]  {progress}%\n"
-                    f"  [bold]Status:[/bold]    {status}",
-                    title=f"{ROMEBOT_HAPPY}  Active Context",
-                    border_style="#95D7E0",
-                    padding=(1, 2),
+        frameworks = [fw for fw in compliance.get("frameworks", []) if fw.get("framework_id")]
+        matched_framework = next((fw for fw in frameworks if fw.get("framework_id") == framework_id), None)
+        if not matched_framework:
+            payload["valid"] = False
+            payload["validation_state"] = "invalid"
+            if frameworks:
+                available_frameworks = ", ".join(sorted(fw["framework_id"] for fw in frameworks))
+                payload["validation_error"] = (
+                    f"Framework '{framework_id}' is not associated with system "
+                    f"'{payload['active_system_name']}'. Available frameworks: {available_frameworks}"
                 )
-            )
+            else:
+                payload["validation_error"] = f"System '{payload['active_system_name']}' has no configured frameworks."
+            _show_context_payload(payload, quiet=quiet)
+            if check:
+                raise typer.Exit(1)
+            return
+
+        payload["valid"] = True
+        payload["validation_state"] = "valid"
+        payload["progress"] = matched_framework.get("progress", 0)
+        payload["status"] = matched_framework.get("status", "unknown")
+        _show_context_payload(payload, quiet=quiet)
 
 
 @app.command("clear")
@@ -465,6 +589,7 @@ def context_clear() -> None:
 
     config = Config()
     config.delete("active_system_id")
+    config.delete("active_system_name")
     config.delete("active_framework_id")
 
     if is_json_mode():

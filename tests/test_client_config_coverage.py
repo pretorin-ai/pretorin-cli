@@ -245,11 +245,24 @@ class TestActiveContextSetters:
         cfg.active_system_id = "sys-abc"
         assert cfg.active_system_id == "sys-abc"
 
-    def test_active_system_id_setter_with_none_deletes_key(self, isolated_config: Path):
+    def test_active_system_id_setter_with_none_deletes_cached_name_too(self, isolated_config: Path):
         cfg = Config()
         cfg.set("active_system_id", "sys-to-delete")
+        cfg.set("active_system_name", "System To Delete")
         cfg.active_system_id = None
         assert cfg.active_system_id is None
+        assert cfg.active_system_name is None
+
+    def test_active_system_name_setter_with_value(self, isolated_config: Path):
+        cfg = Config()
+        cfg.active_system_name = "Friendly System"
+        assert cfg.active_system_name == "Friendly System"
+
+    def test_active_system_name_setter_with_none_deletes_key(self, isolated_config: Path):
+        cfg = Config()
+        cfg.set("active_system_name", "Name To Delete")
+        cfg.active_system_name = None
+        assert cfg.active_system_name is None
 
     def test_active_framework_id_setter_with_value(self, isolated_config: Path):
         cfg = Config()

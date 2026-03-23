@@ -130,6 +130,7 @@ def test_context_set_flags_json_mode():
     assert payload["system_id"] == "sys-1"
     assert payload["framework_id"] == "fedramp-moderate"
     mock_config.set.assert_any_call("active_system_id", "sys-1")
+    mock_config.set.assert_any_call("active_system_name", "Primary")
 
 
 def test_context_set_invalid_system_name_exits_one():
@@ -168,6 +169,7 @@ def test_context_set_interactive_mode_valid_selection(monkeypatch):
     assert result.exit_code == 0
     assert "Context Set" in result.output
     mock_config.set.assert_any_call("active_system_id", "sys-1")
+    mock_config.set.assert_any_call("active_system_name", "Primary")
     mock_config.set.assert_any_call("active_framework_id", "fedramp-moderate")
 
 
@@ -178,6 +180,7 @@ def test_context_set_interactive_mode_valid_selection(monkeypatch):
 
 def test_context_show_with_context_set_json_mode():
     client = _make_client(
+        systems=[{"id": "sys-1", "name": "Primary"}],
         compliance_status={"frameworks": [
             {"framework_id": "fedramp-moderate", "progress": 80, "status": "implemented"}
         ]}
@@ -193,6 +196,7 @@ def test_context_show_with_context_set_json_mode():
     payload = json.loads(result.stdout)
     assert payload["active_system_id"] == "sys-1"
     assert payload["active_framework_id"] == "fedramp-moderate"
+    assert payload["valid"] is True
 
 
 def test_context_show_not_logged_in_shows_stored_context():
@@ -200,6 +204,7 @@ def test_context_show_not_logged_in_shows_stored_context():
     mock_config = MagicMock()
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-offline",
+        "active_system_name": "Offline System",
         "active_framework_id": "fedramp-low",
     }.get(key)
     with patch("pretorin.client.config.Config", return_value=mock_config):
@@ -207,6 +212,7 @@ def test_context_show_not_logged_in_shows_stored_context():
     assert result.exit_code == 0
     payload = json.loads(result.stdout)
     assert payload["active_system_id"] == "sys-offline"
+    assert payload["active_system_name"] == "Offline System"
 
 
 # ---------------------------------------------------------------------------
@@ -222,6 +228,7 @@ def test_context_clear_json_mode():
     payload = json.loads(result.stdout)
     assert payload["cleared"] is True
     mock_config.delete.assert_any_call("active_system_id")
+    mock_config.delete.assert_any_call("active_system_name")
     mock_config.delete.assert_any_call("active_framework_id")
 
 

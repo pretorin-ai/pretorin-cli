@@ -37,6 +37,14 @@ pretorin whoami  # Verify authentication
    command -v pretorin
    ```
 
+4. If the MCP client can talk to Pretorin but scoped write tools behave strangely, validate the stored CLI context:
+
+   ```bash
+   pretorin context show --quiet --check
+   ```
+
+   This catches deleted systems, detached frameworks, and other stale local scope before you debug the MCP client itself.
+
 ## Server Crashes or Hangs
 
 Check the MCP server logs:

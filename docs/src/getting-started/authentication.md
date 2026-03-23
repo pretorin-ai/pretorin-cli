@@ -16,6 +16,8 @@ You'll be prompted to enter your API key. Credentials are stored in `~/.pretorin
 
 If you're already authenticated, `pretorin login` validates your existing key against the API and skips the prompt.
 
+If you log into a different API endpoint or switch API keys, Pretorin clears the stored active `system + framework` context so stale scope does not bleed into the new environment.
+
 ## Verify Authentication
 
 ```bash

@@ -4,6 +4,12 @@ The Pretorin CLI includes a built-in MCP server that enables AI assistants like 
 
 Scoped compliance execution tools on the MCP server run inside exactly one `system + framework` pair at a time. Set the active scope with `pretorin context set`, or pass both values explicitly. If a request spans multiple framework levels or systems, split it into separate runs.
 
+Before running write-heavy MCP workflows from a shell or GUI wrapper, prefer validating the stored scope with:
+
+```bash
+pretorin context show --quiet --check
+```
+
 ## Why MCP?
 
 The Model Context Protocol allows AI assistants to:
@@ -321,7 +327,7 @@ Get framework progress and implementation posture for a system.
 Get rich context for a control including AI guidance, control statement, assessment objectives, scope status, and current implementation details.
 
 **Parameters:**
-- `system_id` (required): The system ID
+- `system_id` (required): The system ID or name
 - `control_id` (required): The control ID (zero-padded for NIST/FedRAMP, e.g., `ac-01`)
 - `framework_id` (required): The framework ID
 
@@ -336,7 +342,7 @@ Get rich context for a control including AI guidance, control statement, assessm
 Get the current narrative record for a control.
 
 **Parameters:**
-- `system_id` (required): The system ID
+- `system_id` (required): The system ID or name
 - `control_id` (required): The control ID
 - `framework_id` (required): The framework ID
 
@@ -351,7 +357,7 @@ Get the current narrative record for a control.
 Get system scope and policy information including excluded controls and Q&A responses.
 
 **Parameters:**
-- `system_id` (required): The system ID
+- `system_id` (required): The system ID or name
 
 **Returns:** Scope narrative, list of excluded controls, Q&A responses, and scope status.
 
@@ -588,6 +594,13 @@ pretorin whoami  # Verify authentication
    ```bash
    command -v pretorin
    ```
+
+4. If the MCP client can connect but scoped write tools behave strangely, validate the stored CLI context:
+   ```bash
+   pretorin context show --quiet --check
+   ```
+
+   This catches deleted systems, detached frameworks, and other stale local scope before you debug the MCP client itself.
 
 ### Server Crashes or Hangs
 
