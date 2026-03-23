@@ -21,6 +21,8 @@
 
 Pretorin CLI gives developers and AI agents direct access to compliance data, implementation context, and evidence workflows.
 
+`mcp-name: io.github.pretorin-ai/pretorin`
+
 ## Two Usage Modes
 
 1. Pretorin-hosted model mode: run `pretorin agent run` and route model calls through Pretorin `/v1` endpoints.
