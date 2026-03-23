@@ -326,6 +326,8 @@ pretorin context set
 pretorin context set --system "My Application" --framework nist-800-53-r5
 ```
 
+Pretorin stores the canonical system ID for stability and also caches the last known system name for display. If you switch API keys or platform endpoints with `pretorin login`, the stored active context is cleared automatically so old scope does not leak into the new environment.
+
 Platform-backed compliance execution is single-scope. Commands that create or update evidence, notes, monitoring events, narratives, or control state operate within exactly one active `system + framework` pair. If you need to work across `fedramp-low` and `fedramp-moderate`, run them separately.
 
 ### Show Current Context
@@ -333,11 +335,20 @@ Platform-backed compliance execution is single-scope. Commands that create or up
 ```bash
 $ pretorin context show
 ╭──────────────────────── Active Context ─────────────────────────╮
-│ System: My Application                                          │
-│ Framework: NIST SP 800-53 Rev 5                                │
-│ Progress: 42% (136/324 implemented, 45 in progress)            │
+│ System: My Application (sys-1234...)                           │
+│ Framework: nist-800-53-r5                                      │
+│ Progress: 42%                                                  │
+│ Status: in_progress                                            │
 ╰─────────────────────────────────────────────────────────────────╯
+
+# Compact summary for shell use
+pretorin context show --quiet
+
+# Exit non-zero if stored context is missing, stale, or cannot be verified
+pretorin context show --quiet --check
 ```
+
+`context show` validates stored scope against the platform when credentials are available and reports invalid or unverified context explicitly instead of silently showing deleted systems as active.
 
 ### Clear Context
 
@@ -678,7 +689,7 @@ Different frameworks use different ID conventions. Always use `pretorin framewor
 | `pretorin frameworks submit-artifact <file>` | Submit a compliance artifact JSON file |
 | `pretorin context list` | List systems and frameworks with progress |
 | `pretorin context set` | Set active system/framework context |
-| `pretorin context show` | Display current active context |
+| `pretorin context show` | Display and validate current active context |
 | `pretorin context clear` | Clear active context |
 | `pretorin evidence create` | Create a local evidence file |
 | `pretorin evidence list` | List local evidence files |

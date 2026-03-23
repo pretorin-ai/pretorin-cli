@@ -91,6 +91,7 @@ def test_store_credentials_without_url_resets_custom_endpoint_to_default(isolate
 def test_store_credentials_clears_active_context_when_api_key_changes(isolated_config: Path) -> None:
     cfg = config_module.Config()
     cfg.active_system_id = "system-local"
+    cfg.active_system_name = "Local System"
     cfg.active_framework_id = "fedramp-moderate"
     cfg.api_base_url = "http://localhost:8000/api/v1/public"
     cfg.model_api_base_url = "http://localhost:8000/v1"
@@ -100,12 +101,14 @@ def test_store_credentials_clears_active_context_when_api_key_changes(isolated_c
 
     reloaded = config_module.Config()
     assert reloaded.active_system_id is None
+    assert reloaded.active_system_name is None
     assert reloaded.active_framework_id is None
 
 
 def test_store_credentials_clears_active_context_when_api_url_changes(isolated_config: Path) -> None:
     cfg = config_module.Config()
     cfg.active_system_id = "system-local"
+    cfg.active_system_name = "Local System"
     cfg.active_framework_id = "fedramp-moderate"
     cfg.api_base_url = "http://localhost:8000/api/v1/public"
     cfg.model_api_base_url = "http://localhost:8000/v1"
@@ -115,6 +118,7 @@ def test_store_credentials_clears_active_context_when_api_url_changes(isolated_c
 
     reloaded = config_module.Config()
     assert reloaded.active_system_id is None
+    assert reloaded.active_system_name is None
     assert reloaded.active_framework_id is None
 
 
@@ -123,12 +127,14 @@ def test_store_credentials_preserves_active_context_when_credentials_unchanged(i
 
     cfg = config_module.Config()
     cfg.active_system_id = "system-prod"
+    cfg.active_system_name = "Production System"
     cfg.active_framework_id = "soc2"
 
     store_credentials("same-key", api_base_url="https://platform.pretorin.com/api/v1/public")
 
     reloaded = config_module.Config()
     assert reloaded.active_system_id == "system-prod"
+    assert reloaded.active_system_name == "Production System"
     assert reloaded.active_framework_id == "soc2"
 
 

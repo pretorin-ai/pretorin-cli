@@ -8,7 +8,7 @@ description: >
   are needed for certification. Trigger phrases include "list frameworks",
   "show controls", "what documents do I need", "compliance check",
   "control requirements", "gap analysis", and "audit my code".
-version: 0.8.0
+version: 0.8.6
 ---
 
 # Pretorin Compliance Skill
@@ -24,6 +24,8 @@ uv tool install pretorin
 pretorin login
 claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 ```
+
+When the user says "my current system" or relies on stored CLI scope, suggest `pretorin context show --quiet --check` before assuming the local context is still valid.
 
 ## Available Frameworks
 
@@ -67,8 +69,8 @@ When unsure of an ID, discover it first with `pretorin_list_control_families` or
 
 ### Systems
 - **`pretorin_list_systems`** — List systems in the organization. Start here when the user has not identified a target system.
-- **`pretorin_get_system`** — Get system metadata including attached frameworks and security impact level. Pass `system_id`.
-- **`pretorin_get_compliance_status`** — Get framework progress and implementation posture for a system. Pass `system_id`.
+- **`pretorin_get_system`** — Get system metadata including attached frameworks and security impact level. Pass a canonical `system_id` or a friendly system name.
+- **`pretorin_get_compliance_status`** — Get framework progress and implementation posture for a system. Pass a canonical `system_id` or a friendly system name.
 
 ### System & Implementation Context
 - **`pretorin_get_control_context`** — Get rich context for a control including AI guidance, statement, objectives, scope status, and current implementation details. Pass `system_id`, `control_id`, and `framework_id`. This is the most comprehensive view for understanding both what a control requires and how it's currently implemented.
@@ -80,6 +82,9 @@ When unsure of an ID, discover it first with `pretorin_list_control_families` or
 - **`pretorin_create_evidence`** — Upsert evidence (find-or-create by default with `dedupe: true`) and return whether it was created or reused. Pass `system_id`, `name`, `description`, `evidence_type`, and control/framework context.
 - **`pretorin_link_evidence`** — Link an existing evidence item to a control (low-level helper).
 - **`pretorin_add_control_note`** — Add a note for unresolved gaps or manual follow-up actions.
+
+### Evidence Search
+- **`pretorin_search_evidence`** — Search evidence inside the active or explicit system/framework scope. Pass `system_id` when you want to override the active scope; friendly system names are accepted.
 
 ### Review, Monitoring, and Drafting
 - **`pretorin_generate_control_artifacts`** — Generate read-only AI drafts for a control narrative and evidence-gap assessment using the same Codex workflow as the CLI. Use this when the user wants a draft without writing to the platform yet.

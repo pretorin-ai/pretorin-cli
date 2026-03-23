@@ -171,8 +171,22 @@ class Config:
         """Set the active system ID."""
         if value is None:
             self.delete("active_system_id")
+            self.delete("active_system_name")
         else:
             self.set("active_system_id", value)
+
+    @property
+    def active_system_name(self) -> str | None:
+        """Get the cached active system name for friendlier context output."""
+        return self.get("active_system_name")
+
+    @active_system_name.setter
+    def active_system_name(self, value: str | None) -> None:
+        """Set the cached active system name."""
+        if value is None:
+            self.delete("active_system_name")
+        else:
+            self.set("active_system_name", value)
 
     @property
     def active_framework_id(self) -> str | None:

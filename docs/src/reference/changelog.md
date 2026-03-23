@@ -2,6 +2,26 @@
 
 All notable changes to the Pretorin CLI are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.6] - 2026-03-23
+
+### Added
+- `pretorin context show --quiet` for compact shell-friendly context checks
+- `pretorin context show --check` to fail fast when stored scope is missing, stale, or unverified
+
+### Changed
+- `context show` caches the last known system name so offline and stale context output stays human-friendly
+
+### Fixed
+- `context show` validates stored context against the platform instead of silently treating deleted systems as active
+
+## [0.8.5] - 2026-03-23
+
+### Fixed
+- Reset active system/framework context when logging into a different API endpoint or with a different API key
+- Model API base URL now follows the configured platform public API endpoint during login
+- `scope populate --json --apply` and `policy populate --json --apply` now persist questionnaire updates
+- Larger Codex subprocess line buffer for policy questionnaire responses
+
 ## [0.8.0] - 2026-03-07
 
 ### Added
@@ -146,6 +166,8 @@ All notable changes to the Pretorin CLI are documented here. The format is based
 - FedRAMP (Low, Moderate, High)
 - CMMC Level 1, 2, and 3
 
+[0.8.6]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.5...v0.8.6
+[0.8.5]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.0...v0.8.5
 [0.8.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.0...v0.6.1

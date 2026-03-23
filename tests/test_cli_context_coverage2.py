@@ -477,6 +477,7 @@ def test_context_show_no_context_json_mode():
     payload = json.loads(result.stdout)
     assert payload["active_system_id"] is None
     assert payload["active_framework_id"] is None
+    assert payload["valid"] is False
 
 
 def test_context_show_no_context_normal_mode():
@@ -501,51 +502,54 @@ def test_context_show_not_configured_non_json():
     mock_config = MagicMock()
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-offline",
+        "active_system_name": "Offline System",
         "active_framework_id": "fedramp-low",
     }.get(key)
     with patch("pretorin.client.config.Config", return_value=mock_config):
         result = _run_with_mock_client(["context", "show"], client)
     assert result.exit_code == 0
     assert "Active Context" in result.output
+    assert "Offline System (sys-offline)" in result.output
     assert "stored context only" in result.output
 
 
 # ---------------------------------------------------------------------------
-# _context_show — lines 423-424 (get_system PretorianClientError)
+# _context_show — stale or unverified context paths
 # ---------------------------------------------------------------------------
 
 
-def test_context_show_get_system_error_uses_system_id_as_name():
-    """Lines 423-424: system_name falls back to system_id when get_system fails."""
+def test_context_show_marks_missing_system_as_invalid():
+    """Stored context should be marked invalid when the system no longer exists."""
     client = _make_client(
+        systems=[{"id": "sys-1", "name": "Primary"}],
         compliance_status={"frameworks": [
             {"framework_id": "fedramp-moderate", "progress": 80, "status": "implemented"}
         ]}
     )
-    client.get_system = AsyncMock(
-        side_effect=PretorianClientError("System not found")
-    )
     mock_config = MagicMock()
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-unknown-id",
+        "active_system_name": "Retired System",
         "active_framework_id": "fedramp-moderate",
     }.get(key)
     with patch("pretorin.client.config.Config", return_value=mock_config):
         result = _run_with_mock_client(["--json", "context", "show"], client)
     assert result.exit_code == 0
     payload = json.loads(result.stdout)
-    # system_name should fall back to system_id
-    assert payload["active_system_name"] == "sys-unknown-id"
+    assert payload["active_system_name"] == "Retired System"
+    assert payload["valid"] is False
+    assert payload["validation_state"] == "invalid"
+    assert "no longer exists" in payload["validation_error"]
 
 
 # ---------------------------------------------------------------------------
-# _context_show — lines 433-434 (compliance status PretorianClientError)
+# _context_show — compliance status PretorianClientError
 # ---------------------------------------------------------------------------
 
 
 def test_context_show_compliance_status_error_keeps_defaults():
-    """Lines 433-434: progress stays 0, status stays 'unknown' when compliance call fails."""
-    client = _make_client()
+    """Progress defaults remain and validation becomes unverified when compliance lookup fails."""
+    client = _make_client(systems=[{"id": "sys-1", "name": "Primary"}])
     client.get_system_compliance_status = AsyncMock(
         side_effect=PretorianClientError("compliance error")
     )
@@ -560,6 +564,29 @@ def test_context_show_compliance_status_error_keeps_defaults():
     payload = json.loads(result.stdout)
     assert payload["progress"] == 0
     assert payload["status"] == "unknown"
+    assert payload["valid"] is None
+    assert payload["validation_state"] == "unverified"
+    assert "Could not validate framework membership" in payload["validation_error"]
+
+
+def test_context_show_marks_missing_framework_as_invalid():
+    """Stored framework should be marked invalid when it no longer belongs to the system."""
+    client = _make_client(
+        systems=[{"id": "sys-1", "name": "Primary"}],
+        compliance_status={"frameworks": [{"framework_id": "fedramp-low", "progress": 10, "status": "in_progress"}]},
+    )
+    mock_config = MagicMock()
+    mock_config.get.side_effect = lambda key, *a: {
+        "active_system_id": "sys-1",
+        "active_framework_id": "fedramp-moderate",
+    }.get(key)
+    with patch("pretorin.client.config.Config", return_value=mock_config):
+        result = _run_with_mock_client(["--json", "context", "show"], client)
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["valid"] is False
+    assert payload["validation_state"] == "invalid"
+    assert "Available frameworks: fedramp-low" in payload["validation_error"]
 
 
 # ---------------------------------------------------------------------------
@@ -570,6 +597,7 @@ def test_context_show_compliance_status_error_keeps_defaults():
 def test_context_show_non_json_with_live_data():
     """Lines 447-448: renders a Panel in non-JSON mode with live system data."""
     client = _make_client(
+        systems=[{"id": "sys-1", "name": "Primary"}],
         compliance_status={"frameworks": [
             {"framework_id": "fedramp-moderate", "progress": 80, "status": "implemented"}
         ]}
@@ -586,9 +614,8 @@ def test_context_show_non_json_with_live_data():
 
 
 def test_context_show_non_json_system_error_and_compliance_error():
-    """Lines 423-424, 433-434, 447-448: both get_system and compliance fail, non-JSON path."""
-    client = _make_client()
-    client.get_system = AsyncMock(side_effect=PretorianClientError("not found"))
+    """Non-JSON path surfaces framework validation problems instead of silently falling back."""
+    client = _make_client(systems=[{"id": "sys-1", "name": "Primary"}])
     client.get_system_compliance_status = AsyncMock(
         side_effect=PretorianClientError("compliance error")
     )
@@ -601,3 +628,37 @@ def test_context_show_non_json_system_error_and_compliance_error():
         result = _run_with_mock_client(["context", "show"], client)
     assert result.exit_code == 0
     assert "Active Context" in result.output
+    assert "Could not validate framework membership" in result.output
+
+
+def test_context_show_quiet_outputs_single_line():
+    """Quiet mode should emit a compact one-line summary."""
+    client = _make_client(
+        systems=[{"id": "sys-1", "name": "Primary"}],
+        compliance_status={"frameworks": [{"framework_id": "fedramp-moderate", "progress": 80, "status": "implemented"}]},
+    )
+    mock_config = MagicMock()
+    mock_config.get.side_effect = lambda key, *a: {
+        "active_system_id": "sys-1",
+        "active_framework_id": "fedramp-moderate",
+    }.get(key)
+    with patch("pretorin.client.config.Config", return_value=mock_config):
+        result = _run_with_mock_client(["context", "show", "--quiet"], client)
+    assert result.exit_code == 0
+    assert "Primary (sys-1) / fedramp-moderate [implemented, 80%]" in result.output
+
+
+def test_context_show_check_exits_nonzero_for_stale_context():
+    """Check mode should fail fast when stored context points at a missing system."""
+    client = _make_client(systems=[{"id": "sys-1", "name": "Primary"}])
+    mock_config = MagicMock()
+    mock_config.get.side_effect = lambda key, *a: {
+        "active_system_id": "sys-missing",
+        "active_system_name": "Retired System",
+        "active_framework_id": "fedramp-moderate",
+    }.get(key)
+    with patch("pretorin.client.config.Config", return_value=mock_config):
+        result = _run_with_mock_client(["context", "show", "--quiet", "--check"], client)
+    assert result.exit_code == 1
+    assert "Retired System (sys-missing)" in result.output
+    assert "invalid" in result.output

@@ -113,7 +113,7 @@ Get system metadata including attached frameworks and security impact level.
 Get framework progress and implementation posture for a system.
 
 **Parameters:**
-- `system_id` (required)
+- `system_id` (required) — System ID or friendly system name
 
 **Returns:** Framework status summaries and progress metrics.
 
@@ -126,11 +126,11 @@ Get framework progress and implementation posture for a system.
 Search current evidence items.
 
 **Parameters:**
-- `system_id` (optional) — System context
+- `system_id` (optional) — System ID or friendly system name. When omitted, the active CLI scope is used if available.
 - `control_id` (optional) — Filter by control
 - `framework_id` (optional) — Filter by framework
 
-**Returns:** Matching evidence items.
+**Returns:** Matching evidence items. The server uses the same compatibility search path as the CLI for deployments that only expose system-scoped evidence routes.
 
 ---
 

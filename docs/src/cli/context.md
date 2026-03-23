@@ -29,16 +29,27 @@ pretorin context set
 pretorin context set --system "My Application" --framework nist-800-53-r5
 ```
 
+Pretorin stores the canonical system ID for stability and also caches the last known system name for display. If you change API keys or platform endpoints with `pretorin login`, the stored active context is cleared automatically so old scope does not leak into the new environment.
+
 ## Show Current Context
 
 ```bash
 $ pretorin context show
 ╭──────────────────────── Active Context ─────────────────────────╮
-│ System: My Application                                          │
-│ Framework: NIST SP 800-53 Rev 5                                │
-│ Progress: 42% (136/324 implemented, 45 in progress)            │
+│ System: My Application (sys-1234...)                           │
+│ Framework: nist-800-53-r5                                      │
+│ Progress: 42%                                                  │
+│ Status: in_progress                                            │
 ╰─────────────────────────────────────────────────────────────────╯
+
+# Compact summary for shell use
+pretorin context show --quiet
+
+# Fail fast if the stored context is missing, stale, or cannot be verified
+pretorin context show --quiet --check
 ```
+
+`context show` validates the stored system and framework against the platform when credentials are available. If the system has been deleted or the framework is no longer attached, the command reports that state explicitly instead of silently showing a stale context.
 
 ## Clear Context
 

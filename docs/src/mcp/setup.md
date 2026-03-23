@@ -137,3 +137,9 @@ Then use that path in your configuration:
 ```
 
 This is especially important for `uv tool` and `pipx` installations where the binary may not be on the PATH available to GUI applications.
+
+Before debugging scoped MCP write failures, validate the active CLI scope:
+
+```bash
+pretorin context show --quiet --check
+```

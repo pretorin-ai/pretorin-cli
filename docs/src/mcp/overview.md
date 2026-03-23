@@ -28,6 +28,12 @@ The MCP server communicates via stdio (standard input/output) using JSON-RPC mes
 
 Scoped compliance execution tools on the MCP server run inside exactly one `system + framework` pair at a time. Set the active scope with `pretorin context set`, or pass both values explicitly. If a request spans multiple frameworks or systems, split it into separate runs.
 
+Before running write-heavy MCP workflows from a shell or GUI wrapper, prefer validating the stored scope with:
+
+```bash
+pretorin context show --quiet --check
+```
+
 ## Tool Categories
 
 The 23 MCP tools are organized into categories:

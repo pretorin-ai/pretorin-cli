@@ -111,6 +111,8 @@ command = "pretorin"
 args = ["mcp-serve"]
 ```
 
+If you installed Pretorin with `uv tool install` or `pipx`, prefer pinning the absolute path from `command -v pretorin` to avoid PATH drift between shells and GUI apps.
+
 For Claude Desktop, Cursor, and Windsurf setup, see [docs/MCP.md](docs/MCP.md).
 
 ## Core Commands
@@ -122,6 +124,8 @@ Platform-backed review and update workflows are single-scope: set one active `sy
 | `pretorin frameworks list` | List available frameworks |
 | `pretorin frameworks control <framework> <control>` | Get control details and guidance |
 | `pretorin context set` | Set active system/framework context |
+| `pretorin context show` | Inspect and validate the active context |
+| `pretorin context clear` | Clear the active context |
 | `pretorin evidence create` | Create local evidence file |
 | `pretorin evidence list` | List local evidence files |
 | `pretorin evidence push` | Push local evidence to Pretorin |
@@ -141,6 +145,15 @@ Platform-backed review and update workflows are single-scope: set one active `sy
 | `pretorin agent run "<task>"` | Run Codex-powered compliance task |
 | `pretorin review run --control-id <id> --path <dir>` | Review local code for control coverage |
 | `pretorin mcp-serve` | Start MCP server |
+
+Quick context checks:
+
+```bash
+pretorin context show --quiet
+pretorin context show --quiet --check
+```
+
+`pretorin login` clears the stored active context when you switch API keys or platform endpoints, which helps prevent old localhost or deleted-system scope from leaking into a new environment.
 
 ## Artifact Authoring Rules
 
