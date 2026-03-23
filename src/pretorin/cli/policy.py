@@ -49,11 +49,7 @@ def _validate_working_directory(path: str) -> Path:
 
 def _answer_map(payload: dict[str, Any] | None) -> dict[str, str | None]:
     questions = (payload or {}).get("questions", [])
-    return {
-        str(item.get("id")): item.get("answer")
-        for item in questions
-        if isinstance(item, dict) and item.get("id")
-    }
+    return {str(item.get("id")): item.get("answer") for item in questions if isinstance(item, dict) and item.get("id")}
 
 
 def _normalize_text(value: str | None) -> str:
@@ -84,9 +80,7 @@ async def _resolve_policy_selector(client: PretorianClient, selector: str) -> Or
         matches = ", ".join(f"{policy.name} ({policy.id})" for policy in by_name)
         raise PretorianClientError(f"Policy selector '{selector}' is ambiguous. Matches: {matches}")
 
-    raise PretorianClientError(
-        f"Policy '{selector}' not found. Run 'pretorin policy list' to see available policies."
-    )
+    raise PretorianClientError(f"Policy '{selector}' not found. Run 'pretorin policy list' to see available policies.")
 
 
 def _print_review(review: Any, reviewed_at: str | None) -> None:

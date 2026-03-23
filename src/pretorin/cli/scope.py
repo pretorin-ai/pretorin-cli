@@ -48,11 +48,7 @@ def _validate_working_directory(path: str) -> Path:
 
 def _answer_map(payload: dict[str, Any] | None) -> dict[str, str | None]:
     questions = (payload or {}).get("questions", [])
-    return {
-        str(item.get("id")): item.get("answer")
-        for item in questions
-        if isinstance(item, dict) and item.get("id")
-    }
+    return {str(item.get("id")): item.get("answer") for item in questions if isinstance(item, dict) and item.get("id")}
 
 
 def _normalize_text(value: str | None) -> str:
@@ -144,9 +140,7 @@ def _print_review(review: Any, reviewed_at: str | None) -> None:
 
 def _print_scope_state(scope: Any, *, system_id: str, framework_id: str) -> None:
     answered = sum(
-        1
-        for item in (scope.scope_qa_responses or {}).get("questions", [])
-        if _normalize_text(item.get("answer"))
+        1 for item in (scope.scope_qa_responses or {}).get("questions", []) if _normalize_text(item.get("answer"))
     )
     total = len(scope.scope_questions)
     rprint(f"\n[bold]Scope Questionnaire[/bold] {system_id} / {framework_id}")

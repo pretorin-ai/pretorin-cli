@@ -131,8 +131,7 @@ async def draft_scope_questionnaire(
         workflow_name="scope",
         subject_label=f"{system.name} / {framework_id}",
         handoff_message=(
-            "the user should return to the Pretorin platform scope page "
-            "to run review and generate the scope document."
+            "the user should return to the Pretorin platform scope page to run review and generate the scope document."
         ),
         state_payload={
             "system_id": system_id,
@@ -140,9 +139,7 @@ async def draft_scope_questionnaire(
             "framework_id": framework_id,
             "questions": [question.model_dump(mode="json") for question in scope.scope_questions],
             "existing_answers": scope.scope_qa_responses or {"questions": []},
-            "persisted_review": (
-                scope.scope_review.model_dump(mode="json") if scope.scope_review else None
-            ),
+            "persisted_review": (scope.scope_review.model_dump(mode="json") if scope.scope_review else None),
             "persisted_reviewed_at": scope.scope_reviewed_at,
         },
     )
@@ -176,9 +173,7 @@ async def draft_policy_questionnaire(
             "template": template,
             "existing_answers": questionnaire.policy_qa_responses or {"questions": []},
             "persisted_review": (
-                questionnaire.policy_review.model_dump(mode="json")
-                if questionnaire.policy_review
-                else None
+                questionnaire.policy_review.model_dump(mode="json") if questionnaire.policy_review else None
             ),
             "persisted_reviewed_at": questionnaire.policy_reviewed_at,
         },
