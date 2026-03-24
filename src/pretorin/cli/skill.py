@@ -27,8 +27,21 @@ KNOWN_AGENTS: dict[str, str] = {
 
 
 def _skill_source() -> Path:
-    """Return the path to the bundled skill data shipped with the package."""
-    return Path(__file__).resolve().parent.parent / "skill_data"
+    """Return the path to the bundled skill data.
+
+    In wheel installs, hatch force-include places skill_data/ inside the
+    package.  In editable/dev installs that directory doesn't exist, so
+    we fall back to the repo-root pretorin-skill/ directory.
+    """
+    # Wheel install: skill_data/ is inside the package
+    pkg_path = Path(__file__).resolve().parent.parent / "skill_data"
+    if (pkg_path / "SKILL.md").exists():
+        return pkg_path
+    # Editable / dev install: use the repo-root canonical copy
+    repo_path = Path(__file__).resolve().parent.parent.parent.parent / "pretorin-skill"
+    if (repo_path / "SKILL.md").exists():
+        return repo_path
+    return pkg_path  # fall through — _install_to will surface a clear error
 
 
 def _resolve_target(agent: str) -> Path:
