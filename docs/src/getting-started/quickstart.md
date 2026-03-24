@@ -58,19 +58,22 @@ Or use a predefined skill:
 pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
 ```
 
-## Connect Your AI Tool via MCP
+## Connect Your AI Tool
 
-If you use Claude Code, Codex CLI, Cursor, or another MCP-compatible AI tool:
+If you use Claude Code, Codex CLI, or another MCP-compatible AI tool:
 
 ```bash
-# Claude Code
+# Install the skill (teaches your agent how to use Pretorin tools)
+pretorin skill install
+
+# Add the MCP server (Claude Code example)
 claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 
 # Then ask your AI agent about compliance
 # "What controls are in the Access Control family for FedRAMP Moderate?"
 ```
 
-See the [MCP Setup Guides](../mcp/setup.md) for other tools.
+Check install status with `pretorin skill status`. See the [MCP Setup Guides](../mcp/setup.md) for other tools.
 
 ## Run the Demo Walkthrough
 

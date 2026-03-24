@@ -9,6 +9,19 @@ uv tool install pretorin
 pretorin login
 ```
 
+## Install the Pretorin Skill
+
+The skill teaches your AI agent how to use MCP tools for compliance workflows — control ID formats, narrative authoring rules, gap analysis methodology, and more. Install it before setting up MCP:
+
+```bash
+pretorin skill install                # both Claude Code and Codex CLI
+pretorin skill install --agent claude # Claude Code only
+pretorin skill install --agent codex  # Codex CLI only
+pretorin skill status                 # check what's installed
+```
+
+The skill is copied to `~/.claude/skills/pretorin/` and/or `~/.codex/skills/pretorin/` and auto-discovered by each agent.
+
 ## Claude Code
 
 **Quick setup** — run a single command:
