@@ -83,10 +83,7 @@ def _resolve_targets(
         unknown = [a for a in agents if a not in KNOWN_AGENTS]
         if unknown:
             known_list = ", ".join(sorted(KNOWN_AGENTS))
-            rprint(
-                f"[#FF9010]![/#FF9010] Unknown agent(s): {', '.join(unknown)}. "
-                f"Known agents: {known_list}"
-            )
+            rprint(f"[#FF9010]![/#FF9010] Unknown agent(s): {', '.join(unknown)}. Known agents: {known_list}")
             rprint("[dim]Use --path to install to a custom directory.[/dim]")
             raise typer.Exit(1)
         return [(a, _resolve_target(a)) for a in agents]
@@ -207,10 +204,7 @@ def status() -> None:
 def list_agents() -> None:
     """List all known agents and their skill directories."""
     if is_json_mode():
-        print_json({
-            agent: str(_resolve_target(agent))
-            for agent in KNOWN_AGENTS
-        })
+        print_json({agent: str(_resolve_target(agent)) for agent in KNOWN_AGENTS})
         return
 
     table = Table(show_header=True, header_style="bold #FF9010")

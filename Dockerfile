@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy project files
 COPY pyproject.toml README.md LICENSE ./
 COPY src/ ./src/
+COPY pretorin-skill/ ./pretorin-skill/
 
 # Install the package
 RUN pip install --no-cache-dir -e .
