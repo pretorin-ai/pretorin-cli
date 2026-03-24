@@ -8,7 +8,7 @@ description: >
   are needed for certification. Trigger phrases include "list frameworks",
   "show controls", "what documents do I need", "compliance check",
   "control requirements", "gap analysis", and "audit my code".
-version: 0.9.1
+version: 0.9.2
 ---
 
 # Pretorin Compliance Skill
