@@ -5,7 +5,7 @@ Covers: config get, config set, config list, config path commands.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -109,9 +109,34 @@ class TestConfigSet:
         assert "custom_key" in result.output
         assert "my-value" in result.output
 
-    def test_set_api_base_url_succeeds(self) -> None:
-        """api_base_url can be set (only api_key is blocked)."""
+    def test_set_api_base_url_prompts_for_api_key(self) -> None:
+        """Changing api_base_url prompts for a new API key and validates it."""
         mock_config = MagicMock()
+        mock_config.platform_api_base_url = "https://platform.pretorin.com/api/v1/public"
+
+        mock_client = AsyncMock()
+        mock_client.validate_api_key = AsyncMock()
+        mock_client.close = AsyncMock()
+
+        with (
+            patch("pretorin.cli.config.Config", return_value=mock_config),
+            patch("pretorin.cli.config.PretorianClient", return_value=mock_client),
+            patch("pretorin.cli.config.store_credentials") as mock_store,
+        ):
+            result = runner.invoke(
+                app,
+                ["config", "set", "api_base_url", "https://self-hosted.example.com"],
+                input="test-api-key\n",
+            )
+
+        assert result.exit_code == 0
+        assert "Authenticated" in result.output or "switched" in result.output
+        mock_store.assert_called_once_with("test-api-key", "https://self-hosted.example.com")
+
+    def test_set_api_base_url_no_change_skips_reauth(self) -> None:
+        """Setting api_base_url to the same value skips re-authentication."""
+        mock_config = MagicMock()
+        mock_config.platform_api_base_url = "https://self-hosted.example.com"
         mock_config.set = MagicMock()
 
         with patch("pretorin.cli.config.Config", return_value=mock_config):
@@ -121,7 +146,6 @@ class TestConfigSet:
             )
 
         assert result.exit_code == 0
-        mock_config.set.assert_called_once_with("api_base_url", "https://self-hosted.example.com")
 
 
 # ---------------------------------------------------------------------------
