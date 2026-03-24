@@ -1,6 +1,6 @@
 [project]
 name = "pretorin"
-version = "0.8.7"
+version = "0.9.0"
 description = "CLI and MCP server for Pretorin Compliance API"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -75,6 +75,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pretorin"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"pretorin-skill" = "pretorin/skill_data"
 
 [tool.ruff]
 line-length = 120

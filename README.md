@@ -33,6 +33,7 @@ Pretorin CLI gives developers and AI agents direct access to compliance data, im
 ```bash
 uv tool install pretorin
 pretorin login
+pretorin skill install
 ```
 
 Run the walkthrough:
@@ -80,6 +81,17 @@ Key behavior:
 Use this flow when you already have an AI agent/tool and want Pretorin as an MCP capability provider.
 
 <img src="assets/Rome-bot_Basic-1.png" alt="Rome-bot" width="120" align="right">
+
+### Install the Skill
+
+The Pretorin skill teaches your AI agent how to use MCP tools effectively for compliance workflows. Install it for Claude Code and/or Codex CLI:
+
+```bash
+pretorin skill install                # both agents
+pretorin skill install --agent claude # claude only
+pretorin skill install --agent codex  # codex only
+pretorin skill status                 # check what's installed
+```
 
 ### 1. Claude Code
 
@@ -144,6 +156,8 @@ Platform-backed review and update workflows are single-scope: set one active `sy
 | `pretorin monitoring push` | Push a monitoring event |
 | `pretorin agent run "<task>"` | Run Codex-powered compliance task |
 | `pretorin review run --control-id <id> --path <dir>` | Review local code for control coverage |
+| `pretorin skill install` | Install Pretorin skill for AI agents |
+| `pretorin skill status` | Check skill install status per agent |
 | `pretorin mcp-serve` | Start MCP server |
 
 Quick context checks:

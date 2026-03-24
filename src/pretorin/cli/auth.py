@@ -90,6 +90,15 @@ def login(
                 )
             )
 
+            # Suggest next steps
+            rprint("\n[bold #FF9010]Next steps:[/bold #FF9010]")
+            rprint("  [dim]1.[/dim] Connect the MCP server to your AI tool:")
+            rprint("     [bold]claude mcp add --transport stdio pretorin -- pretorin mcp-serve[/bold]")
+            rprint("  [dim]2.[/dim] Install the Pretorin skill for richer agent guidance:")
+            rprint("     [bold]pretorin skill install[/bold]")
+            rprint("  [dim]3.[/dim] Browse frameworks: [bold]pretorin frameworks list[/bold]")
+            rprint()
+
         except AuthenticationError as e:
             rprint(f"\n[#EAB536]\\[°︵°][/#EAB536] Authentication failed: {e.message}")
             rprint("[dim]Double-check your API key and try again.[/dim]")
