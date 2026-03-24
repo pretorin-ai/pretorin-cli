@@ -11,6 +11,7 @@ from typing import Any
 from pretorin.client.api import PretorianClient, PretorianClientError
 from pretorin.client.config import Config
 from pretorin.client.models import EvidenceCreate, EvidenceItemResponse
+from pretorin.scope import ExecutionScope
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.markdown_quality import ensure_audit_markdown
 
@@ -123,8 +124,13 @@ class EvidenceUpsertResult:
 async def resolve_system(
     client: PretorianClient,
     system: str | None = None,
+    scope: ExecutionScope | None = None,
 ) -> tuple[str, str]:
-    """Resolve a system hint/name/ID to concrete (system_id, system_name)."""
+    """Resolve a system hint/name/ID to concrete (system_id, system_name).
+
+    When *scope* is provided and *system* is None, uses the scope's system_id
+    instead of falling back to shared config.
+    """
     systems = await client.list_systems()
     if not systems:
         raise PretorianClientError("No systems found. Create a system first.")
@@ -136,8 +142,14 @@ async def resolve_system(
                 return candidate["id"], candidate.get("name", candidate["id"])
         raise PretorianClientError(f"System not found: {system}")
 
-    config = Config()
-    active_system_id = config.get("active_system_id")
+    # Prefer run-local scope over ambient config
+    active_system_id: str | None = None
+    if scope is not None:
+        active_system_id = scope.system_id
+    else:
+        config = Config()
+        active_system_id = config.get("active_system_id")
+
     if active_system_id:
         for candidate in systems:
             if candidate.get("id") == active_system_id:

@@ -11,6 +11,7 @@ from mcp.types import CallToolResult, TextContent
 from pretorin.cli.context import resolve_execution_context
 from pretorin.client import PretorianClient
 from pretorin.client.api import PretorianClientError
+from pretorin.scope import ExecutionScope
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.compliance_updates import resolve_system
 
@@ -140,6 +141,7 @@ async def resolve_execution_scope(
     client: PretorianClient,
     arguments: dict[str, Any],
     *,
+    scope: ExecutionScope | None = None,
     control_required: bool = False,
 ) -> tuple[str, str, str | None]:
     """Resolve one validated execution scope and optionally validate a control within it."""
@@ -147,6 +149,7 @@ async def resolve_execution_scope(
         client,
         system=arguments.get("system_id"),
         framework=arguments.get("framework_id"),
+        scope=scope,
     )
     raw_control_id = arguments.get("control_id")
     normalized_control_id = normalize_control_id(raw_control_id) if raw_control_id else None

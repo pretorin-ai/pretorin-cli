@@ -13,6 +13,7 @@ from typing import Any
 from pretorin.cli.context import resolve_execution_context
 from pretorin.client.api import PretorianClient
 from pretorin.client.models import EvidenceBatchItemCreate
+from pretorin.scope import ExecutionScope
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.compliance_updates import upsert_evidence
 
@@ -50,11 +51,17 @@ def to_function_tool(tool: ToolDefinition) -> Any:
     )
 
 
-def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
+def create_platform_tools(
+    client: PretorianClient,
+    scope: ExecutionScope | None = None,
+) -> list[ToolDefinition]:
     """Create all platform tool definitions bound to a client instance.
 
     Args:
         client: Authenticated PretorianClient.
+        scope: Optional pre-validated execution scope.  When provided, tool
+            calls that resolve system/framework will use this scope instead
+            of reading shared config, making parallel execution safe.
 
     Returns:
         List of ToolDefinition instances.
@@ -74,6 +81,7 @@ def create_platform_tools(client: PretorianClient) -> list[ToolDefinition]:
             client,
             system=system_id,
             framework=framework_id,
+            scope=scope,
         )
 
     async def _resolve_scoped_control(
