@@ -107,6 +107,8 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
+          verbose: true
+          attestations: false
         # No API token needed - uses OIDC trusted publishing
 
   publish-mcp-registry:
