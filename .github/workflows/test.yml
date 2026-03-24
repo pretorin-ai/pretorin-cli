@@ -47,7 +47,7 @@ jobs:
         run: pip install -e .
 
       - name: Run pip-audit
-        run: pip-audit --skip-editable
+        run: pip-audit --skip-editable --ignore-vuln CVE-2026-4539  # pygments 2.19.2; no fix available yet
 
   typecheck:
     name: Type Check
