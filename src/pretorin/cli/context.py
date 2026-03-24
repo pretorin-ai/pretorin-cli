@@ -14,6 +14,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from pretorin.cli.output import is_json_mode, print_json
+from pretorin.scope import ExecutionScope
 
 console = Console()
 
@@ -32,8 +33,15 @@ _MULTI_SCOPE_FRAMEWORK_PATTERN = re.compile(r"(,|/|\\|\band\b|&)", re.IGNORECASE
 def _resolve_context_values(
     system: str | None = None,
     framework: str | None = None,
+    scope: ExecutionScope | None = None,
 ) -> tuple[str | None, str | None]:
-    """Resolve context values from flags or stored config without side effects."""
+    """Resolve context values from an explicit scope, flags, or stored config.
+
+    Priority: scope > explicit flags > stored config.
+    """
+    if scope is not None and system is None and framework is None:
+        return scope.system_id, scope.framework_id
+
     from pretorin.client.config import Config
 
     config = Config()
@@ -141,8 +149,18 @@ async def resolve_execution_context(
     *,
     system: str | None = None,
     framework: str | None = None,
+    scope: ExecutionScope | None = None,
 ) -> tuple[str, str]:
-    """Resolve and validate a single execution scope against the platform."""
+    """Resolve and validate a single execution scope against the platform.
+
+    When *scope* is provided and no explicit system/framework flags override it,
+    the pre-validated scope is returned immediately without hitting the platform
+    API.  This makes parallel agent runs safe — each subtask carries its own
+    resolved scope instead of reading shared config.
+    """
+    if scope is not None and system is None and framework is None:
+        return scope.system_id, scope.framework_id
+
     from pretorin.client.api import PretorianClientError
     from pretorin.workflows.compliance_updates import resolve_system
 

@@ -7,6 +7,7 @@ import sys
 from typing import Any
 
 from pretorin.client.api import PretorianClient
+from pretorin.scope import ExecutionScope
 
 
 class ComplianceAgent:
@@ -46,6 +47,7 @@ class ComplianceAgent:
         mcp_servers: list[Any] | None = None,
         max_turns: int = 15,
         stream: bool = True,
+        scope: ExecutionScope | None = None,
     ) -> str:
         """Run the agent with a message and optional skill.
 
@@ -71,7 +73,7 @@ class ComplianceAgent:
         from pretorin.agent.tools import create_platform_tools, to_function_tool
 
         # Build platform tools
-        platform_tools = create_platform_tools(self.client)
+        platform_tools = create_platform_tools(self.client, scope=scope)
         function_tools = [to_function_tool(t) for t in platform_tools]
 
         # Build system prompt

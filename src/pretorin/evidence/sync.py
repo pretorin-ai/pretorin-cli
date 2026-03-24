@@ -32,11 +32,14 @@ class SyncResult:
 class EvidenceSync:
     """Syncs local evidence files to the Pretorin platform."""
 
-    def __init__(self, evidence_dir: Path | None = None) -> None:
-        from pretorin.client.config import Config
+    def __init__(self, evidence_dir: Path | None = None, system_id: str | None = None) -> None:
+        if system_id:
+            self._system_id = system_id
+        else:
+            from pretorin.client.config import Config
 
-        config = Config()
-        self._system_id = config.active_system_id or ""
+            config = Config()
+            self._system_id = config.active_system_id or ""
         if not self._system_id:
             raise ValueError("No active system set. Run: pretorin context set --system <id>")
         self.writer = EvidenceWriter(evidence_dir)
