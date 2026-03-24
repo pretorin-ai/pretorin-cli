@@ -1,9 +1,13 @@
 """Configuration CLI commands for Pretorin."""
 
+import asyncio
+
 import typer
 from rich import print as rprint
 from rich.table import Table
 
+from pretorin.client.api import AuthenticationError, PretorianClient, PretorianClientError
+from pretorin.client.auth import _derive_model_api_base_url, store_credentials
 from pretorin.client.config import (
     CONFIG_FILE,
     ENV_API_BASE_URL,
@@ -49,7 +53,45 @@ def config_set(
         raise typer.Exit(1)
 
     config = Config()
-    config.set(key, value)
+
+    # Platform URL changes require re-authentication
+    if key in {"api_base_url", "platform_api_base_url"}:
+        previous = config.platform_api_base_url
+        if value.rstrip("/") != previous.rstrip("/"):
+            rprint(f"[#FF9010]→[/#FF9010] Changing API endpoint to: {value}")
+            rprint("[dim]A new API key is required for this endpoint.[/dim]\n")
+            api_key = typer.prompt("Enter your API key for the new endpoint", hide_input=True, default="")
+            if not api_key:
+                rprint("[#FF9010]→[/#FF9010] API key is required. Aborting.")
+                raise typer.Exit(1)
+
+            async def _validate_and_store() -> None:
+                client = PretorianClient(api_key=api_key, api_base_url=value)
+                try:
+                    await client.validate_api_key()
+                    store_credentials(api_key, value)
+                    rprint(f"\n[#95D7E0]✓[/#95D7E0] Authenticated and switched to {value}")
+                    model_url = _derive_model_api_base_url(value)
+                    rprint(f"[#95D7E0]✓[/#95D7E0] Model API URL set to {model_url}")
+                except AuthenticationError as e:
+                    rprint(f"\n[#FF9010]→[/#FF9010] Authentication failed: {e.message}")
+                    rprint("[dim]Endpoint not changed.[/dim]")
+                    raise typer.Exit(1)
+                except PretorianClientError as e:
+                    rprint(f"\n[#FF9010]→[/#FF9010] {e.message}")
+                    rprint("[dim]Endpoint not changed.[/dim]")
+                    raise typer.Exit(1)
+                finally:
+                    await client.close()
+
+            asyncio.run(_validate_and_store())
+            return
+
+    # Use property setters for known URL keys to keep config consistent
+    if key == "model_api_base_url":
+        config.model_api_base_url = value
+    else:
+        config.set(key, value)
     rprint(f"[#95D7E0]✓[/#95D7E0] Set {key} = {value}")
 
 
