@@ -19,7 +19,16 @@ app = typer.Typer(
 
 ROMEBOT_CONTROL = "[#EAB536]\\[°□°][/#EAB536]"
 
-_VALID_STATUSES = {"implemented", "partial", "planned", "not_started", "not_applicable"}
+_VALID_STATUSES = {
+    "implemented",
+    "partially_implemented",
+    "planned",
+    "in_progress",
+    "ready_to_approve",
+    "not_started",
+    "not_applicable",
+    "inherited",
+}
 
 
 @app.command("status")
@@ -27,7 +36,10 @@ def control_status(
     control_id: str = typer.Argument(..., help="Control ID (e.g., ac-02)"),
     status: str = typer.Argument(
         ...,
-        help="New status: implemented, partial, planned, not_started, not_applicable",
+        help=(
+            "New status: implemented, partially_implemented, planned, in_progress, "
+            "ready_to_approve, not_started, not_applicable, inherited"
+        ),
     ),
     framework_id: str | None = typer.Option(None, "--framework-id", "-f", help="Framework ID."),
     system: str | None = typer.Option(None, "--system", "-s", help="System name or ID."),

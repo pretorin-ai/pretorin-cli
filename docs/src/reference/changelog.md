@@ -2,6 +2,16 @@
 
 All notable changes to the Pretorin CLI are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.7] - 2026-03-25
+
+### Fixed
+- Aligned CLI control status validation with the live platform status enum set, including `partially_implemented`
+- Aligned MCP control status validation with the live platform status enum set to match public API behavior
+- Synced package version metadata and release notes so PyPI builds publish a consistent CLI version
+
+### Changed
+- Updated CLI and MCP coverage tests to reflect the platform control status contract used by public control workflows
+
 ## [0.8.7] - 2026-03-23
 
 ### Added

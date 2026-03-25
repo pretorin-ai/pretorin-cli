@@ -38,7 +38,16 @@ VALID_EVIDENCE_TYPES = {
 }
 VALID_SEVERITIES = {"critical", "high", "medium", "low", "info"}
 VALID_EVENT_TYPES = {"security_scan", "configuration_change", "access_review", "compliance_check"}
-VALID_CONTROL_STATUSES = {"implemented", "partial", "planned", "not_started", "not_applicable"}
+VALID_CONTROL_STATUSES = {
+    "implemented",
+    "partially_implemented",
+    "planned",
+    "in_progress",
+    "ready_to_approve",
+    "not_started",
+    "not_applicable",
+    "inherited",
+}
 
 _CONTROL_ID_DESCRIPTION = (
     "The control ID. Use canonical IDs from list_controls. "
