@@ -98,7 +98,15 @@ def test_control_status_json_mode() -> None:
     client.update_control_status = AsyncMock(return_value={"updated": True})
 
     result = _run_with_mock_client(
-        ["--json", "control", "status", "ac-02", "partial", "--system", "Primary"],
+        [
+            "--json",
+            "control",
+            "status",
+            "ac-02",
+            "partially_implemented",
+            "--system",
+            "Primary",
+        ],
         client,
     )
 
@@ -107,7 +115,7 @@ def test_control_status_json_mode() -> None:
     assert payload["system_id"] == "sys-1"
     assert payload["system_name"] == "Primary"
     assert payload["control_id"] == "ac-02"
-    assert payload["status"] == "partial"
+    assert payload["status"] == "partially_implemented"
     assert payload["result"] == {"updated": True}
 
 
@@ -143,7 +151,7 @@ def _mock_control_context() -> MagicMock:
     ctx = MagicMock()
     ctx.control_id = "ac-02"
     ctx.title = "Account Management"
-    ctx.status = "partial"
+    ctx.status = "partially_implemented"
     ctx.statement = "The organization manages information system accounts."
     ctx.objectives = ["Objective A", "Objective B"]
     ctx.guidance = "Follow NIST SP 800-53 guidance for account management."
@@ -152,7 +160,7 @@ def _mock_control_context() -> MagicMock:
     ctx.model_dump.return_value = {
         "control_id": "ac-02",
         "title": "Account Management",
-        "status": "partial",
+        "status": "partially_implemented",
         "statement": "The organization manages information system accounts.",
         "objectives": ["Objective A", "Objective B"],
         "guidance": "Follow NIST SP 800-53 guidance for account management.",
@@ -176,7 +184,7 @@ def test_control_context_normal_mode() -> None:
     assert "Primary" in result.output
     assert "AC-02" in result.output
     assert "Account Management" in result.output
-    assert "partial" in result.output
+    assert "partially_implemented" in result.output
     assert "manages information system accounts" in result.output
     assert "Objective A" in result.output
     assert "Objective B" in result.output
@@ -208,7 +216,7 @@ def test_control_context_json_mode() -> None:
     assert payload["framework_id"] == "nist-800-53-r5"
     assert payload["control_id"] == "ac-02"
     assert payload["title"] == "Account Management"
-    assert payload["status"] == "partial"
+    assert payload["status"] == "partially_implemented"
 
 
 # =============================================================================

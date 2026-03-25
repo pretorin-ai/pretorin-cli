@@ -463,7 +463,7 @@ class TestHandleGetControlImplementation:
 
         impl = ControlImplementationResponse(
             control_id="ac-02",
-            status="partial",
+            status="partially_implemented",
             implementation_narrative="In progress.",
             evidence_count=2,
             notes=[{"content": "Reviewing access logs"}],
@@ -484,5 +484,5 @@ class TestHandleGetControlImplementation:
         assert isinstance(result, list)
         text = _result_text(result)
         assert "ac-02" in text
-        assert "partial" in text
+        assert "partially_implemented" in text
         assert "2" in text
