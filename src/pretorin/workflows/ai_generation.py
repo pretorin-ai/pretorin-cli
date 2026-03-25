@@ -3,13 +3,37 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 from pretorin.cli.context import resolve_execution_context
 from pretorin.client import PretorianClient
 from pretorin.client.api import PretorianClientError
+from pretorin.client.config import Config
 from pretorin.utils import normalize_control_id
+
+logger = logging.getLogger(__name__)
+
+
+async def _ensure_org_model_cached(client: PretorianClient) -> None:
+    """Fetch the org's CLI model from the platform and cache it on Config.
+
+    This is a best-effort call — if it fails (e.g. no API token, network
+    error, old server without the endpoint), we silently fall back to the
+    local config / default.
+    """
+    config = Config()
+    if config._org_cli_model is not None:
+        return  # already cached this session
+    try:
+        data = await client.get_org_ai_settings()
+        cli_model = data.get("cli_model")
+        if cli_model:
+            config.set_org_cli_model(cli_model)
+            logger.debug("Using org CLI model from platform: %s", cli_model)
+    except Exception:
+        logger.debug("Could not fetch org AI settings, using local config")
 
 
 def _strip_json_fence(text: str) -> str:
@@ -100,6 +124,10 @@ async def draft_control_artifacts(
 ) -> dict[str, Any]:
     """Generate read-only narrative and evidence-gap drafts for a control."""
     from pretorin.agent.codex_agent import CodexAgent
+
+    # Pre-fetch org model setting so CodexAgent picks it up via Config
+    if model is None:
+        await _ensure_org_model_cached(client)
 
     normalized_control_id = normalize_control_id(control_id)
     system_id, resolved_framework_id = await resolve_execution_context(
