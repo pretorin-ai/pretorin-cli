@@ -36,6 +36,9 @@ def _as_bool(value: Any) -> bool:
 class Config:
     """Manages Pretorin CLI configuration."""
 
+    # Class-level cache so all Config instances share the fetched org model.
+    _org_cli_model: str | None = None
+
     def __init__(self) -> None:
         self._config: dict[str, Any] = {}
         self._load()
@@ -225,9 +228,28 @@ class Config:
 
     @property
     def openai_model(self) -> str:
-        """Get the OpenAI model (env var takes precedence)."""
+        """Get the OpenAI model.
+
+        Precedence:
+        1. ``OPENAI_MODEL`` env var
+        2. Local ``openai_model`` config key
+        3. Org AI settings fetched from the platform (cached)
+        4. ``"gpt-4o"`` default
+        """
         env = os.environ.get(ENV_OPENAI_MODEL)
-        return env if env else self.get("openai_model", "gpt-4o")
+        if env:
+            return env
+        local = self.get("openai_model")
+        if local:
+            return local
+        if self._org_cli_model is not None:
+            return self._org_cli_model
+        return "gpt-4o"
+
+    @classmethod
+    def set_org_cli_model(cls, model: str) -> None:
+        """Cache the org's CLI model fetched from the platform API."""
+        cls._org_cli_model = model
 
     @property
     def codex_home(self) -> Path:

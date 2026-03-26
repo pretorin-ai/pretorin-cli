@@ -322,6 +322,8 @@ class TestOpenAIProperties:
         assert cfg2.openai_model == "gpt-3.5-turbo"
 
     def test_openai_model_default_is_gpt4o(self, isolated_config: Path):
+        # Reset class-level cache that may leak from other tests
+        Config._org_cli_model = None
         cfg = Config()
         assert cfg.openai_model == "gpt-4o"
 

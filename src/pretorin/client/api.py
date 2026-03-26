@@ -972,3 +972,13 @@ class PretorianClient:
             json=payload,
         )
         return data
+
+    # ---- AI Settings ----
+
+    async def get_org_ai_settings(self) -> dict[str, Any]:
+        """Fetch the organization's AI model settings.
+
+        Returns:
+            Dict with ``cli_model`` and ``default_model`` keys.
+        """
+        return await self._request("GET", "/ai-settings")
