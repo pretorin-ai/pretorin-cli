@@ -57,7 +57,7 @@ def _derive_model_api_base_url(api_base_url: str) -> str:
         if path.endswith(suffix):
             path = path[: -len(suffix)]
             break
-    normalized_path = f"{path}/v1" if path else "/v1"
+    normalized_path = f"{path}/api/v1/public/model" if path else "/api/v1/public/model"
     return urlunsplit((parsed.scheme, parsed.netloc, normalized_path, "", ""))
 
 

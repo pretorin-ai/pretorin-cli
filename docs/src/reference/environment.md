@@ -9,7 +9,7 @@ Environment variables override stored configuration values.
 | `PRETORIN_API_KEY` | API key for platform access. Overrides `api_key` in config file. | — |
 | `PRETORIN_PLATFORM_API_BASE_URL` | Platform REST API base URL | `https://platform.pretorin.com/api/v1/public` |
 | `PRETORIN_API_BASE_URL` | Backward-compatible alias for `PRETORIN_PLATFORM_API_BASE_URL` | — |
-| `PRETORIN_MODEL_API_BASE_URL` | Model API URL for agent runtime | `https://platform.pretorin.com/v1` |
+| `PRETORIN_MODEL_API_BASE_URL` | Model API URL for agent runtime | `https://platform.pretorin.com/api/v1/public/model` |
 
 ## Agent Runtime
 

@@ -34,7 +34,7 @@ Use this setup when you want `pretorin agent run` to call Pretorin-hosted model 
 pretorin login
 
 # 2. Optional: custom/self-hosted Pretorin model endpoint
-pretorin config set model_api_base_url https://platform.pretorin.com/v1
+pretorin config set model_api_base_url https://platform.pretorin.com/api/v1/public/model
 
 # 3. Validate runtime
 pretorin agent doctor

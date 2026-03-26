@@ -509,7 +509,7 @@ Use this setup when you want `pretorin agent run` to call Pretorin-hosted `/v1` 
 pretorin login
 
 # 2) Optional: custom/self-hosted Pretorin model endpoint
-pretorin config set model_api_base_url https://platform.pretorin.com/v1
+pretorin config set model_api_base_url https://platform.pretorin.com/api/v1/public/model
 
 # 3) Validate runtime
 pretorin agent doctor
@@ -591,7 +591,7 @@ $ pretorin config path
 | `PRETORIN_API_KEY` | API key (overrides stored config) |
 | `PRETORIN_PLATFORM_API_BASE_URL` | Platform REST API URL (default: `https://platform.pretorin.com/api/v1/public`) |
 | `PRETORIN_API_BASE_URL` | Backward-compatible alias for `PRETORIN_PLATFORM_API_BASE_URL` |
-| `PRETORIN_MODEL_API_BASE_URL` | Model API URL for agent/harness flows (default: `https://platform.pretorin.com/v1`) |
+| `PRETORIN_MODEL_API_BASE_URL` | Model API URL for agent/harness flows (default: `https://platform.pretorin.com/api/v1/public/model`) |
 | `OPENAI_API_KEY` | Optional model key override for the agent runtime |
 
 ## Utilities

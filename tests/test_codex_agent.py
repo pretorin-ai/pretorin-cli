@@ -40,7 +40,7 @@ class TestCodexAgent:
     def test_resolves_api_key_from_env(self, mock_config_cls: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
-        mock_config.model_api_base_url = "https://example.com/v1"
+        mock_config.model_api_base_url = "https://example.com/api/v1/public/model"
         mock_config_cls.return_value = mock_config
 
         monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-test")
@@ -55,7 +55,7 @@ class TestCodexAgent:
     ) -> None:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
-        mock_config.model_api_base_url = "https://example.com/v1"
+        mock_config.model_api_base_url = "https://example.com/api/v1/public/model"
         mock_config.api_key = None
         mock_config.openai_api_key = "sk-config-openai"
         mock_config_cls.return_value = mock_config
@@ -68,7 +68,7 @@ class TestCodexAgent:
     def test_raises_when_no_api_key(self, mock_config_cls: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
-        mock_config.model_api_base_url = "https://example.com/v1"
+        mock_config.model_api_base_url = "https://example.com/api/v1/public/model"
         mock_config.openai_api_key = None
         mock_config_cls.return_value = mock_config
 
@@ -84,7 +84,7 @@ class TestCodexAgent:
     ) -> None:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
-        mock_config.model_api_base_url = "https://example.com/v1"
+        mock_config.model_api_base_url = "https://example.com/api/v1/public/model"
         mock_config.api_key = "ptn-platform-key"
         mock_config.openai_api_key = None
         mock_config_cls.return_value = mock_config
@@ -97,7 +97,7 @@ class TestCodexAgent:
     def test_model_override(self, mock_config_cls: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
-        mock_config.model_api_base_url = "https://example.com/v1"
+        mock_config.model_api_base_url = "https://example.com/api/v1/public/model"
         mock_config_cls.return_value = mock_config
 
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
@@ -108,7 +108,7 @@ class TestCodexAgent:
     def test_base_url_override(self, mock_config_cls: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
-        mock_config.model_api_base_url = "https://default.example.com/v1"
+        mock_config.model_api_base_url = "https://default.example.com/api/v1/public/model"
         mock_config_cls.return_value = mock_config
 
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
@@ -119,7 +119,7 @@ class TestCodexAgent:
     def test_build_prompt_basic(self, mock_config_cls: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
-        mock_config.model_api_base_url = "https://example.com/v1"
+        mock_config.model_api_base_url = "https://example.com/api/v1/public/model"
         mock_config_cls.return_value = mock_config
 
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
@@ -134,7 +134,7 @@ class TestCodexAgent:
     def test_build_prompt_with_skill(self, mock_config_cls: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
-        mock_config.model_api_base_url = "https://example.com/v1"
+        mock_config.model_api_base_url = "https://example.com/api/v1/public/model"
         mock_config_cls.return_value = mock_config
 
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
@@ -148,7 +148,7 @@ class TestCodexAgent:
     def test_build_prompt_with_invalid_skill(self, mock_config_cls: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
-        mock_config.model_api_base_url = "https://example.com/v1"
+        mock_config.model_api_base_url = "https://example.com/api/v1/public/model"
         mock_config_cls.return_value = mock_config
 
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
@@ -163,7 +163,7 @@ class TestCodexAgent:
     def test_api_key_explicit_override(self, mock_config_cls: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
-        mock_config.model_api_base_url = "https://example.com/v1"
+        mock_config.model_api_base_url = "https://example.com/api/v1/public/model"
         mock_config_cls.return_value = mock_config
 
         monkeypatch.setenv("OPENAI_API_KEY", "sk-env")
@@ -177,7 +177,7 @@ def _make_agent(monkeypatch: pytest.MonkeyPatch) -> CodexAgent:
     with patch("pretorin.agent.codex_agent.Config") as mock_config_cls:
         mock_config = MagicMock()
         mock_config.openai_model = "gpt-4o"
-        mock_config.model_api_base_url = "https://example.com/v1"
+        mock_config.model_api_base_url = "https://example.com/api/v1/public/model"
         mock_config_cls.return_value = mock_config
         runtime = MagicMock()
         return CodexAgent(runtime=runtime)
@@ -221,7 +221,7 @@ class TestCodexAgentRun:
         agent.runtime.ensure_installed.assert_called_once()
         agent.runtime.build_env.assert_called_once_with(
             api_key="sk-test",
-            base_url="https://example.com/v1",
+            base_url="https://example.com/api/v1/public/model",
         )
         agent.runtime.write_config.assert_called_once()
 

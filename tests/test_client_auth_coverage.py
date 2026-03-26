@@ -64,11 +64,11 @@ def test_store_credentials_with_public_url_sets_matching_model_url(isolated_conf
     store_credentials("my-key", api_base_url="https://custom.example.com/api/v1/public")
 
     cfg = config_module.Config()
-    assert cfg.model_api_base_url == "https://custom.example.com/v1"
+    assert cfg.model_api_base_url == "https://custom.example.com/api/v1/public/model"
 
 
 def test_derive_model_api_base_url_handles_non_api_root() -> None:
-    assert _derive_model_api_base_url("https://custom.example.com") == "https://custom.example.com/v1"
+    assert _derive_model_api_base_url("https://custom.example.com") == "https://custom.example.com/api/v1/public/model"
 
 
 def test_store_credentials_without_url_does_not_overwrite_default(isolated_config: Path) -> None:
@@ -94,7 +94,7 @@ def test_store_credentials_clears_active_context_when_api_key_changes(isolated_c
     cfg.active_system_name = "Local System"
     cfg.active_framework_id = "fedramp-moderate"
     cfg.api_base_url = "http://localhost:8000/api/v1/public"
-    cfg.model_api_base_url = "http://localhost:8000/v1"
+    cfg.model_api_base_url = "http://localhost:8000/api/v1/public/model"
     cfg.api_key = "old-key"
 
     store_credentials("new-key", api_base_url="https://platform.pretorin.com/api/v1/public")
@@ -111,7 +111,7 @@ def test_store_credentials_clears_active_context_when_api_url_changes(isolated_c
     cfg.active_system_name = "Local System"
     cfg.active_framework_id = "fedramp-moderate"
     cfg.api_base_url = "http://localhost:8000/api/v1/public"
-    cfg.model_api_base_url = "http://localhost:8000/v1"
+    cfg.model_api_base_url = "http://localhost:8000/api/v1/public/model"
     cfg.api_key = "same-key"
 
     store_credentials("same-key", api_base_url="https://platform.pretorin.com/api/v1/public")

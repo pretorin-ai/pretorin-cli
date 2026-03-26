@@ -43,7 +43,7 @@ The config file is JSON:
 {
   "api_key": "pretorin_...",
   "api_base_url": "https://platform.pretorin.com/api/v1/public",
-  "model_api_base_url": "https://platform.pretorin.com/v1",
+  "model_api_base_url": "https://platform.pretorin.com/api/v1/public/model",
   "active_system": "My Application",
   "active_framework": "nist-800-53-r5",
   "disable_update_check": false

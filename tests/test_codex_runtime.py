@@ -105,7 +105,7 @@ class TestCodexRuntime:
         config_path = runtime.write_config(
             model="gpt-4o",
             provider_name="pretorin",
-            base_url="https://platform.pretorin.com/v1",
+            base_url="https://platform.pretorin.com/api/v1/public/model",
             env_key="OPENAI_API_KEY",
         )
 
@@ -114,7 +114,7 @@ class TestCodexRuntime:
 
         content = config_path.read_text()
         assert 'model_provider = "pretorin"' in content
-        assert 'base_url = "https://platform.pretorin.com/v1"' in content
+        assert 'base_url = "https://platform.pretorin.com/api/v1/public/model"' in content
         assert 'env_key = "OPENAI_API_KEY"' in content
         assert "[mcp_servers.pretorin]" in content
         assert 'command = "pretorin"' in content

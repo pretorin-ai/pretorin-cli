@@ -55,7 +55,7 @@ pretorin login
 2. Optional: point model traffic to a custom/self-hosted Pretorin endpoint:
 
 ```bash
-pretorin config set model_api_base_url https://platform.pretorin.com/v1
+pretorin config set model_api_base_url https://platform.pretorin.com/api/v1/public/model
 ```
 
 3. Verify runtime setup:
@@ -183,7 +183,7 @@ Credentials are stored at `~/.pretorin/config.json`.
 | `PRETORIN_API_KEY` | API key for platform access (overrides stored config) |
 | `PRETORIN_PLATFORM_API_BASE_URL` | Platform REST API base URL (`/api/v1/public`) |
 | `PRETORIN_API_BASE_URL` | Backward-compatible alias for `PRETORIN_PLATFORM_API_BASE_URL` |
-| `PRETORIN_MODEL_API_BASE_URL` | Model API base URL used by agent/harness flows (default: `https://platform.pretorin.com/v1`) |
+| `PRETORIN_MODEL_API_BASE_URL` | Model API base URL used by agent/harness flows (default: `https://platform.pretorin.com/api/v1/public/model`) |
 | `OPENAI_API_KEY` | Optional model key override for agent runtime |
 
 ## Documentation
