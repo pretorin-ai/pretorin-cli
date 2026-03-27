@@ -726,7 +726,10 @@ async def list_tools() -> list[Tool]:
                 "type": "object",
                 "properties": {
                     "system_id": system_id_property(),
-                    "job_id": {"type": "string", "description": "Job ID from trigger_scope_generation or trigger_scope_review"},
+                    "job_id": {
+                        "type": "string",
+                        "description": "Job ID from trigger_scope_generation or trigger_scope_review",
+                    },
                 },
                 "required": ["system_id", "job_id"],
             },
@@ -812,7 +815,10 @@ async def list_tools() -> list[Tool]:
                 "type": "object",
                 "properties": {
                     "policy_id": {"type": "string", "description": "Organization policy ID"},
-                    "job_id": {"type": "string", "description": "Job ID from trigger_policy_generation or trigger_policy_review"},
+                    "job_id": {
+                        "type": "string",
+                        "description": "Job ID from trigger_policy_generation or trigger_policy_review",
+                    },
                 },
                 "required": ["policy_id", "job_id"],
             },

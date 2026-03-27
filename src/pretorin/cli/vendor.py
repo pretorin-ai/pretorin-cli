@@ -168,7 +168,9 @@ def vendor_upload_doc(
     name: str = typer.Option(None, "--name", "-n", help="Document display name"),
     description: str = typer.Option(None, "--description", "-d", help="Document description"),
     attestation_type: str = typer.Option(
-        "vendor_provided", "--attestation-type", help="Attestation type: self_attested, third_party_attestation, vendor_provided"
+        "vendor_provided",
+        "--attestation-type",
+        help="Attestation type: self_attested, third_party_attestation, vendor_provided",
     ),
 ) -> None:
     """Upload a vendor evidence document (SOC 2, CRM, FedRAMP package, etc)."""
@@ -191,7 +193,8 @@ def vendor_upload_doc(
         if is_json_mode():
             print_json(result)
             return
-        rprint(f"[green]Document uploaded:[/green] {result.get('id', '')} - {result.get('name', os.path.basename(file_path))}")
+        doc_name = result.get("name", os.path.basename(file_path))
+        rprint(f"[green]Document uploaded:[/green] {result.get('id', '')} - {doc_name}")
     asyncio.run(_run())
 
 
