@@ -62,7 +62,7 @@ class TestToolListing:
             "pretorin_get_control_implementation",
         ]
 
-        assert len(tools) == 29
+        assert len(tools) == 64
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 
