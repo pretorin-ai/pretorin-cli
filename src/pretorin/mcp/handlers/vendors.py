@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from mcp.types import TextContent
+from mcp.types import CallToolResult, TextContent
 
 from pretorin.client import PretorianClient
 from pretorin.mcp.helpers import format_error, format_json, require
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 async def handle_list_vendors(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the list_vendors tool."""
     vendors = await client.list_vendors()
     return format_json({"total": len(vendors), "vendors": vendors})
@@ -26,7 +26,7 @@ async def handle_list_vendors(
 async def handle_create_vendor(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the create_vendor tool."""
     err = require(arguments, "name", "provider_type")
     if err:
@@ -43,7 +43,7 @@ async def handle_create_vendor(
 async def handle_get_vendor(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_vendor tool."""
     err = require(arguments, "vendor_id")
     if err:
@@ -55,7 +55,7 @@ async def handle_get_vendor(
 async def handle_update_vendor(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the update_vendor tool."""
     err = require(arguments, "vendor_id")
     if err:
@@ -72,7 +72,7 @@ async def handle_update_vendor(
 async def handle_delete_vendor(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the delete_vendor tool."""
     err = require(arguments, "vendor_id")
     if err:
@@ -84,7 +84,7 @@ async def handle_delete_vendor(
 async def handle_upload_vendor_document(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the upload_vendor_document tool."""
     err = require(arguments, "vendor_id", "file_path")
     if err:
@@ -102,7 +102,7 @@ async def handle_upload_vendor_document(
 async def handle_list_vendor_documents(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the list_vendor_documents tool."""
     err = require(arguments, "vendor_id")
     if err:
@@ -114,7 +114,7 @@ async def handle_list_vendor_documents(
 async def handle_link_evidence_to_vendor(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the link_evidence_to_vendor tool."""
     err = require(arguments, "evidence_id")
     if err:
@@ -130,7 +130,7 @@ async def handle_link_evidence_to_vendor(
 async def handle_get_control_responsibility(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_control_responsibility tool."""
     err = require(arguments, "system_id", "control_id", "framework_id")
     if err:
@@ -146,7 +146,7 @@ async def handle_get_control_responsibility(
 async def handle_set_control_responsibility(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the set_control_responsibility tool."""
     err = require(arguments, "system_id", "control_id", "framework_id", "responsibility_mode")
     if err:
@@ -165,7 +165,7 @@ async def handle_set_control_responsibility(
 async def handle_remove_control_responsibility(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the remove_control_responsibility tool."""
     err = require(arguments, "system_id", "control_id", "framework_id")
     if err:
@@ -185,7 +185,7 @@ async def handle_remove_control_responsibility(
 async def handle_get_stale_edges(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_stale_edges tool."""
     err = require(arguments, "system_id")
     if err:
@@ -197,7 +197,7 @@ async def handle_get_stale_edges(
 async def handle_sync_stale_edges(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the sync_stale_edges tool."""
     err = require(arguments, "system_id")
     if err:
@@ -209,7 +209,7 @@ async def handle_sync_stale_edges(
 async def handle_generate_inheritance_narrative(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the generate_inheritance_narrative tool."""
     err = require(arguments, "system_id", "control_id", "framework_id")
     if err:

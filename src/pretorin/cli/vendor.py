@@ -11,6 +11,7 @@ from rich.console import Console
 from rich.table import Table
 
 from pretorin.cli.output import is_json_mode, print_json
+from pretorin.client import PretorianClient
 
 console = Console()
 
@@ -24,15 +25,14 @@ VALID_PROVIDER_TYPES = {"csp", "saas", "managed_service", "internal"}
 VALID_ATTESTATION_TYPES = {"self_attested", "third_party_attestation", "vendor_provided"}
 
 
-def _get_client():
-    from pretorin.client import PretorianClient
+def _get_client() -> PretorianClient:
     return PretorianClient()
 
 
 @app.command("list")
-def vendor_list():
+def vendor_list() -> None:
     """List all vendors for the organization."""
-    async def _run():
+    async def _run() -> None:
         client = _get_client()
         vendors = await client.list_vendors()
         if is_json_mode():
@@ -67,13 +67,13 @@ def vendor_create(
     authorization_level: str = typer.Option(
         None, "--authorization-level", "-a", help="Authorization level (e.g., 'FedRAMP High P-ATO')"
     ),
-):
+) -> None:
     """Create a new vendor entity."""
     if provider_type not in VALID_PROVIDER_TYPES:
         rprint(f"[red]Invalid provider type: {provider_type}. Must be one of: {', '.join(VALID_PROVIDER_TYPES)}[/red]")
         raise typer.Exit(1)
 
-    async def _run():
+    async def _run() -> None:
         client = _get_client()
         result = await client.create_vendor(
             name=name,
@@ -89,9 +89,9 @@ def vendor_create(
 
 
 @app.command("get")
-def vendor_get(vendor_id: str = typer.Argument(..., help="Vendor ID")):
+def vendor_get(vendor_id: str = typer.Argument(..., help="Vendor ID")) -> None:
     """Get vendor details."""
-    async def _run():
+    async def _run() -> None:
         client = _get_client()
         result = await client.get_vendor(vendor_id)
         if is_json_mode():
@@ -113,7 +113,7 @@ def vendor_update(
     description: str = typer.Option(None, "--description", "-d", help="New description"),
     provider_type: str = typer.Option(None, "--type", "-t", help="New provider type"),
     authorization_level: str = typer.Option(None, "--authorization-level", "-a", help="New authorization level"),
-):
+) -> None:
     """Update a vendor's fields."""
     fields = {}
     if name is not None:
@@ -132,7 +132,7 @@ def vendor_update(
         rprint("[yellow]No fields to update. Use --name, --description, --type, or --authorization-level.[/yellow]")
         raise typer.Exit(1)
 
-    async def _run():
+    async def _run() -> None:
         client = _get_client()
         result = await client.update_vendor(vendor_id, **fields)
         if is_json_mode():
@@ -146,7 +146,7 @@ def vendor_update(
 def vendor_delete(
     vendor_id: str = typer.Argument(..., help="Vendor ID"),
     force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
-):
+) -> None:
     """Delete a vendor entity."""
     if not force:
         confirm = typer.confirm(f"Delete vendor {vendor_id}?")
@@ -154,7 +154,7 @@ def vendor_delete(
             rprint("[dim]Cancelled.[/dim]")
             raise typer.Exit(0)
 
-    async def _run():
+    async def _run() -> None:
         client = _get_client()
         await client.delete_vendor(vendor_id)
         rprint(f"[green]Vendor {vendor_id} deleted.[/green]")
@@ -170,7 +170,7 @@ def vendor_upload_doc(
     attestation_type: str = typer.Option(
         "vendor_provided", "--attestation-type", help="Attestation type: self_attested, third_party_attestation, vendor_provided"
     ),
-):
+) -> None:
     """Upload a vendor evidence document (SOC 2, CRM, FedRAMP package, etc)."""
     if not os.path.isfile(file_path):
         rprint(f"[red]File not found: {file_path}[/red]")
@@ -179,7 +179,7 @@ def vendor_upload_doc(
         rprint(f"[red]Invalid attestation type: {attestation_type}[/red]")
         raise typer.Exit(1)
 
-    async def _run():
+    async def _run() -> None:
         client = _get_client()
         result = await client.upload_vendor_document(
             vendor_id=vendor_id,
@@ -196,9 +196,9 @@ def vendor_upload_doc(
 
 
 @app.command("list-docs")
-def vendor_list_docs(vendor_id: str = typer.Argument(..., help="Vendor ID")):
+def vendor_list_docs(vendor_id: str = typer.Argument(..., help="Vendor ID")) -> None:
     """List evidence documents linked to a vendor."""
-    async def _run():
+    async def _run() -> None:
         client = _get_client()
         docs = await client.list_vendor_documents(vendor_id)
         if is_json_mode():

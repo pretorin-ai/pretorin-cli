@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from mcp.types import TextContent
+from mcp.types import CallToolResult, TextContent
 
 from pretorin.client import PretorianClient
 from pretorin.mcp.helpers import (
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 async def handle_get_workflow_state(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_workflow_state tool."""
     err = require(arguments, "system_id", "framework_id")
     if err:
@@ -39,7 +39,7 @@ async def handle_get_workflow_state(
 async def handle_get_pending_scope_questions(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_pending_scope_questions tool."""
     err = require(arguments, "system_id", "framework_id")
     if err:
@@ -52,7 +52,7 @@ async def handle_get_pending_scope_questions(
 async def handle_get_scope_question_detail(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_scope_question_detail tool."""
     err = require(arguments, "system_id", "question_id", "framework_id")
     if err:
@@ -67,7 +67,7 @@ async def handle_get_scope_question_detail(
 async def handle_answer_scope_question(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the answer_scope_question tool."""
     err = require(arguments, "system_id", "question_id", "answer", "framework_id")
     if err:
@@ -85,7 +85,7 @@ async def handle_answer_scope_question(
 async def handle_trigger_scope_generation(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the trigger_scope_generation tool."""
     err = require(arguments, "system_id", "framework_id")
     if err:
@@ -98,7 +98,7 @@ async def handle_trigger_scope_generation(
 async def handle_trigger_scope_review(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the trigger_scope_review tool."""
     err = require(arguments, "system_id", "framework_id")
     if err:
@@ -111,7 +111,7 @@ async def handle_trigger_scope_review(
 async def handle_get_scope_review_results(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_scope_review_results tool."""
     err = require(arguments, "system_id", "job_id")
     if err:
@@ -127,7 +127,7 @@ async def handle_get_scope_review_results(
 async def handle_get_pending_policy_questions(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_pending_policy_questions tool."""
     err = require(arguments, "policy_id")
     if err:
@@ -140,7 +140,7 @@ async def handle_get_pending_policy_questions(
 async def handle_get_policy_question_detail(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_policy_question_detail tool."""
     err = require(arguments, "policy_id", "question_id")
     if err:
@@ -153,7 +153,7 @@ async def handle_get_policy_question_detail(
 async def handle_answer_policy_question(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the answer_policy_question tool."""
     err = require(arguments, "policy_id", "question_id", "answer")
     if err:
@@ -168,7 +168,7 @@ async def handle_answer_policy_question(
 async def handle_trigger_policy_generation(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the trigger_policy_generation tool."""
     err = require(arguments, "policy_id")
     if err:
@@ -183,7 +183,7 @@ async def handle_trigger_policy_generation(
 async def handle_trigger_policy_review(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the trigger_policy_review tool."""
     err = require(arguments, "policy_id")
     if err:
@@ -196,7 +196,7 @@ async def handle_trigger_policy_review(
 async def handle_get_policy_review_results(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_policy_review_results tool."""
     err = require(arguments, "policy_id", "job_id")
     if err:
@@ -209,7 +209,7 @@ async def handle_get_policy_review_results(
 async def handle_get_policy_workflow_state(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_policy_workflow_state tool."""
     err = require(arguments, "policy_id")
     if err:
@@ -225,7 +225,7 @@ async def handle_get_policy_workflow_state(
 async def handle_get_pending_families(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_pending_families tool."""
     err = require(arguments, "system_id", "framework_id")
     if err:
@@ -238,7 +238,7 @@ async def handle_get_pending_families(
 async def handle_get_family_bundle(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_family_bundle tool."""
     err = require(arguments, "system_id", "family_id", "framework_id")
     if err:
@@ -253,7 +253,7 @@ async def handle_get_family_bundle(
 async def handle_trigger_family_review(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the trigger_family_review tool."""
     err = require(arguments, "system_id", "family_id", "framework_id")
     if err:
@@ -268,7 +268,7 @@ async def handle_trigger_family_review(
 async def handle_get_family_review_results(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_family_review_results tool."""
     err = require(arguments, "system_id", "job_id")
     if err:
@@ -284,7 +284,7 @@ async def handle_get_family_review_results(
 async def handle_get_analytics_summary(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_analytics_summary tool."""
     err = require(arguments, "system_id", "framework_id")
     if err:
@@ -297,7 +297,7 @@ async def handle_get_analytics_summary(
 async def handle_get_family_analytics(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_family_analytics tool."""
     err = require(arguments, "system_id", "framework_id")
     if err:
@@ -310,7 +310,7 @@ async def handle_get_family_analytics(
 async def handle_get_policy_analytics(
     client: PretorianClient,
     arguments: dict[str, Any],
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     """Handle the get_policy_analytics tool."""
     err = require(arguments, "policy_id")
     if err:
