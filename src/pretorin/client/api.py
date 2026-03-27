@@ -982,3 +982,309 @@ class PretorianClient:
             Dict with ``cli_model`` and ``default_model`` keys.
         """
         return await self._request("GET", "/ai-settings")
+
+    # =========================================================================
+    # Agentic Workflow Endpoints
+    # =========================================================================
+
+    # --- Workflow Orchestrator ---
+
+    async def get_workflow_state(self, system_id: str, framework_id: str) -> dict[str, Any]:
+        """Get lifecycle state for a system+framework."""
+        return await self._request(
+            "GET",
+            f"/systems/{system_id}/workflow/state",
+            params={"framework_id": framework_id},
+        )
+
+    # --- Scope Workflow ---
+
+    async def get_pending_scope_questions(self, system_id: str, framework_id: str) -> dict[str, Any]:
+        """Get pending scope questions for a system+framework."""
+        return await self._request(
+            "GET",
+            f"/systems/{system_id}/scope/questions/pending",
+            params={"framework_id": framework_id},
+        )
+
+    async def get_scope_question_detail(self, system_id: str, question_id: str, framework_id: str) -> dict[str, Any]:
+        """Get detail for a single scope question."""
+        return await self._request(
+            "GET",
+            f"/systems/{system_id}/scope/questions/{question_id}",
+            params={"framework_id": framework_id},
+        )
+
+    async def answer_scope_question(
+        self, system_id: str, question_id: str, answer: str | None, framework_id: str
+    ) -> dict[str, Any]:
+        """Submit an answer to a scope question."""
+        return await self._request(
+            "PATCH",
+            f"/systems/{system_id}/scope/questions/{question_id}",
+            params={"framework_id": framework_id},
+            json={"answer": answer},
+        )
+
+    async def trigger_scope_generation(self, system_id: str, framework_id: str) -> dict[str, Any]:
+        """Trigger AI scope generation for a system+framework."""
+        return await self._request(
+            "POST",
+            f"/systems/{system_id}/scope/generate",
+            params={"framework_id": framework_id},
+        )
+
+    async def trigger_scope_review(self, system_id: str, framework_id: str) -> dict[str, Any]:
+        """Trigger a scope review job for a system+framework."""
+        return await self._request(
+            "POST",
+            f"/systems/{system_id}/scope/reviews",
+            params={"framework_id": framework_id},
+        )
+
+    async def get_scope_review_results(self, system_id: str, job_id: str) -> dict[str, Any]:
+        """Get results of a scope review job."""
+        return await self._request("GET", f"/systems/{system_id}/scope/reviews/{job_id}")
+
+    # --- Policy Workflow ---
+
+    async def get_pending_policy_questions(self, policy_id: str) -> dict[str, Any]:
+        """Get pending questions for an org policy."""
+        return await self._request("GET", f"/org-policies/{policy_id}/questions/pending")
+
+    async def get_policy_question_detail(self, policy_id: str, question_id: str) -> dict[str, Any]:
+        """Get detail for a single policy question."""
+        return await self._request("GET", f"/org-policies/{policy_id}/questions/{question_id}")
+
+    async def answer_policy_question(self, policy_id: str, question_id: str, answer: str | None) -> dict[str, Any]:
+        """Submit an answer to a policy question."""
+        return await self._request(
+            "PATCH",
+            f"/org-policies/{policy_id}/questions/{question_id}",
+            json={"answer": answer},
+        )
+
+    async def trigger_policy_generation(self, policy_id: str, system_id: str | None = None) -> dict[str, Any]:
+        """Trigger AI policy generation."""
+        params: dict[str, str] = {}
+        if system_id:
+            params["system_id"] = system_id
+        return await self._request(
+            "POST",
+            f"/org-policies/{policy_id}/generate",
+            params=params or None,
+        )
+
+    async def trigger_policy_review(self, policy_id: str) -> dict[str, Any]:
+        """Trigger a policy review job."""
+        return await self._request("POST", f"/org-policies/{policy_id}/reviews")
+
+    async def get_policy_review_results(self, policy_id: str, job_id: str) -> dict[str, Any]:
+        """Get results of a policy review job."""
+        return await self._request("GET", f"/org-policies/{policy_id}/reviews/{job_id}")
+
+    async def get_policy_workflow_state(self, policy_id: str) -> dict[str, Any]:
+        """Get workflow state for an org policy."""
+        return await self._request("GET", f"/org-policies/{policy_id}/workflow-state")
+
+    async def get_policy_analytics(self, policy_id: str) -> dict[str, Any]:
+        """Get analytics for an org policy."""
+        return await self._request("GET", f"/org-policies/{policy_id}/analytics")
+
+    # --- Control Family Workflow ---
+
+    async def get_pending_families(self, system_id: str, framework_id: str) -> dict[str, Any]:
+        """Get pending control families for a system+framework."""
+        return await self._request(
+            "GET",
+            f"/systems/{system_id}/controls/families/pending",
+            params={"framework_id": framework_id},
+        )
+
+    async def get_family_bundle(self, system_id: str, family_id: str, framework_id: str) -> dict[str, Any]:
+        """Get a control family bundle with all controls and context."""
+        return await self._request(
+            "GET",
+            f"/systems/{system_id}/controls/families/{family_id}",
+            params={"framework_id": framework_id},
+        )
+
+    async def trigger_family_review(self, system_id: str, family_id: str, framework_id: str) -> dict[str, Any]:
+        """Trigger a review job for a control family."""
+        return await self._request(
+            "POST",
+            f"/systems/{system_id}/controls/families/{family_id}/review",
+            params={"framework_id": framework_id},
+        )
+
+    async def get_family_review_results(self, system_id: str, job_id: str) -> dict[str, Any]:
+        """Get results of a control family review job."""
+        return await self._request("GET", f"/systems/{system_id}/controls/reviews/{job_id}")
+
+    # --- Analytics ---
+
+    async def get_analytics_summary(self, system_id: str, framework_id: str) -> dict[str, Any]:
+        """Get analytics summary for a system+framework."""
+        return await self._request(
+            "GET",
+            f"/systems/{system_id}/analytics/summary",
+            params={"framework_id": framework_id},
+        )
+
+    async def get_family_analytics(self, system_id: str, framework_id: str) -> dict[str, Any]:
+        """Get per-family analytics for a system+framework."""
+        return await self._request(
+            "GET",
+            f"/systems/{system_id}/analytics/controls/families",
+            params={"framework_id": framework_id},
+        )
+
+    # =========================================================================
+    # Vendor Endpoints
+    # =========================================================================
+
+    async def list_vendors(self) -> list[dict[str, Any]]:
+        """List all vendors for the current organization."""
+        data = await self._request("GET", "/vendors")
+        return data if isinstance(data, list) else data.get("vendors", [])
+
+    async def create_vendor(
+        self,
+        name: str,
+        provider_type: str,
+        description: str | None = None,
+        authorization_level: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a new vendor."""
+        payload: dict[str, Any] = {"name": name, "provider_type": provider_type}
+        if description:
+            payload["description"] = description
+        if authorization_level:
+            payload["authorization_level"] = authorization_level
+        return await self._request("POST", "/vendors", json=payload)
+
+    async def get_vendor(self, vendor_id: str) -> dict[str, Any]:
+        """Get details for a specific vendor."""
+        return await self._request("GET", f"/vendors/{vendor_id}")
+
+    async def update_vendor(self, vendor_id: str, **fields: Any) -> dict[str, Any]:
+        """Update vendor fields."""
+        return await self._request("PATCH", f"/vendors/{vendor_id}", json=fields)
+
+    async def delete_vendor(self, vendor_id: str) -> None:
+        """Delete a vendor."""
+        await self._request("DELETE", f"/vendors/{vendor_id}")
+
+    async def upload_vendor_document(
+        self,
+        vendor_id: str,
+        file_path: str,
+        name: str | None = None,
+        description: str | None = None,
+        attestation_type: str = "vendor_provided",
+        evidence_type: str = "attestation",
+    ) -> dict[str, Any]:
+        """Upload a document to a vendor."""
+        import os
+
+        params: dict[str, str] = {
+            "attestation_type": attestation_type,
+            "evidence_type": evidence_type,
+        }
+        if name:
+            params["name"] = name
+        if description:
+            params["description"] = description
+
+        file_name = os.path.basename(file_path)
+        client = await self._get_client()
+        with open(file_path, "rb") as f:
+            # Use the client directly for multipart upload (no JSON content-type)
+            response = await client.post(
+                f"/vendors/{vendor_id}/documents",
+                params=params,
+                files={"file": (file_name, f)},
+            )
+        if not response.is_success:
+            self._handle_error(response)
+        return response.json()
+
+    async def list_vendor_documents(self, vendor_id: str) -> list[dict[str, Any]]:
+        """List documents for a vendor."""
+        data = await self._request("GET", f"/vendors/{vendor_id}/documents")
+        return data if isinstance(data, list) else data.get("documents", [])
+
+    async def link_evidence_to_vendor(
+        self,
+        evidence_id: str,
+        vendor_id: str | None,
+        attestation_type: str | None = None,
+    ) -> dict[str, Any]:
+        """Link an evidence item to a vendor."""
+        payload: dict[str, Any] = {"vendor_provider_id": vendor_id}
+        if attestation_type:
+            payload["attestation_type"] = attestation_type
+        return await self._request("PATCH", f"/vendors/evidence/{evidence_id}/vendor", json=payload)
+
+    # --- Responsibility / Inheritance ---
+
+    async def get_control_responsibility(self, system_id: str, control_id: str, framework_id: str) -> dict[str, Any]:
+        """Get responsibility assignment for a control."""
+        normalized = self._normalize_control_id(control_id)
+        return await self._request(
+            "GET",
+            f"/systems/{system_id}/controls/{normalized}/responsibility",
+            params={"framework_id": framework_id},
+        )
+
+    async def set_control_responsibility(
+        self,
+        system_id: str,
+        control_id: str,
+        framework_id: str,
+        responsibility_mode: str,
+        source_type: str | None = None,
+        vendor_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Set responsibility assignment for a control."""
+        normalized = self._normalize_control_id(control_id)
+        payload: dict[str, Any] = {"responsibility_mode": responsibility_mode}
+        if source_type:
+            payload["source_type"] = source_type
+        if vendor_id:
+            payload["vendor_provider_id"] = vendor_id
+        return await self._request(
+            "POST",
+            f"/systems/{system_id}/controls/{normalized}/responsibility",
+            params={"framework_id": framework_id},
+            json=payload,
+        )
+
+    async def remove_control_responsibility(self, system_id: str, control_id: str, framework_id: str) -> None:
+        """Remove responsibility assignment for a control."""
+        normalized = self._normalize_control_id(control_id)
+        await self._request(
+            "DELETE",
+            f"/systems/{system_id}/controls/{normalized}/responsibility",
+            params={"framework_id": framework_id},
+        )
+
+    async def get_stale_edges(self, system_id: str) -> list[dict[str, Any]]:
+        """Get stale responsibility edges for a system."""
+        data = await self._request("GET", f"/systems/{system_id}/responsibility/stale")
+        return data if isinstance(data, list) else data.get("stale_edges", [])
+
+    async def sync_stale_edges(self, system_id: str) -> dict[str, Any]:
+        """Sync stale responsibility edges for a system."""
+        return await self._request("POST", f"/systems/{system_id}/responsibility/sync")
+
+    async def generate_inheritance_narrative(
+        self, system_id: str, control_id: str, framework_id: str
+    ) -> dict[str, Any]:
+        """Generate an inheritance narrative for a control."""
+        normalized = self._normalize_control_id(control_id)
+        return await self._request(
+            "POST",
+            f"/systems/{system_id}/controls/{normalized}/responsibility/generate-narrative",
+            params={"framework_id": framework_id},
+        )

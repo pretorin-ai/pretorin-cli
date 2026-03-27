@@ -13,6 +13,10 @@ from pretorin.mcp.prompts import (
     get_control_summary,
     get_framework_guide,
 )
+from pretorin.mcp.prompts.workflow_recipes import (
+    get_workflow_recipe,
+    list_workflow_recipes,
+)
 from pretorin.utils import normalize_control_id
 
 _FRAMEWORK_GUIDES = [
@@ -55,12 +59,33 @@ async def list_resources() -> list[Resource]:
                 )
             )
 
+    # Workflow recipe resources
+    for recipe in list_workflow_recipes():
+        resources.append(
+            Resource(
+                uri=f"workflow://recipe/{recipe['id']}",
+                name=recipe["title"],
+                description=recipe["description"],
+                mimeType="text/markdown",
+            )
+        )
+
     return resources
 
 
 async def read_resource(uri: str) -> str:
     """Read an analysis resource."""
     parsed = urlparse(uri)
+
+    if parsed.scheme == "workflow":
+        resource_type = parsed.netloc
+        path_parts = [p for p in parsed.path.split("/") if p]
+        if resource_type == "recipe" and path_parts:
+            recipe = get_workflow_recipe(path_parts[0])
+            if recipe:
+                return recipe["content"]
+            raise ValueError(f"Unknown workflow recipe: {path_parts[0]}")
+        raise ValueError(f"Unknown workflow resource: {resource_type}")
 
     if parsed.scheme != "analysis":
         raise ValueError(f"Unknown resource scheme: {parsed.scheme}")
