@@ -620,4 +620,595 @@ async def list_tools() -> list[Tool]:
                 "required": ["system_id", "control_id", "framework_id"],
             },
         ),
+        # === Agentic Workflow Tools ===
+        Tool(
+            name="pretorin_get_workflow_state",
+            description=(
+                "Use this FIRST when starting a compliance workflow. Returns the lifecycle state "
+                "for a system+framework: which stage needs work (scope, policies, controls, evidence), "
+                "what the next action is, and progress counts. Lightweight — no content, just status."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "framework_id": {"type": "string", "description": "Framework ID for this workflow context"},
+                },
+                "required": ["system_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_pending_scope_questions",
+            description=(
+                "Use this to see which scope questions still need answers. Returns only unanswered "
+                "questions — much smaller than the full scope dump. Call get_scope_question_detail "
+                "for guidance on a specific question."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "framework_id": {"type": "string", "description": "Framework ID"},
+                },
+                "required": ["system_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_scope_question_detail",
+            description=(
+                "Use this BEFORE answering a specific scope question. Returns guidance, tips, "
+                "example responses, and the current answer for ONE question. Pull only when ready to answer."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "question_id": {"type": "string", "description": "Question ID from the pending list"},
+                    "framework_id": {"type": "string", "description": "Framework ID"},
+                },
+                "required": ["system_id", "question_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_answer_scope_question",
+            description="Answer one scope question. Use get_scope_question_detail first for guidance.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "question_id": {"type": "string", "description": "Question ID to answer"},
+                    "answer": {"type": "string", "description": "The answer text. Set to null to clear."},
+                    "framework_id": {"type": "string", "description": "Framework ID"},
+                },
+                "required": ["system_id", "question_id", "answer", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_trigger_scope_generation",
+            description=(
+                "Trigger AI generation of the scope document from answered questions. Returns a job ID "
+                "for polling. Use AFTER answering scope questions. Poll get_scope_review_results with the "
+                "job_id until status is 'succeeded'."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "framework_id": {"type": "string", "description": "Framework ID"},
+                },
+                "required": ["system_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_trigger_scope_review",
+            description=(
+                "Trigger AI review of scope answers. Returns a job ID for polling. "
+                "Use to check answer quality BEFORE or AFTER generation. "
+                "Poll get_scope_review_results with the job_id."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "framework_id": {"type": "string", "description": "Framework ID"},
+                },
+                "required": ["system_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_scope_review_results",
+            description=(
+                "Poll for scope generation or review results. Returns structured findings with "
+                "severity, affected question IDs, and recommended fixes. Status will be 'queued', "
+                "'running', 'succeeded', or 'failed'. Poll every 2 seconds until done."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "job_id": {"type": "string", "description": "Job ID from trigger_scope_generation or trigger_scope_review"},
+                },
+                "required": ["system_id", "job_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_pending_policy_questions",
+            description=(
+                "Use this to see which policy questions still need answers. Returns only unanswered "
+                "questions — much smaller than the full policy questionnaire dump."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "policy_id": {"type": "string", "description": "Organization policy ID"},
+                },
+                "required": ["policy_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_policy_question_detail",
+            description=(
+                "Use this BEFORE answering a specific policy question. Returns guidance, tips, "
+                "and the current answer for ONE question."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "policy_id": {"type": "string", "description": "Organization policy ID"},
+                    "question_id": {"type": "string", "description": "Question ID from the pending list"},
+                },
+                "required": ["policy_id", "question_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_answer_policy_question",
+            description="Answer one policy question. Use get_policy_question_detail first for guidance.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "policy_id": {"type": "string", "description": "Organization policy ID"},
+                    "question_id": {"type": "string", "description": "Question ID to answer"},
+                    "answer": {"type": "string", "description": "The answer text. Set to null to clear."},
+                },
+                "required": ["policy_id", "question_id", "answer"],
+            },
+        ),
+        Tool(
+            name="pretorin_trigger_policy_generation",
+            description=(
+                "Trigger AI generation of the policy document from answered questions. Returns a job ID. "
+                "Use AFTER answering policy questions. Optionally provide system_id for scope context."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "policy_id": {"type": "string", "description": "Organization policy ID"},
+                    "system_id": {"type": "string", "description": "Optional: system ID for scope context"},
+                },
+                "required": ["policy_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_trigger_policy_review",
+            description=(
+                "Trigger AI review of policy answers/document. Returns a job ID for polling. "
+                "Poll get_policy_review_results with the job_id."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "policy_id": {"type": "string", "description": "Organization policy ID"},
+                },
+                "required": ["policy_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_policy_review_results",
+            description=(
+                "Poll for policy generation or review results. Returns structured findings. "
+                "Status: 'queued', 'running', 'succeeded', or 'failed'. Poll every 2 seconds."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "policy_id": {"type": "string", "description": "Organization policy ID"},
+                    "job_id": {"type": "string", "description": "Job ID from trigger_policy_generation or trigger_policy_review"},
+                },
+                "required": ["policy_id", "job_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_policy_workflow_state",
+            description=(
+                "Get per-policy workflow state: how many questions answered, whether the document "
+                "is generated, review status, and the recommended next action."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "policy_id": {"type": "string", "description": "Organization policy ID"},
+                },
+                "required": ["policy_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_pending_families",
+            description=(
+                "Get control families that need work. Returns family IDs with counts of pending "
+                "vs total controls. Use to decide which family to work on next."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "framework_id": {"type": "string", "description": "Framework ID"},
+                },
+                "required": ["system_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_family_bundle",
+            description=(
+                "Get all controls in a family with their status, narrative presence, evidence presence, "
+                "and notes count. Use to understand the state of a family before working on it."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "family_id": {"type": "string", "description": "Control family ID (e.g., AC, SC, IA)"},
+                    "framework_id": {"type": "string", "description": "Framework ID"},
+                },
+                "required": ["system_id", "family_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_trigger_family_review",
+            description=(
+                "Trigger AI review for all controls in a family. Reviews each control sequentially "
+                "and returns aggregated findings. May take 2-4 minutes for large families. "
+                "Poll get_family_review_results with the job_id."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "family_id": {"type": "string", "description": "Control family ID (e.g., AC)"},
+                    "framework_id": {"type": "string", "description": "Framework ID"},
+                },
+                "required": ["system_id", "family_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_family_review_results",
+            description=(
+                "Poll for family review results. Returns per-control findings with severity, "
+                "affected control IDs, and recommended fixes."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "job_id": {"type": "string", "description": "Job ID from trigger_family_review"},
+                },
+                "required": ["system_id", "job_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_analytics_summary",
+            description=(
+                "Get a full system progress snapshot: scope completion, policy completion, "
+                "control narrative/evidence coverage, and evidence gaps. Lightweight — "
+                "returns counts only, no content. Use to decide what needs attention."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "framework_id": {"type": "string", "description": "Framework ID"},
+                },
+                "required": ["system_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_family_analytics",
+            description=(
+                "Get per-family breakdown: narrative coverage, evidence coverage, open notes, "
+                "status distribution for each control family in scope."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "framework_id": {"type": "string", "description": "Framework ID"},
+                },
+                "required": ["system_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_policy_analytics",
+            description=(
+                "Get per-policy analytics: question completion, document generation status, "
+                "review status. Use to understand one policy's progress."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "policy_id": {"type": "string", "description": "Organization policy ID"},
+                },
+                "required": ["policy_id"],
+            },
+        ),
+        # === Vendor Management Tools ===
+        Tool(
+            name="pretorin_list_vendors",
+            description="List all vendor/provider entities for the organization.",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        ),
+        Tool(
+            name="pretorin_create_vendor",
+            description=(
+                "Create a new vendor entity. Required: name, provider_type"
+                " (csp, saas, managed_service, internal). Optional: description, authorization_level."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Vendor name",
+                    },
+                    "provider_type": {
+                        "type": "string",
+                        "enum": ["csp", "saas", "managed_service", "internal"],
+                        "description": "Type of provider",
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Optional vendor description",
+                    },
+                    "authorization_level": {
+                        "type": "string",
+                        "description": "Optional authorization level (e.g., FedRAMP High P-ATO)",
+                    },
+                },
+                "required": ["name", "provider_type"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_vendor",
+            description="Get detailed information about a specific vendor.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "vendor_id": {
+                        "type": "string",
+                        "description": "Vendor ID",
+                    },
+                },
+                "required": ["vendor_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_update_vendor",
+            description="Update vendor fields (name, description, provider_type, authorization_level).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "vendor_id": {
+                        "type": "string",
+                        "description": "Vendor ID",
+                    },
+                    "name": {"type": "string"},
+                    "description": {"type": "string"},
+                    "provider_type": {
+                        "type": "string",
+                        "enum": ["csp", "saas", "managed_service", "internal"],
+                    },
+                    "authorization_level": {"type": "string"},
+                },
+                "required": ["vendor_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_delete_vendor",
+            description="Delete a vendor entity.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "vendor_id": {
+                        "type": "string",
+                        "description": "Vendor ID",
+                    },
+                },
+                "required": ["vendor_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_upload_vendor_document",
+            description=(
+                "Upload a vendor evidence document (SOC 2 report, CRM, FedRAMP package, etc)."
+                " Provide the file_path on the local filesystem."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "vendor_id": {
+                        "type": "string",
+                        "description": "Vendor ID",
+                    },
+                    "file_path": {
+                        "type": "string",
+                        "description": "Local file path to upload",
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Document display name",
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Document description",
+                    },
+                    "attestation_type": {
+                        "type": "string",
+                        "enum": ["self_attested", "third_party_attestation", "vendor_provided"],
+                        "description": "Default: vendor_provided",
+                    },
+                },
+                "required": ["vendor_id", "file_path"],
+            },
+        ),
+        Tool(
+            name="pretorin_list_vendor_documents",
+            description="List evidence documents linked to a vendor.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "vendor_id": {
+                        "type": "string",
+                        "description": "Vendor ID",
+                    },
+                },
+                "required": ["vendor_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_link_evidence_to_vendor",
+            description="Link existing evidence to a vendor. Set vendor_id to null to unlink.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "evidence_id": {
+                        "type": "string",
+                        "description": "Evidence item ID",
+                    },
+                    "vendor_id": {
+                        "type": "string",
+                        "description": "Vendor ID (null to unlink)",
+                    },
+                    "attestation_type": {
+                        "type": "string",
+                        "enum": ["self_attested", "third_party_attestation", "vendor_provided"],
+                    },
+                },
+                "required": ["evidence_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_control_responsibility",
+            description=(
+                "Get the inheritance/responsibility edge for a control."
+                " Shows if it's inherited, shared, or system-specific."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "control_id": control_id_property(),
+                    "framework_id": {
+                        "type": "string",
+                        "description": "Framework ID",
+                    },
+                },
+                "required": ["system_id", "control_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_set_control_responsibility",
+            description=(
+                "Create or update an inheritance edge for a control."
+                " Set responsibility_mode to 'inherited' or 'shared',"
+                " with source_type and optional vendor_id."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "control_id": control_id_property(),
+                    "framework_id": {
+                        "type": "string",
+                        "description": "Framework ID",
+                    },
+                    "responsibility_mode": {
+                        "type": "string",
+                        "enum": ["inherited", "shared"],
+                        "description": "How this control is handled",
+                    },
+                    "source_type": {
+                        "type": "string",
+                        "enum": ["provider", "internal", "hybrid"],
+                        "description": "Source of the inheritance",
+                    },
+                    "vendor_id": {
+                        "type": "string",
+                        "description": "Optional: vendor providing the inherited control",
+                    },
+                },
+                "required": ["system_id", "control_id", "framework_id", "responsibility_mode"],
+            },
+        ),
+        Tool(
+            name="pretorin_remove_control_responsibility",
+            description="Remove an inheritance edge, making the control system-specific.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "control_id": control_id_property(),
+                    "framework_id": {
+                        "type": "string",
+                        "description": "Framework ID",
+                    },
+                },
+                "required": ["system_id", "control_id", "framework_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_stale_edges",
+            description=(
+                "List controls with stale inheritance — the source narrative changed"
+                " but the inherited control hasn't been updated."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                },
+                "required": ["system_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_sync_stale_edges",
+            description="Bulk sync all stale inherited controls from their source narratives.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                },
+                "required": ["system_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_generate_inheritance_narrative",
+            description=(
+                "AI-generate a grounded inheritance narrative for a control,"
+                " using the vendor's evidence and documentation."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "control_id": control_id_property(),
+                    "framework_id": {
+                        "type": "string",
+                        "description": "Framework ID",
+                    },
+                },
+                "required": ["system_id", "control_id", "framework_id"],
+            },
+        ),
     ]
