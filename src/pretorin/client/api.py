@@ -1228,9 +1228,7 @@ class PretorianClient:
 
     # --- Responsibility / Inheritance ---
 
-    async def get_control_responsibility(
-        self, system_id: str, control_id: str, framework_id: str
-    ) -> dict[str, Any]:
+    async def get_control_responsibility(self, system_id: str, control_id: str, framework_id: str) -> dict[str, Any]:
         """Get responsibility assignment for a control."""
         normalized = self._normalize_control_id(control_id)
         return await self._request(
@@ -1262,9 +1260,7 @@ class PretorianClient:
             json=payload,
         )
 
-    async def remove_control_responsibility(
-        self, system_id: str, control_id: str, framework_id: str
-    ) -> None:
+    async def remove_control_responsibility(self, system_id: str, control_id: str, framework_id: str) -> None:
         """Remove responsibility assignment for a control."""
         normalized = self._normalize_control_id(control_id)
         await self._request(

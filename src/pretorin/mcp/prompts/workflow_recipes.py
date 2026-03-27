@@ -176,7 +176,4 @@ def get_workflow_recipe(recipe_id: str) -> dict[str, str] | None:
 
 def list_workflow_recipes() -> list[dict[str, str]]:
     """List all available workflow recipes."""
-    return [
-        {"id": rid, "title": r["title"], "description": r["description"]}
-        for rid, r in WORKFLOW_RECIPES.items()
-    ]
+    return [{"id": rid, "title": r["title"], "description": r["description"]} for rid, r in WORKFLOW_RECIPES.items()]

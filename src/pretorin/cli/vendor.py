@@ -32,6 +32,7 @@ def _get_client() -> PretorianClient:
 @app.command("list")
 def vendor_list() -> None:
     """List all vendors for the organization."""
+
     async def _run() -> None:
         client = _get_client()
         vendors = await client.list_vendors()
@@ -54,15 +55,14 @@ def vendor_list() -> None:
                 v.get("authorization_level", ""),
             )
         console.print(table)
+
     asyncio.run(_run())
 
 
 @app.command("create")
 def vendor_create(
     name: str = typer.Argument(..., help="Vendor name"),
-    provider_type: str = typer.Option(
-        ..., "--type", "-t", help="Provider type: csp, saas, managed_service, internal"
-    ),
+    provider_type: str = typer.Option(..., "--type", "-t", help="Provider type: csp, saas, managed_service, internal"),
     description: str = typer.Option(None, "--description", "-d", help="Vendor description"),
     authorization_level: str = typer.Option(
         None, "--authorization-level", "-a", help="Authorization level (e.g., 'FedRAMP High P-ATO')"
@@ -85,12 +85,14 @@ def vendor_create(
             print_json(result)
             return
         rprint(f"[green]Vendor created:[/green] {result.get('id', '')} - {result.get('name', '')}")
+
     asyncio.run(_run())
 
 
 @app.command("get")
 def vendor_get(vendor_id: str = typer.Argument(..., help="Vendor ID")) -> None:
     """Get vendor details."""
+
     async def _run() -> None:
         client = _get_client()
         result = await client.get_vendor(vendor_id)
@@ -103,6 +105,7 @@ def vendor_get(vendor_id: str = typer.Argument(..., help="Vendor ID")) -> None:
         rprint(f"  Authorization: {result.get('authorization_level', 'N/A')}")
         if result.get("description"):
             rprint(f"  Description: {result['description']}")
+
     asyncio.run(_run())
 
 
@@ -139,6 +142,7 @@ def vendor_update(
             print_json(result)
             return
         rprint(f"[green]Vendor updated:[/green] {result.get('name', '')}")
+
     asyncio.run(_run())
 
 
@@ -158,6 +162,7 @@ def vendor_delete(
         client = _get_client()
         await client.delete_vendor(vendor_id)
         rprint(f"[green]Vendor {vendor_id} deleted.[/green]")
+
     asyncio.run(_run())
 
 
@@ -195,12 +200,14 @@ def vendor_upload_doc(
             return
         doc_name = result.get("name", os.path.basename(file_path))
         rprint(f"[green]Document uploaded:[/green] {result.get('id', '')} - {doc_name}")
+
     asyncio.run(_run())
 
 
 @app.command("list-docs")
 def vendor_list_docs(vendor_id: str = typer.Argument(..., help="Vendor ID")) -> None:
     """List evidence documents linked to a vendor."""
+
     async def _run() -> None:
         client = _get_client()
         docs = await client.list_vendor_documents(vendor_id)
@@ -223,4 +230,5 @@ def vendor_list_docs(vendor_id: str = typer.Argument(..., help="Vendor ID")) -> 
                 d.get("attestation_type", ""),
             )
         console.print(table)
+
     asyncio.run(_run())

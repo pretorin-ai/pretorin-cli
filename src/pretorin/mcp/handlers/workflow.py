@@ -28,9 +28,7 @@ async def handle_get_workflow_state(
     err = require(arguments, "system_id", "framework_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.get_workflow_state(arguments["system_id"], arguments["framework_id"])
-    )
+    return format_json(await client.get_workflow_state(arguments["system_id"], arguments["framework_id"]))
 
 
 # === Scope Questions ===
@@ -44,9 +42,7 @@ async def handle_get_pending_scope_questions(
     err = require(arguments, "system_id", "framework_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.get_pending_scope_questions(arguments["system_id"], arguments["framework_id"])
-    )
+    return format_json(await client.get_pending_scope_questions(arguments["system_id"], arguments["framework_id"]))
 
 
 async def handle_get_scope_question_detail(
@@ -90,9 +86,7 @@ async def handle_trigger_scope_generation(
     err = require(arguments, "system_id", "framework_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.trigger_scope_generation(arguments["system_id"], arguments["framework_id"])
-    )
+    return format_json(await client.trigger_scope_generation(arguments["system_id"], arguments["framework_id"]))
 
 
 async def handle_trigger_scope_review(
@@ -103,9 +97,7 @@ async def handle_trigger_scope_review(
     err = require(arguments, "system_id", "framework_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.trigger_scope_review(arguments["system_id"], arguments["framework_id"])
-    )
+    return format_json(await client.trigger_scope_review(arguments["system_id"], arguments["framework_id"]))
 
 
 async def handle_get_scope_review_results(
@@ -116,9 +108,7 @@ async def handle_get_scope_review_results(
     err = require(arguments, "system_id", "job_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.get_scope_review_results(arguments["system_id"], arguments["job_id"])
-    )
+    return format_json(await client.get_scope_review_results(arguments["system_id"], arguments["job_id"]))
 
 
 # === Policy Questions ===
@@ -132,9 +122,7 @@ async def handle_get_pending_policy_questions(
     err = require(arguments, "policy_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.get_pending_policy_questions(arguments["policy_id"])
-    )
+    return format_json(await client.get_pending_policy_questions(arguments["policy_id"]))
 
 
 async def handle_get_policy_question_detail(
@@ -145,9 +133,7 @@ async def handle_get_policy_question_detail(
     err = require(arguments, "policy_id", "question_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.get_policy_question_detail(arguments["policy_id"], arguments["question_id"])
-    )
+    return format_json(await client.get_policy_question_detail(arguments["policy_id"], arguments["question_id"]))
 
 
 async def handle_answer_policy_question(
@@ -159,9 +145,7 @@ async def handle_answer_policy_question(
     if err:
         return format_error(err)
     return format_json(
-        await client.answer_policy_question(
-            arguments["policy_id"], arguments["question_id"], arguments["answer"]
-        )
+        await client.answer_policy_question(arguments["policy_id"], arguments["question_id"], arguments["answer"])
     )
 
 
@@ -174,9 +158,7 @@ async def handle_trigger_policy_generation(
     if err:
         return format_error(err)
     return format_json(
-        await client.trigger_policy_generation(
-            arguments["policy_id"], system_id=arguments.get("system_id")
-        )
+        await client.trigger_policy_generation(arguments["policy_id"], system_id=arguments.get("system_id"))
     )
 
 
@@ -188,9 +170,7 @@ async def handle_trigger_policy_review(
     err = require(arguments, "policy_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.trigger_policy_review(arguments["policy_id"])
-    )
+    return format_json(await client.trigger_policy_review(arguments["policy_id"]))
 
 
 async def handle_get_policy_review_results(
@@ -201,9 +181,7 @@ async def handle_get_policy_review_results(
     err = require(arguments, "policy_id", "job_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.get_policy_review_results(arguments["policy_id"], arguments["job_id"])
-    )
+    return format_json(await client.get_policy_review_results(arguments["policy_id"], arguments["job_id"]))
 
 
 async def handle_get_policy_workflow_state(
@@ -214,9 +192,7 @@ async def handle_get_policy_workflow_state(
     err = require(arguments, "policy_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.get_policy_workflow_state(arguments["policy_id"])
-    )
+    return format_json(await client.get_policy_workflow_state(arguments["policy_id"]))
 
 
 # === Family Tools ===
@@ -230,9 +206,7 @@ async def handle_get_pending_families(
     err = require(arguments, "system_id", "framework_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.get_pending_families(arguments["system_id"], arguments["framework_id"])
-    )
+    return format_json(await client.get_pending_families(arguments["system_id"], arguments["framework_id"]))
 
 
 async def handle_get_family_bundle(
@@ -244,9 +218,7 @@ async def handle_get_family_bundle(
     if err:
         return format_error(err)
     return format_json(
-        await client.get_family_bundle(
-            arguments["system_id"], arguments["family_id"], arguments["framework_id"]
-        )
+        await client.get_family_bundle(arguments["system_id"], arguments["family_id"], arguments["framework_id"])
     )
 
 
@@ -259,9 +231,7 @@ async def handle_trigger_family_review(
     if err:
         return format_error(err)
     return format_json(
-        await client.trigger_family_review(
-            arguments["system_id"], arguments["family_id"], arguments["framework_id"]
-        )
+        await client.trigger_family_review(arguments["system_id"], arguments["family_id"], arguments["framework_id"])
     )
 
 
@@ -273,9 +243,7 @@ async def handle_get_family_review_results(
     err = require(arguments, "system_id", "job_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.get_family_review_results(arguments["system_id"], arguments["job_id"])
-    )
+    return format_json(await client.get_family_review_results(arguments["system_id"], arguments["job_id"]))
 
 
 # === Analytics ===
@@ -289,9 +257,7 @@ async def handle_get_analytics_summary(
     err = require(arguments, "system_id", "framework_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.get_analytics_summary(arguments["system_id"], arguments["framework_id"])
-    )
+    return format_json(await client.get_analytics_summary(arguments["system_id"], arguments["framework_id"]))
 
 
 async def handle_get_family_analytics(
@@ -302,9 +268,7 @@ async def handle_get_family_analytics(
     err = require(arguments, "system_id", "framework_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.get_family_analytics(arguments["system_id"], arguments["framework_id"])
-    )
+    return format_json(await client.get_family_analytics(arguments["system_id"], arguments["framework_id"]))
 
 
 async def handle_get_policy_analytics(
@@ -315,6 +279,4 @@ async def handle_get_policy_analytics(
     err = require(arguments, "policy_id")
     if err:
         return format_error(err)
-    return format_json(
-        await client.get_policy_analytics(arguments["policy_id"])
-    )
+    return format_json(await client.get_policy_analytics(arguments["policy_id"]))

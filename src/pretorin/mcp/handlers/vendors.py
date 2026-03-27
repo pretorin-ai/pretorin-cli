@@ -175,11 +175,13 @@ async def handle_remove_control_responsibility(
         control_id=normalize_control_id(arguments["control_id"]),
         framework_id=arguments["framework_id"],
     )
-    return format_json({
-        "status": "removed",
-        "system_id": arguments["system_id"],
-        "control_id": arguments["control_id"],
-    })
+    return format_json(
+        {
+            "status": "removed",
+            "system_id": arguments["system_id"],
+            "control_id": arguments["control_id"],
+        }
+    )
 
 
 async def handle_get_stale_edges(
