@@ -67,7 +67,7 @@ class ComplianceAgent:
         try:
             from agents import Agent, RunConfig, Runner  # noqa: F401
         except ImportError:
-            raise ImportError("Agent features are not installed. Run: pip install 'pretorin[agent]'")
+            raise ImportError("Agent features are not installed. Run: pip install 'pretorin[builtin-agent]'")
 
         from pretorin.agent.skills import get_skill
         from pretorin.agent.tools import create_platform_tools, to_function_tool

@@ -37,7 +37,7 @@ def to_function_tool(tool: ToolDefinition) -> Any:
     try:
         from agents import FunctionTool
     except ImportError:
-        raise ImportError("Agent features are not installed. Run: pip install 'pretorin[agent]'")
+        raise ImportError("Agent features are not installed. Run: pip install 'pretorin[builtin-agent]'")
 
     async def wrapper(ctx: Any, args: str) -> str:
         parsed = json.loads(args) if args else {}

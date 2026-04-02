@@ -127,6 +127,8 @@ class TestRunServer:
         with patch("pretorin.mcp.server.asyncio.run") as mock_run:
             run_server()
             mock_run.assert_called_once()
+            coroutine = mock_run.call_args.args[0]
+            coroutine.close()
 
 
 class TestMainGuard:

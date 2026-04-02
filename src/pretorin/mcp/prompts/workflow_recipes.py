@@ -166,6 +166,92 @@ If evidence shows controls_missing_evidence > 0:
 3. Report the results to the user
 """,
     },
+    "external-campaign-controls": {
+        "title": "External Agent Campaign for Controls",
+        "description": (
+            "Prepare a controls campaign, claim work items, draft proposals with your own agent, "
+            "submit them, and apply them through Pretorin."
+        ),
+        "content": """# Recipe: External Controls Campaign
+
+## Goal
+Use your current agent session and token budget to execute a Pretorin controls
+campaign without using Pretorin's builtin agent.
+
+## Steps
+
+### Step 1: Prepare the campaign
+Call `pretorin_prepare_campaign` with:
+- `domain="controls"`
+- the desired `mode`
+- scope selectors like `system_id`, `framework_id`, `family_id`
+
+The response returns a `checkpoint_path`.
+
+### Step 2: Claim a batch
+Call `pretorin_claim_campaign_items` with:
+- `checkpoint_path`
+- `max_items`
+- `lease_owner`
+
+### Step 3: Draft each item
+For each claimed item:
+1. Call `pretorin_get_campaign_item_context`
+2. Read the instructions and platform context
+3. Draft a JSON proposal in the required controls shape
+4. Call `pretorin_submit_campaign_proposal`
+
+### Step 4: Monitor progress
+Call `pretorin_get_campaign_status` any time to get:
+- counts
+- recent events
+- failures
+- a stable text snapshot for transcript output
+
+### Step 5: Apply
+When proposals look ready:
+Call `pretorin_apply_campaign` with the same `checkpoint_path`.
+
+### Step 6: Verify
+Call `pretorin_get_campaign_status` again and confirm the remaining pending/failed counts.
+""",
+    },
+    "external-campaign-questionnaires": {
+        "title": "External Agent Campaign for Policy or Scope",
+        "description": (
+            "Use Pretorin campaign orchestration with your own Codex, Claude, or MCP-capable agent "
+            "to draft questionnaire proposals and apply them safely."
+        ),
+        "content": """# Recipe: External Questionnaire Campaign
+
+## Goal
+Use Pretorin to prepare and apply questionnaire work while your current agent session does the drafting.
+
+## Steps
+
+### Step 1: Prepare
+Call `pretorin_prepare_campaign` with:
+- `domain="policy"` or `domain="scope"`
+- the desired `mode`
+- selectors such as `policy_ids` or `system_id` + `framework_id`
+
+### Step 2: Claim
+Call `pretorin_claim_campaign_items` with a `lease_owner`.
+
+### Step 3: Draft from item context
+For each claimed item:
+1. Call `pretorin_get_campaign_item_context`
+2. Follow the instructions in the response
+3. Return JSON in the questionnaire proposal shape
+4. Persist it with `pretorin_submit_campaign_proposal`
+
+### Step 4: Apply
+Call `pretorin_apply_campaign` once proposals are ready.
+
+### Step 5: Report
+Use `pretorin_get_campaign_status` to summarize progress and any remaining failures.
+""",
+    },
 }
 
 

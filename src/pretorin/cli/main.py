@@ -12,6 +12,7 @@ from rich.console import Console
 from pretorin import __version__
 from pretorin.cli.agent import app as agent_app
 from pretorin.cli.auth import app as auth_app
+from pretorin.cli.campaign import app as campaign_app
 from pretorin.cli.commands import app as frameworks_app
 from pretorin.cli.config import app as config_app
 from pretorin.cli.context import app as context_app
@@ -154,6 +155,7 @@ def main(
 
 # Add sub-command groups
 app.add_typer(config_app, name="config", help="Manage configuration")
+app.add_typer(campaign_app, name="campaign", help="Workflow-aligned bulk campaign runs")
 app.add_typer(control_app, name="control", help="Control implementation management")
 app.add_typer(context_app, name="context", help="Manage active system/framework context")
 app.add_typer(frameworks_app, name="frameworks", help="Browse compliance frameworks and controls")
