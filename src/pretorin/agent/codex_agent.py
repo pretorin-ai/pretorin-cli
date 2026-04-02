@@ -242,10 +242,7 @@ class CodexAgent:
         try:
             from openai_codex_sdk import Codex  # type: ignore[import-not-found,unused-ignore]
         except ImportError:
-            raise RuntimeError(
-                "Codex agent features are not installed.\n"
-                "Run: pip install 'pretorin[builtin-agent]'"
-            )
+            raise RuntimeError("Codex agent features are not installed.\nRun: pip install 'pretorin[builtin-agent]'")
 
         codex = Codex(
             {

@@ -1017,9 +1017,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_submit_campaign_proposal",
-            description=(
-                "Persist one external-agent proposal onto a prepared campaign item without applying it yet."
-            ),
+            description=("Persist one external-agent proposal onto a prepared campaign item without applying it yet."),
             inputSchema={
                 "type": "object",
                 "properties": {

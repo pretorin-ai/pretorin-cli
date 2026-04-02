@@ -1162,9 +1162,7 @@ async def _policy_item_context(
 ) -> dict[str, Any]:
     questionnaire = await client.get_org_policy_questionnaire(item_id)
     target_ids = (
-        sorted(_policy_question_targets(questionnaire))
-        if checkpoint.identity.get("mode") == "review-fix"
-        else []
+        sorted(_policy_question_targets(questionnaire)) if checkpoint.identity.get("mode") == "review-fix" else []
     )
     instructions = [
         "Use observable facts from the workspace and the persisted Pretorin questionnaire state.",
@@ -1199,9 +1197,7 @@ async def _scope_item_context(
     if target is None:
         raise PretorianClientError(f"Scope question not found: {item_id}")
     target_ids = (
-        sorted(_scope_question_targets(scope))
-        if checkpoint.identity.get("mode") == "review-fix"
-        else [item_id]
+        sorted(_scope_question_targets(scope)) if checkpoint.identity.get("mode") == "review-fix" else [item_id]
     )
     instructions = [
         "Use observable facts from the workspace and the persisted Pretorin scope questionnaire state.",
@@ -1272,11 +1268,7 @@ async def _apply_control_item(
     changed_parts: list[str] = []
     changed = False
 
-    if (
-        request.artifacts in {"narratives", "both"}
-        and proposal.get("narrative_draft")
-        and "narrative" not in receipts
-    ):
+    if request.artifacts in {"narratives", "both"} and proposal.get("narrative_draft") and "narrative" not in receipts:
         await client.update_narrative(
             system_id=system_id,
             control_id=item.item_id,
@@ -1298,9 +1290,7 @@ async def _apply_control_item(
             evidence_type=str(rec.get("evidence_type", "policy_document")),
         )
         for index, rec in enumerate(evidence_recommendations)
-        if isinstance(rec, dict)
-        and request.artifacts in {"evidence", "both"}
-        and index not in existing_indices
+        if isinstance(rec, dict) and request.artifacts in {"evidence", "both"} and index not in existing_indices
     ]
     if batch_items:
         batch_result = await client.create_evidence_batch(system_id, framework_id, batch_items)
