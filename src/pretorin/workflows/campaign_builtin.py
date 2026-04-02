@@ -14,6 +14,7 @@ from pretorin.workflows.campaign import (
     CampaignItemState,
     CampaignPresenter,
     CampaignRunRequest,
+    CampaignRunSummary,
     WorkflowContextSnapshot,
     execute_campaign_with_provider,
 )
@@ -155,7 +156,7 @@ async def execute_prepared_campaign(
     checkpoint_path: Path,
     *,
     presenter: CampaignPresenter | None = None,
-) -> Any:
+) -> CampaignRunSummary:
     """Execute a prepared campaign using Pretorin's builtin Codex backend."""
     return await execute_campaign_with_provider(
         client,

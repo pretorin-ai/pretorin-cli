@@ -35,7 +35,10 @@ def _check_agent_deps() -> None:
         import agents  # noqa: F401
     except ImportError:
         rprint("[red]Agent features are not installed.[/red]")
-        rprint("[dim]Run: [bold]pip install 'pretorin\\[builtin-agent]'[/bold] (compat: [bold]pretorin\\[agent][/bold])[/dim]")
+        rprint(
+            "[dim]Run: [bold]pip install 'pretorin\\[builtin-agent]'[/bold] "
+            "(compat: [bold]pretorin\\[agent][/bold])[/dim]"
+        )
         raise typer.Exit(1)
 
 
@@ -45,7 +48,10 @@ def _check_codex_deps() -> None:
         import openai_codex_sdk  # noqa: F401
     except ImportError:
         rprint("[red]Codex agent features are not installed.[/red]")
-        rprint("[dim]Run: [bold]pip install 'pretorin\\[builtin-agent]'[/bold] (compat: [bold]pretorin\\[agent][/bold])[/dim]")
+        rprint(
+            "[dim]Run: [bold]pip install 'pretorin\\[builtin-agent]'[/bold] "
+            "(compat: [bold]pretorin\\[agent][/bold])[/dim]"
+        )
         raise typer.Exit(1)
 
 

@@ -11,7 +11,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from rich.console import Console, Group
 from rich.live import Live
@@ -63,6 +63,10 @@ def _safe_json(value: Any) -> Any:
     return value
 
 
+def _safe_json_dict(value: Any) -> dict[str, Any]:
+    return cast(dict[str, Any], _safe_json(value))
+
+
 def _json_text(value: Any) -> str:
     return json.dumps(_safe_json(value), indent=2, default=str)
 
@@ -89,7 +93,7 @@ class WorkflowContextSnapshot:
     extras: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return _safe_json(asdict(self))
+        return _safe_json_dict(asdict(self))
 
 
 @dataclass
@@ -141,7 +145,7 @@ class CampaignRunRequest:
                 "working_directory": str(self.working_directory),
             }
         )
-        return _safe_json(payload)
+        return _safe_json_dict(payload)
 
 
 @dataclass
@@ -154,7 +158,7 @@ class CampaignItem:
     payload: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return _safe_json(asdict(self))
+        return _safe_json_dict(asdict(self))
 
 
 @dataclass
@@ -172,7 +176,7 @@ class CampaignEvent:
     at: str = field(default_factory=_utcnow)
 
     def to_dict(self) -> dict[str, Any]:
-        return _safe_json(asdict(self))
+        return _safe_json_dict(asdict(self))
 
 
 @dataclass
@@ -192,7 +196,7 @@ class CampaignItemState:
     lease_expires_at: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return _safe_json(asdict(self))
+        return _safe_json_dict(asdict(self))
 
 
 @dataclass
@@ -221,7 +225,7 @@ class CampaignCheckpoint:
             "items": {item_id: state.to_dict() for item_id, state in self.items.items()},
             "events": self.events,
         }
-        return _safe_json(payload)
+        return _safe_json_dict(payload)
 
 
 @dataclass
@@ -250,7 +254,7 @@ class CampaignRunSummary:
     next_steps: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        return _safe_json(asdict(self))
+        return _safe_json_dict(asdict(self))
 
 
 class CampaignPresenter:
@@ -1305,9 +1309,9 @@ async def _apply_control_item(
             prior_results = []
         failed_indexes: list[int] = []
         pending_indexes = [idx for idx in range(len(evidence_recommendations)) if idx not in existing_indices]
-        for offset, result in enumerate(batch_result.results):
+        for offset, batch_item_result in enumerate(batch_result.results):
             index = pending_indexes[offset]
-            result_payload = result.model_dump(mode="json")
+            result_payload = batch_item_result.model_dump(mode="json")
             result_payload["index"] = index
             if _successful_batch_result(result_payload):
                 prior_results.append(result_payload)
@@ -1320,14 +1324,14 @@ async def _apply_control_item(
         changed_parts.append("evidence")
 
     if changed and "completion_note" not in receipts:
-        result = await client.add_control_note(
+        note_result = await client.add_control_note(
             system_id=system_id,
             control_id=item.item_id,
             framework_id=framework_id,
             content=_control_completion_note(request.mode, changed_parts),
             source="cli",
         )
-        receipts["completion_note"] = _safe_json(result)
+        receipts["completion_note"] = _safe_json_dict(note_result)
         changed_parts.append("note")
 
     item_state.receipts = _safe_json(receipts)
