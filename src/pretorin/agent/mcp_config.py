@@ -44,7 +44,8 @@ class MCPServerConfig:
             from agents.mcp import MCPServerStdio, MCPServerStreamableHttp
         except ImportError:
             raise ImportError(
-                "openai-agents is required for MCP server connections. Install with: pip install pretorin[agent]"
+                "openai-agents is required for MCP server connections. "
+                "Install with: pip install pretorin[builtin-agent]"
             )
 
         self.validate()

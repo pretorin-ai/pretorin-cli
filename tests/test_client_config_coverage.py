@@ -7,6 +7,7 @@ api_base_url setter, openai properties, codex paths, etc.)
 
 from __future__ import annotations
 
+import inspect
 import json
 from pathlib import Path
 
@@ -45,6 +46,20 @@ def isolated_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     ):
         monkeypatch.delenv(key, raising=False)
     return tmp_path
+
+
+@pytest.fixture(autouse=True)
+def _reset_org_cli_model() -> None:
+    """Reset the shared org model cache and close leaked coroutine mocks."""
+    current = Config._org_cli_model
+    if inspect.iscoroutine(current):
+        current.close()
+    Config._org_cli_model = None
+    yield
+    current = Config._org_cli_model
+    if inspect.iscoroutine(current):
+        current.close()
+    Config._org_cli_model = None
 
 
 # ---------------------------------------------------------------------------

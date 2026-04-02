@@ -1,1 +1,1 @@
-"""Pretorin autonomous compliance agent (requires `pip install pretorin[agent]`)."""
+"""Pretorin autonomous compliance agent (requires `pip install pretorin[builtin-agent]`)."""

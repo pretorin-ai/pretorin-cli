@@ -5,6 +5,19 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-04-02
+
+### Added
+- External-agent-first campaign orchestration with shared checkpointed prepare/claim/context/submit/apply/status flows
+- Six MCP campaign tools: `pretorin_prepare_campaign`, `pretorin_claim_campaign_items`, `pretorin_get_campaign_item_context`, `pretorin_submit_campaign_proposal`, `pretorin_apply_campaign`, and `pretorin_get_campaign_status`
+- `pretorin campaign status --checkpoint ...` for attach/read-only visibility into prepared or running campaigns
+- Campaign workflow recipes for Codex, Claude Code, and other MCP-capable external agents
+
+### Changed
+- `pretorin campaign` now prepares runs for external execution by default when the optional builtin backend is unavailable, instead of failing item-by-item
+- CLI and MCP campaign adapters now share one request-normalization and validation path to reduce drift
+- Optional built-in executor dependencies are now exposed as `pretorin[builtin-agent]`, with `pretorin[agent]` preserved as a compatibility alias
+
 ## [0.9.7] - 2026-03-25
 
 ### Fixed

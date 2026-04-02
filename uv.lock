@@ -917,7 +917,7 @@ wheels = [
 
 [[package]]
 name = "pretorin"
-version = "0.10.0"
+version = "0.11.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
@@ -930,6 +930,11 @@ dependencies = [
 
 [package.optional-dependencies]
 agent = [
+    { name = "openai" },
+    { name = "openai-agents" },
+    { name = "openai-codex-sdk" },
+]
+builtin-agent = [
     { name = "openai" },
     { name = "openai-agents" },
     { name = "openai-codex-sdk" },
@@ -948,8 +953,11 @@ requires-dist = [
     { name = "mcp", specifier = ">=1.0.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "openai", marker = "extra == 'agent'", specifier = ">=1.0.0" },
+    { name = "openai", marker = "extra == 'builtin-agent'", specifier = ">=1.0.0" },
     { name = "openai-agents", marker = "extra == 'agent'", specifier = ">=0.2.9" },
+    { name = "openai-agents", marker = "extra == 'builtin-agent'", specifier = ">=0.2.9" },
     { name = "openai-codex-sdk", marker = "extra == 'agent'", specifier = ">=0.1.11" },
+    { name = "openai-codex-sdk", marker = "extra == 'builtin-agent'", specifier = ">=0.1.11" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21.0" },
@@ -959,7 +967,7 @@ requires-dist = [
     { name = "tenacity", specifier = ">=8.0.0" },
     { name = "typer", specifier = ">=0.9.0" },
 ]
-provides-extras = ["agent", "dev"]
+provides-extras = ["builtin-agent", "agent", "dev"]
 
 [[package]]
 name = "pycparser"

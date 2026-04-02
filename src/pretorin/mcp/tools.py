@@ -945,6 +945,124 @@ async def list_tools() -> list[Tool]:
                 "required": ["policy_id"],
             },
         ),
+        Tool(
+            name="pretorin_prepare_campaign",
+            description=(
+                "Prepare a workflow-aligned campaign run and create or attach to a local checkpoint "
+                "that external agents can use for drafting, submission, and apply operations."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "domain": {"type": "string", "enum": ["controls", "policy", "scope"]},
+                    "mode": {"type": "string", "description": "Campaign mode for the selected domain"},
+                    "apply": {"type": "boolean", "default": False},
+                    "output": {"type": "string", "enum": ["auto", "live", "compact", "json"], "default": "json"},
+                    "checkpoint_path": {"type": "string", "description": "Optional local checkpoint file path"},
+                    "working_directory": {"type": "string", "description": "Optional working directory for executors"},
+                    "concurrency": {"type": "integer", "default": 4},
+                    "max_retries": {"type": "integer", "default": 2},
+                    "system_id": system_id_property(optional=True),
+                    "framework_id": {"type": "string", "description": "Optional framework ID"},
+                    "family_id": {"type": "string", "description": "Optional control family selector"},
+                    "control_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Optional explicit control IDs",
+                    },
+                    "all_controls": {"type": "boolean", "default": False},
+                    "artifacts": {"type": "string", "enum": ["narratives", "evidence", "both"], "default": "both"},
+                    "review_job": {"type": "string", "description": "Family review job id for controls review-fix"},
+                    "policy_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Optional explicit policy IDs",
+                    },
+                    "all_incomplete": {"type": "boolean", "default": False},
+                },
+                "required": ["domain", "mode"],
+            },
+        ),
+        Tool(
+            name="pretorin_claim_campaign_items",
+            description=(
+                "Claim prepared campaign items for drafting. Use leases to safely fan out work "
+                "across multiple external agents or subagents."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "checkpoint_path": {"type": "string", "description": "Local campaign checkpoint path"},
+                    "max_items": {"type": "integer", "default": 1},
+                    "lease_owner": {"type": "string", "description": "Stable identifier for the claiming agent"},
+                    "lease_ttl_seconds": {"type": "integer", "default": 300},
+                },
+                "required": ["checkpoint_path"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_campaign_item_context",
+            description=(
+                "Fetch one claimed campaign item's full platform context and drafting instructions "
+                "for an external agent to produce a proposal."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "checkpoint_path": {"type": "string", "description": "Local campaign checkpoint path"},
+                    "item_id": {"type": "string", "description": "Campaign item id to inspect"},
+                },
+                "required": ["checkpoint_path", "item_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_submit_campaign_proposal",
+            description=(
+                "Persist one external-agent proposal onto a prepared campaign item without applying it yet."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "checkpoint_path": {"type": "string", "description": "Local campaign checkpoint path"},
+                    "item_id": {"type": "string", "description": "Campaign item id to update"},
+                    "proposal": {"type": "object", "description": "Campaign proposal payload"},
+                },
+                "required": ["checkpoint_path", "item_id", "proposal"],
+            },
+        ),
+        Tool(
+            name="pretorin_apply_campaign",
+            description=(
+                "Apply stored campaign proposals back into Pretorin workflow records using the platform "
+                "as the source of truth."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "checkpoint_path": {"type": "string", "description": "Local campaign checkpoint path"},
+                    "item_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Optional subset of item ids to apply",
+                    },
+                },
+                "required": ["checkpoint_path"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_campaign_status",
+            description=(
+                "Return structured campaign counts, recent events, active claims, failures, and a stable "
+                "plain-text snapshot suitable for agent transcripts."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "checkpoint_path": {"type": "string", "description": "Local campaign checkpoint path"},
+                },
+                "required": ["checkpoint_path"],
+            },
+        ),
         # === Vendor Management Tools ===
         Tool(
             name="pretorin_list_vendors",

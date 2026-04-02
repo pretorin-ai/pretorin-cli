@@ -60,9 +60,16 @@ class TestToolListing:
             "pretorin_update_narrative",
             "pretorin_update_control_status",
             "pretorin_get_control_implementation",
+            # Campaign 6
+            "pretorin_prepare_campaign",
+            "pretorin_claim_campaign_items",
+            "pretorin_get_campaign_item_context",
+            "pretorin_submit_campaign_proposal",
+            "pretorin_apply_campaign",
+            "pretorin_get_campaign_status",
         ]
 
-        assert len(tools) == 64
+        assert len(tools) == 70
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 
@@ -756,3 +763,121 @@ class TestErrorHandling:
         text = result.content[0].text
         assert "Error" in text
         assert "Server error" in text
+
+
+class TestCampaignTools:
+    """Test MCP campaign orchestration tools."""
+
+    def test_prepare_campaign(self) -> None:
+        client = _make_mock_client()
+
+        class _Summary:
+            def to_dict(self) -> dict[str, Any]:
+                return {"checkpoint_path": "/tmp/campaign.json", "pending": 2, "status_snapshot": "snapshot"}
+
+        with patch(
+            "pretorin.mcp.handlers.workflow.prepare_campaign",
+            new=AsyncMock(return_value=AsyncMock(workflow_snapshot={"subject": "Primary / fedramp-moderate"})),
+        ), patch(
+            "pretorin.mcp.handlers.workflow.get_campaign_status",
+            return_value=_Summary(),
+        ):
+            result = _run_tool(
+                "pretorin_prepare_campaign",
+                {
+                    "domain": "controls",
+                    "mode": "initial",
+                    "system_id": "sys-1",
+                    "framework_id": "fedramp-moderate",
+                    "family_id": "AC",
+                },
+                client,
+            )
+
+        data = _parse_result(result)
+        assert data["normalized_request"]["domain"] == "controls"
+        assert data["summary"]["pending"] == 2
+
+    def test_claim_campaign_items(self) -> None:
+        client = _make_mock_client()
+        with patch(
+            "pretorin.mcp.handlers.workflow.claim_campaign_items",
+            return_value={"claimed": [{"item_id": "ac-02"}], "status_snapshot": "snapshot", "counts": {}},
+        ):
+            result = _run_tool(
+                "pretorin_claim_campaign_items",
+                {"checkpoint_path": "/tmp/campaign.json", "max_items": 1, "lease_owner": "codex-main"},
+                client,
+            )
+        data = _parse_result(result)
+        assert data["claimed"][0]["item_id"] == "ac-02"
+
+    def test_get_campaign_item_context(self) -> None:
+        client = _make_mock_client()
+        with patch(
+            "pretorin.mcp.handlers.workflow.get_campaign_item_context",
+            new=AsyncMock(return_value={"item": {"item_id": "ac-02"}, "context": {"instructions": "Return JSON"}}),
+        ):
+            result = _run_tool(
+                "pretorin_get_campaign_item_context",
+                {"checkpoint_path": "/tmp/campaign.json", "item_id": "ac-02"},
+                client,
+            )
+        data = _parse_result(result)
+        assert data["item"]["item_id"] == "ac-02"
+
+    def test_submit_campaign_proposal(self) -> None:
+        client = _make_mock_client()
+        with patch(
+            "pretorin.mcp.handlers.workflow.submit_campaign_proposal",
+            return_value={"item_id": "ac-02", "status": "proposed"},
+        ):
+            result = _run_tool(
+                "pretorin_submit_campaign_proposal",
+                {
+                    "checkpoint_path": "/tmp/campaign.json",
+                    "item_id": "ac-02",
+                    "proposal": {"narrative_draft": "- draft"},
+                },
+                client,
+            )
+        data = _parse_result(result)
+        assert data["status"] == "proposed"
+
+    def test_apply_campaign(self) -> None:
+        client = _make_mock_client()
+
+        class _Summary:
+            def to_dict(self) -> dict[str, Any]:
+                return {"succeeded": 1, "failed": 0}
+
+        with patch(
+            "pretorin.mcp.handlers.workflow.apply_campaign",
+            new=AsyncMock(return_value=_Summary()),
+        ):
+            result = _run_tool(
+                "pretorin_apply_campaign",
+                {"checkpoint_path": "/tmp/campaign.json", "item_ids": ["ac-02"]},
+                client,
+            )
+        data = _parse_result(result)
+        assert data["succeeded"] == 1
+
+    def test_get_campaign_status(self) -> None:
+        client = _make_mock_client()
+
+        class _Summary:
+            def to_dict(self) -> dict[str, Any]:
+                return {"pending": 1, "status_snapshot": "snapshot"}
+
+        with patch(
+            "pretorin.mcp.handlers.workflow.get_campaign_status",
+            return_value=_Summary(),
+        ):
+            result = _run_tool(
+                "pretorin_get_campaign_status",
+                {"checkpoint_path": "/tmp/campaign.json"},
+                client,
+            )
+        data = _parse_result(result)
+        assert data["pending"] == 1

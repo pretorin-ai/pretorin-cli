@@ -3,16 +3,27 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 
 from mcp.types import CallToolResult, TextContent
 
 from pretorin.client import PretorianClient
+from pretorin.client.api import PretorianClientError
 from pretorin.mcp.helpers import (
     format_error,
     format_json,
     require,
 )
+from pretorin.workflows.campaign import (
+    apply_campaign,
+    claim_campaign_items,
+    get_campaign_item_context,
+    get_campaign_status,
+    prepare_campaign,
+    submit_campaign_proposal,
+)
+from pretorin.workflows.campaign_protocol import build_campaign_request_from_mapping
 
 logger = logging.getLogger(__name__)
 
@@ -258,6 +269,113 @@ async def handle_get_analytics_summary(
     if err:
         return format_error(err)
     return format_json(await client.get_analytics_summary(arguments["system_id"], arguments["framework_id"]))
+
+
+async def handle_prepare_campaign(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Prepare a campaign for external or builtin execution."""
+    try:
+        request = build_campaign_request_from_mapping(arguments)
+    except ValueError as exc:
+        raise PretorianClientError(str(exc)) from exc
+    checkpoint = await prepare_campaign(client, request)
+    summary = get_campaign_status(request.checkpoint_path)
+    return format_json(
+        {
+            "checkpoint_path": str(request.checkpoint_path),
+            "normalized_request": request.to_dict(),
+            "workflow_snapshot": checkpoint.workflow_snapshot,
+            "summary": summary.to_dict(),
+        }
+    )
+
+
+async def handle_claim_campaign_items(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Claim prepared campaign items for drafting."""
+    del client
+    err = require(arguments, "checkpoint_path")
+    if err:
+        return format_error(err)
+    result = claim_campaign_items(
+        Path(str(arguments["checkpoint_path"])).expanduser().resolve(),
+        max_items=int(arguments.get("max_items", 1)),
+        lease_owner=str(arguments.get("lease_owner", "external-agent")),
+        lease_ttl_seconds=int(arguments.get("lease_ttl_seconds", 300)),
+    )
+    return format_json(result)
+
+
+async def handle_get_campaign_item_context(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Fetch full item context plus drafting instructions."""
+    err = require(arguments, "checkpoint_path", "item_id")
+    if err:
+        return format_error(err)
+    result = await get_campaign_item_context(
+        client,
+        Path(str(arguments["checkpoint_path"])).expanduser().resolve(),
+        item_id=str(arguments["item_id"]),
+    )
+    return format_json(result)
+
+
+async def handle_submit_campaign_proposal(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Persist one campaign proposal."""
+    del client
+    err = require(arguments, "checkpoint_path", "item_id", "proposal")
+    if err:
+        return format_error(err)
+    proposal = arguments["proposal"]
+    if not isinstance(proposal, dict):
+        return format_error("proposal must be a JSON object")
+    result = submit_campaign_proposal(
+        Path(str(arguments["checkpoint_path"])).expanduser().resolve(),
+        item_id=str(arguments["item_id"]),
+        proposal=proposal,
+    )
+    return format_json(result)
+
+
+async def handle_apply_campaign(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Apply stored proposals back to platform workflow records."""
+    err = require(arguments, "checkpoint_path")
+    if err:
+        return format_error(err)
+    item_ids = arguments.get("item_ids")
+    if item_ids is not None and not isinstance(item_ids, list):
+        return format_error("item_ids must be a list of item ids when provided")
+    summary = await apply_campaign(
+        client,
+        Path(str(arguments["checkpoint_path"])).expanduser().resolve(),
+        item_ids=[str(item) for item in item_ids] if isinstance(item_ids, list) else None,
+    )
+    return format_json(summary.to_dict())
+
+
+async def handle_get_campaign_status(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Return structured campaign status and a stable transcript snapshot."""
+    del client
+    err = require(arguments, "checkpoint_path")
+    if err:
+        return format_error(err)
+    summary = get_campaign_status(Path(str(arguments["checkpoint_path"])).expanduser().resolve())
+    return format_json(summary.to_dict())
 
 
 async def handle_get_family_analytics(
