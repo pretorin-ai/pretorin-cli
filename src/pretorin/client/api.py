@@ -1288,3 +1288,109 @@ class PretorianClient:
             f"/systems/{system_id}/controls/{normalized}/responsibility/generate-narrative",
             params={"framework_id": framework_id},
         )
+
+    # -----------------------------------------------------------------
+    # DoD Traceability (CCI/STIG)
+    # -----------------------------------------------------------------
+
+    async def list_ccis(
+        self,
+        nist_control_id: str | None = None,
+        status: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> dict[str, Any]:
+        """List CCI items with optional filters."""
+        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        if nist_control_id:
+            params["nist_control_id"] = nist_control_id
+        if status:
+            params["status"] = status
+        return await self._request("GET", "/cci", params=params)
+
+    async def get_cci(self, cci_id: str) -> dict[str, Any]:
+        """Get CCI detail with linked SRGs and STIG rules."""
+        return await self._request("GET", f"/cci/{cci_id}")
+
+    async def list_stigs(
+        self,
+        technology_area: str | None = None,
+        product: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> dict[str, Any]:
+        """List STIG benchmarks."""
+        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        if technology_area:
+            params["technology_area"] = technology_area
+        if product:
+            params["product"] = product
+        return await self._request("GET", "/stigs", params=params)
+
+    async def list_stig_rules(
+        self,
+        stig_id: str,
+        severity: str | None = None,
+        cci_id: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> dict[str, Any]:
+        """List rules for a STIG benchmark."""
+        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        if severity:
+            params["severity"] = severity
+        if cci_id:
+            params["cci_id"] = cci_id
+        return await self._request("GET", f"/stigs/{stig_id}/rules", params=params)
+
+    async def get_stig_rule(self, stig_id: str, rule_id: str) -> dict[str, Any]:
+        """Get full detail for a single STIG rule."""
+        return await self._request("GET", f"/stigs/{stig_id}/rules/{rule_id}")
+
+    async def get_test_manifest(
+        self, system_id: str, stig_id: str | None = None
+    ) -> dict[str, Any]:
+        """Get test manifest for CLI scan execution."""
+        params = {"stig_id": stig_id} if stig_id else {}
+        return await self._request(
+            "GET", f"/systems/{system_id}/test-manifest", params=params
+        )
+
+    async def get_stig_applicability(self, system_id: str) -> dict[str, Any]:
+        """Get STIG applicability for a system."""
+        return await self._request(
+            "GET", f"/systems/{system_id}/stig-applicability"
+        )
+
+    async def submit_test_results(
+        self,
+        system_id: str,
+        cli_run_id: str,
+        results: list[dict[str, Any]],
+        cli_version: str | None = None,
+    ) -> dict[str, Any]:
+        """Submit STIG test results from a scan."""
+        return await self._request(
+            "POST",
+            f"/systems/{system_id}/test-results",
+            json={
+                "cli_run_id": cli_run_id,
+                "cli_version": cli_version,
+                "results": results,
+            },
+        )
+
+    async def get_cci_status(
+        self, system_id: str, nist_control_id: str | None = None
+    ) -> dict[str, Any]:
+        """Get CCI-level compliance status rollup for a system."""
+        params = {"nist_control_id": nist_control_id} if nist_control_id else {}
+        return await self._request(
+            "GET", f"/systems/{system_id}/cci-status", params=params
+        )
+
+    async def infer_stigs(self, system_id: str) -> dict[str, Any]:
+        """AI-infer applicable STIGs based on system profile."""
+        return await self._request(
+            "POST", f"/systems/{system_id}/infer-stigs"
+        )
