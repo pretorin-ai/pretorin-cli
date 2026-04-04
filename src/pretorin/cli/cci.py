@@ -53,9 +53,7 @@ async def _list_ccis(control: str | None, status: str | None, limit: int) -> Non
     async with PretorianClient() as client:
         require_auth(client)
         try:
-            data = await client.list_ccis(
-                nist_control_id=control, status=status, limit=limit
-            )
+            data = await client.list_ccis(nist_control_id=control, status=status, limit=limit)
         except PretorianClientError as e:
             rprint(f"[red]Error: {e.message}[/red]")
             raise typer.Exit(1)
@@ -137,10 +135,9 @@ async def _show_cci(cci_id: str) -> None:
                 r.get("stig_id", ""),
                 r.get("rule_id", "")[:30],
                 (
-                    f"[{severity_styles.get(sev, '')}]"
-                    f"{sev.upper().replace('_', ' ')}"
-                    f"[/{severity_styles.get(sev, '')}]"
-                    if sev else ""
+                    f"[{severity_styles.get(sev, '')}]{sev.upper().replace('_', ' ')}[/{severity_styles.get(sev, '')}]"
+                    if sev
+                    else ""
                 ),
                 (r.get("title", "") or "")[:50],
             )
@@ -165,9 +162,7 @@ async def _chain(control_id: str, system: str | None) -> None:
 
         # Get CCIs for this control
         try:
-            cci_data = await client.list_ccis(
-                nist_control_id=control_id.lower(), limit=500
-            )
+            cci_data = await client.list_ccis(nist_control_id=control_id.lower(), limit=500)
         except PretorianClientError as e:
             rprint(f"[red]Error: {e.message}[/red]")
             raise typer.Exit(1)
@@ -179,9 +174,7 @@ async def _chain(control_id: str, system: str | None) -> None:
         if system:
             try:
                 system_id, _ = await resolve_execution_context(client, system=system)
-                status_data = await client.get_cci_status(
-                    system_id, nist_control_id=control_id.lower()
-                )
+                status_data = await client.get_cci_status(system_id, nist_control_id=control_id.lower())
                 for item in status_data.get("ccis", []):
                     cci_status[item["cci_id"]] = item
             except PretorianClientError:
@@ -210,10 +203,7 @@ async def _chain(control_id: str, system: str | None) -> None:
             color = color_map.get(s, "")
             passing = status_info["passing_rules"]
             total = status_info["total_rules"]
-            label = (
-                f"[{color}]{icon} {cci_id}[/{color}]  "
-                f"{s.upper()}  ({passing}/{total} rules)"
-            )
+            label = f"[{color}]{icon} {cci_id}[/{color}]  {s.upper()}  ({passing}/{total} rules)"
         else:
             label = f"[dim]— {cci_id}[/dim]  [{cci.get('cci_type', '')}]"
 
@@ -225,8 +215,6 @@ async def _chain(control_id: str, system: str | None) -> None:
             for sr in status_info.get("stig_results", [])[:5]:
                 sr_icon = "✓" if sr["status"] == "pass" else "✗"
                 sr_color = "green" if sr["status"] == "pass" else "red"
-                cci_branch.add(
-                    f"  [{sr_color}]{sr_icon}[/{sr_color}] {sr.get('stig_id', '')} {sr.get('rule_id', '')}"
-                )
+                cci_branch.add(f"  [{sr_color}]{sr_icon}[/{sr_color}] {sr.get('stig_id', '')} {sr.get('rule_id', '')}")
 
     rprint(tree)

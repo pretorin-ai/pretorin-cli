@@ -60,16 +60,18 @@ async def _doctor() -> None:
     infos = await orchestrator.detect_scanners()
 
     if is_json_mode():
-        print_json([
-            {
-                "name": info.name,
-                "version": info.version,
-                "available": info.available,
-                "supported_stigs": info.supported_stigs,
-                "install_hint": info.install_hint,
-            }
-            for info in infos
-        ])
+        print_json(
+            [
+                {
+                    "name": info.name,
+                    "version": info.version,
+                    "available": info.available,
+                    "supported_stigs": info.supported_stigs,
+                    "install_hint": info.install_hint,
+                }
+                for info in infos
+            ]
+        )
         return
 
     table = Table(title="Scanner Availability")
@@ -123,13 +125,13 @@ async def _manifest(system: str | None, stig_id: str | None) -> None:
         return
 
     total_rules = sum(len(s.get("rules", [])) for s in stigs)
-    rprint(Panel(
-        f"System: {manifest['system_id']}\n"
-        f"STIGs:  {len(stigs)}\n"
-        f"Rules:  {total_rules}",
-        title="Test Manifest",
-        border_style="#FF9010",
-    ))
+    rprint(
+        Panel(
+            f"System: {manifest['system_id']}\nSTIGs:  {len(stigs)}\nRules:  {total_rules}",
+            title="Test Manifest",
+            border_style="#FF9010",
+        )
+    )
 
     for stig in stigs:
         rules = stig.get("rules", [])
@@ -143,9 +145,7 @@ async def _manifest(system: str | None, stig_id: str | None) -> None:
         )
 
 
-async def _run_scan(
-    system: str | None, stig_id: str | None, tool: str | None, dry_run: bool
-) -> None:
+async def _run_scan(system: str | None, stig_id: str | None, tool: str | None, dry_run: bool) -> None:
     from pretorin.cli.commands import require_auth
     from pretorin.cli.context import resolve_execution_context
     from pretorin.client.api import PretorianClient, PretorianClientError
@@ -179,10 +179,7 @@ async def _run_scan(
             plan = orchestrator.plan_scan(manifest, preferred_scanner=tool)
 
             for step in plan.steps:
-                rprint(
-                    f"  [bold]{step.scanner_name}[/bold] → {step.benchmark_id} "
-                    f"({len(step.rules)} rules)"
-                )
+                rprint(f"  [bold]{step.scanner_name}[/bold] → {step.benchmark_id} ({len(step.rules)} rules)")
 
             if plan.unassigned_rules:
                 rprint(
@@ -208,26 +205,30 @@ async def _run_scan(
             raise typer.Exit(1)
 
     if is_json_mode():
-        print_json({
-            "cli_run_id": report.cli_run_id,
-            "total": report.total,
-            "passed": report.passed,
-            "failed": report.failed,
-            "not_reviewed": report.not_reviewed,
-            "errors": report.errors,
-        })
+        print_json(
+            {
+                "cli_run_id": report.cli_run_id,
+                "total": report.total,
+                "passed": report.passed,
+                "failed": report.failed,
+                "not_reviewed": report.not_reviewed,
+                "errors": report.errors,
+            }
+        )
         return
 
     # Display results summary
-    rprint(Panel(
-        f"Run ID:       {report.cli_run_id}\n"
-        f"Total rules:  {report.total}\n"
-        f"[green]Passed:       {report.passed}[/green]\n"
-        f"[red]Failed:       {report.failed}[/red]\n"
-        f"Not reviewed: {report.not_reviewed}",
-        title="Scan Complete",
-        border_style="#FF9010",
-    ))
+    rprint(
+        Panel(
+            f"Run ID:       {report.cli_run_id}\n"
+            f"Total rules:  {report.total}\n"
+            f"[green]Passed:       {report.passed}[/green]\n"
+            f"[red]Failed:       {report.failed}[/red]\n"
+            f"Not reviewed: {report.not_reviewed}",
+            title="Scan Complete",
+            border_style="#FF9010",
+        )
+    )
 
     if report.errors:
         rprint(f"\n[yellow]Errors ({len(report.errors)}):[/yellow]")
@@ -292,7 +293,4 @@ async def _results(system: str | None, control: str | None) -> None:
     passing = sum(1 for c in ccis if c["status"] == "pass")
     failing = sum(1 for c in ccis if c["status"] == "fail")
     not_tested = sum(1 for c in ccis if c["status"] == "not_tested")
-    rprint(
-        f"\n[dim]Summary: {passing} passing, {failing} failing, "
-        f"{not_tested} not tested ({total} total CCIs)[/dim]"
-    )
+    rprint(f"\n[dim]Summary: {passing} passing, {failing} failing, {not_tested} not tested ({total} total CCIs)[/dim]")

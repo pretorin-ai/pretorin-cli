@@ -102,9 +102,7 @@ class ScannerBase(ABC):
         """Human-readable scanner name."""
         ...
 
-    async def _run_command(
-        self, cmd: list[str], timeout: int = 300
-    ) -> tuple[int, str, str]:
+    async def _run_command(self, cmd: list[str], timeout: int = 300) -> tuple[int, str, str]:
         """
         Run a shell command asynchronously.
 
@@ -116,9 +114,7 @@ class ScannerBase(ABC):
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=timeout
-            )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
             return (
                 proc.returncode or 0,
                 stdout.decode("utf-8", errors="replace"),

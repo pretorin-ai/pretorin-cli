@@ -1347,20 +1347,14 @@ class PretorianClient:
         """Get full detail for a single STIG rule."""
         return await self._request("GET", f"/stigs/{stig_id}/rules/{rule_id}")
 
-    async def get_test_manifest(
-        self, system_id: str, stig_id: str | None = None
-    ) -> dict[str, Any]:
+    async def get_test_manifest(self, system_id: str, stig_id: str | None = None) -> dict[str, Any]:
         """Get test manifest for CLI scan execution."""
         params = {"stig_id": stig_id} if stig_id else {}
-        return await self._request(
-            "GET", f"/systems/{system_id}/test-manifest", params=params
-        )
+        return await self._request("GET", f"/systems/{system_id}/test-manifest", params=params)
 
     async def get_stig_applicability(self, system_id: str) -> dict[str, Any]:
         """Get STIG applicability for a system."""
-        return await self._request(
-            "GET", f"/systems/{system_id}/stig-applicability"
-        )
+        return await self._request("GET", f"/systems/{system_id}/stig-applicability")
 
     async def submit_test_results(
         self,
@@ -1380,17 +1374,11 @@ class PretorianClient:
             },
         )
 
-    async def get_cci_status(
-        self, system_id: str, nist_control_id: str | None = None
-    ) -> dict[str, Any]:
+    async def get_cci_status(self, system_id: str, nist_control_id: str | None = None) -> dict[str, Any]:
         """Get CCI-level compliance status rollup for a system."""
         params = {"nist_control_id": nist_control_id} if nist_control_id else {}
-        return await self._request(
-            "GET", f"/systems/{system_id}/cci-status", params=params
-        )
+        return await self._request("GET", f"/systems/{system_id}/cci-status", params=params)
 
     async def infer_stigs(self, system_id: str) -> dict[str, Any]:
         """AI-infer applicable STIGs based on system profile."""
-        return await self._request(
-            "POST", f"/systems/{system_id}/infer-stigs"
-        )
+        return await self._request("POST", f"/systems/{system_id}/infer-stigs")

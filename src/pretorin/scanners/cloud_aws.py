@@ -30,9 +30,7 @@ class AWSCloudScanner(ScannerBase):
 
     async def detect(self) -> ScannerInfo:
         """Check if AWS CLI is available and configured."""
-        code, stdout, stderr = await self._run_command(
-            ["aws", "--version"], timeout=10
-        )
+        code, stdout, stderr = await self._run_command(["aws", "--version"], timeout=10)
 
         if code != 0:
             return ScannerInfo(
@@ -46,9 +44,7 @@ class AWSCloudScanner(ScannerBase):
         version = stdout.strip().split()[0].replace("aws-cli/", "")
 
         # Check if credentials are configured
-        code2, _, _ = await self._run_command(
-            ["aws", "sts", "get-caller-identity"], timeout=10
-        )
+        code2, _, _ = await self._run_command(["aws", "sts", "get-caller-identity"], timeout=10)
         if code2 != 0:
             return ScannerInfo(
                 name=self.name,
@@ -84,13 +80,20 @@ class AWSCloudScanner(ScannerBase):
 
         # Query Security Hub findings
         cmd = [
-            "aws", "securityhub", "get-findings",
-            "--filters", json.dumps({
-                "ComplianceStatus": [{"Value": "PASSED", "Comparison": "EQUALS"}],
-                "RecordState": [{"Value": "ACTIVE", "Comparison": "EQUALS"}],
-            }),
-            "--max-items", "500",
-            "--output", "json",
+            "aws",
+            "securityhub",
+            "get-findings",
+            "--filters",
+            json.dumps(
+                {
+                    "ComplianceStatus": [{"Value": "PASSED", "Comparison": "EQUALS"}],
+                    "RecordState": [{"Value": "ACTIVE", "Comparison": "EQUALS"}],
+                }
+            ),
+            "--max-items",
+            "500",
+            "--output",
+            "json",
         ]
         if region:
             cmd.extend(["--region", region])

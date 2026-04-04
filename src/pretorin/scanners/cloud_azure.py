@@ -29,9 +29,7 @@ class AzureCloudScanner(ScannerBase):
 
     async def detect(self) -> ScannerInfo:
         """Check if Azure CLI is available and authenticated."""
-        code, stdout, stderr = await self._run_command(
-            ["az", "version", "--output", "json"], timeout=10
-        )
+        code, stdout, stderr = await self._run_command(["az", "version", "--output", "json"], timeout=10)
 
         if code != 0:
             return ScannerInfo(
@@ -49,9 +47,7 @@ class AzureCloudScanner(ScannerBase):
             version = ""
 
         # Check if logged in
-        code2, _, _ = await self._run_command(
-            ["az", "account", "show", "--output", "json"], timeout=10
-        )
+        code2, _, _ = await self._run_command(["az", "account", "show", "--output", "json"], timeout=10)
         if code2 != 0:
             return ScannerInfo(
                 name=self.name,
@@ -85,8 +81,12 @@ class AzureCloudScanner(ScannerBase):
         subscription = config.get("subscription_id", "")
 
         cmd = [
-            "az", "policy", "state", "summarize",
-            "--output", "json",
+            "az",
+            "policy",
+            "state",
+            "summarize",
+            "--output",
+            "json",
         ]
         if subscription:
             cmd.extend(["--subscription", subscription])

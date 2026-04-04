@@ -188,9 +188,7 @@ class ScanOrchestrator:
                 results = await scanner.execute(step.rules, step.config)
                 report.results.extend(results)
             except Exception as e:
-                report.errors.append(
-                    f"Scanner {step.scanner_name} failed for {step.benchmark_id}: {e}"
-                )
+                report.errors.append(f"Scanner {step.scanner_name} failed for {step.benchmark_id}: {e}")
                 # Mark rules as error
                 for rule in step.rules:
                     report.results.append(
@@ -208,7 +206,7 @@ class ScanOrchestrator:
 
     async def run(
         self,
-        client,  # PretorianClient
+        client: Any,  # PretorianClient
         system_id: str,
         stig_id: str | None = None,
         preferred_scanner: str | None = None,

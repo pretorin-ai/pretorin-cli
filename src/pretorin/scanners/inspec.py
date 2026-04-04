@@ -44,9 +44,7 @@ class InSpecScanner(ScannerBase):
 
     async def detect(self) -> ScannerInfo:
         """Check if inspec binary is available."""
-        code, stdout, stderr = await self._run_command(
-            ["inspec", "version"], timeout=15
-        )
+        code, stdout, stderr = await self._run_command(["inspec", "version"], timeout=15)
 
         if code != 0:
             return ScannerInfo(
@@ -102,8 +100,11 @@ class InSpecScanner(ScannerBase):
             results_path = tf.name
 
         cmd = [
-            "inspec", "exec", str(profile),
-            "--reporter", f"json:{results_path}",
+            "inspec",
+            "exec",
+            str(profile),
+            "--reporter",
+            f"json:{results_path}",
         ]
 
         target = config.get("target")
@@ -129,9 +130,7 @@ class InSpecScanner(ScannerBase):
                 for r in rules
             ]
 
-        return self._parse_json_results(
-            Path(results_path), benchmark_id, rules
-        )
+        return self._parse_json_results(Path(results_path), benchmark_id, rules)
 
     def _parse_json_results(
         self, results_path: Path, benchmark_id: str, rules: list[dict[str, Any]]

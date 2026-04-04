@@ -96,13 +96,13 @@ class ManualScanner(ScannerBase):
             title = rule.get("title", "")
             check_text = rule.get("check_text", "No check text available")
 
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"Rule: {rule_id}")
             if title:
                 print(f"Title: {title}")
             print(f"Severity: {rule.get('severity', 'unknown')}")
             print(f"\nCheck:\n{check_text[:500]}")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             while True:
                 response = input("[P]ass / [F]ail / [N/A] / [S]kip > ").strip().lower()

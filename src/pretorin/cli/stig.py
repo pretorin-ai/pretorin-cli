@@ -21,7 +21,9 @@ app = typer.Typer(
 @app.command("list")
 def stig_list(
     technology_area: str | None = typer.Option(
-        None, "--technology-area", "-t",
+        None,
+        "--technology-area",
+        "-t",
         help="Filter by technology area (OS, Container, Database, etc.)",
     ),
     product: str | None = typer.Option(None, "--product", "-p", help="Filter by product name (partial match)"),
@@ -66,18 +68,14 @@ def stig_infer(
     asyncio.run(_infer(system))
 
 
-async def _list_stigs(
-    technology_area: str | None, product: str | None, limit: int
-) -> None:
+async def _list_stigs(technology_area: str | None, product: str | None, limit: int) -> None:
     from pretorin.cli.commands import require_auth
     from pretorin.client.api import PretorianClient, PretorianClientError
 
     async with PretorianClient() as client:
         require_auth(client)
         try:
-            data = await client.list_stigs(
-                technology_area=technology_area, product=product, limit=limit
-            )
+            data = await client.list_stigs(technology_area=technology_area, product=product, limit=limit)
         except PretorianClientError as e:
             rprint(f"[red]Error: {e.message}[/red]")
             raise typer.Exit(1)
@@ -156,18 +154,14 @@ async def _show_stig(stig_id: str) -> None:
     rprint(Panel(panel_content, title="STIG Benchmark", border_style="#FF9010"))
 
 
-async def _list_rules(
-    stig_id: str, severity: str | None, cci_id: str | None, limit: int
-) -> None:
+async def _list_rules(stig_id: str, severity: str | None, cci_id: str | None, limit: int) -> None:
     from pretorin.cli.commands import require_auth
     from pretorin.client.api import PretorianClient, PretorianClientError
 
     async with PretorianClient() as client:
         require_auth(client)
         try:
-            data = await client.list_stig_rules(
-                stig_id, severity=severity, cci_id=cci_id, limit=limit
-            )
+            data = await client.list_stig_rules(stig_id, severity=severity, cci_id=cci_id, limit=limit)
         except PretorianClientError as e:
             rprint(f"[red]Error: {e.message}[/red]")
             raise typer.Exit(1)
@@ -197,10 +191,9 @@ async def _list_rules(
             item.get("stig_ref", item.get("rule_id", ""))[:25],
             item.get("group_id", ""),
             (
-                f"[{severity_styles.get(sev, '')}]"
-                f"{sev.upper().replace('_', ' ')}"
-                f"[/{severity_styles.get(sev, '')}]"
-                if sev else ""
+                f"[{severity_styles.get(sev, '')}]{sev.upper().replace('_', ' ')}[/{severity_styles.get(sev, '')}]"
+                if sev
+                else ""
             ),
             (item.get("title", "") or "")[:50],
             ", ".join(item.get("cci_ids", [])[:3]),
@@ -280,12 +273,13 @@ async def _infer(system: str | None) -> None:
         rprint("[dim]This may mean the system profile lacks tech stack details.[/dim]")
         return
 
-    rprint(Panel(
-        f"System: {data.get('system_name', data.get('system_id', ''))}\n"
-        f"Inferred: {len(inferred)} applicable STIGs",
-        title="STIG Inference Results",
-        border_style="#FF9010",
-    ))
+    rprint(
+        Panel(
+            f"System: {data.get('system_name', data.get('system_id', ''))}\nInferred: {len(inferred)} applicable STIGs",
+            title="STIG Inference Results",
+            border_style="#FF9010",
+        )
+    )
 
     table = Table()
     table.add_column("STIG", style="bold")

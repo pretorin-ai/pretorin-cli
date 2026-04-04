@@ -99,8 +99,11 @@ class OpenSCAPScanner(ScannerBase):
 
         # Build oscap command
         cmd = [
-            "oscap", "xccdf", "eval",
-            "--results", results_path,
+            "oscap",
+            "xccdf",
+            "eval",
+            "--results",
+            results_path,
         ]
         if profile:
             cmd.extend(["--profile", profile])
@@ -123,9 +126,7 @@ class OpenSCAPScanner(ScannerBase):
             ]
 
         # Parse results XML
-        return self._parse_results_xml(
-            Path(results_path), benchmark_id, rules
-        )
+        return self._parse_results_xml(Path(results_path), benchmark_id, rules)
 
     def _parse_results_xml(
         self, results_path: Path, benchmark_id: str, rules: list[dict[str, Any]]
