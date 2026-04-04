@@ -67,9 +67,20 @@ class TestToolListing:
             "pretorin_submit_campaign_proposal",
             "pretorin_apply_campaign",
             "pretorin_get_campaign_status",
+            # STIG / CCI 10
+            "pretorin_list_stigs",
+            "pretorin_list_stig_rules",
+            "pretorin_get_stig_rule",
+            "pretorin_list_ccis",
+            "pretorin_get_cci",
+            "pretorin_get_test_manifest",
+            "pretorin_submit_test_results",
+            "pretorin_get_stig_applicability",
+            "pretorin_get_cci_status",
+            "pretorin_infer_stigs",
         ]
 
-        assert len(tools) == 70
+        assert len(tools) == 80
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 
