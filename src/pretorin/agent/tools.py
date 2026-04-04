@@ -747,6 +747,25 @@ def create_platform_tools(
         )
     )
 
+    async def get_stig(stig_id: str) -> str:
+        result = await client.get_stig(stig_id=stig_id)
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="get_stig",
+            description="Get single STIG benchmark detail by ID, including title, version, release info, and technology area",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "stig_id": {"type": "string", "description": "STIG benchmark ID"},
+                },
+                "required": ["stig_id"],
+            },
+            handler=get_stig,
+        )
+    )
+
     async def list_stig_rules(
         stig_id: str,
         severity: str | None = None,
@@ -850,6 +869,25 @@ def create_platform_tools(
                 "required": ["cci_id"],
             },
             handler=get_cci,
+        )
+    )
+
+    async def get_cci_chain(nist_control_id: str) -> str:
+        result = await client.get_cci_chain(nist_control_id=nist_control_id)
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="get_cci_chain",
+            description="Get full traceability chain for a NIST control: Control -> CCIs -> SRGs -> STIG rules",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "nist_control_id": {"type": "string", "description": "NIST control ID (e.g., AC-2)"},
+                },
+                "required": ["nist_control_id"],
+            },
+            handler=get_cci_chain,
         )
     )
 

@@ -1363,6 +1363,20 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="pretorin_get_stig",
+            description="Get single STIG benchmark detail by ID, including title, version, release info, and technology area.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "stig_id": {
+                        "type": "string",
+                        "description": "The STIG benchmark ID",
+                    },
+                },
+                "required": ["stig_id"],
+            },
+        ),
+        Tool(
             name="pretorin_list_stig_rules",
             description="List rules for a STIG benchmark with optional severity and CCI filters.",
             inputSchema={
@@ -1452,6 +1466,20 @@ async def list_tools() -> list[Tool]:
                     },
                 },
                 "required": ["cci_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_cci_chain",
+            description="Get full traceability chain for a NIST control: Control -> CCIs -> SRGs -> STIG rules.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "nist_control_id": {
+                        "type": "string",
+                        "description": "The NIST control ID (e.g., AC-2)",
+                    },
+                },
+                "required": ["nist_control_id"],
             },
         ),
         Tool(

@@ -1312,6 +1312,10 @@ class PretorianClient:
         """Get CCI detail with linked SRGs and STIG rules."""
         return await self._request("GET", f"/cci/{cci_id}")
 
+    async def get_cci_chain(self, nist_control_id: str) -> dict[str, Any]:
+        """Get full traceability chain: Control -> CCIs -> SRGs -> STIG rules."""
+        return await self._request("GET", f"/cci/chain/{nist_control_id}")
+
     async def list_stigs(
         self,
         technology_area: str | None = None,
@@ -1326,6 +1330,10 @@ class PretorianClient:
         if product:
             params["product"] = product
         return await self._request("GET", "/stigs", params=params)
+
+    async def get_stig(self, stig_id: str) -> dict[str, Any]:
+        """Get single STIG benchmark detail by ID."""
+        return await self._request("GET", f"/stigs/{stig_id}")
 
     async def list_stig_rules(
         self,
