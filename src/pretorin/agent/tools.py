@@ -713,4 +713,258 @@ def create_platform_tools(
         )
     )
 
+    # --- STIG / CCI ---
+
+    async def list_stigs(
+        technology_area: str | None = None,
+        product: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> str:
+        result = await client.list_stigs(
+            technology_area=technology_area,
+            product=product,
+            limit=limit,
+            offset=offset,
+        )
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="list_stigs",
+            description="List STIG benchmarks with optional filters by technology area or product",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "technology_area": {"type": "string", "description": "Filter by technology area"},
+                    "product": {"type": "string", "description": "Filter by product name"},
+                    "limit": {"type": "integer", "description": "Max results", "default": 100},
+                    "offset": {"type": "integer", "description": "Pagination offset", "default": 0},
+                },
+                "required": [],
+            },
+            handler=list_stigs,
+        )
+    )
+
+    async def list_stig_rules(
+        stig_id: str,
+        severity: str | None = None,
+        cci_id: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> str:
+        result = await client.list_stig_rules(
+            stig_id=stig_id,
+            severity=severity,
+            cci_id=cci_id,
+            limit=limit,
+            offset=offset,
+        )
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="list_stig_rules",
+            description="List rules for a STIG benchmark with optional severity and CCI filters",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "stig_id": {"type": "string", "description": "STIG benchmark ID"},
+                    "severity": {"type": "string", "description": "Filter by severity (high, medium, low)"},
+                    "cci_id": {"type": "string", "description": "Filter by CCI identifier"},
+                    "limit": {"type": "integer", "description": "Max results", "default": 100},
+                    "offset": {"type": "integer", "description": "Pagination offset", "default": 0},
+                },
+                "required": ["stig_id"],
+            },
+            handler=list_stig_rules,
+        )
+    )
+
+    async def get_stig_rule(stig_id: str, rule_id: str) -> str:
+        result = await client.get_stig_rule(stig_id=stig_id, rule_id=rule_id)
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="get_stig_rule",
+            description="Get full detail for a single STIG rule including CCIs, check text, and fix text",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "stig_id": {"type": "string", "description": "STIG benchmark ID"},
+                    "rule_id": {"type": "string", "description": "STIG rule ID"},
+                },
+                "required": ["stig_id", "rule_id"],
+            },
+            handler=get_stig_rule,
+        )
+    )
+
+    async def list_ccis(
+        nist_control_id: str | None = None,
+        status: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> str:
+        result = await client.list_ccis(
+            nist_control_id=nist_control_id,
+            status=status,
+            limit=limit,
+            offset=offset,
+        )
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="list_ccis",
+            description="List CCI items with optional filters by NIST control ID or status",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "nist_control_id": {"type": "string", "description": "Filter by NIST control ID (e.g., AC-2)"},
+                    "status": {"type": "string", "description": "Filter by CCI status"},
+                    "limit": {"type": "integer", "description": "Max results", "default": 100},
+                    "offset": {"type": "integer", "description": "Pagination offset", "default": 0},
+                },
+                "required": [],
+            },
+            handler=list_ccis,
+        )
+    )
+
+    async def get_cci(cci_id: str) -> str:
+        result = await client.get_cci(cci_id=cci_id)
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="get_cci",
+            description="Get CCI detail with linked SRGs and STIG rules",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "cci_id": {"type": "string", "description": "CCI identifier (e.g., CCI-000015)"},
+                },
+                "required": ["cci_id"],
+            },
+            handler=get_cci,
+        )
+    )
+
+    async def get_test_manifest(system_id: str, stig_id: str | None = None) -> str:
+        result = await client.get_test_manifest(system_id=system_id, stig_id=stig_id)
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="get_test_manifest",
+            description="Get the test manifest for CLI scan execution against a system",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "system_id": {"type": "string", "description": "System ID"},
+                    "stig_id": {"type": "string", "description": "Optional STIG benchmark ID to scope the manifest"},
+                },
+                "required": ["system_id"],
+            },
+            handler=get_test_manifest,
+        )
+    )
+
+    async def submit_test_results(
+        system_id: str,
+        cli_run_id: str,
+        results: list[dict[str, Any]],
+        cli_version: str | None = None,
+    ) -> str:
+        result = await client.submit_test_results(
+            system_id=system_id,
+            cli_run_id=cli_run_id,
+            results=results,
+            cli_version=cli_version,
+        )
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="submit_test_results",
+            description="Upload STIG scan results from a CLI scan run",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "system_id": {"type": "string", "description": "System ID"},
+                    "cli_run_id": {"type": "string", "description": "CLI scan run identifier"},
+                    "results": {
+                        "type": "array",
+                        "description": "Array of test result objects",
+                        "items": {"type": "object"},
+                    },
+                    "cli_version": {"type": "string", "description": "Optional CLI version string"},
+                },
+                "required": ["system_id", "cli_run_id", "results"],
+            },
+            handler=submit_test_results,
+        )
+    )
+
+    async def get_stig_applicability(system_id: str) -> str:
+        result = await client.get_stig_applicability(system_id=system_id)
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="get_stig_applicability",
+            description="Get which STIGs apply to a system based on its profile",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "system_id": {"type": "string", "description": "System ID"},
+                },
+                "required": ["system_id"],
+            },
+            handler=get_stig_applicability,
+        )
+    )
+
+    async def get_cci_status(system_id: str, nist_control_id: str | None = None) -> str:
+        result = await client.get_cci_status(system_id=system_id, nist_control_id=nist_control_id)
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="get_cci_status",
+            description="Get CCI-level compliance rollup for a system",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "system_id": {"type": "string", "description": "System ID"},
+                    "nist_control_id": {"type": "string", "description": "Optional NIST control ID filter"},
+                },
+                "required": ["system_id"],
+            },
+            handler=get_cci_status,
+        )
+    )
+
+    async def infer_stigs(system_id: str) -> str:
+        result = await client.infer_stigs(system_id=system_id)
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="infer_stigs",
+            description="AI-infer applicable STIGs from a system's profile",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "system_id": {"type": "string", "description": "System ID"},
+                },
+                "required": ["system_id"],
+            },
+            handler=infer_stigs,
+        )
+    )
+
     return tools

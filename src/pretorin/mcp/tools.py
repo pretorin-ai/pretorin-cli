@@ -1333,4 +1333,203 @@ async def list_tools() -> list[Tool]:
                 "required": ["system_id", "control_id", "framework_id"],
             },
         ),
+        # === STIG / CCI Tools ===
+        Tool(
+            name="pretorin_list_stigs",
+            description="List STIG benchmarks with optional filters by technology area or product.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "technology_area": {
+                        "type": "string",
+                        "description": "Filter by technology area",
+                    },
+                    "product": {
+                        "type": "string",
+                        "description": "Filter by product name",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max results to return",
+                        "default": 100,
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "default": 0,
+                    },
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="pretorin_list_stig_rules",
+            description="List rules for a STIG benchmark with optional severity and CCI filters.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "stig_id": {
+                        "type": "string",
+                        "description": "The STIG benchmark ID",
+                    },
+                    "severity": {
+                        "type": "string",
+                        "description": "Filter by severity (high, medium, low)",
+                    },
+                    "cci_id": {
+                        "type": "string",
+                        "description": "Filter by CCI identifier",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max results to return",
+                        "default": 100,
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "default": 0,
+                    },
+                },
+                "required": ["stig_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_stig_rule",
+            description="Get full detail for a single STIG rule including CCIs, check text, and fix text.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "stig_id": {
+                        "type": "string",
+                        "description": "The STIG benchmark ID",
+                    },
+                    "rule_id": {
+                        "type": "string",
+                        "description": "The STIG rule ID",
+                    },
+                },
+                "required": ["stig_id", "rule_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_list_ccis",
+            description="List CCI items with optional filters by NIST control ID or status.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "nist_control_id": {
+                        "type": "string",
+                        "description": "Filter by NIST control ID (e.g., AC-2)",
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Filter by CCI status",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max results to return",
+                        "default": 100,
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "default": 0,
+                    },
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="pretorin_get_cci",
+            description="Get CCI detail with linked SRGs and STIG rules.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "cci_id": {
+                        "type": "string",
+                        "description": "The CCI identifier (e.g., CCI-000015)",
+                    },
+                },
+                "required": ["cci_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_test_manifest",
+            description="Get the test manifest for CLI scan execution against a system.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "stig_id": {
+                        "type": "string",
+                        "description": "Optional STIG benchmark ID to scope the manifest",
+                    },
+                },
+                "required": ["system_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_submit_test_results",
+            description="Upload STIG scan results from a CLI scan run.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "cli_run_id": {
+                        "type": "string",
+                        "description": "The CLI scan run identifier",
+                    },
+                    "results": {
+                        "type": "array",
+                        "description": "Array of test result objects",
+                        "items": {
+                            "type": "object",
+                        },
+                    },
+                    "cli_version": {
+                        "type": "string",
+                        "description": "Optional CLI version string",
+                    },
+                },
+                "required": ["system_id", "cli_run_id", "results"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_stig_applicability",
+            description="Get which STIGs apply to a system based on its profile.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                },
+                "required": ["system_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_get_cci_status",
+            description="Get CCI-level compliance rollup for a system, optionally filtered by NIST control.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                    "nist_control_id": {
+                        "type": "string",
+                        "description": "Optional NIST control ID to filter (e.g., AC-2)",
+                    },
+                },
+                "required": ["system_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_infer_stigs",
+            description="AI-infer applicable STIGs from a system's profile.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                },
+                "required": ["system_id"],
+            },
+        ),
     ]

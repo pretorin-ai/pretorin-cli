@@ -40,6 +40,18 @@ from pretorin.mcp.handlers.frameworks import (
     handle_list_controls,
     handle_list_frameworks,
 )
+from pretorin.mcp.handlers.stig import (
+    handle_get_cci,
+    handle_get_cci_status,
+    handle_get_stig_applicability,
+    handle_get_stig_rule,
+    handle_get_test_manifest,
+    handle_infer_stigs,
+    handle_list_ccis,
+    handle_list_stig_rules,
+    handle_list_stigs,
+    handle_submit_test_results,
+)
 from pretorin.mcp.handlers.systems import (
     handle_get_compliance_status,
     handle_get_system,
@@ -166,4 +178,15 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pretorin_get_stale_edges": handle_get_stale_edges,
     "pretorin_sync_stale_edges": handle_sync_stale_edges,
     "pretorin_generate_inheritance_narrative": handle_generate_inheritance_narrative,
+    # STIG / CCI Tools
+    "pretorin_list_stigs": handle_list_stigs,
+    "pretorin_list_stig_rules": handle_list_stig_rules,
+    "pretorin_get_stig_rule": handle_get_stig_rule,
+    "pretorin_list_ccis": handle_list_ccis,
+    "pretorin_get_cci": handle_get_cci,
+    "pretorin_get_test_manifest": handle_get_test_manifest,
+    "pretorin_submit_test_results": handle_submit_test_results,
+    "pretorin_get_stig_applicability": handle_get_stig_applicability,
+    "pretorin_get_cci_status": handle_get_cci_status,
+    "pretorin_infer_stigs": handle_infer_stigs,
 }
