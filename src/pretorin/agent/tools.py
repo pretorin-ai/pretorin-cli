@@ -754,7 +754,7 @@ def create_platform_tools(
     tools.append(
         ToolDefinition(
             name="get_stig",
-            description="Get single STIG benchmark detail by ID, including title, version, release info, and technology area",
+            description="Get single STIG benchmark detail by ID including title, version, and release info",
             parameters={
                 "type": "object",
                 "properties": {

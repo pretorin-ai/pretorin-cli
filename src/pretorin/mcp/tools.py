@@ -1364,7 +1364,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_get_stig",
-            description="Get single STIG benchmark detail by ID, including title, version, release info, and technology area.",
+            description="Get single STIG benchmark detail by ID including title, version, and release info.",
             inputSchema={
                 "type": "object",
                 "properties": {
