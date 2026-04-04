@@ -43,6 +43,20 @@ async def handle_list_stigs(
     return format_json(result)
 
 
+async def handle_get_stig(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Handle the get_stig tool."""
+    logger.debug("handle_get_stig called with %s", _safe_args(arguments))
+    err = require(arguments, "stig_id")
+    if err:
+        return format_error(err)
+
+    result = await client.get_stig(stig_id=arguments["stig_id"])
+    return format_json(result)
+
+
 async def handle_list_stig_rules(
     client: PretorianClient,
     arguments: dict[str, Any],
@@ -92,6 +106,20 @@ async def handle_list_ccis(
         limit=arguments.get("limit", 100),
         offset=arguments.get("offset", 0),
     )
+    return format_json(result)
+
+
+async def handle_get_cci_chain(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Handle the get_cci_chain tool."""
+    logger.debug("handle_get_cci_chain called with %s", _safe_args(arguments))
+    err = require(arguments, "nist_control_id")
+    if err:
+        return format_error(err)
+
+    result = await client.get_cci_chain(nist_control_id=arguments["nist_control_id"])
     return format_json(result)
 
 

@@ -42,7 +42,9 @@ from pretorin.mcp.handlers.frameworks import (
 )
 from pretorin.mcp.handlers.stig import (
     handle_get_cci,
+    handle_get_cci_chain,
     handle_get_cci_status,
+    handle_get_stig,
     handle_get_stig_applicability,
     handle_get_stig_rule,
     handle_get_test_manifest,
@@ -180,10 +182,12 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pretorin_generate_inheritance_narrative": handle_generate_inheritance_narrative,
     # STIG / CCI Tools
     "pretorin_list_stigs": handle_list_stigs,
+    "pretorin_get_stig": handle_get_stig,
     "pretorin_list_stig_rules": handle_list_stig_rules,
     "pretorin_get_stig_rule": handle_get_stig_rule,
     "pretorin_list_ccis": handle_list_ccis,
     "pretorin_get_cci": handle_get_cci,
+    "pretorin_get_cci_chain": handle_get_cci_chain,
     "pretorin_get_test_manifest": handle_get_test_manifest,
     "pretorin_submit_test_results": handle_submit_test_results,
     "pretorin_get_stig_applicability": handle_get_stig_applicability,

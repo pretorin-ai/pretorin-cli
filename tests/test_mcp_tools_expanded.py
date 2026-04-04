@@ -67,12 +67,14 @@ class TestToolListing:
             "pretorin_submit_campaign_proposal",
             "pretorin_apply_campaign",
             "pretorin_get_campaign_status",
-            # STIG / CCI 10
+            # STIG / CCI 12
             "pretorin_list_stigs",
+            "pretorin_get_stig",
             "pretorin_list_stig_rules",
             "pretorin_get_stig_rule",
             "pretorin_list_ccis",
             "pretorin_get_cci",
+            "pretorin_get_cci_chain",
             "pretorin_get_test_manifest",
             "pretorin_submit_test_results",
             "pretorin_get_stig_applicability",
@@ -80,7 +82,7 @@ class TestToolListing:
             "pretorin_infer_stigs",
         ]
 
-        assert len(tools) == 80
+        assert len(tools) == 82
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 
