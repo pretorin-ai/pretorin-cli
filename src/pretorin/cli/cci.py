@@ -136,7 +136,12 @@ async def _show_cci(cci_id: str) -> None:
             table.add_row(
                 r.get("stig_id", ""),
                 r.get("rule_id", "")[:30],
-                f"[{severity_styles.get(sev, '')}]{sev.upper().replace('_', ' ')}[/{severity_styles.get(sev, '')}]" if sev else "",
+                (
+                    f"[{severity_styles.get(sev, '')}]"
+                    f"{sev.upper().replace('_', ' ')}"
+                    f"[/{severity_styles.get(sev, '')}]"
+                    if sev else ""
+                ),
                 (r.get("title", "") or "")[:50],
             )
 
@@ -199,9 +204,16 @@ async def _chain(control_id: str, system: str | None) -> None:
 
         if status_info:
             s = status_info["status"]
-            icon = {"pass": "✓", "fail": "✗", "mixed": "◐", "not_tested": "—"}.get(s, "?")
-            color = {"pass": "green", "fail": "red", "mixed": "yellow", "not_tested": "dim"}.get(s, "")
-            label = f"[{color}]{icon} {cci_id}[/{color}]  {s.upper()}  ({status_info['passing_rules']}/{status_info['total_rules']} rules)"
+            icon_map = {"pass": "✓", "fail": "✗", "mixed": "◐", "not_tested": "—"}
+            color_map = {"pass": "green", "fail": "red", "mixed": "yellow", "not_tested": "dim"}
+            icon = icon_map.get(s, "?")
+            color = color_map.get(s, "")
+            passing = status_info["passing_rules"]
+            total = status_info["total_rules"]
+            label = (
+                f"[{color}]{icon} {cci_id}[/{color}]  "
+                f"{s.upper()}  ({passing}/{total} rules)"
+            )
         else:
             label = f"[dim]— {cci_id}[/dim]  [{cci.get('cci_type', '')}]"
 

@@ -11,7 +11,7 @@ Requires: AWS CLI v2 (aws binary) + configured credentials
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from typing import Any
 
 from pretorin.scanners.base import ScannerBase, ScannerInfo, TestResult, TestStatus
 
@@ -67,8 +67,8 @@ class AWSCloudScanner(ScannerBase):
 
     async def execute(
         self,
-        rules: list[dict],
-        config: dict | None = None,
+        rules: list[dict[str, Any]],
+        config: dict[str, Any] | None = None,
     ) -> list[TestResult]:
         """
         Query AWS Security Hub for STIG-mapped findings.

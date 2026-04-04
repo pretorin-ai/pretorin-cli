@@ -20,7 +20,10 @@ app = typer.Typer(
 
 @app.command("list")
 def stig_list(
-    technology_area: str | None = typer.Option(None, "--technology-area", "-t", help="Filter by technology area (OS, Container, Database, etc.)"),
+    technology_area: str | None = typer.Option(
+        None, "--technology-area", "-t",
+        help="Filter by technology area (OS, Container, Database, etc.)",
+    ),
     product: str | None = typer.Option(None, "--product", "-p", help="Filter by product name (partial match)"),
     limit: int = typer.Option(100, "--limit", "-l", help="Max results"),
 ) -> None:
@@ -193,7 +196,12 @@ async def _list_rules(
         table.add_row(
             item.get("stig_ref", item.get("rule_id", ""))[:25],
             item.get("group_id", ""),
-            f"[{severity_styles.get(sev, '')}]{sev.upper().replace('_', ' ')}[/{severity_styles.get(sev, '')}]" if sev else "",
+            (
+                f"[{severity_styles.get(sev, '')}]"
+                f"{sev.upper().replace('_', ' ')}"
+                f"[/{severity_styles.get(sev, '')}]"
+                if sev else ""
+            ),
             (item.get("title", "") or "")[:50],
             ", ".join(item.get("cci_ids", [])[:3]),
         )

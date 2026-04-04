@@ -12,6 +12,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+from typing import Any
 
 
 class TestStatus(str, Enum):
@@ -70,8 +71,8 @@ class ScannerBase(ABC):
     @abstractmethod
     async def execute(
         self,
-        rules: list[dict],
-        config: dict | None = None,
+        rules: list[dict[str, Any]],
+        config: dict[str, Any] | None = None,
     ) -> list[TestResult]:
         """
         Run checks against a set of STIG rules.

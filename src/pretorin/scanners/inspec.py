@@ -13,8 +13,8 @@ from __future__ import annotations
 import json
 import re
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from pretorin.scanners.base import ScannerBase, ScannerInfo, TestResult, TestStatus
 
@@ -68,8 +68,8 @@ class InSpecScanner(ScannerBase):
 
     async def execute(
         self,
-        rules: list[dict],
-        config: dict | None = None,
+        rules: list[dict[str, Any]],
+        config: dict[str, Any] | None = None,
     ) -> list[TestResult]:
         """
         Run inspec exec against a MITRE SAF profile.
@@ -134,7 +134,7 @@ class InSpecScanner(ScannerBase):
         )
 
     def _parse_json_results(
-        self, results_path: Path, benchmark_id: str, rules: list[dict]
+        self, results_path: Path, benchmark_id: str, rules: list[dict[str, Any]]
     ) -> list[TestResult]:
         """Parse InSpec JSON output into TestResult objects."""
         if not results_path.exists():

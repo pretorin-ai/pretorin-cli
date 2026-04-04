@@ -8,6 +8,8 @@ OVAL/InSpec checks.
 
 from __future__ import annotations
 
+from typing import Any
+
 from pretorin.scanners.base import ScannerBase, ScannerInfo, TestResult, TestStatus
 
 
@@ -33,8 +35,8 @@ class ManualScanner(ScannerBase):
 
     async def execute(
         self,
-        rules: list[dict],
-        config: dict | None = None,
+        rules: list[dict[str, Any]],
+        config: dict[str, Any] | None = None,
     ) -> list[TestResult]:
         """
         Collect manual check results.

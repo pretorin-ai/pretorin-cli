@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from pretorin.scanners.base import ScannerBase, ScannerInfo, TestResult, TestStatus
 
@@ -46,7 +46,10 @@ class OpenSCAPScanner(ScannerBase):
                 version="",
                 available=False,
                 supported_stigs=self.supported_stigs(),
-                install_hint="Install: sudo dnf install openscap-scanner (RHEL/Fedora) or sudo apt install libopenscap8 (Debian/Ubuntu)",
+                install_hint=(
+                    "Install: sudo dnf install openscap-scanner (RHEL/Fedora)"
+                    " or sudo apt install libopenscap8 (Debian/Ubuntu)"
+                ),
             )
 
         # Parse version from output like "OpenSCAP command line tool (oscap) 1.3.7"
@@ -64,8 +67,8 @@ class OpenSCAPScanner(ScannerBase):
 
     async def execute(
         self,
-        rules: list[dict],
-        config: dict | None = None,
+        rules: list[dict[str, Any]],
+        config: dict[str, Any] | None = None,
     ) -> list[TestResult]:
         """
         Run oscap xccdf eval against a STIG profile.
@@ -125,7 +128,7 @@ class OpenSCAPScanner(ScannerBase):
         )
 
     def _parse_results_xml(
-        self, results_path: Path, benchmark_id: str, rules: list[dict]
+        self, results_path: Path, benchmark_id: str, rules: list[dict[str, Any]]
     ) -> list[TestResult]:
         """Parse XCCDF results XML into TestResult objects."""
         if not results_path.exists():

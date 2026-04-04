@@ -13,6 +13,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import Any
 
 from pretorin.scanners.base import ScannerBase, ScannerInfo, TestResult, TestStatus
 
@@ -23,8 +24,8 @@ class ScanPlanStep:
 
     scanner_name: str
     benchmark_id: str
-    rules: list[dict]
-    config: dict = field(default_factory=dict)
+    rules: list[dict[str, Any]]
+    config: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -32,7 +33,7 @@ class ScanPlan:
     """Full scan execution plan."""
 
     steps: list[ScanPlanStep]
-    unassigned_rules: list[dict] = field(default_factory=list)
+    unassigned_rules: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -104,8 +105,8 @@ class ScanOrchestrator:
 
     def plan_scan(
         self,
-        manifest: dict,
-        scanner_config: dict | None = None,
+        manifest: dict[str, Any],
+        scanner_config: dict[str, Any] | None = None,
         preferred_scanner: str | None = None,
     ) -> ScanPlan:
         """
@@ -116,7 +117,7 @@ class ScanOrchestrator:
         """
         scanner_config = scanner_config or {}
         steps: list[ScanPlanStep] = []
-        unassigned: list[dict] = []
+        unassigned: list[dict[str, Any]] = []
 
         # Build scanner lookup: name → (scanner, info)
         available = {
@@ -211,7 +212,7 @@ class ScanOrchestrator:
         system_id: str,
         stig_id: str | None = None,
         preferred_scanner: str | None = None,
-        scanner_config: dict | None = None,
+        scanner_config: dict[str, Any] | None = None,
         dry_run: bool = False,
     ) -> ScanReport:
         """
@@ -274,9 +275,7 @@ class ScanOrchestrator:
                     results=result_dicts,
                     cli_version=__version__,
                 )
-                accepted = submit_response.get("accepted", 0)
-                rejected = submit_response.get("rejected", 0)
-                if rejected > 0:
+                if submit_response.get("rejected", 0) > 0:
                     report.errors.extend(submit_response.get("errors", []))
             except Exception as e:
                 report.errors.append(f"Failed to upload results: {e}")

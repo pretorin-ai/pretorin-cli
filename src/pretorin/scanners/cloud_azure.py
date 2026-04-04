@@ -10,7 +10,7 @@ Requires: Azure CLI (az binary) + authenticated session
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from typing import Any
 
 from pretorin.scanners.base import ScannerBase, ScannerInfo, TestResult, TestStatus
 
@@ -70,8 +70,8 @@ class AzureCloudScanner(ScannerBase):
 
     async def execute(
         self,
-        rules: list[dict],
-        config: dict | None = None,
+        rules: list[dict[str, Any]],
+        config: dict[str, Any] | None = None,
     ) -> list[TestResult]:
         """
         Query Azure Policy compliance for STIG-mapped rules.
