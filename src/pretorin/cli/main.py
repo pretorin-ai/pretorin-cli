@@ -13,6 +13,7 @@ from pretorin import __version__
 from pretorin.cli.agent import app as agent_app
 from pretorin.cli.auth import app as auth_app
 from pretorin.cli.campaign import app as campaign_app
+from pretorin.cli.cci import app as cci_app
 from pretorin.cli.commands import app as frameworks_app
 from pretorin.cli.config import app as config_app
 from pretorin.cli.context import app as context_app
@@ -25,8 +26,10 @@ from pretorin.cli.notes import app as notes_app
 from pretorin.cli.output import set_json_mode
 from pretorin.cli.policy import app as policy_app
 from pretorin.cli.review import app as review_app
+from pretorin.cli.scan import app as scan_app
 from pretorin.cli.scope import app as scope_app
 from pretorin.cli.skill import app as skill_app
+from pretorin.cli.stig import app as stig_app
 from pretorin.cli.vendor import app as vendor_app
 
 console = Console()
@@ -169,6 +172,9 @@ app.add_typer(scope_app, name="scope", help="Stateful scope questionnaire workfl
 app.add_typer(agent_app, name="agent", help="Autonomous compliance agent")
 app.add_typer(skill_app, name="skill", help="Install/manage the Pretorin skill for AI agents")
 app.add_typer(vendor_app, name="vendor", help="Vendor management and evidence linking")
+app.add_typer(stig_app, name="stig", help="Browse STIG benchmarks, rules, and applicability")
+app.add_typer(cci_app, name="cci", help="Browse CCIs and the full traceability chain")
+app.add_typer(scan_app, name="scan", help="Run STIG compliance scans and view results")
 app.add_typer(harness_app, name="harness", help="[Deprecated] AI harness wrapper")
 
 # Add auth commands directly to root

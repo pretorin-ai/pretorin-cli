@@ -184,6 +184,55 @@ SKILLS: dict[str, Skill] = {
         ],
         max_turns=25,
     ),
+    "stig-scan": Skill(
+        name="stig-scan",
+        description="Run STIG compliance scans against a system",
+        system_prompt=(
+            "You are a STIG compliance scanning expert. Your task is to:\n"
+            "1. Check the system's STIG applicability (which STIGs apply)\n"
+            "2. Get the test manifest (rules to evaluate)\n"
+            "3. Report what scanners are available and what rules they cover\n"
+            "4. Summarize the scan plan and any gaps in automated coverage\n\n"
+            "Start by listing the system, then check STIG applicability. "
+            "If applicable STIGs exist, get the test manifest and summarize "
+            "the rules by severity and scanner availability."
+        ),
+        tool_names=[
+            "list_systems",
+            "get_system",
+            "get_compliance_status",
+            "list_stigs",
+            "get_stig_applicability",
+            "get_test_manifest",
+            "get_cci_status",
+        ],
+        max_turns=15,
+    ),
+    "cci-assessment": Skill(
+        name="cci-assessment",
+        description="Assess CCI compliance for a specific control",
+        system_prompt=(
+            "You are a CCI compliance assessment expert. Your task is to:\n"
+            "1. Get the control context and implementation status\n"
+            "2. List CCIs for this control\n"
+            "3. Check CCI-level test results (pass/fail/not tested)\n"
+            "4. Identify gaps: which CCIs have no test coverage\n"
+            "5. Recommend actions for untested CCIs\n\n"
+            "Present results as a traceability chain showing the full path "
+            "from control → CCIs → STIG rules → test results."
+        ),
+        tool_names=[
+            "get_system",
+            "get_control",
+            "get_control_context",
+            "get_control_implementation",
+            "list_ccis",
+            "get_cci",
+            "get_cci_status",
+            "search_evidence",
+        ],
+        max_turns=15,
+    ),
 }
 
 
