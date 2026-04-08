@@ -160,6 +160,57 @@ Platform-backed review and update workflows are single-scope: set one active `sy
 | `pretorin skill status` | Check skill install status per agent |
 | `pretorin mcp-serve` | Start MCP server |
 
+### Campaign Workflows
+
+Campaigns let you run bulk compliance operations across multiple controls, policies, or scope questions in a single coordinated run. Campaigns support an external-agent-first pattern with checkpoint persistence and lease-based concurrency.
+
+| Command | Purpose |
+|---------|---------|
+| `pretorin campaign controls --mode initial --family AC` | Draft narratives/evidence for a control family |
+| `pretorin campaign controls --mode notes-fix --family AC` | Fix controls flagged by platform notes |
+| `pretorin campaign controls --mode review-fix --family AC` | Fix controls flagged by family review |
+| `pretorin campaign policy --mode answer --all-incomplete` | Answer all incomplete policy questions |
+| `pretorin campaign scope --mode answer` | Answer scope questions for a system/framework |
+| `pretorin campaign status --checkpoint <path>` | Check campaign progress |
+
+### Vendor Management & Inheritance
+
+Manage vendor entities (CSPs, SaaS, managed services) and track control inheritance through vendor responsibility edges.
+
+| Command | Purpose |
+|---------|---------|
+| `pretorin vendor list` | List all vendors |
+| `pretorin vendor create <name> --type csp` | Create a vendor entity |
+| `pretorin vendor get <id>` | Get vendor details |
+| `pretorin vendor upload-doc <id> <file>` | Upload vendor evidence document |
+| `pretorin vendor list-docs <id>` | List vendor documents |
+
+### STIG & CCI Browsing
+
+Browse STIG benchmarks, rules, and CCIs with full traceability from NIST 800-53 controls down to individual STIG check rules.
+
+| Command | Purpose |
+|---------|---------|
+| `pretorin stig list` | List STIG benchmarks |
+| `pretorin stig show <id>` | Show STIG benchmark detail |
+| `pretorin stig rules <id>` | List rules for a benchmark |
+| `pretorin stig applicable` | Show applicable STIGs for active system |
+| `pretorin stig infer` | AI-infer applicable STIGs from system profile |
+| `pretorin cci list` | List CCIs with optional control filter |
+| `pretorin cci show <id>` | Show CCI detail with linked SRGs and rules |
+| `pretorin cci chain <control_id>` | Full traceability: Control -> CCIs -> STIG rules |
+
+### STIG Scanning
+
+Run STIG compliance scans using available scanner tools (OpenSCAP, InSpec, AWS/Azure Cloud Scanners).
+
+| Command | Purpose |
+|---------|---------|
+| `pretorin scan doctor` | Check installed scanner tools |
+| `pretorin scan manifest` | Show test manifest for active system |
+| `pretorin scan run` | Execute STIG compliance scans |
+| `pretorin scan results` | View CCI-level test results |
+
 Quick context checks:
 
 ```bash

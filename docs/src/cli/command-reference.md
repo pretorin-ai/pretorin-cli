@@ -100,6 +100,74 @@
 | `pretorin config set <key> <value>` | Set a config value |
 | `pretorin config path` | Show config file path |
 
+## Campaign Commands
+
+| Command | Description |
+|---------|-------------|
+| `pretorin campaign controls` | Run bulk control narrative/evidence campaign (`--mode`, `--family`, `--controls`, `--all-controls`, `--artifacts`, `--review-job`, `--concurrency`, `--checkpoint`, `--apply`, `--output`) |
+| `pretorin campaign policy` | Run bulk policy questionnaire campaign (`--mode`, `--policies`, `--all-incomplete`, `--concurrency`, `--checkpoint`, `--apply`, `--output`) |
+| `pretorin campaign scope` | Run bulk scope questionnaire campaign (`--mode`, `--system`, `--framework-id`, `--concurrency`, `--checkpoint`, `--apply`, `--output`) |
+| `pretorin campaign status` | Show campaign progress from a checkpoint file (`--checkpoint`, `--output`) |
+
+### Campaign Modes
+
+| Domain | Mode | Description |
+|--------|------|-------------|
+| controls | `initial` | Draft new narratives and evidence for controls |
+| controls | `notes-fix` | Address platform notes on existing controls |
+| controls | `review-fix` | Fix findings from a family review job |
+| policy | `answer` | Generate answers for policy questions |
+| policy | `review-fix` | Fix findings from a policy review |
+| scope | `answer` | Generate answers for scope questions |
+| scope | `review-fix` | Fix findings from a scope review |
+
+## Vendor Commands
+
+| Command | Description |
+|---------|-------------|
+| `pretorin vendor list` | List all vendors in the organization |
+| `pretorin vendor create <name>` | Create a vendor (`--type`, `--description`, `--authorization-level`) |
+| `pretorin vendor get <vendor_id>` | Get vendor details |
+| `pretorin vendor update <vendor_id>` | Update vendor fields (`--name`, `--description`, `--type`, `--authorization-level`) |
+| `pretorin vendor delete <vendor_id>` | Delete a vendor (`--force`) |
+| `pretorin vendor upload-doc <vendor_id> <file>` | Upload a vendor evidence document (`--name`, `--description`, `--attestation-type`) |
+| `pretorin vendor list-docs <vendor_id>` | List documents linked to a vendor |
+
+### Vendor Types
+
+`csp`, `saas`, `managed_service`, `internal`
+
+## STIG Commands
+
+| Command | Description |
+|---------|-------------|
+| `pretorin stig list` | List STIG benchmarks (`--technology-area`, `--product`, `--limit`) |
+| `pretorin stig show <stig_id>` | Show STIG benchmark detail with severity breakdown |
+| `pretorin stig rules <stig_id>` | List rules for a benchmark (`--severity`, `--cci`, `--limit`) |
+| `pretorin stig applicable` | Show applicable STIGs for the active system (`--system`) |
+| `pretorin stig infer` | AI-infer applicable STIGs from system profile (`--system`) |
+
+## CCI Commands
+
+| Command | Description |
+|---------|-------------|
+| `pretorin cci list` | List CCIs (`--control`, `--status`, `--limit`) |
+| `pretorin cci show <cci_id>` | Show CCI detail with linked SRGs and STIG rules (e.g., `CCI-000015`) |
+| `pretorin cci chain <control_id>` | Full traceability chain: Control -> CCIs -> SRGs -> STIG rules (`--system`) |
+
+## Scan Commands
+
+| Command | Description |
+|---------|-------------|
+| `pretorin scan doctor` | Check which scanner tools are installed and available |
+| `pretorin scan manifest` | Show test manifest for the active system (`--system`, `--stig`) |
+| `pretorin scan run` | Run STIG compliance scans (`--system`, `--stig`, `--tool`, `--dry-run`) |
+| `pretorin scan results` | Show CCI-level test results (`--system`, `--control`) |
+
+### Supported Scanners
+
+`OpenSCAP`, `InSpec`, `AWS Cloud Scanner`, `Azure Cloud Scanner`, `Manual`
+
 ## Deprecated Commands
 
 | Command | Description |
