@@ -158,8 +158,9 @@ Restart the application to load the new MCP server.
 
 ## Available Tools
 
-The MCP server provides 29 tools for accessing and managing compliance data.
-The current tool surface is:
+The MCP server provides 80+ tools organized by category.
+
+### Framework & Control Reference
 
 | Tool | Description |
 |------|-------------|
@@ -171,27 +172,140 @@ The current tool surface is:
 | `pretorin_get_controls_batch` | Get detailed control data for many controls in one request |
 | `pretorin_get_control_references` | Get control guidance, objectives, and related controls |
 | `pretorin_get_document_requirements` | Get document requirements for a framework |
+
+### Systems
+
+| Tool | Description |
+|------|-------------|
 | `pretorin_list_systems` | List systems in the current organization |
 | `pretorin_get_system` | Get system metadata, attached frameworks, and impact level |
 | `pretorin_get_compliance_status` | Get implementation progress for a system |
+
+### Evidence Management
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_search_evidence` | Search current evidence items |
+| `pretorin_create_evidence` | Upsert evidence (find-or-create by default) |
+| `pretorin_create_evidence_batch` | Create and link multiple evidence items in one scoped request |
+| `pretorin_link_evidence` | Link an existing evidence item to a control |
+
+### Implementation Context
+
+| Tool | Description |
+|------|-------------|
 | `pretorin_get_control_context` | Get rich control context: AI guidance, statement, objectives, and implementation details |
 | `pretorin_get_scope` | Get scope narrative, exclusions, and scope Q&A |
 | `pretorin_get_narrative` | Get the current narrative for a control |
 | `pretorin_get_control_implementation` | Get implementation status, narrative, evidence count, and notes |
 | `pretorin_get_control_notes` | Read notes for a control implementation |
-| `pretorin_search_evidence` | Search current evidence items |
-| `pretorin_create_evidence` | Upsert evidence (find-or-create by default) |
-| `pretorin_create_evidence_batch` | Create and link multiple evidence items in one scoped request |
-| `pretorin_link_evidence` | Link an existing evidence item to a control |
-| `pretorin_patch_scope_qa` | Update scope questionnaire answers for a system/framework |
-| `pretorin_list_org_policies` | List organization policies available for questionnaire work |
-| `pretorin_get_org_policy_questionnaire` | Get canonical questionnaire state for one organization policy |
-| `pretorin_patch_org_policy_qa` | Update organization policy questionnaire answers |
 | `pretorin_update_narrative` | Push a narrative text update for a control implementation |
 | `pretorin_add_control_note` | Add a control note with manual follow-up guidance |
 | `pretorin_update_control_status` | Update a control implementation status |
-| `pretorin_push_monitoring_event` | Create a monitoring event for a system |
 | `pretorin_generate_control_artifacts` | Generate read-only AI narrative and evidence-gap drafts |
+
+### Monitoring
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_push_monitoring_event` | Create a monitoring event for a system |
+
+### Workflow State & Analytics
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_get_workflow_state` | Get lifecycle state for a system+framework (scope, policies, controls, evidence) |
+| `pretorin_get_analytics_summary` | Lightweight system progress snapshot |
+| `pretorin_get_family_analytics` | Per-family breakdown: narrative coverage, evidence, status distribution |
+| `pretorin_get_policy_analytics` | Per-policy breakdown: answer completion, review status |
+
+### Family Operations
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_get_pending_families` | Identify families that need work (pending vs total counts) |
+| `pretorin_get_family_bundle` | Get all controls in a family with status, narrative, evidence, notes |
+| `pretorin_trigger_family_review` | Trigger AI review of all controls in a family |
+| `pretorin_get_family_review_results` | Poll family review results with findings |
+
+### Scope Workflow
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_get_pending_scope_questions` | Get only unanswered scope questions |
+| `pretorin_get_scope_question_detail` | Get guidance, tips, and examples for a scope question |
+| `pretorin_answer_scope_question` | Answer one scope question |
+| `pretorin_patch_scope_qa` | Batch update scope questionnaire answers |
+| `pretorin_trigger_scope_generation` | Trigger AI scope document generation |
+| `pretorin_trigger_scope_review` | Trigger AI scope review |
+| `pretorin_get_scope_review_results` | Poll scope review results |
+
+### Policy Workflow
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_list_org_policies` | List organization policies |
+| `pretorin_get_org_policy_questionnaire` | Get policy questionnaire state |
+| `pretorin_get_pending_policy_questions` | Get only unanswered policy questions |
+| `pretorin_get_policy_question_detail` | Get guidance for a policy question |
+| `pretorin_answer_policy_question` | Answer one policy question |
+| `pretorin_patch_org_policy_qa` | Batch update policy questionnaire answers |
+| `pretorin_get_policy_workflow_state` | Per-policy completion and review status |
+| `pretorin_trigger_policy_generation` | Trigger AI policy document generation |
+| `pretorin_trigger_policy_review` | Trigger AI policy review |
+| `pretorin_get_policy_review_results` | Poll policy review results |
+
+### Campaign Operations
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_prepare_campaign` | Prepare a campaign run with platform state snapshot |
+| `pretorin_claim_campaign_items` | Claim items for drafting with TTL-based leases |
+| `pretorin_get_campaign_item_context` | Get full item context and drafting instructions |
+| `pretorin_submit_campaign_proposal` | Submit a proposal without applying to platform |
+| `pretorin_apply_campaign` | Push accepted proposals to the platform |
+| `pretorin_get_campaign_status` | Get structured campaign status snapshot |
+
+### Vendor Management
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_list_vendors` | List all vendor entities |
+| `pretorin_create_vendor` | Create a vendor (CSP, SaaS, managed service, internal) |
+| `pretorin_get_vendor` | Get vendor details |
+| `pretorin_update_vendor` | Update vendor fields |
+| `pretorin_delete_vendor` | Delete a vendor entity |
+| `pretorin_upload_vendor_document` | Upload vendor evidence documents |
+| `pretorin_list_vendor_documents` | List documents linked to a vendor |
+| `pretorin_link_evidence_to_vendor` | Link evidence to a vendor with attestation type |
+
+### Inheritance & Responsibility
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_set_control_responsibility` | Mark control as inherited/shared from a provider |
+| `pretorin_get_control_responsibility` | Check if control is inherited and from where |
+| `pretorin_remove_control_responsibility` | Convert inherited control to system-specific |
+| `pretorin_generate_inheritance_narrative` | AI-generate inheritance narrative from vendor docs |
+| `pretorin_get_stale_edges` | Identify controls with stale inheritance |
+| `pretorin_sync_stale_edges` | Bulk update inherited controls from source narratives |
+
+### STIG & CCI
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_list_stigs` | List STIG benchmarks with filters |
+| `pretorin_get_stig` | Get STIG benchmark detail |
+| `pretorin_list_stig_rules` | List rules with severity/CCI filters |
+| `pretorin_get_stig_rule` | Full rule detail: check text, fix text, CCIs |
+| `pretorin_list_ccis` | List CCIs with optional control filter |
+| `pretorin_get_cci` | CCI detail with linked SRGs and rules |
+| `pretorin_get_cci_chain` | Full traceability: Control -> CCIs -> SRGs -> STIG rules |
+| `pretorin_get_cci_status` | CCI-level compliance rollup for a system |
+| `pretorin_get_stig_applicability` | Which STIGs apply to a system |
+| `pretorin_infer_stigs` | AI-infer applicable STIGs from system profile |
+| `pretorin_get_test_manifest` | Fetch test manifest for a system |
+| `pretorin_submit_test_results` | Upload STIG scan results |
 
 `pretorin_generate_control_artifacts` is read-only. Use `pretorin_update_narrative`, `pretorin_create_evidence`, and `pretorin_add_control_note` to persist approved changes.
 

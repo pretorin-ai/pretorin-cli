@@ -1,6 +1,6 @@
 # MCP Tool Reference
 
-The MCP server provides 29 tools organized by category.
+The MCP server provides 80+ tools organized by category.
 
 ## Framework & Control Reference
 
@@ -381,3 +381,671 @@ Generate read-only AI drafts for a control narrative and evidence-gap assessment
 **Returns:** Draft narrative text plus evidence-gap analysis. Does not write to the platform.
 
 Use `pretorin_update_narrative`, `pretorin_create_evidence`, and `pretorin_add_control_note` to persist approved changes.
+
+---
+
+## Workflow State & Analytics
+
+### pretorin_get_workflow_state
+
+Get the lifecycle state for a system+framework, showing which stage needs work next (scope, policies, controls, evidence).
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+
+**Returns:** Current workflow stage, completion percentages, and next recommended action.
+
+---
+
+### pretorin_get_analytics_summary
+
+Get a lightweight system progress snapshot.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+
+**Returns:** Scope completion, policy completion, control coverage, and evidence gaps.
+
+---
+
+### pretorin_get_family_analytics
+
+Get per-family breakdown with narrative coverage, evidence coverage, and status distribution.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+
+**Returns:** Per-family metrics.
+
+---
+
+### pretorin_get_policy_analytics
+
+Get per-policy breakdown with answer completion and review status.
+
+**Parameters:** None (uses org context)
+
+**Returns:** Per-policy completion metrics.
+
+---
+
+## Family Operations
+
+### pretorin_get_pending_families
+
+Identify which control families need work.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+
+**Returns:** Families with counts of pending vs total controls.
+
+---
+
+### pretorin_get_family_bundle
+
+Get all controls in one family with status, narrative presence, evidence presence, and note counts.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+- `family_id` (required)
+
+**Returns:** Complete family bundle with per-control details.
+
+---
+
+### pretorin_trigger_family_review
+
+Trigger AI review of all controls in a family. Takes 2-4 minutes for large families.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+- `family_id` (required)
+
+**Returns:** Review job ID for polling.
+
+---
+
+### pretorin_get_family_review_results
+
+Poll family review results.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+- `job_id` (required)
+
+**Returns:** Aggregated findings with severity, affected control IDs, and recommended fixes.
+
+---
+
+## Scope Workflow
+
+### pretorin_get_pending_scope_questions
+
+Get only unanswered scope questions (lightweight).
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+
+**Returns:** List of unanswered questions with IDs.
+
+---
+
+### pretorin_get_scope_question_detail
+
+Get guidance, tips, and example responses for a specific scope question.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+- `question_id` (required)
+
+**Returns:** Question text, guidance, tips, and example answers.
+
+---
+
+### pretorin_answer_scope_question
+
+Answer one scope question.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+- `question_id` (required)
+- `answer` (required)
+
+**Returns:** Updated question state.
+
+---
+
+### pretorin_trigger_scope_generation
+
+Trigger AI generation of scope document from answered questions.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+
+**Returns:** Generation job status.
+
+---
+
+### pretorin_trigger_scope_review
+
+Trigger AI review of scope answers.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+
+**Returns:** Review job ID for polling.
+
+---
+
+### pretorin_get_scope_review_results
+
+Poll for structured scope review findings.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+- `job_id` (required)
+
+**Returns:** Findings with severity levels and recommended fixes.
+
+---
+
+## Policy Workflow
+
+### pretorin_get_pending_policy_questions
+
+Get only unanswered policy questions.
+
+**Parameters:**
+- `policy_id` (required)
+
+**Returns:** List of unanswered questions.
+
+---
+
+### pretorin_get_policy_question_detail
+
+Get guidance, tips, and examples for a specific policy question.
+
+**Parameters:**
+- `policy_id` (required)
+- `question_id` (required)
+
+**Returns:** Question text, guidance, and example answers.
+
+---
+
+### pretorin_answer_policy_question
+
+Answer one policy question.
+
+**Parameters:**
+- `policy_id` (required)
+- `question_id` (required)
+- `answer` (required)
+
+**Returns:** Updated question state.
+
+---
+
+### pretorin_get_policy_workflow_state
+
+Get per-policy workflow state including completion, generation, and review status.
+
+**Parameters:**
+- `policy_id` (required)
+
+**Returns:** Policy workflow state.
+
+---
+
+### pretorin_trigger_policy_generation
+
+Trigger AI generation of policy document from answered questions.
+
+**Parameters:**
+- `policy_id` (required)
+
+**Returns:** Generation job status.
+
+---
+
+### pretorin_trigger_policy_review
+
+Trigger AI review of policy answers/document.
+
+**Parameters:**
+- `policy_id` (required)
+
+**Returns:** Review job ID for polling.
+
+---
+
+### pretorin_get_policy_review_results
+
+Poll for structured policy review findings.
+
+**Parameters:**
+- `policy_id` (required)
+- `job_id` (required)
+
+**Returns:** Findings with severity levels and recommended fixes.
+
+---
+
+## Campaign Operations
+
+Campaigns enable bulk compliance operations with checkpoint persistence and lease-based concurrency.
+
+### pretorin_prepare_campaign
+
+Prepare a workflow-aligned campaign run with a platform state snapshot.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+- `domain` (required) — `controls`, `policy`, or `scope`
+- `mode` (required) — `initial`, `notes-fix`, `review-fix`, `answer`
+- `family_id` (optional) — Target family for control campaigns
+- `review_job` (optional) — Review job ID for `review-fix` mode
+
+**Returns:** Campaign checkpoint with item list and metadata.
+
+---
+
+### pretorin_claim_campaign_items
+
+Claim items for drafting with TTL-based leases. Safe for fan-out to multiple agents.
+
+**Parameters:**
+- `checkpoint` (required) — Campaign checkpoint
+- `count` (optional) — Number of items to claim
+
+**Returns:** Claimed items with lease metadata.
+
+---
+
+### pretorin_get_campaign_item_context
+
+Get full item context plus drafting instructions for a claimed item.
+
+**Parameters:**
+- `checkpoint` (required)
+- `item_id` (required)
+
+**Returns:** Control/policy/scope context, current state, and drafting guidance.
+
+---
+
+### pretorin_submit_campaign_proposal
+
+Submit an external agent's proposal without applying it to the platform.
+
+**Parameters:**
+- `checkpoint` (required)
+- `item_id` (required)
+- `proposal` (required) — Draft content
+
+**Returns:** Proposal acceptance confirmation.
+
+---
+
+### pretorin_apply_campaign
+
+Push all accepted proposals to the platform as a single apply operation.
+
+**Parameters:**
+- `checkpoint` (required)
+
+**Returns:** Apply results with per-item status.
+
+---
+
+### pretorin_get_campaign_status
+
+Get structured campaign status with a stable transcript snapshot.
+
+**Parameters:**
+- `checkpoint` (required)
+
+**Returns:** Campaign progress, item states, and transcript.
+
+---
+
+## Vendor Management
+
+### pretorin_list_vendors
+
+List all vendor entities in the organization.
+
+**Parameters:** None
+
+**Returns:** Vendor list with IDs, names, types, and authorization levels.
+
+---
+
+### pretorin_create_vendor
+
+Create a new vendor entity.
+
+**Parameters:**
+- `name` (required)
+- `vendor_type` (optional) — `csp`, `saas`, `managed_service`, `internal`
+- `description` (optional)
+- `authorization_level` (optional)
+
+**Returns:** Created vendor record.
+
+---
+
+### pretorin_get_vendor
+
+Get vendor details.
+
+**Parameters:**
+- `vendor_id` (required)
+
+**Returns:** Vendor metadata and linked documents.
+
+---
+
+### pretorin_update_vendor
+
+Update vendor fields.
+
+**Parameters:**
+- `vendor_id` (required)
+- `name` (optional)
+- `description` (optional)
+- `vendor_type` (optional)
+- `authorization_level` (optional)
+
+**Returns:** Updated vendor record.
+
+---
+
+### pretorin_delete_vendor
+
+Delete a vendor entity.
+
+**Parameters:**
+- `vendor_id` (required)
+
+**Returns:** Deletion confirmation.
+
+---
+
+### pretorin_upload_vendor_document
+
+Upload vendor evidence documents (SOC 2 reports, CRMs, FedRAMP packages).
+
+**Parameters:**
+- `vendor_id` (required)
+- `file_path` (required)
+- `name` (optional)
+- `description` (optional)
+- `attestation_type` (optional) — `self_attested`, `third_party_attestation`, `vendor_provided`
+
+**Returns:** Uploaded document record.
+
+---
+
+### pretorin_list_vendor_documents
+
+List documents linked to a vendor.
+
+**Parameters:**
+- `vendor_id` (required)
+
+**Returns:** Document list with metadata.
+
+---
+
+### pretorin_link_evidence_to_vendor
+
+Link an evidence item to a vendor with attestation type.
+
+**Parameters:**
+- `evidence_id` (required)
+- `vendor_id` (required)
+- `attestation_type` (optional)
+
+**Returns:** Link confirmation.
+
+---
+
+## Inheritance & Responsibility
+
+### pretorin_set_control_responsibility
+
+Mark a control as inherited or shared from a provider.
+
+**Parameters:**
+- `system_id` (required)
+- `control_id` (required)
+- `framework_id` (required)
+- `vendor_id` (required)
+- `responsibility_type` (required) — `inherited` or `shared`
+
+**Returns:** Created responsibility edge.
+
+---
+
+### pretorin_get_control_responsibility
+
+Check if a control is inherited and from where.
+
+**Parameters:**
+- `system_id` (required)
+- `control_id` (required)
+- `framework_id` (required)
+
+**Returns:** Responsibility edge details or null.
+
+---
+
+### pretorin_remove_control_responsibility
+
+Convert an inherited control back to system-specific.
+
+**Parameters:**
+- `system_id` (required)
+- `control_id` (required)
+- `framework_id` (required)
+
+**Returns:** Removal confirmation.
+
+---
+
+### pretorin_generate_inheritance_narrative
+
+AI-generate an inheritance narrative grounded in vendor documentation.
+
+**Parameters:**
+- `system_id` (required)
+- `control_id` (required)
+- `framework_id` (required)
+- `vendor_id` (required)
+
+**Returns:** Draft inheritance narrative text.
+
+---
+
+### pretorin_get_stale_edges
+
+Identify controls where the source narrative changed but the inherited control hasn't been updated.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+
+**Returns:** List of stale inheritance edges with source change timestamps.
+
+---
+
+### pretorin_sync_stale_edges
+
+Bulk update inherited controls by regenerating narratives from latest source.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+
+**Returns:** Sync results with per-control status.
+
+---
+
+## STIG & CCI
+
+### pretorin_list_stigs
+
+List STIG benchmarks with optional filters.
+
+**Parameters:**
+- `technology_area` (optional) — Filter by technology area
+- `product` (optional) — Filter by product name
+- `limit` (optional)
+
+**Returns:** STIG benchmark list with IDs, titles, and rule counts.
+
+---
+
+### pretorin_get_stig
+
+Get STIG benchmark detail.
+
+**Parameters:**
+- `stig_id` (required)
+
+**Returns:** Benchmark metadata including title, version, release info, and severity breakdown.
+
+---
+
+### pretorin_list_stig_rules
+
+List rules for a STIG benchmark.
+
+**Parameters:**
+- `stig_id` (required)
+- `severity` (optional) — Filter by severity (high, medium, low)
+- `cci` (optional) — Filter by CCI ID
+- `limit` (optional)
+
+**Returns:** Rule list with IDs, titles, severities, and linked CCIs.
+
+---
+
+### pretorin_get_stig_rule
+
+Get full STIG rule detail.
+
+**Parameters:**
+- `rule_id` (required)
+
+**Returns:** Check text, fix text, discussion, and linked CCIs.
+
+---
+
+### pretorin_list_ccis
+
+List CCIs with optional filters.
+
+**Parameters:**
+- `control` (optional) — Filter by NIST 800-53 control ID
+- `status` (optional)
+- `limit` (optional)
+
+**Returns:** CCI list with definitions and linked controls.
+
+---
+
+### pretorin_get_cci
+
+Get CCI detail with linked SRGs and STIG rules.
+
+**Parameters:**
+- `cci_id` (required) — e.g., `CCI-000015`
+
+**Returns:** CCI definition, linked SRGs, and linked STIG rules.
+
+---
+
+### pretorin_get_cci_chain
+
+Get the full traceability chain: Control -> CCIs -> SRGs -> STIG rules.
+
+**Parameters:**
+- `control_id` (required) — NIST 800-53 control ID
+- `system_id` (optional) — Include test results when provided
+
+**Returns:** Complete traceability from control requirements to technical checks.
+
+---
+
+### pretorin_get_cci_status
+
+Get CCI-level compliance rollup for a system.
+
+**Parameters:**
+- `system_id` (required)
+- `framework_id` (required)
+
+**Returns:** Per-CCI pass/fail status.
+
+---
+
+### pretorin_get_stig_applicability
+
+Get which STIGs apply to a system based on its profile.
+
+**Parameters:**
+- `system_id` (required)
+
+**Returns:** List of applicable STIG benchmarks.
+
+---
+
+### pretorin_infer_stigs
+
+AI-infer applicable STIGs from the system's profile.
+
+**Parameters:**
+- `system_id` (required)
+
+**Returns:** Recommended STIG benchmarks with reasoning.
+
+---
+
+### pretorin_get_test_manifest
+
+Fetch the test manifest (applicable STIGs + rules) for a system.
+
+**Parameters:**
+- `system_id` (required)
+
+**Returns:** Test manifest with applicable rules and scanner assignments.
+
+---
+
+### pretorin_submit_test_results
+
+Upload STIG scan results to the platform.
+
+**Parameters:**
+- `system_id` (required)
+- `results` (required) — Scan result payload
+
+**Returns:** Submission confirmation with per-result status.

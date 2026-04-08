@@ -668,6 +668,97 @@ Different frameworks use different ID conventions. Always use `pretorin framewor
 | `nist-800-171-r3` | NIST SP 800-171 Revision 3 | 17 | 130 |
 | `nist-800-53-r5` | NIST SP 800-53 Rev 5 | 20 | 324 |
 
+## Campaign Commands
+
+The `campaign` command group runs bulk compliance operations across multiple controls, policies, or scope questions.
+
+### Control Campaigns
+
+```bash
+# Draft new narratives for the Access Control family
+pretorin campaign controls --mode initial --family AC \
+  --system "My System" --framework-id fedramp-moderate
+
+# Fix controls flagged by platform notes
+pretorin campaign controls --mode notes-fix --family AC
+
+# Fix controls flagged by family review
+pretorin campaign controls --mode review-fix --family AC --review-job <job-id>
+```
+
+### Policy Campaigns
+
+```bash
+pretorin campaign policy --mode answer --all-incomplete
+```
+
+### Scope Campaigns
+
+```bash
+pretorin campaign scope --mode answer \
+  --system "My System" --framework-id fedramp-moderate
+```
+
+### Campaign Status
+
+```bash
+pretorin campaign status --checkpoint .pretorin/campaign-checkpoint.json
+```
+
+Campaign modes: `initial` (new drafts), `notes-fix` (fix platform notes), `review-fix` (fix review findings), `answer` (policy/scope questions).
+
+## Vendor Commands
+
+The `vendor` command group manages vendor entities and their evidence documents.
+
+```bash
+pretorin vendor list
+pretorin vendor create "AWS" --type csp --description "Cloud provider"
+pretorin vendor get <vendor_id>
+pretorin vendor update <vendor_id> --name "AWS GovCloud"
+pretorin vendor delete <vendor_id> --force
+pretorin vendor upload-doc <vendor_id> ./soc2-report.pdf --name "SOC 2" --attestation-type third_party_attestation
+pretorin vendor list-docs <vendor_id>
+```
+
+Vendor types: `csp`, `saas`, `managed_service`, `internal`
+
+## STIG Commands
+
+Browse STIG benchmarks and rules.
+
+```bash
+pretorin stig list --technology-area "Network"
+pretorin stig show <stig_id>
+pretorin stig rules <stig_id> --severity high
+pretorin stig applicable --system "My System"
+pretorin stig infer --system "My System"
+```
+
+## CCI Commands
+
+Browse CCIs and the full traceability chain from NIST 800-53 controls to STIG rules.
+
+```bash
+pretorin cci list --control ac-2
+pretorin cci show CCI-000015
+pretorin cci chain ac-2 --system "My System"
+```
+
+## Scan Commands
+
+Run STIG compliance scans using available scanner tools.
+
+```bash
+pretorin scan doctor                          # check installed scanners
+pretorin scan manifest --system "My System"   # view test manifest
+pretorin scan run --system "My System"        # execute scans
+pretorin scan run --dry-run                   # preview without executing
+pretorin scan results --control ac-2          # view CCI-level results
+```
+
+Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Manual.
+
 ## Complete Command Reference
 
 | Command | Description |
@@ -701,6 +792,29 @@ Different frameworks use different ID conventions. Always use `pretorin framewor
 | `pretorin notes list <ctrl> <fw>` | List control notes |
 | `pretorin notes add <ctrl> <fw> --content ...` | Add a control note |
 | `pretorin monitoring push` | Push a monitoring event to a system |
+| `pretorin campaign controls` | Run bulk control campaign (`--mode`, `--family`, `--apply`) |
+| `pretorin campaign policy` | Run bulk policy campaign (`--mode`, `--all-incomplete`) |
+| `pretorin campaign scope` | Run bulk scope campaign (`--mode`) |
+| `pretorin campaign status` | Check campaign progress (`--checkpoint`) |
+| `pretorin vendor list` | List all vendors |
+| `pretorin vendor create <name>` | Create a vendor (`--type`, `--description`) |
+| `pretorin vendor get <id>` | Get vendor details |
+| `pretorin vendor update <id>` | Update vendor fields |
+| `pretorin vendor delete <id>` | Delete a vendor (`--force`) |
+| `pretorin vendor upload-doc <id> <file>` | Upload vendor evidence document |
+| `pretorin vendor list-docs <id>` | List vendor documents |
+| `pretorin stig list` | List STIG benchmarks (`--technology-area`, `--product`) |
+| `pretorin stig show <id>` | Show STIG benchmark detail |
+| `pretorin stig rules <id>` | List STIG rules (`--severity`, `--cci`) |
+| `pretorin stig applicable` | Show applicable STIGs for active system |
+| `pretorin stig infer` | AI-infer applicable STIGs |
+| `pretorin cci list` | List CCIs (`--control`, `--status`) |
+| `pretorin cci show <id>` | Show CCI detail |
+| `pretorin cci chain <ctrl>` | Full traceability chain (`--system`) |
+| `pretorin scan doctor` | Check installed scanner tools |
+| `pretorin scan manifest` | Show test manifest (`--system`, `--stig`) |
+| `pretorin scan run` | Run STIG scans (`--tool`, `--dry-run`) |
+| `pretorin scan results` | View CCI-level results (`--control`) |
 | `pretorin agent run "<task>"` | Run a compliance task with the Codex agent |
 | `pretorin agent run --skill <name>` | Run a predefined agent skill |
 | `pretorin agent doctor` | Validate Codex runtime setup |

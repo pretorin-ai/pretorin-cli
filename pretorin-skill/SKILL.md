@@ -3,17 +3,20 @@ name: pretorin
 description: >
   This skill should be used when the user asks about compliance frameworks,
   security controls, control families, document requirements, FedRAMP, NIST 800-53,
-  NIST 800-171, CMMC, or wants to perform a compliance gap analysis, generate
-  compliance artifacts, map controls across frameworks, or check what documents
-  are needed for certification. Trigger phrases include "list frameworks",
-  "show controls", "what documents do I need", "compliance check",
-  "control requirements", "gap analysis", and "audit my code".
-version: 0.9.7
+  NIST 800-171, CMMC, STIGs, CCIs, vendor inheritance, compliance campaigns,
+  policy/scope questionnaires, or wants to perform a compliance gap analysis,
+  generate compliance artifacts, map controls across frameworks, run bulk
+  compliance workflows, manage vendor responsibility, scan for STIG compliance,
+  or check what documents are needed for certification. Trigger phrases include
+  "list frameworks", "show controls", "what documents do I need", "compliance check",
+  "control requirements", "gap analysis", "audit my code", "run campaign",
+  "vendor inheritance", "STIG rules", "CCI chain", and "scan compliance".
+version: 0.13.1
 ---
 
 # Pretorin Compliance Skill
 
-Query authoritative compliance framework data via the Pretorin MCP server. Access controls, families, document requirements, and implementation guidance from NIST 800-53, NIST 800-171, FedRAMP, and CMMC.
+Query authoritative compliance framework data via the Pretorin MCP server. Access controls, families, document requirements, implementation guidance, STIG/CCI traceability, vendor inheritance, and campaign-based bulk workflows across NIST 800-53, NIST 800-171, FedRAMP (Low/Moderate/High), and CMMC (Level 1/2/3).
 
 ## Prerequisites
 
@@ -90,6 +93,104 @@ When unsure of an ID, discover it first with `pretorin_list_control_families` or
 - **`pretorin_generate_control_artifacts`** — Generate read-only AI drafts for a control narrative and evidence-gap assessment using the same Codex workflow as the CLI. Use this when the user wants a draft without writing to the platform yet.
 - **`pretorin_push_monitoring_event`** — Record a monitoring event for notable findings such as scans, access reviews, or configuration changes.
 - **`pretorin_update_control_status`** — Update a control implementation status when findings justify a state change.
+
+### Batch Operations
+- **`pretorin_get_controls_batch`** — Get detailed control data for many controls in one framework-scoped request. Pass `framework_id` and optionally `control_ids` (omit to get all).
+- **`pretorin_create_evidence_batch`** — Create and link multiple evidence items within one system/framework scope. Pass `system_id`, `framework_id`, and `items` array.
+
+### Workflow State & Analytics
+- **`pretorin_get_workflow_state`** — Get lifecycle state for a system+framework showing which stage needs work (scope, policies, controls, evidence) and the next recommended action.
+- **`pretorin_get_analytics_summary`** — Lightweight system progress snapshot: scope completion, policy completion, control coverage, evidence gaps.
+- **`pretorin_get_family_analytics`** — Per-family breakdown with narrative coverage, evidence coverage, and status distribution.
+- **`pretorin_get_policy_analytics`** — Per-policy breakdown with answer completion and review status.
+
+### Family Operations
+- **`pretorin_get_pending_families`** — Identify which control families need work (returns counts of pending vs total controls).
+- **`pretorin_get_family_bundle`** — Get all controls in one family with status, narrative presence, evidence presence, and note counts.
+- **`pretorin_trigger_family_review`** — Trigger AI review of all controls in a family (2-4 minutes for large families). Returns a job ID.
+- **`pretorin_get_family_review_results`** — Poll family review results with aggregated findings showing severity, affected control IDs, and recommended fixes.
+
+### Scope Workflow
+- **`pretorin_get_pending_scope_questions`** — Get only unanswered scope questions (lightweight).
+- **`pretorin_get_scope_question_detail`** — Get guidance, tips, and examples for a specific scope question.
+- **`pretorin_answer_scope_question`** — Answer one scope question with partial update support.
+- **`pretorin_trigger_scope_generation`** — Trigger AI generation of scope document from answered questions.
+- **`pretorin_trigger_scope_review`** — Trigger AI review of scope answers.
+- **`pretorin_get_scope_review_results`** — Poll for structured scope review findings.
+
+### Policy Workflow
+- **`pretorin_get_pending_policy_questions`** — Get only unanswered policy questions.
+- **`pretorin_get_policy_question_detail`** — Get guidance, tips, and examples for a specific policy question.
+- **`pretorin_answer_policy_question`** — Answer one policy question.
+- **`pretorin_get_policy_workflow_state`** — Check per-policy completion status, document generation, and review status.
+- **`pretorin_trigger_policy_generation`** — Trigger AI generation of policy document from answered questions.
+- **`pretorin_trigger_policy_review`** — Trigger AI review of policy answers/document.
+- **`pretorin_get_policy_review_results`** — Poll for structured policy review findings.
+
+### Campaign Operations
+Campaigns enable bulk compliance operations across multiple controls, policies, or scope questions with checkpoint persistence and lease-based concurrency.
+
+- **`pretorin_prepare_campaign`** — Prepare a workflow-aligned campaign run with platform context snapshot.
+- **`pretorin_claim_campaign_items`** — Claim items for drafting with TTL-based leases.
+- **`pretorin_get_campaign_item_context`** — Get full item context plus drafting instructions.
+- **`pretorin_submit_campaign_proposal`** — Submit a proposal without applying to the platform.
+- **`pretorin_apply_campaign`** — Push accepted proposals to the platform.
+- **`pretorin_get_campaign_status`** — Get structured campaign status snapshot.
+
+### Vendor Management
+- **`pretorin_list_vendors`** — List all vendor entities (CSP, SaaS, managed services, internal).
+- **`pretorin_create_vendor`** — Create a new vendor entity.
+- **`pretorin_get_vendor`** — Get vendor details.
+- **`pretorin_update_vendor`** — Update vendor fields.
+- **`pretorin_delete_vendor`** — Delete a vendor entity.
+- **`pretorin_upload_vendor_document`** — Upload vendor evidence documents.
+- **`pretorin_list_vendor_documents`** — List documents linked to a vendor.
+- **`pretorin_link_evidence_to_vendor`** — Link evidence to a vendor with attestation type.
+
+### Inheritance & Responsibility
+- **`pretorin_set_control_responsibility`** — Mark a control as inherited/shared from a provider.
+- **`pretorin_get_control_responsibility`** — Check if a control is inherited and from where.
+- **`pretorin_remove_control_responsibility`** — Convert inherited control to system-specific.
+- **`pretorin_generate_inheritance_narrative`** — AI-generate inheritance narrative from vendor docs.
+- **`pretorin_get_stale_edges`** — Identify controls with stale inheritance.
+- **`pretorin_sync_stale_edges`** — Bulk update inherited controls from source narratives.
+
+### STIG & CCI
+- **`pretorin_list_stigs`** — List STIG benchmarks, filterable by technology area or product.
+- **`pretorin_get_stig`** — Get STIG benchmark details.
+- **`pretorin_list_stig_rules`** — List rules for a benchmark with severity/CCI filters.
+- **`pretorin_get_stig_rule`** — Get full rule detail: check text, fix text, linked CCIs.
+- **`pretorin_list_ccis`** — List CCI items, filterable by NIST 800-53 control.
+- **`pretorin_get_cci`** — Get CCI detail with linked SRGs and STIG rules.
+- **`pretorin_get_cci_chain`** — Full traceability: Control -> CCIs -> SRGs -> STIG rules.
+- **`pretorin_get_cci_status`** — CCI-level compliance rollup for a system.
+- **`pretorin_get_stig_applicability`** — Which STIGs apply to a system.
+- **`pretorin_infer_stigs`** — AI-infer applicable STIGs from system profile.
+- **`pretorin_get_test_manifest`** — Fetch test manifest for a system.
+- **`pretorin_submit_test_results`** — Upload STIG scan results.
+
+## Campaign Workflow
+
+For bulk compliance operations, follow this lifecycle:
+
+1. Check what needs work: `pretorin_get_workflow_state` and `pretorin_get_pending_families`
+2. Prepare the campaign: `pretorin_prepare_campaign` with the target domain (controls, policy, or scope) and mode
+3. Claim items: `pretorin_claim_campaign_items` to lease items for drafting
+4. Get context: `pretorin_get_campaign_item_context` for each claimed item
+5. Draft and submit: `pretorin_submit_campaign_proposal` for each item
+6. Review status: `pretorin_get_campaign_status` to check progress
+7. Apply: `pretorin_apply_campaign` to push all proposals to the platform
+
+## Vendor Inheritance Workflow
+
+For controls inherited from vendors (CSPs, SaaS providers):
+
+1. Create the vendor: `pretorin_create_vendor`
+2. Upload vendor documentation: `pretorin_upload_vendor_document` (SOC 2 reports, CRMs, FedRAMP packages)
+3. Set responsibility: `pretorin_set_control_responsibility` to mark controls as inherited/shared
+4. Generate narratives: `pretorin_generate_inheritance_narrative` to AI-draft grounded inheritance narratives
+5. Monitor staleness: `pretorin_get_stale_edges` to find controls where source narratives changed
+6. Sync updates: `pretorin_sync_stale_edges` to bulk update inherited controls
 
 ## Narrative + Evidence + Notes Workflow
 

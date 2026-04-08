@@ -2,6 +2,56 @@
 
 All notable changes to the Pretorin CLI are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2026-04-07
+
+### Added
+- `pretorin_get_stig` MCP tool for STIG benchmark detail
+- `pretorin_get_cci_chain` MCP tool for full Control → CCI → SRG → STIG rule traceability
+
+---
+
+## [0.13.0] - 2026-04-07
+
+### Added
+- Complete STIG/CCI MCP tools: `list_stigs`, `get_stig`, `list_stig_rules`, `get_stig_rule`, `list_ccis`, `get_cci`, `get_cci_chain`, `get_cci_status`, `get_stig_applicability`, `infer_stigs`, `get_test_manifest`, `submit_test_results`
+- STIG/CCI agent tools for OpenAI Agents SDK
+- `pretorin stig` CLI group: `list`, `show`, `rules`, `applicable`, `infer`
+- `pretorin cci` CLI group: `list`, `show`, `chain`
+- `pretorin scan` CLI group: `doctor`, `manifest`, `run`, `results`
+- Scanner orchestration module with support for OpenSCAP, InSpec, AWS/Azure Cloud Scanners, and Manual review
+
+---
+
+## [0.12.0] - 2026-04-04
+
+### Added
+- Vendor management CLI: `pretorin vendor list/create/get/update/delete/upload-doc/list-docs`
+- MCP vendor tools: `list_vendors`, `create_vendor`, `get_vendor`, `update_vendor`, `delete_vendor`, `upload_vendor_document`, `list_vendor_documents`, `link_evidence_to_vendor`
+- Inheritance/responsibility MCP tools: `set_control_responsibility`, `get_control_responsibility`, `remove_control_responsibility`, `generate_inheritance_narrative`, `get_stale_edges`, `sync_stale_edges`
+
+---
+
+## [0.11.0] - 2026-04-01
+
+### Added
+- Campaign CLI: `pretorin campaign controls/policy/scope/status`
+- Campaign MCP tools: `prepare_campaign`, `claim_campaign_items`, `get_campaign_item_context`, `submit_campaign_proposal`, `apply_campaign`, `get_campaign_status`
+- External-agent-first campaign pattern with checkpoint persistence and lease-based concurrency
+- Campaign builtin executor for local execution
+
+---
+
+## [0.10.0] - 2026-03-28
+
+### Added
+- Workflow state and analytics MCP tools: `get_workflow_state`, `get_analytics_summary`, `get_family_analytics`, `get_policy_analytics`
+- Family operations MCP tools: `get_pending_families`, `get_family_bundle`, `trigger_family_review`, `get_family_review_results`
+- Policy workflow MCP tools: `get_pending_policy_questions`, `get_policy_question_detail`, `answer_policy_question`, `get_policy_workflow_state`, `trigger_policy_generation`, `trigger_policy_review`, `get_policy_review_results`
+- Scope workflow MCP tools: `get_pending_scope_questions`, `get_scope_question_detail`, `answer_scope_question`, `trigger_scope_generation`, `trigger_scope_review`, `get_scope_review_results`
+- ExecutionScope for thread-safe parallel agent execution
+
+---
+
 ## [0.9.7] - 2026-03-25
 
 ### Fixed
@@ -184,6 +234,12 @@ All notable changes to the Pretorin CLI are documented here. The format is based
 - FedRAMP (Low, Moderate, High)
 - CMMC Level 1, 2, and 3
 
+[0.13.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.0...v0.13.1
+[0.13.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.12.0...v0.13.0
+[0.12.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.11.0...v0.12.0
+[0.11.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.9.7...v0.10.0
+[0.9.7]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.7...v0.9.7
 [0.8.7]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.6...v0.8.7
 [0.8.6]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.0...v0.8.5
