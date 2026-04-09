@@ -669,6 +669,7 @@ def build_campaign_summary(
     *,
     output_mode: str | None = None,
     prepared_only: bool = False,
+    apply_override: bool | None = None,
 ) -> CampaignRunSummary:
     """Build a campaign summary from a checkpoint."""
     counts = _status_counts(checkpoint)
@@ -677,7 +678,7 @@ def build_campaign_summary(
     return CampaignRunSummary(
         domain=str(checkpoint.identity.get("domain", request.domain)),
         mode=str(checkpoint.identity.get("mode", request.mode)),
-        apply=bool(checkpoint.identity.get("apply", request.apply)),
+        apply=apply_override if apply_override is not None else bool(checkpoint.identity.get("apply", request.apply)),
         output_mode=output_mode or checkpoint.output,
         checkpoint_path=str(checkpoint_path),
         workflow_snapshot=checkpoint.workflow_snapshot,
@@ -1423,7 +1424,10 @@ async def apply_campaign(
             _record_event(checkpoint, presenter, "item_failed", str(exc), item=item)
         _write_checkpoint(checkpoint_path, checkpoint)
 
-    return build_campaign_summary(checkpoint, checkpoint_path, output_mode=request.output)
+    checkpoint.identity["apply"] = True
+    _write_checkpoint(checkpoint_path, checkpoint)
+
+    return build_campaign_summary(checkpoint, checkpoint_path, output_mode=request.output, apply_override=True)
 
 
 def _mark_item_failed(
