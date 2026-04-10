@@ -100,6 +100,7 @@ def test_ensure_single_framework_scope_returns_empty_for_whitespace_only():
 async def test_resolve_execution_context_raises_when_no_system():
     """Line 67: raises PretorianClientError when system_value is missing."""
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.return_value = None
     client = AsyncMock()
 
@@ -111,6 +112,7 @@ async def test_resolve_execution_context_raises_when_no_system():
 async def test_resolve_execution_context_raises_when_no_framework():
     """Line 67: raises PretorianClientError when framework_value is missing."""
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-1",
         "active_framework_id": None,
@@ -125,6 +127,7 @@ async def test_resolve_execution_context_raises_when_no_framework():
 async def test_resolve_execution_context_rejects_multi_framework():
     """Lines 72-74: raises PretorianClientError when framework contains separators."""
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-1",
         "active_framework_id": "fw1,fw2",
@@ -139,6 +142,7 @@ async def test_resolve_execution_context_rejects_multi_framework():
 async def test_resolve_execution_context_no_frameworks_on_system():
     """Lines 78-81: raises PretorianClientError when system has no frameworks."""
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-1",
         "active_framework_id": "fedramp-moderate",
@@ -156,6 +160,7 @@ async def test_resolve_execution_context_no_frameworks_on_system():
 async def test_resolve_execution_context_framework_not_available():
     """Lines 82-86: raises PretorianClientError when requested framework not on system."""
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-1",
         "active_framework_id": "fedramp-high",
@@ -175,6 +180,7 @@ async def test_resolve_execution_context_framework_not_available():
 async def test_resolve_execution_context_success():
     """Lines 75-87: successful resolution returns (system_id, framework_id)."""
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-1",
         "active_framework_id": "fedramp-moderate",
@@ -470,6 +476,7 @@ def test_context_show_no_context_json_mode():
     """Lines 390-391: JSON mode outputs null values when no context set."""
     client = _make_client()
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.return_value = None
     with patch("pretorin.client.config.Config", return_value=mock_config):
         result = _run_with_mock_client(["--json", "context", "show"], client)
@@ -484,6 +491,7 @@ def test_context_show_no_context_normal_mode():
     """Lines 392-395: non-JSON mode prints sad message when no context."""
     client = _make_client()
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.return_value = None
     with patch("pretorin.client.config.Config", return_value=mock_config):
         result = _run_with_mock_client(["context", "show"], client)
@@ -500,6 +508,7 @@ def test_context_show_not_configured_non_json():
     """Line 403: renders a Panel with stored context when not logged in (non-JSON)."""
     client = _make_client(configured=False)
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-offline",
         "active_system_name": "Offline System",
@@ -527,6 +536,7 @@ def test_context_show_marks_missing_system_as_invalid():
         ]}
     )
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-unknown-id",
         "active_system_name": "Retired System",
@@ -554,6 +564,7 @@ def test_context_show_compliance_status_error_keeps_defaults():
         side_effect=PretorianClientError("compliance error")
     )
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-1",
         "active_framework_id": "fedramp-moderate",
@@ -576,6 +587,7 @@ def test_context_show_marks_missing_framework_as_invalid():
         compliance_status={"frameworks": [{"framework_id": "fedramp-low", "progress": 10, "status": "in_progress"}]},
     )
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-1",
         "active_framework_id": "fedramp-moderate",
@@ -603,6 +615,7 @@ def test_context_show_non_json_with_live_data():
         ]}
     )
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-1",
         "active_framework_id": "fedramp-moderate",
@@ -620,6 +633,7 @@ def test_context_show_non_json_system_error_and_compliance_error():
         side_effect=PretorianClientError("compliance error")
     )
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-1",
         "active_framework_id": "fedramp-moderate",
@@ -638,6 +652,7 @@ def test_context_show_quiet_outputs_single_line():
         compliance_status={"frameworks": [{"framework_id": "fedramp-moderate", "progress": 80, "status": "implemented"}]},
     )
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-1",
         "active_framework_id": "fedramp-moderate",
@@ -652,6 +667,7 @@ def test_context_show_check_exits_nonzero_for_stale_context():
     """Check mode should fail fast when stored context points at a missing system."""
     client = _make_client(systems=[{"id": "sys-1", "name": "Primary"}])
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-missing",
         "active_system_name": "Retired System",

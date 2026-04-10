@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import importlib.util
 import json
+import logging
 import sys
 from collections import deque
 from collections.abc import Awaitable, Callable
@@ -26,6 +27,8 @@ from pretorin.client.api import PretorianClientError
 from pretorin.client.models import EvidenceBatchItemCreate, OrgPolicyQuestionnaireResponse, ScopeResponse
 from pretorin.scope import ExecutionScope
 from pretorin.utils import normalize_control_id
+
+logger = logging.getLogger(__name__)
 
 ROMEBOT_COLOR = "#EAB536"
 OUTPUT_AUTO = "auto"
@@ -91,6 +94,7 @@ class WorkflowContextSnapshot:
     analytics_summary: dict[str, Any] = field(default_factory=dict)
     family_analytics: dict[str, Any] = field(default_factory=dict)
     extras: dict[str, Any] = field(default_factory=dict)
+    platform_api_base_url: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return _safe_json_dict(asdict(self))
@@ -572,6 +576,24 @@ def _validate_checkpoint_identity(checkpoint: CampaignCheckpoint, request: Campa
         )
 
 
+def _validate_checkpoint_environment(client: PretorianClient, snapshot: WorkflowContextSnapshot) -> None:
+    """Verify the checkpoint's API environment matches the current client."""
+    checkpoint_url = snapshot.platform_api_base_url
+    if not checkpoint_url:
+        logger.warning(
+            "Campaign checkpoint does not include platform_api_base_url; "
+            "cannot verify environment affinity. Consider re-preparing."
+        )
+        return
+    current_url = client.api_base_url
+    if checkpoint_url.rstrip("/") != current_url.rstrip("/"):
+        raise PretorianClientError(
+            f"This checkpoint was prepared against '{checkpoint_url}' but the current "
+            f"API environment is '{current_url}'. Re-prepare the campaign against the "
+            f"correct environment."
+        )
+
+
 def _lease_expired(item_state: CampaignItemState) -> bool:
     if item_state.lease_expires_at is None:
         return False
@@ -895,6 +917,7 @@ async def _prepare_controls_context(
         analytics_summary=analytics_summary,
         family_analytics=family_analytics,
         extras=extras,
+        platform_api_base_url=client.api_base_url,
     )
     return snapshot, items
 
@@ -931,6 +954,7 @@ async def _prepare_policy_context(
         subject=f"{len(items)} policy workflow(s)",
         workflow_state={"policy_ids": [policy.id for policy in selected]},
         extras=extras,
+        platform_api_base_url=client.api_base_url,
     )
     return snapshot, items
 
@@ -955,6 +979,7 @@ async def _prepare_scope_context(
         scope={"system_id": system_id, "framework_id": framework_id},
         workflow_state=workflow_state,
         extras={"scope": scope.model_dump(mode="json")},
+        platform_api_base_url=client.api_base_url,
     )
     items = [
         CampaignItem(
@@ -1011,6 +1036,10 @@ async def prepare_campaign(
         _validate_checkpoint_identity(checkpoint, request)
         checkpoint.output = request.output
         checkpoint.request = request.to_dict()
+        # Backfill platform_api_base_url for legacy checkpoints.
+        ws = checkpoint.workflow_snapshot
+        if not ws.get("platform_api_base_url"):
+            ws["platform_api_base_url"] = client.api_base_url
         _record_event(checkpoint, presenter, "run_attached", "Attached to existing checkpoint")
         _write_checkpoint(request.checkpoint_path, checkpoint)
 
@@ -1231,6 +1260,7 @@ async def get_campaign_item_context(
     checkpoint = _load_checkpoint(checkpoint_path)
     if checkpoint is None:
         raise PretorianClientError(f"Campaign checkpoint not found: {checkpoint_path}")
+    _validate_checkpoint_environment(client, WorkflowContextSnapshot(**checkpoint.workflow_snapshot))
     item_state = checkpoint.items.get(item_id)
     if item_state is None:
         raise PretorianClientError(f"Campaign item not found: {item_id}")
@@ -1387,6 +1417,7 @@ async def apply_campaign(
         raise PretorianClientError(f"Campaign checkpoint not found: {checkpoint_path}")
     request = _request_from_checkpoint(checkpoint_path, checkpoint)
     snapshot = WorkflowContextSnapshot(**checkpoint.workflow_snapshot)
+    _validate_checkpoint_environment(client, snapshot)
     selected = set(item_ids or [])
 
     for item_id, item_state in checkpoint.items.items():

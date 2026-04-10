@@ -186,6 +186,7 @@ def test_context_show_with_context_set_json_mode():
         ]}
     )
     mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
         "active_system_id": "sys-1",
         "active_framework_id": "fedramp-moderate",
