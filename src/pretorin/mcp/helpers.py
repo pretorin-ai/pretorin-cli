@@ -86,8 +86,7 @@ def allow_scope_override_property() -> dict[str, Any]:
     return {
         "type": "boolean",
         "description": (
-            "Allow writes outside the active system/framework context. "
-            "Defaults to false and should be used sparingly."
+            "Allow writes outside the active system/framework context. Defaults to false and should be used sparingly."
         ),
         "default": False,
     }

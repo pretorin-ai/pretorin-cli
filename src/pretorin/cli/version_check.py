@@ -173,10 +173,7 @@ def get_update_status(*, force: bool = False) -> dict[str, Any]:
     status["checked"] = result.checked
 
     if result.update_available and result.latest_version:
-        prompt = (
-            f"A newer version of Pretorin CLI is available ({result.latest_version}). "
-            f"Run: {UPGRADE_COMMAND}"
-        )
+        prompt = f"A newer version of Pretorin CLI is available ({result.latest_version}). Run: {UPGRADE_COMMAND}"
         status["message"] = prompt
         status["prompt"] = prompt
     elif result.checked:
