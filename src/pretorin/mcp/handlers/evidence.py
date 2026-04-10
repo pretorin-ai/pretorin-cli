@@ -8,7 +8,6 @@ from typing import Any
 from mcp.types import CallToolResult, TextContent
 
 from pretorin.client import PretorianClient
-from pretorin.client.api import PretorianClientError
 from pretorin.client.models import EvidenceBatchItemCreate
 from pretorin.mcp.helpers import (
     VALID_EVIDENCE_TYPES,
@@ -16,7 +15,6 @@ from pretorin.mcp.helpers import (
     format_json,
     require,
     resolve_execution_scope,
-    resolve_system_id,
     validate_enum,
 )
 from pretorin.utils import normalize_control_id
@@ -79,7 +77,11 @@ async def handle_create_evidence(
         return format_error(enum_err)
 
     dedupe = arguments.get("dedupe", True)
-    system_id, framework_id, normalized_control_id = await resolve_execution_scope(client, arguments)
+    system_id, framework_id, normalized_control_id = await resolve_execution_scope(
+        client,
+        arguments,
+        enforce_active_context=True,
+    )
     try:
         result = await upsert_evidence(
             client,
@@ -109,7 +111,11 @@ async def handle_create_evidence_batch(
     if err:
         return format_error(err)
 
-    system_id, framework_id, _ = await resolve_execution_scope(client, arguments)
+    system_id, framework_id, _ = await resolve_execution_scope(
+        client,
+        arguments,
+        enforce_active_context=True,
+    )
     items = arguments.get("items", [])
     payload_items = []
     for item in items:
@@ -145,6 +151,7 @@ async def handle_link_evidence(
         client,
         arguments,
         control_required=True,
+        enforce_active_context=True,
     )
     result = await client.link_evidence_to_control(
         evidence_id=arguments["evidence_id"],
@@ -161,17 +168,20 @@ async def handle_get_narrative(
 ) -> list[TextContent] | CallToolResult:
     """Handle the get_narrative tool."""
     logger.debug("handle_get_narrative called with %s", _safe_args(arguments))
-    err = require(arguments, "system_id", "control_id", "framework_id")
+    err = require(arguments, "control_id")
     if err:
         return format_error(err)
 
-    system_id = await resolve_system_id(client, arguments)
-    if system_id is None:
-        raise PretorianClientError("system_id is required")
+    system_id, framework_id, normalized_control_id = await resolve_execution_scope(
+        client,
+        arguments,
+        control_required=True,
+        enforce_active_context=True,
+    )
     narrative = await client.get_narrative(
         system_id=system_id,
-        control_id=normalize_control_id(arguments["control_id"]),
-        framework_id=arguments["framework_id"],
+        control_id=normalized_control_id or "",
+        framework_id=framework_id,
     )
     return format_json(
         {

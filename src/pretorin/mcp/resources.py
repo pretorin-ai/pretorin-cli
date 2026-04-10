@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 from mcp.types import Resource
 
+from pretorin.cli.version_check import get_update_status
 from pretorin.mcp.prompts import (
     format_control_analysis_prompt,
     get_artifact_schema,
@@ -33,6 +34,12 @@ async def list_resources() -> list[Resource]:
             uri="analysis://schema",
             name="Compliance Artifact Schema",
             description="JSON schema for compliance artifacts that AI should produce during analysis",
+            mimeType="text/markdown",
+        ),
+        Resource(
+            uri="status://cli",
+            name="Pretorin CLI Status",
+            description="Current CLI version, update availability, and upgrade guidance for MCP hosts and agents",
             mimeType="text/markdown",
         ),
     ]
@@ -76,6 +83,30 @@ async def list_resources() -> list[Resource]:
 async def read_resource(uri: str) -> str:
     """Read an analysis resource."""
     parsed = urlparse(uri)
+
+    if parsed.scheme == "status":
+        if parsed.netloc != "cli":
+            raise ValueError(f"Unknown status resource: {parsed.netloc}")
+
+        status = get_update_status()
+        latest_version = status["latest_version"] or "unknown"
+        update_available = "yes" if status["update_available"] else "no"
+        notifications_enabled = "yes" if status["notifications_enabled"] else "no"
+        check_state = "verified" if status["checked"] else "unverified"
+
+        lines = [
+            "# Pretorin CLI Status",
+            "",
+            f"- Current version: `{status['current_version']}`",
+            f"- Latest version: `{latest_version}`",
+            f"- Update available: `{update_available}`",
+            f"- Passive notifications enabled: `{notifications_enabled}`",
+            f"- Check state: `{check_state}`",
+            f"- Upgrade command: `{status['upgrade_command']}`",
+            "",
+            status["message"],
+        ]
+        return "\n".join(lines)
 
     if parsed.scheme == "workflow":
         resource_type = parsed.netloc

@@ -91,3 +91,33 @@ def test_get_update_message_uses_cached_success(
 
     assert message is not None
     assert "9.9.9" in message
+
+
+def test_get_update_status_includes_prompt_when_update_available(
+    monkeypatch: MonkeyPatch,
+    isolated_update_paths: Path,
+) -> None:
+    monkeypatch.setattr(version_check, "_fetch_latest_version", lambda: "9.9.9")
+
+    status = version_check.get_update_status()
+
+    assert status["current_version"] == version_check.__version__
+    assert status["latest_version"] == "9.9.9"
+    assert status["update_available"] is True
+    assert status["checked"] is True
+    assert status["notifications_enabled"] is True
+    assert "pip install --upgrade pretorin" in status["prompt"]
+
+
+def test_get_update_status_respects_opt_out(
+    monkeypatch: MonkeyPatch,
+    isolated_update_paths: Path,
+) -> None:
+    monkeypatch.setenv(config_module.ENV_DISABLE_UPDATE_CHECK, "1")
+
+    status = version_check.get_update_status()
+
+    assert status["notifications_enabled"] is False
+    assert status["checked"] is False
+    assert status["update_available"] is False
+    assert status["prompt"] is None

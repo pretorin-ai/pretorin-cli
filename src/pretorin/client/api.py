@@ -115,6 +115,11 @@ class PretorianClient:
         self._client: httpx.AsyncClient | None = None
 
     @property
+    def api_base_url(self) -> str:
+        """The resolved API base URL this client is targeting."""
+        return self._api_base_url
+
+    @property
     def is_configured(self) -> bool:
         """Check if the client has an API key configured."""
         return self._api_key is not None

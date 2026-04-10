@@ -1,5 +1,7 @@
 """Tests for MCP resources."""
 
+from unittest.mock import patch
+
 import pytest
 
 from pretorin.mcp.server import list_resources, read_resource
@@ -26,6 +28,13 @@ class TestListResources:
         resources = await list_resources()
         uris = [str(r.uri) for r in resources]
         assert "analysis://schema" in uris
+
+    @pytest.mark.asyncio
+    async def test_list_resources_contains_cli_status(self):
+        """Test that CLI status resource is listed."""
+        resources = await list_resources()
+        uris = [str(r.uri) for r in resources]
+        assert "status://cli" in uris
 
     @pytest.mark.asyncio
     async def test_list_resources_contains_framework_guides(self):
@@ -94,6 +103,34 @@ class TestReadResourceSchema:
         content = await read_resource("analysis://schema")
         assert "json" in content.lower()
         assert "example" in content.lower() or "{" in content
+
+
+class TestReadResourceStatus:
+    """Tests for reading the CLI status resource."""
+
+    @pytest.mark.asyncio
+    async def test_read_cli_status_resource(self):
+        """Test reading the CLI status resource."""
+        with patch(
+            "pretorin.mcp.resources.get_update_status",
+            return_value={
+                "current_version": "0.14.0",
+                "latest_version": "0.15.0",
+                "update_available": True,
+                "checked": True,
+                "notifications_enabled": True,
+                "upgrade_command": "pip install --upgrade pretorin",
+                "message": "A newer version of Pretorin CLI is available (0.15.0). Run: pip install --upgrade pretorin",
+                "prompt": "A newer version of Pretorin CLI is available (0.15.0). Run: pip install --upgrade pretorin",
+            },
+        ):
+            content = await read_resource("status://cli")
+
+        assert isinstance(content, str)
+        assert "Pretorin CLI Status" in content
+        assert "`0.14.0`" in content
+        assert "`0.15.0`" in content
+        assert "pip install --upgrade pretorin" in content
 
 
 class TestReadResourceGuide:
@@ -219,6 +256,13 @@ class TestReadResourceErrors:
         with pytest.raises(ValueError) as exc_info:
             await read_resource("unknown://schema")
         assert "Unknown resource scheme" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_unknown_status_resource_raises_error(self):
+        """Test that unknown status resource raises error."""
+        with pytest.raises(ValueError) as exc_info:
+            await read_resource("status://unknown")
+        assert "Unknown status resource" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_unknown_resource_type_raises_error(self):

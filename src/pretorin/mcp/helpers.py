@@ -81,6 +81,17 @@ def system_id_property(*, optional: bool = False) -> dict[str, Any]:
     }
 
 
+def allow_scope_override_property() -> dict[str, Any]:
+    """Return a shared JSON schema field for explicit scope overrides."""
+    return {
+        "type": "boolean",
+        "description": (
+            "Allow writes outside the active system/framework context. Defaults to false and should be used sparingly."
+        ),
+        "default": False,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Response formatters
 # ---------------------------------------------------------------------------
@@ -152,6 +163,7 @@ async def resolve_execution_scope(
     *,
     scope: ExecutionScope | None = None,
     control_required: bool = False,
+    enforce_active_context: bool = False,
 ) -> tuple[str, str, str | None]:
     """Resolve one validated execution scope and optionally validate a control within it."""
     system_id, framework_id = await resolve_execution_context(
@@ -159,6 +171,8 @@ async def resolve_execution_scope(
         system=arguments.get("system_id"),
         framework=arguments.get("framework_id"),
         scope=scope,
+        enforce_active_context=enforce_active_context,
+        allow_scope_override=bool(arguments.get("allow_scope_override", False)),
     )
     raw_control_id = arguments.get("control_id")
     normalized_control_id = normalize_control_id(raw_control_id) if raw_control_id else None

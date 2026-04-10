@@ -8,7 +8,9 @@ from __future__ import annotations
 import asyncio
 import json
 from typing import Any
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from pretorin.client.api import NotFoundError, PretorianClientError
 from pretorin.mcp.server import call_tool, list_tools
@@ -33,6 +35,7 @@ class TestToolListing:
             "pretorin_get_document_requirements",
             # System & compliance 3
             "pretorin_list_systems",
+            "pretorin_get_cli_status",
             "pretorin_get_system",
             "pretorin_get_compliance_status",
             # Evidence 4
@@ -82,7 +85,7 @@ class TestToolListing:
             "pretorin_infer_stigs",
         ]
 
-        assert len(tools) == 82
+        assert len(tools) == 83
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 
@@ -129,6 +132,19 @@ def _make_mock_client(**overrides: Any) -> AsyncMock:
     for attr, val in overrides.items():
         setattr(client, attr, AsyncMock(return_value=val))
     return client
+
+
+@pytest.fixture(autouse=True)
+def _blank_active_context() -> None:
+    """Keep MCP tool tests independent from the developer's local config."""
+    config = MagicMock()
+    config.check_context_environment.return_value = None
+    config.active_system_id = None
+    config.active_framework_id = None
+    config.active_system_name = None
+    config.get.side_effect = lambda _key, default=None: default
+    with patch("pretorin.client.config.Config", return_value=config):
+        yield
 
 
 def _run_tool(name: str, arguments: dict[str, Any], mock_client: AsyncMock) -> Any:
@@ -197,6 +213,27 @@ class TestSystemTools:
         result = _run_tool("pretorin_get_compliance_status", {"system_id": "sys-1"}, client)
         data = _parse_result(result)
         assert data["system_id"] == "sys-1"
+
+    def test_get_cli_status_without_authentication(self) -> None:
+        status_data = {
+            "current_version": "0.14.0",
+            "latest_version": "0.15.0",
+            "update_available": True,
+            "checked": True,
+            "notifications_enabled": True,
+            "upgrade_command": "pip install --upgrade pretorin",
+            "message": "A newer version of Pretorin CLI is available (0.15.0). Run: pip install --upgrade pretorin",
+            "prompt": "A newer version of Pretorin CLI is available (0.15.0). Run: pip install --upgrade pretorin",
+        }
+
+        with patch("pretorin.mcp.server.PretorianClient") as mock_client, \
+             patch("pretorin.mcp.handlers.systems.get_update_status", return_value=status_data):
+            result = asyncio.run(call_tool("pretorin_get_cli_status", {}))
+
+        mock_client.assert_not_called()
+        data = _parse_result(result)
+        assert data["update_available"] is True
+        assert data["latest_version"] == "0.15.0"
 
 
 class TestEvidenceTools:
@@ -431,11 +468,25 @@ class TestNarrativeTools:
             framework_id="fedramp-moderate",
         )
 
-    def test_get_narrative_missing_framework_id(self) -> None:
-        client = _make_mock_client()
-        result = _run_tool("pretorin_get_narrative", {"system_id": "sys-1", "control_id": "ac-2"}, client)
-        assert result.isError is True
-        assert any("Missing required" in c.text for c in result.content)
+    def test_get_narrative_uses_active_scope_when_explicit_scope_omitted(self) -> None:
+        from pretorin.client.models import NarrativeResponse
+
+        client = _make_mock_client(
+            get_narrative=NarrativeResponse(
+                control_id="ac-2",
+                framework_id="fedramp-moderate",
+                narrative="Existing narrative",
+                ai_confidence_score=0.9,
+                status="approved",
+            )
+        )
+        with patch(
+            "pretorin.mcp.helpers.resolve_execution_context",
+            new=AsyncMock(return_value=("sys-1", "fedramp-moderate")),
+        ):
+            result = _run_tool("pretorin_get_narrative", {"control_id": "ac-2"}, client)
+        data = _parse_result(result)
+        assert data["control_id"] == "ac-2"
 
     def test_get_narrative_resolves_system_name(self) -> None:
         from pretorin.client.models import NarrativeResponse
@@ -728,15 +779,29 @@ class TestControlImplementationTools:
             framework_id="fedramp-moderate",
         )
 
-    def test_get_control_implementation_missing_framework_id(self) -> None:
-        client = _make_mock_client()
-        result = _run_tool(
-            "pretorin_get_control_implementation",
-            {"system_id": "sys-1", "control_id": "ac-2"},
-            client,
+    def test_get_control_implementation_uses_active_scope_when_explicit_scope_omitted(self) -> None:
+        from pretorin.client.models import ControlImplementationResponse
+
+        client = _make_mock_client(
+            get_control_implementation=ControlImplementationResponse(
+                control_id="ac-2",
+                status="partially_implemented",
+                implementation_narrative="In progress",
+                evidence_count=3,
+                notes=[{"content": "Working on it"}],
+            )
         )
-        assert result.isError is True
-        assert any("Missing required" in c.text for c in result.content)
+        with patch(
+            "pretorin.mcp.helpers.resolve_execution_context",
+            new=AsyncMock(return_value=("sys-1", "fedramp-moderate")),
+        ):
+            result = _run_tool(
+                "pretorin_get_control_implementation",
+                {"control_id": "ac-2"},
+                client,
+            )
+        data = _parse_result(result)
+        assert data["control_id"] == "ac-2"
 
 
 class TestErrorHandling:

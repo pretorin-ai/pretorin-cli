@@ -1,8 +1,4 @@
-"""Additional coverage tests for src/pretorin/mcp/handlers/compliance.py.
-
-Covers line 144 (add_control_note system_id None), line 194 (update_narrative
-system_id None), line 248 (get_control_implementation system_id None).
-"""
+"""Additional coverage tests for src/pretorin/mcp/handlers/compliance.py."""
 
 from __future__ import annotations
 
@@ -28,15 +24,15 @@ def _make_client(**overrides) -> AsyncMock:
 
 
 class TestAddControlNoteSystemIdNone:
-    """Tests for handle_add_control_note when system_id is None."""
+    """Tests for handle_add_control_note when scope resolution fails."""
 
     @pytest.mark.asyncio
     async def test_system_id_none_raises(self):
-        """Line 144: system_id resolves to None raises PretorianClientError."""
+        """Scope resolution failure should surface as a client error."""
         client = _make_client()
         with patch(
-            "pretorin.mcp.handlers.compliance.resolve_system_id",
-            new=AsyncMock(return_value=None),
+            "pretorin.mcp.handlers.compliance.resolve_execution_scope",
+            new=AsyncMock(side_effect=PretorianClientError("system_id is required")),
         ):
             with pytest.raises(PretorianClientError, match="system_id is required"):
                 await handle_add_control_note(
@@ -51,15 +47,15 @@ class TestAddControlNoteSystemIdNone:
 
 
 class TestUpdateNarrativeSystemIdNone:
-    """Tests for handle_update_narrative when system_id is None."""
+    """Tests for handle_update_narrative when scope resolution fails."""
 
     @pytest.mark.asyncio
     async def test_system_id_none_raises(self):
-        """Line 194: system_id resolves to None raises PretorianClientError."""
+        """Scope resolution failure should surface as a client error."""
         client = _make_client()
         with patch(
-            "pretorin.mcp.handlers.compliance.resolve_system_id",
-            new=AsyncMock(return_value=None),
+            "pretorin.mcp.handlers.compliance.resolve_execution_scope",
+            new=AsyncMock(side_effect=PretorianClientError("system_id is required")),
         ):
             with pytest.raises(PretorianClientError, match="system_id is required"):
                 await handle_update_narrative(
@@ -74,15 +70,15 @@ class TestUpdateNarrativeSystemIdNone:
 
 
 class TestGetControlImplementationSystemIdNone:
-    """Tests for handle_get_control_implementation when system_id is None."""
+    """Tests for handle_get_control_implementation when scope resolution fails."""
 
     @pytest.mark.asyncio
     async def test_system_id_none_raises(self):
-        """Line 248: system_id resolves to None raises PretorianClientError."""
+        """Scope resolution failure should surface as a client error."""
         client = _make_client()
         with patch(
-            "pretorin.mcp.handlers.compliance.resolve_system_id",
-            new=AsyncMock(return_value=None),
+            "pretorin.mcp.handlers.compliance.resolve_execution_scope",
+            new=AsyncMock(side_effect=PretorianClientError("system_id is required")),
         ):
             with pytest.raises(PretorianClientError, match="system_id is required"):
                 await handle_get_control_implementation(

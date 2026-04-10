@@ -19,6 +19,7 @@ FAILURE_CACHE_TTL_SECONDS = 3600  # 1 hour
 REQUEST_TIMEOUT_SECONDS = 1.0
 
 PYPI_URL = "https://pypi.org/pypi/pretorin/json"
+UPGRADE_COMMAND = "pip install --upgrade pretorin"
 
 
 @dataclass(frozen=True)
@@ -149,16 +150,48 @@ def check_for_updates(*, force: bool = False) -> VersionCheckResult:
     )
 
 
+def get_update_status(*, force: bool = False) -> dict[str, Any]:
+    """Return structured CLI update status for CLI and MCP surfaces."""
+    notifications_enabled = update_notifications_enabled()
+    status: dict[str, Any] = {
+        "current_version": __version__,
+        "latest_version": None,
+        "update_available": False,
+        "checked": False,
+        "notifications_enabled": notifications_enabled,
+        "upgrade_command": UPGRADE_COMMAND,
+        "message": "Passive update notifications are disabled.",
+        "prompt": None,
+    }
+
+    if not notifications_enabled:
+        return status
+
+    result = check_for_updates(force=force)
+    status["latest_version"] = result.latest_version
+    status["update_available"] = result.update_available
+    status["checked"] = result.checked
+
+    if result.update_available and result.latest_version:
+        prompt = f"A newer version of Pretorin CLI is available ({result.latest_version}). Run: {UPGRADE_COMMAND}"
+        status["message"] = prompt
+        status["prompt"] = prompt
+    elif result.checked:
+        status["message"] = "Pretorin CLI is up to date."
+    else:
+        status["message"] = "Unable to check for updates right now."
+
+    return status
+
+
 def get_update_message() -> str | None:
     """Get a formatted update message if an update is available."""
-    if not update_notifications_enabled():
-        return None
-
-    result = check_for_updates()
-    if result.update_available and result.latest_version:
+    status = get_update_status()
+    latest_version = status.get("latest_version")
+    if status.get("update_available") and latest_version:
         return (
             f"[#FF9010]→[/#FF9010] A newer version of Pretorin CLI is available "
-            f"([#EAB536]{result.latest_version}[/#EAB536])\n"
-            f"  [dim]Run:[/dim] [bold]pip install --upgrade pretorin[/bold]"
+            f"([#EAB536]{latest_version}[/#EAB536])\n"
+            f"  [dim]Run:[/dim] [bold]{UPGRADE_COMMAND}[/bold]"
         )
     return None

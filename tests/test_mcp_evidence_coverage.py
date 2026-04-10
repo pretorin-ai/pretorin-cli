@@ -19,7 +19,6 @@ from pretorin.mcp.handlers.evidence import (
     handle_create_evidence_batch,
     handle_get_narrative,
     handle_link_evidence,
-    handle_search_evidence,
 )
 
 
@@ -163,11 +162,11 @@ class TestHandleGetNarrative:
 
     @pytest.mark.asyncio
     async def test_client_error_in_get_narrative(self):
-        """Line 170: PretorianClientError raised when system_id is None."""
+        """Scope resolution failures should bubble up as PretorianClientError."""
         client = _make_client()
         with patch(
-            "pretorin.mcp.handlers.evidence.resolve_system_id",
-            new=AsyncMock(return_value=None),
+            "pretorin.mcp.handlers.evidence.resolve_execution_scope",
+            new=AsyncMock(side_effect=PretorianClientError("system_id is required")),
         ):
             with pytest.raises(PretorianClientError, match="system_id is required"):
                 await handle_get_narrative(

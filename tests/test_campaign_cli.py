@@ -50,6 +50,7 @@ def _reset_json_mode() -> None:
 def _mock_campaign_client() -> AsyncMock:
     client = AsyncMock()
     client.is_configured = True
+    client.api_base_url = "https://platform.pretorin.com/api/v1/public"
     return client
 
 
@@ -478,6 +479,9 @@ async def test_prepare_claim_submit_apply_policy_campaign(tmp_path: Path) -> Non
     summary = await apply_campaign(client, request.checkpoint_path)
 
     assert summary.succeeded == 1
+    assert summary.apply is True
+    status = get_campaign_status(request.checkpoint_path)
+    assert status.apply is True
     client.patch_org_policy_qa.assert_awaited_once_with(
         "pol-001",
         [{"question_id": "q_scope_2", "answer": "Production systems, CUI, administrators, and service accounts."}],
@@ -578,6 +582,80 @@ def test_submit_campaign_proposal_rejects_invalid_questionnaire_shape(tmp_path: 
 
     with pytest.raises(PretorianClientError, match="questions list"):
         submit_campaign_proposal(path, item_id="pol-001", proposal={"summary": "missing questions"})
+
+
+@pytest.mark.asyncio
+async def test_apply_campaign_rejects_checkpoint_with_wrong_environment(tmp_path: Path) -> None:
+    """apply_campaign should raise when checkpoint URL differs from client URL."""
+    client = _mock_campaign_client()
+    client.api_base_url = "https://platform.pretorin.com/api/v1/public"
+
+    checkpoint = CampaignCheckpoint(
+        version=2,
+        identity={"domain": "policy", "mode": "answer", "apply": False},
+        request={
+            "domain": "policy",
+            "mode": "answer",
+            "apply": False,
+            "output": "json",
+            "concurrency": 1,
+            "max_retries": 1,
+            "working_directory": str(tmp_path),
+        },
+        output="json",
+        created_at="2026-04-02T00:00:00+00:00",
+        updated_at="2026-04-02T00:00:00+00:00",
+        workflow_snapshot={
+            "domain": "policy",
+            "subject": "Policies",
+            "platform_api_base_url": "https://localhost:8000/api/v1/public",
+        },
+        items={"pol-001": CampaignItemState(item={"item_id": "pol-001", "label": "Policy", "kind": "policy"})},
+        events=[],
+    )
+    path = tmp_path / "campaign.json"
+    path.write_text(json.dumps(checkpoint.to_dict()))
+
+    with pytest.raises(PretorianClientError, match="prepared against"):
+        await apply_campaign(client, path)
+
+
+@pytest.mark.asyncio
+async def test_apply_campaign_warns_for_legacy_checkpoint_without_url(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    """Legacy checkpoints without platform_api_base_url should log a warning but not raise."""
+    client = _mock_campaign_client()
+    client.api_base_url = "https://platform.pretorin.com/api/v1/public"
+
+    # Checkpoint with no items to apply — just verify the warning fires and no error is raised.
+    checkpoint = CampaignCheckpoint(
+        version=2,
+        identity={"domain": "policy", "mode": "answer", "apply": False},
+        request={
+            "domain": "policy",
+            "mode": "answer",
+            "apply": False,
+            "output": "json",
+            "concurrency": 1,
+            "max_retries": 1,
+            "working_directory": str(tmp_path),
+        },
+        output="json",
+        created_at="2026-04-02T00:00:00+00:00",
+        updated_at="2026-04-02T00:00:00+00:00",
+        workflow_snapshot={"domain": "policy", "subject": "Policies"},
+        items={},
+        events=[],
+    )
+    path = tmp_path / "campaign.json"
+    path.write_text(json.dumps(checkpoint.to_dict()))
+
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="pretorin.workflows.campaign"):
+        summary = await apply_campaign(client, path)
+
+    assert "cannot verify environment affinity" in caplog.text
+    assert summary.total == 0
 
 
 def test_get_campaign_status_includes_snapshot(tmp_path: Path) -> None:

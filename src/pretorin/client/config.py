@@ -165,6 +165,37 @@ class Config:
         self.set("model_api_base_url", value)
 
     @property
+    def context_api_base_url(self) -> str | None:
+        """Get the API base URL that was active when the context was set."""
+        return self.get("context_api_base_url")
+
+    @context_api_base_url.setter
+    def context_api_base_url(self, value: str | None) -> None:
+        """Set the API base URL captured at context-set time."""
+        if value is None:
+            self.delete("context_api_base_url")
+        else:
+            self.set("context_api_base_url", value)
+
+    def check_context_environment(self) -> str | None:
+        """Compare stored context URL against the current platform URL.
+
+        Returns ``None`` when the environment matches (or when no stored URL
+        exists for backward compatibility).  Returns a human-readable error
+        string when the URLs diverge.
+        """
+        stored = self.context_api_base_url
+        if not stored:
+            return None
+        current = self.platform_api_base_url
+        if stored.rstrip("/") == current.rstrip("/"):
+            return None
+        return (
+            f"Context was set against '{stored}' but the current API environment is "
+            f"'{current}'. Run 'pretorin context set' to update your context."
+        )
+
+    @property
     def active_system_id(self) -> str | None:
         """Get the active system ID for context commands."""
         return self.get("active_system_id")
@@ -175,6 +206,7 @@ class Config:
         if value is None:
             self.delete("active_system_id")
             self.delete("active_system_name")
+            self.delete("context_api_base_url")
         else:
             self.set("active_system_id", value)
 

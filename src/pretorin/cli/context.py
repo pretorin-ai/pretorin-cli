@@ -93,6 +93,19 @@ def _format_context_subject(payload: dict[str, Any]) -> str:
     return system_name or system_id or "-"
 
 
+def _format_scope_label(
+    *,
+    system_id: str | None,
+    framework_id: str | None,
+    system_name: str | None = None,
+) -> str:
+    """Return a compact scope label for guardrail messages."""
+    subject = system_name or system_id or "-"
+    if system_id and system_name and system_name != system_id:
+        subject = f"{system_name} ({system_id})"
+    return f"{subject} / {framework_id or '-'}"
+
+
 def _format_quiet_context(payload: dict[str, Any]) -> str:
     """Render a single-line context summary."""
     subject = _format_context_subject(payload)
@@ -150,6 +163,8 @@ async def resolve_execution_context(
     system: str | None = None,
     framework: str | None = None,
     scope: ExecutionScope | None = None,
+    enforce_active_context: bool = False,
+    allow_scope_override: bool = False,
 ) -> tuple[str, str]:
     """Resolve and validate a single execution scope against the platform.
 
@@ -162,7 +177,16 @@ async def resolve_execution_context(
         return scope.system_id, scope.framework_id
 
     from pretorin.client.api import PretorianClientError
+    from pretorin.client.config import Config
     from pretorin.workflows.compliance_updates import resolve_system
+
+    config = Config()
+
+    # When falling back to stored config, verify the environment hasn't changed.
+    if system is None and framework is None:
+        env_error = config.check_context_environment()
+        if env_error:
+            raise PretorianClientError(env_error)
 
     system_value, framework_value = _resolve_context_values(system=system, framework=framework)
     if not system_value or not framework_value:
@@ -186,6 +210,39 @@ async def resolve_execution_context(
             f"Framework '{framework_id}' is not associated with system '{system_id}'. "
             f"Available frameworks: {', '.join(sorted(available_frameworks))}"
         )
+
+    if enforce_active_context and not allow_scope_override:
+        if scope is not None:
+            if system_id != scope.system_id or framework_id != scope.framework_id:
+                raise PretorianClientError(
+                    "Execution scope is "
+                    f"'{_format_scope_label(system_id=scope.system_id, framework_id=scope.framework_id)}'; "
+                    "refusing write to "
+                    f"'{_format_scope_label(system_id=system_id, framework_id=framework_id)}' "
+                    "without explicit scope override."
+                )
+            return system_id, framework_id
+
+        active_system_id = config.active_system_id
+        active_framework_id = config.active_framework_id
+        if active_system_id and active_framework_id:
+            if system_id != active_system_id or framework_id != active_framework_id:
+                active_scope_label = _format_scope_label(
+                    system_id=active_system_id,
+                    framework_id=active_framework_id,
+                    system_name=config.active_system_name,
+                )
+                requested_scope_label = _format_scope_label(
+                    system_id=system_id,
+                    framework_id=framework_id,
+                )
+                raise PretorianClientError(
+                    "Active context is "
+                    f"'{active_scope_label}'; "
+                    "refusing write to "
+                    f"'{requested_scope_label}' "
+                    "without explicit scope override."
+                )
     return system_id, framework_id
 
 
@@ -452,6 +509,7 @@ async def _context_set(
         config.set("active_system_id", system_id)
         config.set("active_system_name", system_name)
         config.set("active_framework_id", target_framework_id)
+        config.context_api_base_url = config.platform_api_base_url
 
         if is_json_mode():
             print_json(
@@ -518,6 +576,22 @@ async def _context_show(*, quiet: bool = False, check: bool = False) -> None:
         else:
             rprint(f"\n  {ROMEBOT_SAD}  No active context set.\n")
             rprint("  Run [bold]pretorin context set[/bold] to select a system and framework.")
+        if check:
+            raise typer.Exit(1)
+        return
+
+    # Check for environment mismatch before hitting the API.
+    env_error = config.check_context_environment()
+    if env_error:
+        payload = _build_context_payload(
+            system_id=system_id,
+            framework_id=framework_id,
+            system_name=cached_system_name,
+            valid=False,
+            validation_state="invalid",
+            validation_error=env_error,
+        )
+        _show_context_payload(payload, quiet=quiet)
         if check:
             raise typer.Exit(1)
         return
@@ -609,6 +683,7 @@ def context_clear() -> None:
     config.delete("active_system_id")
     config.delete("active_system_name")
     config.delete("active_framework_id")
+    config.delete("context_api_base_url")
 
     if is_json_mode():
         print_json({"cleared": True})

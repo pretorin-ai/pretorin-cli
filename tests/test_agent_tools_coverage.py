@@ -10,7 +10,6 @@ import pytest
 
 from pretorin.agent.tools import ToolDefinition, create_platform_tools, to_function_tool
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -48,7 +47,9 @@ def mock_client() -> AsyncMock:
     client = AsyncMock()
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "System 1"}])
     client.get_system = AsyncMock(return_value=_ModelStub({"id": "sys-1", "name": "System 1"}))
-    client.get_system_compliance_status = AsyncMock(return_value={"status": "partial"})
+    client.get_system_compliance_status = AsyncMock(
+        return_value={"status": "partial", "frameworks": [{"framework_id": "fw-1"}]}
+    )
     client.list_frameworks = AsyncMock(return_value=_ModelStub({"frameworks": []}))
     client.get_control = AsyncMock(return_value=_ModelStub({"id": "ac-02", "title": "Account Mgmt"}))
     client.get_controls_batch = AsyncMock(return_value=_ModelStub({"controls": [], "total": 0}))
@@ -74,6 +75,19 @@ def mock_client() -> AsyncMock:
     )
     client.update_narrative = AsyncMock(return_value={"ok": True})
     return client
+
+
+@pytest.fixture(autouse=True)
+def _blank_active_context() -> None:
+    """Keep agent tool tests independent from the developer's local config."""
+    config = MagicMock()
+    config.check_context_environment.return_value = None
+    config.active_system_id = None
+    config.active_framework_id = None
+    config.active_system_name = None
+    config.get.side_effect = lambda _key, default=None: default
+    with patch("pretorin.client.config.Config", return_value=config):
+        yield
 
 
 def _build_tools_patched(mock_client: AsyncMock) -> tuple[list[ToolDefinition], AsyncMock]:

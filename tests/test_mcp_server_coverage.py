@@ -7,6 +7,7 @@ Covers lines 75-76 (AuthenticationError handler), 78-79 (NotFoundError handler),
 
 from __future__ import annotations
 
+from io import StringIO
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -129,6 +130,23 @@ class TestRunServer:
             mock_run.assert_called_once()
             coroutine = mock_run.call_args.args[0]
             coroutine.close()
+
+    def test_run_server_prints_update_notice_to_stderr(self):
+        """Startup update notices should go to stderr, not stdout."""
+        from pretorin.mcp.server import run_server
+
+        stderr = StringIO()
+        with patch("pretorin.mcp.server.asyncio.run") as mock_run, \
+             patch(
+                 "pretorin.mcp.server.get_update_status",
+                 return_value={"prompt": "A newer version is available."},
+             ), \
+             patch("sys.stderr", stderr):
+            run_server()
+
+        assert "NOTICE: A newer version is available." in stderr.getvalue()
+        coroutine = mock_run.call_args.args[0]
+        coroutine.close()
 
 
 class TestMainGuard:
