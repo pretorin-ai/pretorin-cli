@@ -227,15 +227,20 @@ async def resolve_execution_context(
         active_framework_id = config.active_framework_id
         if active_system_id and active_framework_id:
             if system_id != active_system_id or framework_id != active_framework_id:
+                active_scope_label = _format_scope_label(
+                    system_id=active_system_id,
+                    framework_id=active_framework_id,
+                    system_name=config.active_system_name,
+                )
+                requested_scope_label = _format_scope_label(
+                    system_id=system_id,
+                    framework_id=framework_id,
+                )
                 raise PretorianClientError(
                     "Active context is "
-                    f"'{_format_scope_label(
-                        system_id=active_system_id,
-                        framework_id=active_framework_id,
-                        system_name=config.active_system_name,
-                    )}'; "
+                    f"'{active_scope_label}'; "
                     "refusing write to "
-                    f"'{_format_scope_label(system_id=system_id, framework_id=framework_id)}' "
+                    f"'{requested_scope_label}' "
                     "without explicit scope override."
                 )
     return system_id, framework_id
