@@ -478,6 +478,9 @@ async def test_prepare_claim_submit_apply_policy_campaign(tmp_path: Path) -> Non
     summary = await apply_campaign(client, request.checkpoint_path)
 
     assert summary.succeeded == 1
+    assert summary.apply is True
+    status = get_campaign_status(request.checkpoint_path)
+    assert status.apply is True
     client.patch_org_policy_qa.assert_awaited_once_with(
         "pol-001",
         [{"question_id": "q_scope_2", "answer": "Production systems, CUI, administrators, and service accounts."}],
