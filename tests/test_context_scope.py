@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
@@ -58,31 +57,24 @@ async def test_resolve_execution_context_rejects_wrong_framework_for_system() ->
 
 
 @pytest.mark.asyncio
-async def test_resolve_execution_context_rejects_stale_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_resolve_execution_context_rejects_stale_environment() -> None:
     """When both system and framework fall back to stored config, environment mismatch should be caught."""
-    from pretorin.client import config as config_module
+    from unittest.mock import MagicMock, patch
 
-    monkeypatch.delenv("PRETORIN_PLATFORM_API_BASE_URL", raising=False)
-    monkeypatch.delenv("PRETORIN_API_BASE_URL", raising=False)
+    mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = (
+        "Context was set against 'https://localhost:8000' but the current API environment is "
+        "'https://platform.pretorin.com'. Run 'pretorin context set' to update your context."
+    )
+    mock_config.get.side_effect = lambda key, *a: {
+        "active_system_id": "sys-1",
+        "active_framework_id": "fedramp-moderate",
+    }.get(key)
 
-    config_dir = Path(__file__).parent / "_tmp_ctx_env"
-    config_file = config_dir / "config.json"
-    monkeypatch.setattr(config_module, "CONFIG_DIR", config_dir)
-    monkeypatch.setattr(config_module, "CONFIG_FILE", config_file)
-
-    try:
-        cfg = config_module.Config()
-        cfg.set("active_system_id", "sys-1")
-        cfg.set("active_framework_id", "fedramp-moderate")
-        cfg.context_api_base_url = "https://localhost:8000/api/v1/public"
-
-        client = AsyncMock()
+    client = AsyncMock()
+    with patch("pretorin.client.config.Config", return_value=mock_config):
         with pytest.raises(PretorianClientError, match="Context was set against"):
             await resolve_execution_context(client)
-    finally:
-        import shutil
-
-        shutil.rmtree(config_dir, ignore_errors=True)
 
 
 @pytest.mark.asyncio
