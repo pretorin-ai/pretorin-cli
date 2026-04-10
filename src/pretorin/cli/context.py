@@ -162,7 +162,14 @@ async def resolve_execution_context(
         return scope.system_id, scope.framework_id
 
     from pretorin.client.api import PretorianClientError
+    from pretorin.client.config import Config
     from pretorin.workflows.compliance_updates import resolve_system
+
+    # When falling back to stored config, verify the environment hasn't changed.
+    if system is None and framework is None:
+        env_error = Config().check_context_environment()
+        if env_error:
+            raise PretorianClientError(env_error)
 
     system_value, framework_value = _resolve_context_values(system=system, framework=framework)
     if not system_value or not framework_value:
@@ -452,6 +459,7 @@ async def _context_set(
         config.set("active_system_id", system_id)
         config.set("active_system_name", system_name)
         config.set("active_framework_id", target_framework_id)
+        config.context_api_base_url = config.platform_api_base_url
 
         if is_json_mode():
             print_json(
@@ -518,6 +526,22 @@ async def _context_show(*, quiet: bool = False, check: bool = False) -> None:
         else:
             rprint(f"\n  {ROMEBOT_SAD}  No active context set.\n")
             rprint("  Run [bold]pretorin context set[/bold] to select a system and framework.")
+        if check:
+            raise typer.Exit(1)
+        return
+
+    # Check for environment mismatch before hitting the API.
+    env_error = config.check_context_environment()
+    if env_error:
+        payload = _build_context_payload(
+            system_id=system_id,
+            framework_id=framework_id,
+            system_name=cached_system_name,
+            valid=False,
+            validation_state="invalid",
+            validation_error=env_error,
+        )
+        _show_context_payload(payload, quiet=quiet)
         if check:
             raise typer.Exit(1)
         return
@@ -609,6 +633,7 @@ def context_clear() -> None:
     config.delete("active_system_id")
     config.delete("active_system_name")
     config.delete("active_framework_id")
+    config.delete("context_api_base_url")
 
     if is_json_mode():
         print_json({"cleared": True})
