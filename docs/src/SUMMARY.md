@@ -61,4 +61,5 @@
 - [Environment Variables](./reference/environment.md)
 - [Artifact Schema](./reference/artifact-schema.md)
 - [Contributing](./reference/contributing.md)
+- [Trademarks and Service Terms](./reference/trademarks.md)
 - [Changelog](./reference/changelog.md)

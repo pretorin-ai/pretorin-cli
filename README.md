@@ -10,16 +10,18 @@
   <a href="https://pypi.org/project/pretorin/"><img src="https://img.shields.io/pypi/v/pretorin" alt="PyPI version"></a>
   <a href="https://registry.modelcontextprotocol.io/"><img src="https://img.shields.io/badge/MCP_Registry-Listed-green" alt="MCP Registry"></a>
   <a href="https://modelcontextprotocol.io"><img src="https://img.shields.io/badge/MCP-Compatible-green" alt="MCP Compatible"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-yellow.svg" alt="License: Apache-2.0"></a>
   <a href="https://github.com/pretorin-ai/pretorin-cli/actions"><img src="https://github.com/pretorin-ai/pretorin-cli/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+"></a>
 </p>
 
 ---
 
-> **Beta** — Pretorin is currently in closed beta. Framework/control browsing works for everyone. Platform write features (evidence, narratives, monitoring) require a beta code. [Sign up for early access](https://pretorin.com/early-access/).
+> **Beta** — Pretorin is currently in closed beta. Framework/control browsing works for authenticated users. Platform write features (evidence, narratives, monitoring) require a beta code. [Sign up for early access](https://pretorin.com/early-access/).
 
 Pretorin CLI gives developers and AI agents direct access to compliance data, implementation context, and evidence workflows.
+
+The CLI and MCP tooling in this repository are open source. Access to Pretorin-hosted platform services, APIs, and account-scoped data is authenticated and governed separately by the applicable platform terms.
 
 `mcp-name: io.github.pretorin-ai/pretorin`
 
@@ -264,6 +266,7 @@ cd docs && mdbook build
 - [MCP integration guide](docs/src/mcp/overview.md)
 - [Bundled skill guide](pretorin-skill/SKILL.md)
 - [Contributing](CONTRIBUTING.md)
+- [Trademarks](TRADEMARKS.md)
 
 ## Development
 
@@ -278,4 +281,6 @@ ruff format --check src/pretorin
 
 ## License
 
-MIT License. See [LICENSE](LICENSE).
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).
+
+The Apache-2.0 license applies to the source code in this repository. It does not grant rights to Pretorin trademarks, logos, or branding, and it does not change the separate terms that govern access to Pretorin-hosted platform services and data. See [TRADEMARKS.md](TRADEMARKS.md).

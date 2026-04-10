@@ -4,7 +4,9 @@
 
 Get your API key from [platform.pretorin.com](https://platform.pretorin.com/).
 
-> **Beta Note:** Framework and control browsing works for all authenticated users. Platform write features (evidence, narratives, monitoring) require a beta code. Systems can only be created on the platform, not through the CLI or MCP. [Sign up for early access](https://pretorin.com/early-access/).
+> **Beta Note:** Framework and control browsing works for authenticated users. Platform write features (evidence, narratives, monitoring) require a beta code. Systems can only be created on the platform, not through the CLI or MCP. [Sign up for early access](https://pretorin.com/early-access/).
+
+All hosted API access is account-scoped and authenticated. Access to Pretorin-hosted services and any returned account-scoped data is governed by the applicable platform terms in addition to the open-source license for this repository.
 
 ## Login
 

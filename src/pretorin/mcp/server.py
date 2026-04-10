@@ -28,7 +28,7 @@ server = Server(
     "pretorin",
     instructions=(
         "Pretorin is currently in BETA. Framework and control reference tools "
-        "(list_frameworks, get_control, etc.) work without restrictions. "
+        "(list_frameworks, get_control, etc.) are available to authenticated users. "
         "Creating a system requires a beta code — systems can only be created on "
         "the Pretorin platform (https://platform.pretorin.com), not through the CLI "
         "or MCP. Without a system, platform write features (evidence, narratives, "
