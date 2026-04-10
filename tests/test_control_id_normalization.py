@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, cast
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -16,6 +16,19 @@ from pretorin.client.models import (
     ImplementationStatement,
 )
 from pretorin.utils import normalize_control_id
+
+
+@pytest.fixture(autouse=True)
+def _blank_active_context() -> None:
+    """Keep control-id tests independent from the developer's local config."""
+    config = MagicMock()
+    config.check_context_environment.return_value = None
+    config.active_system_id = None
+    config.active_framework_id = None
+    config.active_system_name = None
+    config.get.side_effect = lambda _key, default=None: default
+    with patch("pretorin.client.config.Config", return_value=config):
+        yield
 
 
 @pytest.mark.asyncio
@@ -135,15 +148,20 @@ async def test_agent_tool_search_evidence_normalizes_control_id_filter() -> None
 @pytest.mark.asyncio
 async def test_agent_tool_add_control_note_normalizes_control_id() -> None:
     mock_client = AsyncMock()
+    mock_client.get_control = AsyncMock(return_value=AsyncMock())
     mock_client.add_control_note = AsyncMock(return_value={"ok": True})
 
-    tools = {tool.name: tool for tool in create_platform_tools(mock_client)}
-    await tools["add_control_note"].handler(
-        system_id="sys-1",
-        control_id="ac-2",
-        framework_id="fedramp-moderate",
-        content="Need manual SSO upload",
-    )
+    with patch(
+        "pretorin.agent.tools.resolve_execution_context",
+        new=AsyncMock(return_value=("sys-1", "fedramp-moderate")),
+    ):
+        tools = {tool.name: tool for tool in create_platform_tools(mock_client)}
+        await tools["add_control_note"].handler(
+            system_id="sys-1",
+            control_id="ac-2",
+            framework_id="fedramp-moderate",
+            content="Need manual SSO upload",
+        )
 
     mock_client.add_control_note.assert_awaited_once_with(
         system_id="sys-1",
@@ -226,7 +244,7 @@ def test_normalize_passes_cmmc_and_800_171_ids_unchanged(raw: str, expected: str
 
 
 # =========================================================================
-# get_control_implementation requires framework_id
+# get_control_implementation uses exact scoped control lookup
 # =========================================================================
 
 
@@ -259,18 +277,20 @@ async def test_client_get_narrative_uses_scoped_endpoint() -> None:
 
 
 @pytest.mark.asyncio
-async def test_agent_tool_get_control_implementation_requires_framework_id() -> None:
+async def test_agent_tool_get_control_implementation_uses_scoped_lookup() -> None:
     mock_client = AsyncMock()
+    mock_client.get_control = AsyncMock(return_value=AsyncMock())
     mock_client.get_control_implementation = AsyncMock(
         return_value=AsyncMock(model_dump=lambda: {"control_id": "ac.l1-3.1.1"})
     )
 
-    tools = {tool.name: tool for tool in create_platform_tools(mock_client)}
-    await tools["get_control_implementation"].handler(
-        system_id="sys-1",
-        control_id="AC.L1-3.1.1",
-        framework_id="cmmc-l1",
-    )
+    with patch("pretorin.agent.tools.resolve_execution_context", new=AsyncMock(return_value=("sys-1", "cmmc-l1"))):
+        tools = {tool.name: tool for tool in create_platform_tools(mock_client)}
+        await tools["get_control_implementation"].handler(
+            system_id="sys-1",
+            control_id="AC.L1-3.1.1",
+            framework_id="cmmc-l1",
+        )
 
     mock_client.get_control_implementation.assert_awaited_once_with(
         "sys-1",

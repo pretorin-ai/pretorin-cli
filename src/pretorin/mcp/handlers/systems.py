@@ -7,6 +7,7 @@ from typing import Any
 
 from mcp.types import TextContent
 
+from pretorin.cli.version_check import get_update_status
 from pretorin.client import PretorianClient
 from pretorin.client.api import PretorianClientError
 from pretorin.mcp.helpers import format_json, resolve_system_id
@@ -81,3 +82,12 @@ async def handle_get_compliance_status(
         raise PretorianClientError("system_id is required")
     status = await client.get_system_compliance_status(system_id)
     return format_json(status)
+
+
+async def handle_get_cli_status(
+    _client: PretorianClient | None,
+    arguments: dict[str, Any],
+) -> list[TextContent]:
+    """Handle the get_cli_status tool."""
+    logger.debug("handle_get_cli_status called with %s", _safe_args(arguments))
+    return format_json(get_update_status(force=bool(arguments.get("force", False))))

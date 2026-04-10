@@ -11,7 +11,7 @@ description: >
   "list frameworks", "show controls", "what documents do I need", "compliance check",
   "control requirements", "gap analysis", "audit my code", "run campaign",
   "vendor inheritance", "STIG rules", "CCI chain", and "scan compliance".
-version: 0.13.1
+version: 0.14.0
 ---
 
 # Pretorin Compliance Skill
@@ -54,6 +54,7 @@ Control and family IDs must be formatted correctly or the API will return errors
 - **800-171**: controls are dotted (`03.01.01`)
 
 When unsure of an ID, discover it first with `pretorin_list_control_families` or `pretorin_list_controls`.
+When the user already supplied a control ID and you have an active scope, try the exact control lookup in that active framework first. Do not silently remap the request to a different control or framework.
 
 ## Tools
 

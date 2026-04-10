@@ -80,8 +80,6 @@ async def test_resolve_execution_context_rejects_stale_environment() -> None:
 @pytest.mark.asyncio
 async def test_resolve_execution_context_skips_env_check_with_explicit_args() -> None:
     """When explicit system/framework are passed, environment check should not fire."""
-    from pretorin.client import config as config_module
-
     client = AsyncMock()
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Test System"}])
     client.get_system_compliance_status = AsyncMock(
@@ -96,3 +94,70 @@ async def test_resolve_execution_context_skips_env_check_with_explicit_args() ->
     )
     assert system_id == "sys-1"
     assert framework_id == "fedramp-moderate"
+
+
+@pytest.mark.asyncio
+async def test_resolve_execution_context_rejects_mismatched_write_scope() -> None:
+    """Strict write resolution should refuse scopes outside the active context by default."""
+    from unittest.mock import MagicMock, patch
+
+    mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
+    mock_config.active_system_id = "sys-1"
+    mock_config.active_framework_id = "fedramp-moderate"
+    mock_config.active_system_name = "System One"
+
+    client = AsyncMock()
+    client.list_systems = AsyncMock(
+        return_value=[
+            {"id": "sys-1", "name": "System One"},
+            {"id": "sys-2", "name": "System Two"},
+        ]
+    )
+    client.get_system_compliance_status = AsyncMock(
+        return_value={"frameworks": [{"framework_id": "fedramp-high"}, {"framework_id": "fedramp-moderate"}]}
+    )
+
+    with patch("pretorin.client.config.Config", return_value=mock_config):
+        with pytest.raises(PretorianClientError, match="Active context is"):
+            await resolve_execution_context(
+                client,
+                system="sys-2",
+                framework="fedramp-high",
+                enforce_active_context=True,
+            )
+
+
+@pytest.mark.asyncio
+async def test_resolve_execution_context_allows_explicit_scope_override() -> None:
+    """Explicit scope override should bypass the active-context write guardrail."""
+    from unittest.mock import MagicMock, patch
+
+    mock_config = MagicMock()
+    mock_config.check_context_environment.return_value = None
+    mock_config.active_system_id = "sys-1"
+    mock_config.active_framework_id = "fedramp-moderate"
+    mock_config.active_system_name = "System One"
+
+    client = AsyncMock()
+    client.list_systems = AsyncMock(
+        return_value=[
+            {"id": "sys-1", "name": "System One"},
+            {"id": "sys-2", "name": "System Two"},
+        ]
+    )
+    client.get_system_compliance_status = AsyncMock(
+        return_value={"frameworks": [{"framework_id": "fedramp-high"}, {"framework_id": "fedramp-moderate"}]}
+    )
+
+    with patch("pretorin.client.config.Config", return_value=mock_config):
+        system_id, framework_id = await resolve_execution_context(
+            client,
+            system="sys-2",
+            framework="fedramp-high",
+            enforce_active_context=True,
+            allow_scope_override=True,
+        )
+
+    assert system_id == "sys-2"
+    assert framework_id == "fedramp-high"

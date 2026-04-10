@@ -21,7 +21,6 @@ from pretorin.mcp.helpers import (
     resolve_system_id,
     validate_enum,
 )
-from pretorin.utils import normalize_control_id
 from pretorin.workflows.ai_generation import draft_control_artifacts
 
 logger = logging.getLogger(__name__)
@@ -74,7 +73,11 @@ async def handle_push_monitoring_event(
     if enum_err:
         return format_error(enum_err)
 
-    system_id, framework_id, normalized_control_id = await resolve_execution_scope(client, arguments)
+    system_id, framework_id, normalized_control_id = await resolve_execution_scope(
+        client,
+        arguments,
+        enforce_active_context=True,
+    )
     event = MonitoringEventCreate(
         event_type=event_type,
         title=arguments["title"],
@@ -204,18 +207,21 @@ async def handle_add_control_note(
 ) -> list[TextContent] | CallToolResult:
     """Handle the add_control_note tool."""
     logger.debug("handle_add_control_note called with %s", _safe_args(arguments))
-    err = require(arguments, "system_id", "control_id", "framework_id", "content")
+    err = require(arguments, "control_id", "content")
     if err:
         return format_error(err)
 
-    system_id = await resolve_system_id(client, arguments)
-    if system_id is None:
-        raise PretorianClientError("system_id is required")
+    system_id, framework_id, normalized_control_id = await resolve_execution_scope(
+        client,
+        arguments,
+        control_required=True,
+        enforce_active_context=True,
+    )
     result = await client.add_control_note(
         system_id=system_id,
-        control_id=normalize_control_id(arguments["control_id"]),
+        control_id=normalized_control_id or "",
         content=arguments["content"],
-        framework_id=arguments["framework_id"],
+        framework_id=framework_id,
         source="cli",
     )
     return format_json(result)
@@ -254,18 +260,21 @@ async def handle_update_narrative(
 ) -> list[TextContent] | CallToolResult:
     """Handle the update_narrative tool."""
     logger.debug("handle_update_narrative called with %s", _safe_args(arguments))
-    err = require(arguments, "system_id", "control_id", "framework_id", "narrative")
+    err = require(arguments, "control_id", "narrative")
     if err:
         return format_error(err)
 
-    system_id = await resolve_system_id(client, arguments)
-    if system_id is None:
-        raise PretorianClientError("system_id is required")
+    system_id, framework_id, normalized_control_id = await resolve_execution_scope(
+        client,
+        arguments,
+        control_required=True,
+        enforce_active_context=True,
+    )
     try:
         result = await client.update_narrative(
             system_id=system_id,
-            control_id=normalize_control_id(arguments["control_id"]),
-            framework_id=arguments["framework_id"],
+            control_id=normalized_control_id or "",
+            framework_id=framework_id,
             narrative=arguments["narrative"],
             is_ai_generated=arguments.get("is_ai_generated", False),
         )
@@ -292,6 +301,7 @@ async def handle_update_control_status(
         client,
         arguments,
         control_required=True,
+        enforce_active_context=True,
     )
     result = await client.update_control_status(
         system_id=system_id,
@@ -308,17 +318,20 @@ async def handle_get_control_implementation(
 ) -> list[TextContent] | CallToolResult:
     """Handle the get_control_implementation tool."""
     logger.debug("handle_get_control_implementation called with %s", _safe_args(arguments))
-    err = require(arguments, "system_id", "control_id", "framework_id")
+    err = require(arguments, "control_id")
     if err:
         return format_error(err)
 
-    system_id = await resolve_system_id(client, arguments)
-    if system_id is None:
-        raise PretorianClientError("system_id is required")
+    system_id, framework_id, normalized_control_id = await resolve_execution_scope(
+        client,
+        arguments,
+        control_required=True,
+        enforce_active_context=True,
+    )
     impl = await client.get_control_implementation(
         system_id=system_id,
-        control_id=normalize_control_id(arguments["control_id"]),
-        framework_id=arguments["framework_id"],
+        control_id=normalized_control_id or "",
+        framework_id=framework_id,
     )
     return format_json(
         {

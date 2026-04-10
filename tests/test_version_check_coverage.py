@@ -11,8 +11,6 @@ import json
 import time
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from pretorin.cli.version_check import (
     CACHE_TTL_SECONDS,
     FAILURE_CACHE_TTL_SECONDS,
@@ -22,6 +20,7 @@ from pretorin.cli.version_check import (
     _save_cache,
     check_for_updates,
     get_update_message,
+    get_update_status,
 )
 
 
@@ -224,3 +223,25 @@ class TestGetUpdateMessage:
         assert result is not None
         assert "99.0.0" in result
         assert "pip install --upgrade" in result
+
+
+class TestGetUpdateStatus:
+    """Tests for get_update_status."""
+
+    def test_get_update_status_disabled(self):
+        with patch("pretorin.cli.version_check.update_notifications_enabled", return_value=False):
+            result = get_update_status()
+        assert result["notifications_enabled"] is False
+        assert result["message"] == "Passive update notifications are disabled."
+
+    def test_get_update_status_up_to_date(self):
+        from pretorin.cli.version_check import VersionCheckResult
+
+        with patch("pretorin.cli.version_check.update_notifications_enabled", return_value=True), \
+             patch(
+                 "pretorin.cli.version_check.check_for_updates",
+                 return_value=VersionCheckResult(latest_version="0.14.0", update_available=False, checked=True),
+             ):
+            result = get_update_status()
+        assert result["checked"] is True
+        assert result["message"] == "Pretorin CLI is up to date."

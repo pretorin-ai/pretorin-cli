@@ -8,9 +8,9 @@ handle_update_control_status, handle_get_control_implementation.
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
+import pytest
 from mcp.types import CallToolResult
 
 from pretorin.client.api import PretorianClientError
@@ -19,14 +19,11 @@ from pretorin.mcp.handlers.compliance import (
     handle_generate_control_artifacts,
     handle_get_control_context,
     handle_get_control_implementation,
-    handle_get_control_notes,
     handle_get_scope,
     handle_push_monitoring_event,
     handle_update_control_status,
     handle_update_narrative,
 )
-from pretorin.mcp.helpers import format_error
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -244,7 +241,10 @@ class TestHandleGetScope:
     async def test_success_returns_scope(self):
         from pretorin.client.models import ScopeResponse
 
-        scope = ScopeResponse(scope_status="complete", scope_narrative={"description": "In scope: all production systems."})
+        scope = ScopeResponse(
+            scope_status="complete",
+            scope_narrative={"description": "In scope: all production systems."},
+        )
         client = _make_client(get_scope=scope)
         with patch(
             "pretorin.mcp.handlers.compliance.resolve_system_id",
@@ -300,8 +300,8 @@ class TestHandleAddControlNote:
         note_response = {"id": "note-1", "content": "Manual review complete", "source": "cli"}
         client = _make_client(add_control_note=note_response)
         with patch(
-            "pretorin.mcp.handlers.compliance.resolve_system_id",
-            new=AsyncMock(return_value="sys-1"),
+            "pretorin.mcp.handlers.compliance.resolve_execution_scope",
+            new=AsyncMock(return_value=("sys-1", "fedramp-moderate", "ac-02")),
         ):
             result = await handle_add_control_note(
                 client,
@@ -344,8 +344,8 @@ class TestHandleUpdateNarrative:
         narrative_response = {"control_id": "ac-02", "narrative": "Access is controlled via RBAC."}
         client = _make_client(update_narrative=narrative_response)
         with patch(
-            "pretorin.mcp.handlers.compliance.resolve_system_id",
-            new=AsyncMock(return_value="sys-1"),
+            "pretorin.mcp.handlers.compliance.resolve_execution_scope",
+            new=AsyncMock(return_value=("sys-1", "fedramp-moderate", "ac-02")),
         ):
             result = await handle_update_narrative(
                 client,
@@ -364,8 +364,8 @@ class TestHandleUpdateNarrative:
         client = _make_client()
         client.update_narrative = AsyncMock(side_effect=ValueError("narrative too long"))
         with patch(
-            "pretorin.mcp.handlers.compliance.resolve_system_id",
-            new=AsyncMock(return_value="sys-1"),
+            "pretorin.mcp.handlers.compliance.resolve_execution_scope",
+            new=AsyncMock(return_value=("sys-1", "fedramp-moderate", "ac-02")),
         ):
             result = await handle_update_narrative(
                 client,
@@ -449,13 +449,25 @@ class TestHandleGetControlImplementation:
         assert "Missing required" in _error_text(result)
 
     @pytest.mark.asyncio
-    async def test_missing_framework_id_returns_error(self):
-        client = _make_client()
-        result = await handle_get_control_implementation(
-            client, {"system_id": "sys-1", "control_id": "ac-02"}
+    async def test_uses_active_scope_when_explicit_scope_omitted(self):
+        from pretorin.client.models import ControlImplementationResponse
+
+        client = _make_client(
+            get_control_implementation=ControlImplementationResponse(
+                control_id="ac-02",
+                status="partially_implemented",
+                implementation_narrative="In progress.",
+                evidence_count=2,
+                notes=[{"content": "Reviewing access logs"}],
+            )
         )
-        assert _is_error(result)
-        assert "framework_id" in _error_text(result)
+        with patch(
+            "pretorin.mcp.handlers.compliance.resolve_execution_scope",
+            new=AsyncMock(return_value=("sys-1", "fedramp-moderate", "ac-02")),
+        ):
+            result = await handle_get_control_implementation(client, {"control_id": "ac-02"})
+        assert isinstance(result, list)
+        assert "ac-02" in _result_text(result)
 
     @pytest.mark.asyncio
     async def test_success_returns_implementation(self):
@@ -470,8 +482,8 @@ class TestHandleGetControlImplementation:
         )
         client = _make_client(get_control_implementation=impl)
         with patch(
-            "pretorin.mcp.handlers.compliance.resolve_system_id",
-            new=AsyncMock(return_value="sys-1"),
+            "pretorin.mcp.handlers.compliance.resolve_execution_scope",
+            new=AsyncMock(return_value=("sys-1", "fedramp-moderate", "ac-02")),
         ):
             result = await handle_get_control_implementation(
                 client,

@@ -18,7 +18,11 @@ class Skill:
 
 _WORKFLOW_GUARDRAILS = (
     "Workflow requirements:\n"
+    "- Start from the active or provided execution scope first.\n"
     "- Read current platform state first (control context, current narrative, evidence, and notes).\n"
+    "- When the user supplies a control ID, resolve that exact control in the current "
+    "framework before any discovery calls.\n"
+    "- Do not silently remap a requested control to a different control or framework.\n"
     "- Use only observable facts from codebase and connected systems.\n"
     "- Do not hallucinate missing controls, integrations, or evidence.\n"
     "- Write auditor-ready markdown with no section headings.\n"

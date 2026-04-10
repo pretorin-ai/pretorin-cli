@@ -2,6 +2,24 @@
 
 All notable changes to the Pretorin CLI are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-04-10
+
+### Changed
+- MCP and agent write workflows now treat the active CLI context as a strict execution boundary by default, with an explicit `allow_scope_override` escape hatch for intentional cross-scope writes
+- Control-scoped MCP and agent workflows now route through one shared scope-validation path so exact control lookup happens in the resolved framework before any write proceeds
+- Agent guidance now tells built-in workflows to resolve an exact user-supplied control in the active framework before doing broader discovery
+- `pretorin mcp-serve` now emits a non-blocking stderr update prompt when a newer CLI release is available, so MCP-only users can discover upgrades without interrupting active tool calls
+
+### Fixed
+- `apply_campaign` now reports `apply: true` after a successful apply run and persists that state back to the checkpoint summary
+- Stored active context and campaign checkpoints are now validated against the current API environment before campaign reads or writes proceed
+- Control-scoped MCP and agent updates now refuse silent remaps like `cm-04.02` to a different control when the exact control does not resolve in the active framework
+
+### Added
+- `pretorin_get_cli_status` and the `status://cli` MCP resource expose local CLI version, update availability, and upgrade guidance to MCP hosts and agents
+
+---
+
 ## [0.13.1] - 2026-04-07
 
 ### Added
@@ -234,6 +252,7 @@ All notable changes to the Pretorin CLI are documented here. The format is based
 - FedRAMP (Low, Moderate, High)
 - CMMC Level 1, 2, and 3
 
+[0.14.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.11.0...v0.12.0

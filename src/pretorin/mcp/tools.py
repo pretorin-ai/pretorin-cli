@@ -9,6 +9,7 @@ from pretorin.mcp.helpers import (
     VALID_EVENT_TYPES,
     VALID_EVIDENCE_TYPES,
     VALID_SEVERITIES,
+    allow_scope_override_property,
     control_id_property,
     system_id_property,
 )
@@ -157,6 +158,24 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="pretorin_get_cli_status",
+            description=(
+                "Return the local Pretorin CLI version status, including update availability "
+                "and upgrade guidance for MCP hosts and agents"
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "force": {
+                        "type": "boolean",
+                        "description": "Bypass the local cache and re-check PyPI for the latest version",
+                        "default": False,
+                    },
+                },
+                "required": [],
+            },
+        ),
+        Tool(
             name="pretorin_get_system",
             description=(
                 "Get detailed information about a specific system including frameworks and security impact level"
@@ -239,6 +258,7 @@ async def list_tools() -> list[Tool]:
                         "description": "Whether to reuse exact-matching org evidence before creating",
                         "default": True,
                     },
+                    "allow_scope_override": allow_scope_override_property(),
                 },
                 "required": ["name", "description"],
             },
@@ -272,6 +292,7 @@ async def list_tools() -> list[Tool]:
                             "required": ["name", "description", "control_id"],
                         },
                     },
+                    "allow_scope_override": allow_scope_override_property(),
                 },
                 "required": ["items"],
             },
@@ -292,6 +313,7 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "Optional: Framework context for the link; defaults to active scope",
                     },
+                    "allow_scope_override": allow_scope_override_property(),
                 },
                 "required": ["evidence_id", "control_id"],
             },
@@ -303,14 +325,15 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": system_id_property(),
+                    "system_id": system_id_property(optional=True),
                     "control_id": control_id_property(),
                     "framework_id": {
                         "type": "string",
-                        "description": "The framework ID (required for narrative lookup)",
+                        "description": "Optional: Framework ID; defaults to active scope",
                     },
+                    "allow_scope_override": allow_scope_override_property(),
                 },
-                "required": ["system_id", "control_id", "framework_id"],
+                "required": ["control_id"],
             },
         ),
         Tool(
@@ -373,6 +396,7 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "Optional: Detailed event description",
                     },
+                    "allow_scope_override": allow_scope_override_property(),
                 },
                 "required": ["title"],
             },
@@ -516,11 +540,11 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": system_id_property(),
+                    "system_id": system_id_property(optional=True),
                     "control_id": control_id_property(),
                     "framework_id": {
                         "type": "string",
-                        "description": "The framework ID",
+                        "description": "Optional: Framework ID; defaults to active scope",
                     },
                     "narrative": {
                         "type": "string",
@@ -534,8 +558,9 @@ async def list_tools() -> list[Tool]:
                         "description": "Whether the narrative was AI-generated",
                         "default": False,
                     },
+                    "allow_scope_override": allow_scope_override_property(),
                 },
-                "required": ["system_id", "control_id", "framework_id", "narrative"],
+                "required": ["control_id", "narrative"],
             },
         ),
         Tool(
@@ -548,18 +573,19 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": system_id_property(),
+                    "system_id": system_id_property(optional=True),
                     "control_id": control_id_property(),
                     "framework_id": {
                         "type": "string",
-                        "description": "The framework ID",
+                        "description": "Optional: Framework ID; defaults to active scope",
                     },
                     "content": {
                         "type": "string",
                         "description": "Note content (suggestions, manual steps, integration guidance)",
                     },
+                    "allow_scope_override": allow_scope_override_property(),
                 },
-                "required": ["system_id", "control_id", "framework_id", "content"],
+                "required": ["control_id", "content"],
             },
         ),
         Tool(
@@ -598,6 +624,7 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "Optional: Framework ID; defaults to active scope",
                     },
+                    "allow_scope_override": allow_scope_override_property(),
                 },
                 "required": ["control_id", "status"],
             },
@@ -610,14 +637,15 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "system_id": system_id_property(),
+                    "system_id": system_id_property(optional=True),
                     "control_id": control_id_property(),
                     "framework_id": {
                         "type": "string",
-                        "description": "The framework ID (required for control lookup)",
+                        "description": "Optional: Framework ID; defaults to active scope",
                     },
+                    "allow_scope_override": allow_scope_override_property(),
                 },
-                "required": ["system_id", "control_id", "framework_id"],
+                "required": ["control_id"],
             },
         ),
         # === Agentic Workflow Tools ===

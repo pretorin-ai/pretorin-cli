@@ -76,20 +76,33 @@ def create_platform_tools(
     async def _resolve_scope(
         system_id: str | None = None,
         framework_id: str | None = None,
+        *,
+        enforce_active_context: bool = False,
+        allow_scope_override: bool = False,
     ) -> tuple[str, str]:
         return await resolve_execution_context(
             client,
             system=system_id,
             framework=framework_id,
             scope=scope,
+            enforce_active_context=enforce_active_context,
+            allow_scope_override=allow_scope_override,
         )
 
     async def _resolve_scoped_control(
         control_id: str,
         system_id: str | None = None,
         framework_id: str | None = None,
+        *,
+        enforce_active_context: bool = False,
+        allow_scope_override: bool = False,
     ) -> tuple[str, str, str]:
-        resolved_system_id, resolved_framework_id = await _resolve_scope(system_id, framework_id)
+        resolved_system_id, resolved_framework_id = await _resolve_scope(
+            system_id,
+            framework_id,
+            enforce_active_context=enforce_active_context,
+            allow_scope_override=allow_scope_override,
+        )
         normalized_control_id = _normalize(control_id) or control_id
         await client.get_control(resolved_framework_id, normalized_control_id)
         return resolved_system_id, resolved_framework_id, normalized_control_id
@@ -248,9 +261,15 @@ def create_platform_tools(
         control_id: str | None = None,
         framework_id: str | None = None,
         dedupe: bool = True,
+        allow_scope_override: bool = False,
     ) -> str:
         try:
-            resolved_system_id, resolved_framework_id = await _resolve_scope(system_id, framework_id)
+            resolved_system_id, resolved_framework_id = await _resolve_scope(
+                system_id,
+                framework_id,
+                enforce_active_context=True,
+                allow_scope_override=allow_scope_override,
+            )
             normalized_control_id = _normalize(control_id)
             if normalized_control_id:
                 await client.get_control(resolved_framework_id, normalized_control_id)
@@ -291,6 +310,11 @@ def create_platform_tools(
                     "control_id": {"type": "string", "description": "Associated control"},
                     "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
                     "dedupe": {"type": "boolean", "description": "Reuse exact-matching evidence", "default": True},
+                    "allow_scope_override": {
+                        "type": "boolean",
+                        "description": "Allow writing outside the active system/framework context",
+                        "default": False,
+                    },
                 },
                 "required": ["name", "description"],
             },
@@ -302,8 +326,14 @@ def create_platform_tools(
         items: list[dict[str, Any]],
         system_id: str | None = None,
         framework_id: str | None = None,
+        allow_scope_override: bool = False,
     ) -> str:
-        resolved_system_id, resolved_framework_id = await _resolve_scope(system_id, framework_id)
+        resolved_system_id, resolved_framework_id = await _resolve_scope(
+            system_id,
+            framework_id,
+            enforce_active_context=True,
+            allow_scope_override=allow_scope_override,
+        )
         payload_items = [
             EvidenceBatchItemCreate(
                 name=item["name"],
@@ -332,6 +362,11 @@ def create_platform_tools(
                 "properties": {
                     "system_id": {"type": "string", "description": "System ID (defaults to active scope)"},
                     "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
+                    "allow_scope_override": {
+                        "type": "boolean",
+                        "description": "Allow writing outside the active system/framework context",
+                        "default": False,
+                    },
                     "items": {
                         "type": "array",
                         "items": {
@@ -358,11 +393,14 @@ def create_platform_tools(
         control_id: str,
         system_id: str | None = None,
         framework_id: str | None = None,
+        allow_scope_override: bool = False,
     ) -> str:
         resolved_system_id, resolved_framework_id, normalized_control_id = await _resolve_scoped_control(
             control_id,
             system_id,
             framework_id,
+            enforce_active_context=True,
+            allow_scope_override=allow_scope_override,
         )
         result = await client.link_evidence_to_control(
             evidence_id=evidence_id,
@@ -383,6 +421,11 @@ def create_platform_tools(
                     "evidence_id": {"type": "string", "description": "Evidence item ID"},
                     "control_id": {"type": "string", "description": "Control ID"},
                     "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
+                    "allow_scope_override": {
+                        "type": "boolean",
+                        "description": "Allow writing outside the active system/framework context",
+                        "default": False,
+                    },
                 },
                 "required": ["evidence_id", "control_id"],
             },
@@ -393,11 +436,19 @@ def create_platform_tools(
     # --- Narratives ---
 
     async def get_narrative(
-        system_id: str,
         control_id: str,
-        framework_id: str,
+        system_id: str | None = None,
+        framework_id: str | None = None,
+        allow_scope_override: bool = False,
     ) -> str:
-        narrative = await client.get_narrative(system_id, _normalize(control_id) or control_id, framework_id)
+        resolved_system_id, resolved_framework_id, normalized_control_id = await _resolve_scoped_control(
+            control_id,
+            system_id,
+            framework_id,
+            enforce_active_context=True,
+            allow_scope_override=allow_scope_override,
+        )
+        narrative = await client.get_narrative(resolved_system_id, normalized_control_id, resolved_framework_id)
         return json.dumps(narrative.model_dump(), default=str)
 
     tools.append(
@@ -407,27 +458,40 @@ def create_platform_tools(
             parameters={
                 "type": "object",
                 "properties": {
-                    "system_id": {"type": "string", "description": "System ID"},
+                    "system_id": {"type": "string", "description": "System ID (defaults to active scope)"},
                     "control_id": {"type": "string", "description": "Control ID"},
-                    "framework_id": {"type": "string", "description": "Framework ID (required)"},
+                    "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
+                    "allow_scope_override": {
+                        "type": "boolean",
+                        "description": "Allow reads/writes outside the active system/framework context",
+                        "default": False,
+                    },
                 },
-                "required": ["system_id", "control_id", "framework_id"],
+                "required": ["control_id"],
             },
             handler=get_narrative,
         )
     )
 
     async def add_control_note(
-        system_id: str,
         control_id: str,
-        framework_id: str,
         content: str,
+        system_id: str | None = None,
+        framework_id: str | None = None,
+        allow_scope_override: bool = False,
     ) -> str:
+        resolved_system_id, resolved_framework_id, normalized_control_id = await _resolve_scoped_control(
+            control_id,
+            system_id,
+            framework_id,
+            enforce_active_context=True,
+            allow_scope_override=allow_scope_override,
+        )
         result = await client.add_control_note(
-            system_id=system_id,
-            control_id=_normalize(control_id) or control_id,
+            system_id=resolved_system_id,
+            control_id=normalized_control_id,
             content=content,
-            framework_id=framework_id,
+            framework_id=resolved_framework_id,
             source="cli",
         )
         return json.dumps(result, default=str)
@@ -439,12 +503,17 @@ def create_platform_tools(
             parameters={
                 "type": "object",
                 "properties": {
-                    "system_id": {"type": "string", "description": "System ID"},
+                    "system_id": {"type": "string", "description": "System ID (defaults to active scope)"},
                     "control_id": {"type": "string", "description": "Control ID"},
-                    "framework_id": {"type": "string", "description": "Framework ID"},
+                    "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
                     "content": {"type": "string", "description": "Note content"},
+                    "allow_scope_override": {
+                        "type": "boolean",
+                        "description": "Allow writing outside the active system/framework context",
+                        "default": False,
+                    },
                 },
-                "required": ["system_id", "control_id", "framework_id", "content"],
+                "required": ["control_id", "content"],
             },
             handler=add_control_note,
         )
@@ -500,10 +569,16 @@ def create_platform_tools(
         event_type: str = "security_scan",
         control_id: str | None = None,
         description: str = "",
+        allow_scope_override: bool = False,
     ) -> str:
         from pretorin.client.models import MonitoringEventCreate
 
-        resolved_system_id, resolved_framework_id = await _resolve_scope(system_id, framework_id)
+        resolved_system_id, resolved_framework_id = await _resolve_scope(
+            system_id,
+            framework_id,
+            enforce_active_context=True,
+            allow_scope_override=allow_scope_override,
+        )
         normalized_control_id = _normalize(control_id)
         if normalized_control_id:
             await client.get_control(resolved_framework_id, normalized_control_id)
@@ -533,6 +608,11 @@ def create_platform_tools(
                     "event_type": {"type": "string", "description": "Event type"},
                     "control_id": {"type": "string", "description": "Associated control"},
                     "description": {"type": "string", "description": "Event description"},
+                    "allow_scope_override": {
+                        "type": "boolean",
+                        "description": "Allow writing outside the active system/framework context",
+                        "default": False,
+                    },
                 },
                 "required": ["title"],
             },
@@ -547,11 +627,14 @@ def create_platform_tools(
         status: str,
         system_id: str | None = None,
         framework_id: str | None = None,
+        allow_scope_override: bool = False,
     ) -> str:
         resolved_system_id, resolved_framework_id, normalized_control_id = await _resolve_scoped_control(
             control_id,
             system_id,
             framework_id,
+            enforce_active_context=True,
+            allow_scope_override=allow_scope_override,
         )
         result = await client.update_control_status(
             resolved_system_id,
@@ -572,6 +655,11 @@ def create_platform_tools(
                     "control_id": {"type": "string", "description": "Control ID"},
                     "status": {"type": "string", "description": "New status"},
                     "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
+                    "allow_scope_override": {
+                        "type": "boolean",
+                        "description": "Allow writing outside the active system/framework context",
+                        "default": False,
+                    },
                 },
                 "required": ["control_id", "status"],
             },
@@ -580,14 +668,22 @@ def create_platform_tools(
     )
 
     async def get_control_implementation(
-        system_id: str,
         control_id: str,
-        framework_id: str,
+        system_id: str | None = None,
+        framework_id: str | None = None,
+        allow_scope_override: bool = False,
     ) -> str:
-        impl = await client.get_control_implementation(
+        resolved_system_id, resolved_framework_id, normalized_control_id = await _resolve_scoped_control(
+            control_id,
             system_id,
-            _normalize(control_id) or control_id,
             framework_id,
+            enforce_active_context=True,
+            allow_scope_override=allow_scope_override,
+        )
+        impl = await client.get_control_implementation(
+            resolved_system_id,
+            normalized_control_id,
+            resolved_framework_id,
         )
         return json.dumps(impl.model_dump(), default=str)
 
@@ -598,11 +694,16 @@ def create_platform_tools(
             parameters={
                 "type": "object",
                 "properties": {
-                    "system_id": {"type": "string", "description": "System ID"},
+                    "system_id": {"type": "string", "description": "System ID (defaults to active scope)"},
                     "control_id": {"type": "string", "description": "Control ID"},
-                    "framework_id": {"type": "string", "description": "Framework ID (required)"},
+                    "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
+                    "allow_scope_override": {
+                        "type": "boolean",
+                        "description": "Allow reads/writes outside the active system/framework context",
+                        "default": False,
+                    },
                 },
-                "required": ["system_id", "control_id", "framework_id"],
+                "required": ["control_id"],
             },
             handler=get_control_implementation,
         )
@@ -670,18 +771,26 @@ def create_platform_tools(
     # --- Update Narrative ---
 
     async def update_narrative(
-        system_id: str,
         control_id: str,
-        framework_id: str,
         narrative: str,
+        system_id: str | None = None,
+        framework_id: str | None = None,
         is_ai_generated: bool = False,
+        allow_scope_override: bool = False,
     ) -> str:
+        resolved_system_id, resolved_framework_id, normalized_control_id = await _resolve_scoped_control(
+            control_id,
+            system_id,
+            framework_id,
+            enforce_active_context=True,
+            allow_scope_override=allow_scope_override,
+        )
         try:
             result = await client.update_narrative(
-                system_id,
-                _normalize(control_id) or control_id,
+                resolved_system_id,
+                normalized_control_id,
                 narrative,
-                framework_id,
+                resolved_framework_id,
                 is_ai_generated,
             )
         except ValueError as e:
@@ -695,9 +804,9 @@ def create_platform_tools(
             parameters={
                 "type": "object",
                 "properties": {
-                    "system_id": {"type": "string", "description": "System ID"},
+                    "system_id": {"type": "string", "description": "System ID (defaults to active scope)"},
                     "control_id": {"type": "string", "description": "Control ID"},
-                    "framework_id": {"type": "string", "description": "Framework ID"},
+                    "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
                     "narrative": {
                         "type": "string",
                         "description": (
@@ -706,8 +815,13 @@ def create_platform_tools(
                         ),
                     },
                     "is_ai_generated": {"type": "boolean", "description": "AI-generated flag"},
+                    "allow_scope_override": {
+                        "type": "boolean",
+                        "description": "Allow writing outside the active system/framework context",
+                        "default": False,
+                    },
                 },
-                "required": ["system_id", "control_id", "framework_id", "narrative"],
+                "required": ["control_id", "narrative"],
             },
             handler=update_narrative,
         )
