@@ -3,13 +3,13 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Pretorin CLI Documentation</title>
+        <title>Pretorin Developer &amp; Agent Docs</title>
         <meta name="robots" content="noindex">
 
 
         <!-- Custom HTML head -->
 
-        <meta name="description" content="Documentation for the Pretorin CLI - compliance tools for developers and AI agents.">
+        <meta name="description" content="Documentation for developers and AI agents using Pretorin via the CLI, MCP, and skills.">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-14ccf727.js";
+            window.path_to_searchindex_js = "searchindex-829ba4b6.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-9dfb40f5.js"></script>
@@ -138,7 +138,7 @@
                         </button>
                     </div>
 
-                    <h1 class="menu-title">Pretorin CLI Documentation</h1>
+                    <h1 class="menu-title">Pretorin Developer &amp; Agent Docs</h1>
 
                     <div class="right-buttons">
                         <a href="print.html" title="Print this book" aria-label="Print this book">
@@ -178,20 +178,31 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="pretorin-cli"><a class="header" href="#pretorin-cli">Pretorin CLI</a></h1>
+                        <h1 id="pretorin-developer--agent-docs"><a class="header" href="#pretorin-developer--agent-docs">Pretorin Developer &amp; Agent Docs</a></h1>
 <blockquote>
 <p><strong>Beta</strong> — Pretorin is currently in closed beta. Framework and control browsing works for authenticated users. Platform write features (evidence, narratives, monitoring) require a beta code. <a href="https://pretorin.com/early-access/">Sign up for early access</a>.</p>
 </blockquote>
-<p>Pretorin CLI gives developers and AI agents direct access to compliance data, implementation context, and evidence workflows. It supports NIST 800-53, NIST 800-171, FedRAMP, and CMMC frameworks with over 700 controls across 8 framework profiles.</p>
+<p>Pretorin gives developers and AI agents direct access to compliance data, implementation context, and evidence workflows. The primary surfaces are the CLI, the MCP server, and skill-driven agent workflows. It supports NIST 800-53, NIST 800-171, FedRAMP, and CMMC frameworks with over 700 controls across 8 framework profiles.</p>
 <p>The CLI and MCP tooling in this repository are open source under Apache-2.0. Access to Pretorin-hosted platform services, APIs, and account-scoped data is authenticated and governed separately by the applicable platform terms.</p>
-<h2 id="two-usage-modes"><a class="header" href="#two-usage-modes">Two Usage Modes</a></h2>
-<p>Pretorin works in two modes depending on your setup:</p>
+<h2 id="start-here"><a class="header" href="#start-here">Start Here</a></h2>
+<p>Choose the path that matches how you work:</p>
+<ul>
+<li><strong>CLI-first</strong> — Use the Pretorin CLI directly for framework browsing, evidence workflows, reviews, scans, and agent execution.</li>
+<li><strong>AI-agent-first</strong> — Connect <code>pretorin mcp-serve</code> to Claude Code, Codex CLI, Cursor, or another MCP-compatible tool.</li>
+<li><strong>Hosted agent runtime</strong> — Use <code>pretorin agent run</code> when you want Pretorin-managed model execution with built-in skills.</li>
+</ul>
+<p>Start with <a href="#installation">Installation</a>, <a href="#authentication">Authentication</a>, and <a href="#quick-start">Quick Start</a> if this is your first time here.</p>
+<h2 id="core-paths"><a class="header" href="#core-paths">Core Paths</a></h2>
+<p>Pretorin is usually used in one of these modes:</p>
 <ol>
 <li>
 <p><strong>Pretorin-hosted model mode</strong> — Run <code>pretorin agent run</code> to route model calls through Pretorin’s <code>/v1</code> endpoints. Pretorin manages the AI runtime.</p>
 </li>
 <li>
 <p><strong>Bring-your-own-agent mode</strong> — Run <code>pretorin mcp-serve</code> and connect the MCP server to your existing AI tool (Claude Code, Codex CLI, Cursor, Windsurf, etc.). Your agent gets compliance tools without changing your workflow.</p>
+</li>
+<li>
+<p><strong>Direct CLI mode</strong> — Use <code>pretorin</code> subcommands directly for browsing frameworks, managing context, authoring evidence, updating narratives, and running scans.</p>
 </li>
 </ol>
 <h2 id="what-you-can-do"><a class="header" href="#what-you-can-do">What You Can Do</a></h2>
@@ -204,6 +215,14 @@
 <li><strong>Review code against controls</strong> — Analyze your codebase for control coverage</li>
 <li><strong>Track monitoring events</strong> — Record security scans, access reviews, configuration changes, and compliance checks</li>
 <li><strong>Generate compliance artifacts</strong> — Produce structured JSON artifacts documenting control implementations</li>
+</ul>
+<h2 id="recommended-sections"><a class="header" href="#recommended-sections">Recommended Sections</a></h2>
+<ul>
+<li><a href="#quick-start">Quick Start</a> for first commands and setup</li>
+<li><a href="#mcp-integration-overview">MCP Integration</a> for Claude, Codex, Cursor, and other agent tools</li>
+<li><a href="#agent-overview">Agent Overview</a> for Pretorin-hosted runtime usage</li>
+<li><a href="#complete-command-reference">CLI Reference</a> for command-level detail</li>
+<li><a href="#narrative--evidence-workflow">Workflows</a> for end-to-end compliance tasks</li>
 </ul>
 <h2 id="architecture"><a class="header" href="#architecture">Architecture</a></h2>
 <pre><code>┌─────────────────────────────────────────────┐

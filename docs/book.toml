@@ -2,8 +2,8 @@
 authors = ["Pretorin"]
 language = "en"
 src = "src"
-title = "Pretorin CLI Documentation"
-description = "Documentation for the Pretorin CLI - compliance tools for developers and AI agents."
+title = "Pretorin Developer & Agent Docs"
+description = "Documentation for developers and AI agents using Pretorin via the CLI, MCP, and skills."
 
 [build]
 build-dir = "book"
