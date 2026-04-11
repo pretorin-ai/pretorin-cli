@@ -7,6 +7,24 @@ on:
     branches: [main, master]
 
 jobs:
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install mdBook
+        run: cargo install mdbook --version 0.5.2 --locked
+
+      - name: Build docs
+        run: mdbook build docs
+
+      - name: Verify generated docs are up to date
+        run: git diff --exit-code -- docs/book
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -113,7 +131,7 @@ jobs:
     runs-on: ubuntu-latest
     # Only run on main/master branch, not on PRs (to protect API key)
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    needs: [lint, typecheck, test]
+    needs: [docs, lint, typecheck, test]
 
     steps:
       - uses: actions/checkout@v4

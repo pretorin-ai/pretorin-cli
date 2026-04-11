@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-a8894136.js";
+            window.path_to_searchindex_js = "../searchindex-14ccf727.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-8de013d0.js"></script>
+        <script src="../toc-9dfb40f5.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -202,14 +202,23 @@ pretorin context set
 # Explicit
 pretorin context set --system "My Application" --framework nist-800-53-r5
 </code></pre>
+<p>Pretorin stores the canonical system ID for stability and also caches the last known system name for display. If you change API keys or platform endpoints with <code>pretorin login</code>, the stored active context is cleared automatically so old scope does not leak into the new environment.</p>
 <h2 id="show-current-context"><a class="header" href="#show-current-context">Show Current Context</a></h2>
 <pre><code class="language-bash">$ pretorin context show
 ╭──────────────────────── Active Context ─────────────────────────╮
-│ System: My Application                                          │
-│ Framework: NIST SP 800-53 Rev 5                                │
-│ Progress: 42% (136/324 implemented, 45 in progress)            │
+│ System: My Application (sys-1234...)                           │
+│ Framework: nist-800-53-r5                                      │
+│ Progress: 42%                                                  │
+│ Status: in_progress                                            │
 ╰─────────────────────────────────────────────────────────────────╯
+
+# Compact summary for shell use
+pretorin context show --quiet
+
+# Fail fast if the stored context is missing, stale, or cannot be verified
+pretorin context show --quiet --check
 </code></pre>
+<p><code>context show</code> validates the stored system and framework against the platform when credentials are available. If the system has been deleted or the framework is no longer attached, the command reports that state explicitly instead of silently showing a stale context.</p>
 <h2 id="clear-context"><a class="header" href="#clear-context">Clear Context</a></h2>
 <pre><code class="language-bash">pretorin context clear
 </code></pre>

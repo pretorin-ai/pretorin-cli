@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-a8894136.js";
+            window.path_to_searchindex_js = "searchindex-14ccf727.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-8de013d0.js"></script>
+        <script src="toc-9dfb40f5.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -180,9 +180,10 @@
                     <main>
                         <h1 id="pretorin-cli"><a class="header" href="#pretorin-cli">Pretorin CLI</a></h1>
 <blockquote>
-<p><strong>Beta</strong> — Pretorin is currently in closed beta. Framework and control browsing works for everyone. Platform write features (evidence, narratives, monitoring) require a beta code. <a href="https://pretorin.com/early-access/">Sign up for early access</a>.</p>
+<p><strong>Beta</strong> — Pretorin is currently in closed beta. Framework and control browsing works for authenticated users. Platform write features (evidence, narratives, monitoring) require a beta code. <a href="https://pretorin.com/early-access/">Sign up for early access</a>.</p>
 </blockquote>
 <p>Pretorin CLI gives developers and AI agents direct access to compliance data, implementation context, and evidence workflows. It supports NIST 800-53, NIST 800-171, FedRAMP, and CMMC frameworks with over 700 controls across 8 framework profiles.</p>
+<p>The CLI and MCP tooling in this repository are open source under Apache-2.0. Access to Pretorin-hosted platform services, APIs, and account-scoped data is authenticated and governed separately by the applicable platform terms.</p>
 <h2 id="two-usage-modes"><a class="header" href="#two-usage-modes">Two Usage Modes</a></h2>
 <p>Pretorin works in two modes depending on your setup:</p>
 <ol>
@@ -288,13 +289,15 @@ uv pip install -e ".[dev]"
 <h2 id="getting-an-api-key"><a class="header" href="#getting-an-api-key">Getting an API Key</a></h2>
 <p>Get your API key from <a href="https://platform.pretorin.com/">platform.pretorin.com</a>.</p>
 <blockquote>
-<p><strong>Beta Note:</strong> Framework and control browsing works for all authenticated users. Platform write features (evidence, narratives, monitoring) require a beta code. Systems can only be created on the platform, not through the CLI or MCP. <a href="https://pretorin.com/early-access/">Sign up for early access</a>.</p>
+<p><strong>Beta Note:</strong> Framework and control browsing works for authenticated users. Platform write features (evidence, narratives, monitoring) require a beta code. Systems can only be created on the platform, not through the CLI or MCP. <a href="https://pretorin.com/early-access/">Sign up for early access</a>.</p>
 </blockquote>
+<p>All hosted API access is account-scoped and authenticated. Access to Pretorin-hosted services and any returned account-scoped data is governed by the applicable platform terms in addition to the open-source license for this repository.</p>
 <h2 id="login"><a class="header" href="#login">Login</a></h2>
 <pre><code class="language-bash">pretorin login
 </code></pre>
 <p>You’ll be prompted to enter your API key. Credentials are stored in <code>~/.pretorin/config.json</code>.</p>
 <p>If you’re already authenticated, <code>pretorin login</code> validates your existing key against the API and skips the prompt.</p>
+<p>If you log into a different API endpoint or switch API keys, Pretorin clears the stored active <code>system + framework</code> context so stale scope does not bleed into the new environment.</p>
 <h2 id="verify-authentication"><a class="header" href="#verify-authentication">Verify Authentication</a></h2>
 <pre><code class="language-bash">$ pretorin whoami
 [°~°] Checking your session...
@@ -348,15 +351,18 @@ pretorin context set --system "My Application" --framework fedramp-moderate
 <p>Or use a predefined skill:</p>
 <pre><code class="language-bash">pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
 </code></pre>
-<h2 id="connect-your-ai-tool-via-mcp"><a class="header" href="#connect-your-ai-tool-via-mcp">Connect Your AI Tool via MCP</a></h2>
-<p>If you use Claude Code, Codex CLI, Cursor, or another MCP-compatible AI tool:</p>
-<pre><code class="language-bash"># Claude Code
+<h2 id="connect-your-ai-tool"><a class="header" href="#connect-your-ai-tool">Connect Your AI Tool</a></h2>
+<p>If you use Claude Code, Codex CLI, or another MCP-compatible AI tool:</p>
+<pre><code class="language-bash"># Install the skill (teaches your agent how to use Pretorin tools)
+pretorin skill install
+
+# Add the MCP server (Claude Code example)
 claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 
 # Then ask your AI agent about compliance
 # "What controls are in the Access Control family for FedRAMP Moderate?"
 </code></pre>
-<p>See the <a href="#mcp-setup-guides">MCP Setup Guides</a> for other tools.</p>
+<p>Check install status with <code>pretorin skill status</code>. See the <a href="#mcp-setup-guides">MCP Setup Guides</a> for other tools.</p>
 <h2 id="run-the-demo-walkthrough"><a class="header" href="#run-the-demo-walkthrough">Run the Demo Walkthrough</a></h2>
 <p>An interactive demo script is included in the repository:</p>
 <pre><code class="language-bash">bash scripts/demo-walkthrough.sh
@@ -516,14 +522,23 @@ pretorin context set
 # Explicit
 pretorin context set --system "My Application" --framework nist-800-53-r5
 </code></pre>
+<p>Pretorin stores the canonical system ID for stability and also caches the last known system name for display. If you change API keys or platform endpoints with <code>pretorin login</code>, the stored active context is cleared automatically so old scope does not leak into the new environment.</p>
 <h2 id="show-current-context"><a class="header" href="#show-current-context">Show Current Context</a></h2>
 <pre><code class="language-bash">$ pretorin context show
 ╭──────────────────────── Active Context ─────────────────────────╮
-│ System: My Application                                          │
-│ Framework: NIST SP 800-53 Rev 5                                │
-│ Progress: 42% (136/324 implemented, 45 in progress)            │
+│ System: My Application (sys-1234...)                           │
+│ Framework: nist-800-53-r5                                      │
+│ Progress: 42%                                                  │
+│ Status: in_progress                                            │
 ╰─────────────────────────────────────────────────────────────────╯
+
+# Compact summary for shell use
+pretorin context show --quiet
+
+# Fail fast if the stored context is missing, stale, or cannot be verified
+pretorin context show --quiet --check
 </code></pre>
+<p><code>context show</code> validates the stored system and framework against the platform when credentials are available. If the system has been deleted or the framework is no longer attached, the command reports that state explicitly instead of silently showing a stale context.</p>
 <h2 id="clear-context"><a class="header" href="#clear-context">Clear Context</a></h2>
 <pre><code class="language-bash">pretorin context clear
 </code></pre>
@@ -617,12 +632,33 @@ pretorin evidence search --system "My Application" --framework-id fedramp-modera
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="narrative-commands"><a class="header" href="#narrative-commands">Narrative Commands</a></h1>
 <p>The <code>narrative</code> command group manages implementation narratives for controls. Narratives describe how a specific control is implemented within your system.</p>
+<h2 id="create-local-narrative"><a class="header" href="#create-local-narrative">Create Local Narrative</a></h2>
+<pre><code class="language-bash">pretorin narrative create ac-02 fedramp-moderate \
+  -c "- RBAC enforced via IdP\n\n\`\`\`yaml\nroles:\n  admin: ...\n\`\`\`"
+</code></pre>
+<p>Creates a local markdown file at <code>narratives/&lt;framework&gt;/&lt;control&gt;/&lt;slug&gt;.md</code> with YAML frontmatter. Markdown is validated at create time (same rules as push).</p>
+<p>Options:</p>
+<ul>
+<li><code>--content / -c</code> — Narrative content (required)</li>
+<li><code>--name / -n</code> — Custom name (defaults to <code>&lt;control&gt;-&lt;framework&gt;</code>)</li>
+<li><code>--ai-generated</code> — Mark the narrative as AI-generated</li>
+</ul>
+<h2 id="list-local-narratives"><a class="header" href="#list-local-narratives">List Local Narratives</a></h2>
+<pre><code class="language-bash">pretorin narrative list
+pretorin narrative list --framework fedramp-moderate
+</code></pre>
+<p>Displays a table of local narrative files: Control, Framework, Name, AI Generated, Synced.</p>
+<h2 id="push-narratives"><a class="header" href="#push-narratives">Push Narratives</a></h2>
+<pre><code class="language-bash">pretorin narrative push --dry-run
+pretorin narrative push
+</code></pre>
+<p>Batch-pushes all unsynced local narratives to the platform. After a successful push, the local file’s <code>platform_synced</code> frontmatter is set to <code>true</code>.</p>
 <h2 id="get-current-narrative"><a class="header" href="#get-current-narrative">Get Current Narrative</a></h2>
 <pre><code class="language-bash">pretorin narrative get ac-02 fedramp-moderate --system "My System"
 </code></pre>
 <p>Returns the current narrative text, status, and AI confidence metadata when present.</p>
-<h2 id="push-a-narrative-file"><a class="header" href="#push-a-narrative-file">Push a Narrative File</a></h2>
-<pre><code class="language-bash">pretorin narrative push ac-02 fedramp-moderate "My System" narrative-ac02.md
+<h2 id="push-a-single-file-legacy"><a class="header" href="#push-a-single-file-legacy">Push a Single File (Legacy)</a></h2>
+<pre><code class="language-bash">pretorin narrative push-file ac-02 fedramp-moderate "My System" narrative-ac02.md
 </code></pre>
 <p>Reads a markdown or text file and submits it as the implementation narrative for the specified control.</p>
 <h2 id="markdown-quality-requirements-1"><a class="header" href="#markdown-quality-requirements-1">Markdown Quality Requirements</a></h2>
@@ -633,7 +669,7 @@ pretorin evidence search --system "My Application" --framework-id fedramp-modera
 <li>At least <strong>one structural element</strong> (code block, table, or list)</li>
 <li><strong>No markdown images</strong> (temporarily disabled pending platform image upload support)</li>
 </ul>
-<p>These requirements are validated before push.</p>
+<p>These requirements are validated at create time and before push.</p>
 <h2 id="generating-narratives-with-ai"><a class="header" href="#generating-narratives-with-ai">Generating Narratives with AI</a></h2>
 <p>To generate narratives using the agent runtime:</p>
 <pre><code class="language-bash">pretorin agent run --skill narrative-generation "Generate narrative for AC-02"
@@ -652,10 +688,30 @@ suggested_evidence_type: &lt;policy_document|configuration|...&gt;
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="notes-commands"><a class="header" href="#notes-commands">Notes Commands</a></h1>
 <p>The <code>notes</code> command group manages control implementation notes. Notes are used to track gaps, manual follow-up items, and implementation context for specific controls.</p>
-<h2 id="list-notes"><a class="header" href="#list-notes">List Notes</a></h2>
+<h2 id="create-local-note"><a class="header" href="#create-local-note">Create Local Note</a></h2>
+<pre><code class="language-bash">pretorin notes create ac-02 fedramp-moderate \
+  -c "Gap: Missing SSO evidence. Manual next step: collect IdP configuration screenshots."
+</code></pre>
+<p>Creates a local markdown file at <code>notes/&lt;framework&gt;/&lt;control&gt;/&lt;slug&gt;.md</code> with YAML frontmatter. No markdown validation is applied to notes.</p>
+<p>Options:</p>
+<ul>
+<li><code>--content / -c</code> — Note content (required)</li>
+<li><code>--name / -n</code> — Custom name (defaults to content summary)</li>
+</ul>
+<h2 id="push-notes"><a class="header" href="#push-notes">Push Notes</a></h2>
+<pre><code class="language-bash">pretorin notes push --dry-run
+pretorin notes push
+</code></pre>
+<p>Batch-pushes all unsynced local notes to the platform. Notes are append-only on the platform. After a successful push, the local file’s <code>platform_synced</code> frontmatter is set to <code>true</code>.</p>
+<h2 id="list-local-notes"><a class="header" href="#list-local-notes">List Local Notes</a></h2>
+<pre><code class="language-bash">pretorin notes list --local
+pretorin notes list --local --framework fedramp-moderate
+</code></pre>
+<p>Use the <code>--local</code> flag to list local note files instead of platform notes.</p>
+<h2 id="list-platform-notes"><a class="header" href="#list-platform-notes">List Platform Notes</a></h2>
 <pre><code class="language-bash">pretorin notes list ac-02 fedramp-moderate --system "My System"
 </code></pre>
-<h2 id="add-a-note"><a class="header" href="#add-a-note">Add a Note</a></h2>
+<h2 id="add-a-note-direct-to-platform"><a class="header" href="#add-a-note-direct-to-platform">Add a Note (Direct to Platform)</a></h2>
 <pre><code class="language-bash">pretorin notes add ac-02 fedramp-moderate \
   --content "Gap: Missing SSO evidence. Manual next step: collect IdP configuration screenshots."
 </code></pre>
@@ -707,6 +763,269 @@ Manual next step: &lt;explicit user/platform action&gt;
 <h2 id="context-requirement"><a class="header" href="#context-requirement">Context Requirement</a></h2>
 <p>The <code>monitoring push</code> command requires an active system context. Set it with <code>pretorin context set</code> or pass <code>--system</code> explicitly.</p>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="campaign-workflows"><a class="header" href="#campaign-workflows">Campaign Workflows</a></h1>
+<p>The <code>campaign</code> command group runs bulk compliance operations across multiple controls, policies, or scope questions in a single coordinated run. Campaigns support an external-agent-first pattern with checkpoint persistence and lease-based concurrency for safe fan-out to multiple agents.</p>
+<h2 id="campaign-domains-and-modes"><a class="header" href="#campaign-domains-and-modes">Campaign Domains and Modes</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Domain</th><th>Mode</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>controls</code></td><td><code>initial</code></td><td>Draft new narratives and evidence for controls</td></tr>
+<tr><td><code>controls</code></td><td><code>notes-fix</code></td><td>Address platform notes on existing controls</td></tr>
+<tr><td><code>controls</code></td><td><code>review-fix</code></td><td>Fix findings from a family review job</td></tr>
+<tr><td><code>policy</code></td><td><code>answer</code></td><td>Generate answers for policy questions</td></tr>
+<tr><td><code>policy</code></td><td><code>review-fix</code></td><td>Fix findings from a policy review</td></tr>
+<tr><td><code>scope</code></td><td><code>answer</code></td><td>Generate answers for scope questions</td></tr>
+<tr><td><code>scope</code></td><td><code>review-fix</code></td><td>Fix findings from a scope review</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="control-campaigns"><a class="header" href="#control-campaigns">Control Campaigns</a></h2>
+<h3 id="draft-new-narratives-for-a-family"><a class="header" href="#draft-new-narratives-for-a-family">Draft New Narratives for a Family</a></h3>
+<pre><code class="language-bash">pretorin campaign controls --mode initial --family AC \
+  --system "My System" --framework-id fedramp-moderate
+</code></pre>
+<h3 id="fix-controls-with-platform-notes"><a class="header" href="#fix-controls-with-platform-notes">Fix Controls with Platform Notes</a></h3>
+<pre><code class="language-bash">pretorin campaign controls --mode notes-fix --family AC
+</code></pre>
+<h3 id="fix-controls-after-family-review"><a class="header" href="#fix-controls-after-family-review">Fix Controls after Family Review</a></h3>
+<pre><code class="language-bash">pretorin campaign controls --mode review-fix --family AC --review-job &lt;job-id&gt;
+</code></pre>
+<h3 id="options"><a class="header" href="#options">Options</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--system</code></td><td>Target system ID or name</td></tr>
+<tr><td><code>--framework-id</code></td><td>Target framework ID</td></tr>
+<tr><td><code>--family</code></td><td>Control family to target (e.g., <code>AC</code>, <code>AU</code>)</td></tr>
+<tr><td><code>--controls</code></td><td>Specific control IDs (comma-separated)</td></tr>
+<tr><td><code>--all-controls</code></td><td>Target all controls in the framework</td></tr>
+<tr><td><code>--mode</code></td><td>Campaign mode: <code>initial</code>, <code>notes-fix</code>, <code>review-fix</code></td></tr>
+<tr><td><code>--artifacts</code></td><td>Generate AI artifacts during the campaign</td></tr>
+<tr><td><code>--review-job</code></td><td>Review job ID (required for <code>review-fix</code> mode)</td></tr>
+<tr><td><code>--concurrency</code></td><td>Number of parallel workers</td></tr>
+<tr><td><code>--max-retries</code></td><td>Maximum retry attempts per item</td></tr>
+<tr><td><code>--checkpoint</code></td><td>Path to checkpoint file for resume</td></tr>
+<tr><td><code>--apply</code></td><td>Apply proposals to platform after completion</td></tr>
+<tr><td><code>--output</code></td><td>Output mode: <code>auto</code>, <code>live</code>, <code>compact</code>, <code>json</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="policy-campaigns"><a class="header" href="#policy-campaigns">Policy Campaigns</a></h2>
+<h3 id="answer-all-incomplete-policy-questions"><a class="header" href="#answer-all-incomplete-policy-questions">Answer All Incomplete Policy Questions</a></h3>
+<pre><code class="language-bash">pretorin campaign policy --mode answer --all-incomplete
+</code></pre>
+<h3 id="fix-policy-review-findings"><a class="header" href="#fix-policy-review-findings">Fix Policy Review Findings</a></h3>
+<pre><code class="language-bash">pretorin campaign policy --mode review-fix --policies &lt;policy-id&gt;
+</code></pre>
+<h2 id="scope-campaigns"><a class="header" href="#scope-campaigns">Scope Campaigns</a></h2>
+<h3 id="answer-scope-questions"><a class="header" href="#answer-scope-questions">Answer Scope Questions</a></h3>
+<pre><code class="language-bash">pretorin campaign scope --mode answer \
+  --system "My System" --framework-id fedramp-moderate
+</code></pre>
+<h2 id="checking-campaign-status"><a class="header" href="#checking-campaign-status">Checking Campaign Status</a></h2>
+<pre><code class="language-bash">pretorin campaign status --checkpoint .pretorin/campaign-checkpoint.json
+</code></pre>
+<h2 id="campaign-lifecycle"><a class="header" href="#campaign-lifecycle">Campaign Lifecycle</a></h2>
+<ol>
+<li><strong>Prepare</strong> — The campaign snapshots platform state and creates a local checkpoint file</li>
+<li><strong>Claim</strong> — Items are claimed with TTL-based leases (safe for multiple agents)</li>
+<li><strong>Draft</strong> — Each item gets full context and drafting instructions</li>
+<li><strong>Propose</strong> — Proposals are submitted without writing to the platform</li>
+<li><strong>Apply</strong> — All accepted proposals are pushed to the platform in one operation</li>
+</ol>
+<p>Use <code>--apply</code> to automatically apply after completion, or run <code>campaign status</code> to review before applying.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="vendor-management"><a class="header" href="#vendor-management">Vendor Management</a></h1>
+<p>The <code>vendor</code> command group manages vendor entities and their evidence documents. Vendors represent external providers (CSPs, SaaS, managed services) or internal teams whose controls your system inherits.</p>
+<h2 id="list-vendors"><a class="header" href="#list-vendors">List Vendors</a></h2>
+<pre><code class="language-bash">pretorin vendor list
+</code></pre>
+<h2 id="create-a-vendor"><a class="header" href="#create-a-vendor">Create a Vendor</a></h2>
+<pre><code class="language-bash">pretorin vendor create "AWS" --type csp --description "Primary cloud provider" \
+  --authorization-level "FedRAMP High P-ATO"
+</code></pre>
+<h3 id="vendor-types"><a class="header" href="#vendor-types">Vendor Types</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>csp</code></td><td>Cloud Service Provider</td></tr>
+<tr><td><code>saas</code></td><td>Software as a Service</td></tr>
+<tr><td><code>managed_service</code></td><td>Managed service provider</td></tr>
+<tr><td><code>internal</code></td><td>Internal team or shared service</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="get-vendor-details"><a class="header" href="#get-vendor-details">Get Vendor Details</a></h2>
+<pre><code class="language-bash">pretorin vendor get &lt;vendor_id&gt;
+</code></pre>
+<h2 id="update-a-vendor"><a class="header" href="#update-a-vendor">Update a Vendor</a></h2>
+<pre><code class="language-bash">pretorin vendor update &lt;vendor_id&gt; --name "AWS GovCloud" --authorization-level "FedRAMP High"
+</code></pre>
+<h2 id="delete-a-vendor"><a class="header" href="#delete-a-vendor">Delete a Vendor</a></h2>
+<pre><code class="language-bash">pretorin vendor delete &lt;vendor_id&gt;
+pretorin vendor delete &lt;vendor_id&gt; --force  # skip confirmation
+</code></pre>
+<h2 id="upload-vendor-documents"><a class="header" href="#upload-vendor-documents">Upload Vendor Documents</a></h2>
+<p>Upload SOC 2 reports, Customer Responsibility Matrices (CRMs), FedRAMP packages, or other vendor evidence:</p>
+<pre><code class="language-bash">pretorin vendor upload-doc &lt;vendor_id&gt; ./aws-soc2-report.pdf \
+  --name "AWS SOC 2 Type II" \
+  --description "Annual SOC 2 report covering 2025" \
+  --attestation-type third_party_attestation
+</code></pre>
+<h3 id="attestation-types"><a class="header" href="#attestation-types">Attestation Types</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>self_attested</code></td><td>Vendor’s own assertion</td></tr>
+<tr><td><code>third_party_attestation</code></td><td>Independent auditor report (SOC 2, FedRAMP)</td></tr>
+<tr><td><code>vendor_provided</code></td><td>Documentation provided by vendor</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="list-vendor-documents"><a class="header" href="#list-vendor-documents">List Vendor Documents</a></h2>
+<pre><code class="language-bash">pretorin vendor list-docs &lt;vendor_id&gt;
+</code></pre>
+<h2 id="related-control-inheritance"><a class="header" href="#related-control-inheritance">Related: Control Inheritance</a></h2>
+<p>Once vendors are created and documents uploaded, use the MCP tools or platform to set control responsibility edges:</p>
+<ul>
+<li><code>pretorin_set_control_responsibility</code> — Mark controls as inherited/shared</li>
+<li><code>pretorin_generate_inheritance_narrative</code> — AI-draft inheritance narratives from vendor docs</li>
+<li><code>pretorin_get_stale_edges</code> / <code>pretorin_sync_stale_edges</code> — Monitor and sync inheritance</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="stig--cci-browsing"><a class="header" href="#stig--cci-browsing">STIG &amp; CCI Browsing</a></h1>
+<p>The <code>stig</code> and <code>cci</code> command groups let you browse STIG benchmarks, rules, and CCIs with full traceability from NIST 800-53 controls down to individual STIG check rules.</p>
+<h2 id="stig-commands"><a class="header" href="#stig-commands">STIG Commands</a></h2>
+<h3 id="list-stig-benchmarks"><a class="header" href="#list-stig-benchmarks">List STIG Benchmarks</a></h3>
+<pre><code class="language-bash">pretorin stig list
+pretorin stig list --technology-area "Network"
+pretorin stig list --product "Windows" --limit 10
+</code></pre>
+<h3 id="show-stig-details"><a class="header" href="#show-stig-details">Show STIG Details</a></h3>
+<pre><code class="language-bash">pretorin stig show &lt;stig_id&gt;
+</code></pre>
+<p>Shows benchmark metadata including title, version, release info, and severity breakdown of rules.</p>
+<h3 id="list-rules-for-a-stig"><a class="header" href="#list-rules-for-a-stig">List Rules for a STIG</a></h3>
+<pre><code class="language-bash">pretorin stig rules &lt;stig_id&gt;
+pretorin stig rules &lt;stig_id&gt; --severity high
+pretorin stig rules &lt;stig_id&gt; --cci CCI-000015 --limit 20
+</code></pre>
+<h3 id="show-applicable-stigs"><a class="header" href="#show-applicable-stigs">Show Applicable STIGs</a></h3>
+<pre><code class="language-bash"># Uses active system context
+pretorin stig applicable
+
+# Explicit system
+pretorin stig applicable --system "My System"
+</code></pre>
+<h3 id="ai-infer-applicable-stigs"><a class="header" href="#ai-infer-applicable-stigs">AI-Infer Applicable STIGs</a></h3>
+<pre><code class="language-bash">pretorin stig infer
+pretorin stig infer --system "My System"
+</code></pre>
+<p>Uses the system’s profile to recommend which STIG benchmarks should apply.</p>
+<h2 id="cci-commands"><a class="header" href="#cci-commands">CCI Commands</a></h2>
+<p>CCIs (Control Correlation Identifiers) bridge NIST 800-53 controls to specific STIG rules via SRGs (Security Requirements Guides).</p>
+<h3 id="list-ccis"><a class="header" href="#list-ccis">List CCIs</a></h3>
+<pre><code class="language-bash">pretorin cci list
+pretorin cci list --control ac-2
+pretorin cci list --status draft --limit 50
+</code></pre>
+<h3 id="show-cci-details"><a class="header" href="#show-cci-details">Show CCI Details</a></h3>
+<pre><code class="language-bash">pretorin cci show CCI-000015
+</code></pre>
+<p>Shows the CCI definition, linked SRGs, and linked STIG rules.</p>
+<h3 id="full-traceability-chain"><a class="header" href="#full-traceability-chain">Full Traceability Chain</a></h3>
+<pre><code class="language-bash">pretorin cci chain ac-2
+pretorin cci chain ac-2 --system "My System"
+</code></pre>
+<p>Shows the complete chain: <strong>NIST 800-53 Control -&gt; CCIs -&gt; SRGs -&gt; STIG rules</strong> (and test results when <code>--system</code> is provided).</p>
+<p>This is useful for understanding exactly which technical checks validate a given control requirement.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="stig-scanning"><a class="header" href="#stig-scanning">STIG Scanning</a></h1>
+<p>The <code>scan</code> command group runs STIG compliance scans using available scanner tools and manages test results.</p>
+<h2 id="check-scanner-availability"><a class="header" href="#check-scanner-availability">Check Scanner Availability</a></h2>
+<pre><code class="language-bash">pretorin scan doctor
+</code></pre>
+<p>Lists which scanner tools are installed and available on your system:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Scanner</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>OpenSCAP</td><td>Open-source SCAP scanner</td></tr>
+<tr><td>InSpec</td><td>Chef InSpec compliance profiles</td></tr>
+<tr><td>AWS Cloud Scanner</td><td>AWS-native compliance scanning</td></tr>
+<tr><td>Azure Cloud Scanner</td><td>Azure-native compliance scanning</td></tr>
+<tr><td>Manual</td><td>Manual review checklist</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="view-test-manifest"><a class="header" href="#view-test-manifest">View Test Manifest</a></h2>
+<pre><code class="language-bash"># Uses active system context
+pretorin scan manifest
+
+# Filter by STIG
+pretorin scan manifest --system "My System" --stig &lt;stig_id&gt;
+</code></pre>
+<p>Shows which STIGs and rules are applicable to the system and which scanners can test them.</p>
+<h2 id="run-scans"><a class="header" href="#run-scans">Run Scans</a></h2>
+<pre><code class="language-bash"># Run all applicable scans
+pretorin scan run
+
+# Target a specific STIG
+pretorin scan run --stig &lt;stig_id&gt;
+
+# Use a specific scanner
+pretorin scan run --tool openscap
+
+# Dry run (show what would execute)
+pretorin scan run --dry-run
+</code></pre>
+<p>The scan orchestrator automatically detects available scanners, assigns rules to capable tools, and collects results.</p>
+<h3 id="options-1"><a class="header" href="#options-1">Options</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--system</code> / <code>-s</code></td><td>Target system (uses active context if omitted)</td></tr>
+<tr><td><code>--stig</code></td><td>Run only rules from this STIG benchmark</td></tr>
+<tr><td><code>--tool</code> / <code>-t</code></td><td>Force a specific scanner tool</td></tr>
+<tr><td><code>--dry-run</code></td><td>Show the test plan without executing</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="view-results"><a class="header" href="#view-results">View Results</a></h2>
+<pre><code class="language-bash"># All results for active system
+pretorin scan results
+
+# Filter by control
+pretorin scan results --system "My System" --control ac-2
+</code></pre>
+<p>Shows CCI-level test results including pass/fail status, scanner used, and timestamp.</p>
+<h2 id="workflow"><a class="header" href="#workflow">Workflow</a></h2>
+<ol>
+<li><code>pretorin scan doctor</code> — Verify scanner tools are installed</li>
+<li><code>pretorin scan manifest</code> — Review what will be tested</li>
+<li><code>pretorin scan run --dry-run</code> — Preview the test plan</li>
+<li><code>pretorin scan run</code> — Execute scans</li>
+<li><code>pretorin scan results</code> — Review results</li>
+</ol>
+<p>Results are automatically submitted to the platform when a system context is active.</p>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="review-commands"><a class="header" href="#review-commands">Review Commands</a></h1>
 <p>The <code>review</code> command group helps you review local code against framework controls.</p>
 <h2 id="run-a-review"><a class="header" href="#run-a-review">Run a Review</a></h2>
@@ -755,7 +1074,7 @@ Config file: /home/user/.pretorin/config.json
 <pre><code class="language-json">{
   "api_key": "pretorin_...",
   "api_base_url": "https://platform.pretorin.com/api/v1/public",
-  "model_api_base_url": "https://platform.pretorin.com/v1",
+  "model_api_base_url": "https://platform.pretorin.com/api/v1/public/model",
   "active_system": "My Application",
   "active_framework": "nist-800-53-r5",
   "disable_update_check": false
@@ -838,7 +1157,7 @@ Config file: /home/user/.pretorin/config.json
 <tbody>
 <tr><td><code>pretorin context list</code></td><td>List systems and frameworks with progress</td></tr>
 <tr><td><code>pretorin context set</code></td><td>Set active system/framework context (<code>--system</code>, <code>--framework</code>)</td></tr>
-<tr><td><code>pretorin context show</code></td><td>Display current active context</td></tr>
+<tr><td><code>pretorin context show</code></td><td>Display and validate current active context (<code>--quiet</code>, <code>--check</code>)</td></tr>
 <tr><td><code>pretorin context clear</code></td><td>Clear active context</td></tr>
 </tbody>
 </table>
@@ -937,6 +1256,100 @@ Config file: /home/user/.pretorin/config.json
 </tbody>
 </table>
 </div>
+<h2 id="campaign-commands"><a class="header" href="#campaign-commands">Campaign Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin campaign controls</code></td><td>Run bulk control narrative/evidence campaign (<code>--mode</code>, <code>--family</code>, <code>--controls</code>, <code>--all-controls</code>, <code>--artifacts</code>, <code>--review-job</code>, <code>--concurrency</code>, <code>--checkpoint</code>, <code>--apply</code>, <code>--output</code>)</td></tr>
+<tr><td><code>pretorin campaign policy</code></td><td>Run bulk policy questionnaire campaign (<code>--mode</code>, <code>--policies</code>, <code>--all-incomplete</code>, <code>--concurrency</code>, <code>--checkpoint</code>, <code>--apply</code>, <code>--output</code>)</td></tr>
+<tr><td><code>pretorin campaign scope</code></td><td>Run bulk scope questionnaire campaign (<code>--mode</code>, <code>--system</code>, <code>--framework-id</code>, <code>--concurrency</code>, <code>--checkpoint</code>, <code>--apply</code>, <code>--output</code>)</td></tr>
+<tr><td><code>pretorin campaign status</code></td><td>Show campaign progress from a checkpoint file (<code>--checkpoint</code>, <code>--output</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="campaign-modes"><a class="header" href="#campaign-modes">Campaign Modes</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Domain</th><th>Mode</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>controls</td><td><code>initial</code></td><td>Draft new narratives and evidence for controls</td></tr>
+<tr><td>controls</td><td><code>notes-fix</code></td><td>Address platform notes on existing controls</td></tr>
+<tr><td>controls</td><td><code>review-fix</code></td><td>Fix findings from a family review job</td></tr>
+<tr><td>policy</td><td><code>answer</code></td><td>Generate answers for policy questions</td></tr>
+<tr><td>policy</td><td><code>review-fix</code></td><td>Fix findings from a policy review</td></tr>
+<tr><td>scope</td><td><code>answer</code></td><td>Generate answers for scope questions</td></tr>
+<tr><td>scope</td><td><code>review-fix</code></td><td>Fix findings from a scope review</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="vendor-commands"><a class="header" href="#vendor-commands">Vendor Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin vendor list</code></td><td>List all vendors in the organization</td></tr>
+<tr><td><code>pretorin vendor create &lt;name&gt;</code></td><td>Create a vendor (<code>--type</code>, <code>--description</code>, <code>--authorization-level</code>)</td></tr>
+<tr><td><code>pretorin vendor get &lt;vendor_id&gt;</code></td><td>Get vendor details</td></tr>
+<tr><td><code>pretorin vendor update &lt;vendor_id&gt;</code></td><td>Update vendor fields (<code>--name</code>, <code>--description</code>, <code>--type</code>, <code>--authorization-level</code>)</td></tr>
+<tr><td><code>pretorin vendor delete &lt;vendor_id&gt;</code></td><td>Delete a vendor (<code>--force</code>)</td></tr>
+<tr><td><code>pretorin vendor upload-doc &lt;vendor_id&gt; &lt;file&gt;</code></td><td>Upload a vendor evidence document (<code>--name</code>, <code>--description</code>, <code>--attestation-type</code>)</td></tr>
+<tr><td><code>pretorin vendor list-docs &lt;vendor_id&gt;</code></td><td>List documents linked to a vendor</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="vendor-types-1"><a class="header" href="#vendor-types-1">Vendor Types</a></h3>
+<p><code>csp</code>, <code>saas</code>, <code>managed_service</code>, <code>internal</code></p>
+<h2 id="stig-commands-1"><a class="header" href="#stig-commands-1">STIG Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin stig list</code></td><td>List STIG benchmarks (<code>--technology-area</code>, <code>--product</code>, <code>--limit</code>)</td></tr>
+<tr><td><code>pretorin stig show &lt;stig_id&gt;</code></td><td>Show STIG benchmark detail with severity breakdown</td></tr>
+<tr><td><code>pretorin stig rules &lt;stig_id&gt;</code></td><td>List rules for a benchmark (<code>--severity</code>, <code>--cci</code>, <code>--limit</code>)</td></tr>
+<tr><td><code>pretorin stig applicable</code></td><td>Show applicable STIGs for the active system (<code>--system</code>)</td></tr>
+<tr><td><code>pretorin stig infer</code></td><td>AI-infer applicable STIGs from system profile (<code>--system</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="cci-commands-1"><a class="header" href="#cci-commands-1">CCI Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin cci list</code></td><td>List CCIs (<code>--control</code>, <code>--status</code>, <code>--limit</code>)</td></tr>
+<tr><td><code>pretorin cci show &lt;cci_id&gt;</code></td><td>Show CCI detail with linked SRGs and STIG rules (e.g., <code>CCI-000015</code>)</td></tr>
+<tr><td><code>pretorin cci chain &lt;control_id&gt;</code></td><td>Full traceability chain: Control -&gt; CCIs -&gt; SRGs -&gt; STIG rules (<code>--system</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="scan-commands"><a class="header" href="#scan-commands">Scan Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin scan doctor</code></td><td>Check which scanner tools are installed and available</td></tr>
+<tr><td><code>pretorin scan manifest</code></td><td>Show test manifest for the active system (<code>--system</code>, <code>--stig</code>)</td></tr>
+<tr><td><code>pretorin scan run</code></td><td>Run STIG compliance scans (<code>--system</code>, <code>--stig</code>, <code>--tool</code>, <code>--dry-run</code>)</td></tr>
+<tr><td><code>pretorin scan results</code></td><td>Show CCI-level test results (<code>--system</code>, <code>--control</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="supported-scanners"><a class="header" href="#supported-scanners">Supported Scanners</a></h3>
+<p><code>OpenSCAP</code>, <code>InSpec</code>, <code>AWS Cloud Scanner</code>, <code>Azure Cloud Scanner</code>, <code>Manual</code></p>
 <h2 id="deprecated-commands"><a class="header" href="#deprecated-commands">Deprecated Commands</a></h2>
 <div class="table-wrapper">
 <table>
@@ -972,6 +1385,9 @@ Config file: /home/user/.pretorin/config.json
 </code></pre>
 <h2 id="scope"><a class="header" href="#scope">Scope</a></h2>
 <p>Scoped compliance execution tools on the MCP server run inside exactly one <code>system + framework</code> pair at a time. Set the active scope with <code>pretorin context set</code>, or pass both values explicitly. If a request spans multiple frameworks or systems, split it into separate runs.</p>
+<p>Before running write-heavy MCP workflows from a shell or GUI wrapper, prefer validating the stored scope with:</p>
+<pre><code class="language-bash">pretorin context show --quiet --check
+</code></pre>
 <h2 id="tool-categories"><a class="header" href="#tool-categories">Tool Categories</a></h2>
 <p>The 23 MCP tools are organized into categories:</p>
 <div class="table-wrapper">
@@ -1023,6 +1439,14 @@ claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 <pre><code class="language-bash">uv tool install pretorin
 pretorin login
 </code></pre>
+<h2 id="install-the-pretorin-skill"><a class="header" href="#install-the-pretorin-skill">Install the Pretorin Skill</a></h2>
+<p>The skill teaches your AI agent how to use MCP tools for compliance workflows — control ID formats, narrative authoring rules, gap analysis methodology, and more. Install it before setting up MCP:</p>
+<pre><code class="language-bash">pretorin skill install                # both Claude Code and Codex CLI
+pretorin skill install --agent claude # Claude Code only
+pretorin skill install --agent codex  # Codex CLI only
+pretorin skill status                 # check what's installed
+</code></pre>
+<p>The skill is copied to <code>~/.claude/skills/pretorin/</code> and/or <code>~/.codex/skills/pretorin/</code> and auto-discovered by each agent.</p>
 <h2 id="claude-code"><a class="header" href="#claude-code">Claude Code</a></h2>
 <p><strong>Quick setup</strong> — run a single command:</p>
 <pre><code class="language-bash">claude mcp add --transport stdio pretorin -- pretorin mcp-serve
@@ -1110,9 +1534,12 @@ command -v pretorin
 }
 </code></pre>
 <p>This is especially important for <code>uv tool</code> and <code>pipx</code> installations where the binary may not be on the PATH available to GUI applications.</p>
+<p>Before debugging scoped MCP write failures, validate the active CLI scope:</p>
+<pre><code class="language-bash">pretorin context show --quiet --check
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="mcp-tool-reference"><a class="header" href="#mcp-tool-reference">MCP Tool Reference</a></h1>
-<p>The MCP server provides 23 tools organized by category.</p>
+<p>The MCP server provides 80+ tools organized by category.</p>
 <h2 id="framework--control-reference"><a class="header" href="#framework--control-reference">Framework &amp; Control Reference</a></h2>
 <p>These tools are read-only and available to all authenticated users.</p>
 <h3 id="pretorin_list_frameworks"><a class="header" href="#pretorin_list_frameworks">pretorin_list_frameworks</a></h3>
@@ -1154,6 +1581,15 @@ command -v pretorin
 </ul>
 <p><strong>Returns:</strong> Control details including parameters, parts, and enhancement count.</p>
 <hr>
+<h3 id="pretorin_get_controls_batch"><a class="header" href="#pretorin_get_controls_batch">pretorin_get_controls_batch</a></h3>
+<p>Get detailed control data for many controls in one framework-scoped request.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>framework_id</code> (required)</li>
+<li><code>control_ids</code> (optional) — List of canonical control IDs; omit to retrieve all controls in the framework</li>
+</ul>
+<p><strong>Returns:</strong> Full control detail records for the requested controls.</p>
+<hr>
 <h3 id="pretorin_get_control_references"><a class="header" href="#pretorin_get_control_references">pretorin_get_control_references</a></h3>
 <p>Get reference information including statement, guidance, objectives, and related controls.</p>
 <p><strong>Parameters:</strong></p>
@@ -1189,7 +1625,7 @@ command -v pretorin
 <p>Get framework progress and implementation posture for a system.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
+<li><code>system_id</code> (required) — System ID or friendly system name</li>
 </ul>
 <p><strong>Returns:</strong> Framework status summaries and progress metrics.</p>
 <hr>
@@ -1198,11 +1634,11 @@ command -v pretorin
 <p>Search current evidence items.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (optional) — System context</li>
+<li><code>system_id</code> (optional) — System ID or friendly system name. When omitted, the active CLI scope is used if available.</li>
 <li><code>control_id</code> (optional) — Filter by control</li>
 <li><code>framework_id</code> (optional) — Filter by framework</li>
 </ul>
-<p><strong>Returns:</strong> Matching evidence items.</p>
+<p><strong>Returns:</strong> Matching evidence items. The server uses the same compatibility search path as the CLI for deployments that only expose system-scoped evidence routes.</p>
 <hr>
 <h3 id="pretorin_create_evidence"><a class="header" href="#pretorin_create_evidence">pretorin_create_evidence</a></h3>
 <p>Upsert evidence on the platform (find-or-create by default). If <code>dedupe</code> is true, exact matching evidence in the active system/framework scope is reused; otherwise a new record is created.</p>
@@ -1223,6 +1659,16 @@ command -v pretorin
 <li><code>linked</code> — whether control/system link succeeded</li>
 <li><code>match_basis</code> — <code>exact_name_desc_type_control_framework</code> or <code>none</code></li>
 </ul>
+<hr>
+<h3 id="pretorin_create_evidence_batch"><a class="header" href="#pretorin_create_evidence_batch">pretorin_create_evidence_batch</a></h3>
+<p>Create and link multiple evidence items within one system/framework scope in a single request.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>items</code> (required) — Array of evidence payloads with <code>name</code>, <code>description</code>, and <code>control_id</code>; may also include <code>evidence_type</code> and <code>relevance_notes</code></li>
+</ul>
+<p><strong>Returns:</strong> Batch creation summary with per-item results and created evidence IDs.</p>
 <hr>
 <h3 id="pretorin_link_evidence"><a class="header" href="#pretorin_link_evidence">pretorin_link_evidence</a></h3>
 <p>Link an existing evidence item to a control.</p>
@@ -1261,8 +1707,41 @@ command -v pretorin
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> Scope narrative, excluded controls, Q&amp;A responses, and scope status.</p>
+<hr>
+<h3 id="pretorin_patch_scope_qa"><a class="header" href="#pretorin_patch_scope_qa">pretorin_patch_scope_qa</a></h3>
+<p>Apply partial scope questionnaire updates for a system/framework.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>updates</code> (required) — Non-empty list of <code>{question_id, answer}</code> objects</li>
+</ul>
+<p><strong>Returns:</strong> Updated scope questionnaire state, including the saved responses.</p>
+<hr>
+<h3 id="pretorin_list_org_policies"><a class="header" href="#pretorin_list_org_policies">pretorin_list_org_policies</a></h3>
+<p>List organization policies available for questionnaire work.</p>
+<p><strong>Parameters:</strong> None</p>
+<p><strong>Returns:</strong> Policy summaries including <code>id</code>, <code>name</code>, template linkage, and questionnaire status.</p>
+<hr>
+<h3 id="pretorin_get_org_policy_questionnaire"><a class="header" href="#pretorin_get_org_policy_questionnaire">pretorin_get_org_policy_questionnaire</a></h3>
+<p>Get the canonical questionnaire state for one organization policy.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Policy metadata, saved answers, and the merged template/question set when available.</p>
+<hr>
+<h3 id="pretorin_patch_org_policy_qa"><a class="header" href="#pretorin_patch_org_policy_qa">pretorin_patch_org_policy_qa</a></h3>
+<p>Apply partial questionnaire updates for one organization policy.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+<li><code>updates</code> (required) — Non-empty list of <code>{question_id, answer}</code> objects</li>
+</ul>
+<p><strong>Returns:</strong> Updated organization policy questionnaire state.</p>
 <hr>
 <h3 id="pretorin_get_control_implementation"><a class="header" href="#pretorin_get_control_implementation">pretorin_get_control_implementation</a></h3>
 <p>Get implementation details for a control in a system.</p>
@@ -1344,6 +1823,502 @@ command -v pretorin
 </ul>
 <p><strong>Returns:</strong> Draft narrative text plus evidence-gap analysis. Does not write to the platform.</p>
 <p>Use <code>pretorin_update_narrative</code>, <code>pretorin_create_evidence</code>, and <code>pretorin_add_control_note</code> to persist approved changes.</p>
+<hr>
+<h2 id="workflow-state--analytics"><a class="header" href="#workflow-state--analytics">Workflow State &amp; Analytics</a></h2>
+<h3 id="pretorin_get_workflow_state"><a class="header" href="#pretorin_get_workflow_state">pretorin_get_workflow_state</a></h3>
+<p>Get the lifecycle state for a system+framework, showing which stage needs work next (scope, policies, controls, evidence).</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Current workflow stage, completion percentages, and next recommended action.</p>
+<hr>
+<h3 id="pretorin_get_analytics_summary"><a class="header" href="#pretorin_get_analytics_summary">pretorin_get_analytics_summary</a></h3>
+<p>Get a lightweight system progress snapshot.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Scope completion, policy completion, control coverage, and evidence gaps.</p>
+<hr>
+<h3 id="pretorin_get_family_analytics"><a class="header" href="#pretorin_get_family_analytics">pretorin_get_family_analytics</a></h3>
+<p>Get per-family breakdown with narrative coverage, evidence coverage, and status distribution.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Per-family metrics.</p>
+<hr>
+<h3 id="pretorin_get_policy_analytics"><a class="header" href="#pretorin_get_policy_analytics">pretorin_get_policy_analytics</a></h3>
+<p>Get per-policy breakdown with answer completion and review status.</p>
+<p><strong>Parameters:</strong> None (uses org context)</p>
+<p><strong>Returns:</strong> Per-policy completion metrics.</p>
+<hr>
+<h2 id="family-operations"><a class="header" href="#family-operations">Family Operations</a></h2>
+<h3 id="pretorin_get_pending_families"><a class="header" href="#pretorin_get_pending_families">pretorin_get_pending_families</a></h3>
+<p>Identify which control families need work.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Families with counts of pending vs total controls.</p>
+<hr>
+<h3 id="pretorin_get_family_bundle"><a class="header" href="#pretorin_get_family_bundle">pretorin_get_family_bundle</a></h3>
+<p>Get all controls in one family with status, narrative presence, evidence presence, and note counts.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>family_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Complete family bundle with per-control details.</p>
+<hr>
+<h3 id="pretorin_trigger_family_review"><a class="header" href="#pretorin_trigger_family_review">pretorin_trigger_family_review</a></h3>
+<p>Trigger AI review of all controls in a family. Takes 2-4 minutes for large families.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>family_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Review job ID for polling.</p>
+<hr>
+<h3 id="pretorin_get_family_review_results"><a class="header" href="#pretorin_get_family_review_results">pretorin_get_family_review_results</a></h3>
+<p>Poll family review results.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>job_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Aggregated findings with severity, affected control IDs, and recommended fixes.</p>
+<hr>
+<h2 id="scope-workflow"><a class="header" href="#scope-workflow">Scope Workflow</a></h2>
+<h3 id="pretorin_get_pending_scope_questions"><a class="header" href="#pretorin_get_pending_scope_questions">pretorin_get_pending_scope_questions</a></h3>
+<p>Get only unanswered scope questions (lightweight).</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> List of unanswered questions with IDs.</p>
+<hr>
+<h3 id="pretorin_get_scope_question_detail"><a class="header" href="#pretorin_get_scope_question_detail">pretorin_get_scope_question_detail</a></h3>
+<p>Get guidance, tips, and example responses for a specific scope question.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>question_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Question text, guidance, tips, and example answers.</p>
+<hr>
+<h3 id="pretorin_answer_scope_question"><a class="header" href="#pretorin_answer_scope_question">pretorin_answer_scope_question</a></h3>
+<p>Answer one scope question.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>question_id</code> (required)</li>
+<li><code>answer</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Updated question state.</p>
+<hr>
+<h3 id="pretorin_trigger_scope_generation"><a class="header" href="#pretorin_trigger_scope_generation">pretorin_trigger_scope_generation</a></h3>
+<p>Trigger AI generation of scope document from answered questions.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Generation job status.</p>
+<hr>
+<h3 id="pretorin_trigger_scope_review"><a class="header" href="#pretorin_trigger_scope_review">pretorin_trigger_scope_review</a></h3>
+<p>Trigger AI review of scope answers.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Review job ID for polling.</p>
+<hr>
+<h3 id="pretorin_get_scope_review_results"><a class="header" href="#pretorin_get_scope_review_results">pretorin_get_scope_review_results</a></h3>
+<p>Poll for structured scope review findings.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>job_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Findings with severity levels and recommended fixes.</p>
+<hr>
+<h2 id="policy-workflow"><a class="header" href="#policy-workflow">Policy Workflow</a></h2>
+<h3 id="pretorin_get_pending_policy_questions"><a class="header" href="#pretorin_get_pending_policy_questions">pretorin_get_pending_policy_questions</a></h3>
+<p>Get only unanswered policy questions.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> List of unanswered questions.</p>
+<hr>
+<h3 id="pretorin_get_policy_question_detail"><a class="header" href="#pretorin_get_policy_question_detail">pretorin_get_policy_question_detail</a></h3>
+<p>Get guidance, tips, and examples for a specific policy question.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+<li><code>question_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Question text, guidance, and example answers.</p>
+<hr>
+<h3 id="pretorin_answer_policy_question"><a class="header" href="#pretorin_answer_policy_question">pretorin_answer_policy_question</a></h3>
+<p>Answer one policy question.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+<li><code>question_id</code> (required)</li>
+<li><code>answer</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Updated question state.</p>
+<hr>
+<h3 id="pretorin_get_policy_workflow_state"><a class="header" href="#pretorin_get_policy_workflow_state">pretorin_get_policy_workflow_state</a></h3>
+<p>Get per-policy workflow state including completion, generation, and review status.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Policy workflow state.</p>
+<hr>
+<h3 id="pretorin_trigger_policy_generation"><a class="header" href="#pretorin_trigger_policy_generation">pretorin_trigger_policy_generation</a></h3>
+<p>Trigger AI generation of policy document from answered questions.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Generation job status.</p>
+<hr>
+<h3 id="pretorin_trigger_policy_review"><a class="header" href="#pretorin_trigger_policy_review">pretorin_trigger_policy_review</a></h3>
+<p>Trigger AI review of policy answers/document.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Review job ID for polling.</p>
+<hr>
+<h3 id="pretorin_get_policy_review_results"><a class="header" href="#pretorin_get_policy_review_results">pretorin_get_policy_review_results</a></h3>
+<p>Poll for structured policy review findings.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+<li><code>job_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Findings with severity levels and recommended fixes.</p>
+<hr>
+<h2 id="campaign-operations"><a class="header" href="#campaign-operations">Campaign Operations</a></h2>
+<p>Campaigns enable bulk compliance operations with checkpoint persistence and lease-based concurrency.</p>
+<h3 id="pretorin_prepare_campaign"><a class="header" href="#pretorin_prepare_campaign">pretorin_prepare_campaign</a></h3>
+<p>Prepare a workflow-aligned campaign run with a platform state snapshot.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>domain</code> (required) — <code>controls</code>, <code>policy</code>, or <code>scope</code></li>
+<li><code>mode</code> (required) — <code>initial</code>, <code>notes-fix</code>, <code>review-fix</code>, <code>answer</code></li>
+<li><code>family_id</code> (optional) — Target family for control campaigns</li>
+<li><code>review_job</code> (optional) — Review job ID for <code>review-fix</code> mode</li>
+</ul>
+<p><strong>Returns:</strong> Campaign checkpoint with item list and metadata.</p>
+<hr>
+<h3 id="pretorin_claim_campaign_items"><a class="header" href="#pretorin_claim_campaign_items">pretorin_claim_campaign_items</a></h3>
+<p>Claim items for drafting with TTL-based leases. Safe for fan-out to multiple agents.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>checkpoint</code> (required) — Campaign checkpoint</li>
+<li><code>count</code> (optional) — Number of items to claim</li>
+</ul>
+<p><strong>Returns:</strong> Claimed items with lease metadata.</p>
+<hr>
+<h3 id="pretorin_get_campaign_item_context"><a class="header" href="#pretorin_get_campaign_item_context">pretorin_get_campaign_item_context</a></h3>
+<p>Get full item context plus drafting instructions for a claimed item.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>checkpoint</code> (required)</li>
+<li><code>item_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Control/policy/scope context, current state, and drafting guidance.</p>
+<hr>
+<h3 id="pretorin_submit_campaign_proposal"><a class="header" href="#pretorin_submit_campaign_proposal">pretorin_submit_campaign_proposal</a></h3>
+<p>Submit an external agent’s proposal without applying it to the platform.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>checkpoint</code> (required)</li>
+<li><code>item_id</code> (required)</li>
+<li><code>proposal</code> (required) — Draft content</li>
+</ul>
+<p><strong>Returns:</strong> Proposal acceptance confirmation.</p>
+<hr>
+<h3 id="pretorin_apply_campaign"><a class="header" href="#pretorin_apply_campaign">pretorin_apply_campaign</a></h3>
+<p>Push all accepted proposals to the platform as a single apply operation.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>checkpoint</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Apply results with per-item status.</p>
+<hr>
+<h3 id="pretorin_get_campaign_status"><a class="header" href="#pretorin_get_campaign_status">pretorin_get_campaign_status</a></h3>
+<p>Get structured campaign status with a stable transcript snapshot.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>checkpoint</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Campaign progress, item states, and transcript.</p>
+<hr>
+<h2 id="vendor-management-1"><a class="header" href="#vendor-management-1">Vendor Management</a></h2>
+<h3 id="pretorin_list_vendors"><a class="header" href="#pretorin_list_vendors">pretorin_list_vendors</a></h3>
+<p>List all vendor entities in the organization.</p>
+<p><strong>Parameters:</strong> None</p>
+<p><strong>Returns:</strong> Vendor list with IDs, names, types, and authorization levels.</p>
+<hr>
+<h3 id="pretorin_create_vendor"><a class="header" href="#pretorin_create_vendor">pretorin_create_vendor</a></h3>
+<p>Create a new vendor entity.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>name</code> (required)</li>
+<li><code>vendor_type</code> (optional) — <code>csp</code>, <code>saas</code>, <code>managed_service</code>, <code>internal</code></li>
+<li><code>description</code> (optional)</li>
+<li><code>authorization_level</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> Created vendor record.</p>
+<hr>
+<h3 id="pretorin_get_vendor"><a class="header" href="#pretorin_get_vendor">pretorin_get_vendor</a></h3>
+<p>Get vendor details.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>vendor_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Vendor metadata and linked documents.</p>
+<hr>
+<h3 id="pretorin_update_vendor"><a class="header" href="#pretorin_update_vendor">pretorin_update_vendor</a></h3>
+<p>Update vendor fields.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>vendor_id</code> (required)</li>
+<li><code>name</code> (optional)</li>
+<li><code>description</code> (optional)</li>
+<li><code>vendor_type</code> (optional)</li>
+<li><code>authorization_level</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> Updated vendor record.</p>
+<hr>
+<h3 id="pretorin_delete_vendor"><a class="header" href="#pretorin_delete_vendor">pretorin_delete_vendor</a></h3>
+<p>Delete a vendor entity.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>vendor_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Deletion confirmation.</p>
+<hr>
+<h3 id="pretorin_upload_vendor_document"><a class="header" href="#pretorin_upload_vendor_document">pretorin_upload_vendor_document</a></h3>
+<p>Upload vendor evidence documents (SOC 2 reports, CRMs, FedRAMP packages).</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>vendor_id</code> (required)</li>
+<li><code>file_path</code> (required)</li>
+<li><code>name</code> (optional)</li>
+<li><code>description</code> (optional)</li>
+<li><code>attestation_type</code> (optional) — <code>self_attested</code>, <code>third_party_attestation</code>, <code>vendor_provided</code></li>
+</ul>
+<p><strong>Returns:</strong> Uploaded document record.</p>
+<hr>
+<h3 id="pretorin_list_vendor_documents"><a class="header" href="#pretorin_list_vendor_documents">pretorin_list_vendor_documents</a></h3>
+<p>List documents linked to a vendor.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>vendor_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Document list with metadata.</p>
+<hr>
+<h3 id="pretorin_link_evidence_to_vendor"><a class="header" href="#pretorin_link_evidence_to_vendor">pretorin_link_evidence_to_vendor</a></h3>
+<p>Link an evidence item to a vendor with attestation type.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>evidence_id</code> (required)</li>
+<li><code>vendor_id</code> (required)</li>
+<li><code>attestation_type</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> Link confirmation.</p>
+<hr>
+<h2 id="inheritance--responsibility"><a class="header" href="#inheritance--responsibility">Inheritance &amp; Responsibility</a></h2>
+<h3 id="pretorin_set_control_responsibility"><a class="header" href="#pretorin_set_control_responsibility">pretorin_set_control_responsibility</a></h3>
+<p>Mark a control as inherited or shared from a provider.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>vendor_id</code> (required)</li>
+<li><code>responsibility_type</code> (required) — <code>inherited</code> or <code>shared</code></li>
+</ul>
+<p><strong>Returns:</strong> Created responsibility edge.</p>
+<hr>
+<h3 id="pretorin_get_control_responsibility"><a class="header" href="#pretorin_get_control_responsibility">pretorin_get_control_responsibility</a></h3>
+<p>Check if a control is inherited and from where.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Responsibility edge details or null.</p>
+<hr>
+<h3 id="pretorin_remove_control_responsibility"><a class="header" href="#pretorin_remove_control_responsibility">pretorin_remove_control_responsibility</a></h3>
+<p>Convert an inherited control back to system-specific.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Removal confirmation.</p>
+<hr>
+<h3 id="pretorin_generate_inheritance_narrative"><a class="header" href="#pretorin_generate_inheritance_narrative">pretorin_generate_inheritance_narrative</a></h3>
+<p>AI-generate an inheritance narrative grounded in vendor documentation.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>vendor_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Draft inheritance narrative text.</p>
+<hr>
+<h3 id="pretorin_get_stale_edges"><a class="header" href="#pretorin_get_stale_edges">pretorin_get_stale_edges</a></h3>
+<p>Identify controls where the source narrative changed but the inherited control hasn’t been updated.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> List of stale inheritance edges with source change timestamps.</p>
+<hr>
+<h3 id="pretorin_sync_stale_edges"><a class="header" href="#pretorin_sync_stale_edges">pretorin_sync_stale_edges</a></h3>
+<p>Bulk update inherited controls by regenerating narratives from latest source.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Sync results with per-control status.</p>
+<hr>
+<h2 id="stig--cci"><a class="header" href="#stig--cci">STIG &amp; CCI</a></h2>
+<h3 id="pretorin_list_stigs"><a class="header" href="#pretorin_list_stigs">pretorin_list_stigs</a></h3>
+<p>List STIG benchmarks with optional filters.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>technology_area</code> (optional) — Filter by technology area</li>
+<li><code>product</code> (optional) — Filter by product name</li>
+<li><code>limit</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> STIG benchmark list with IDs, titles, and rule counts.</p>
+<hr>
+<h3 id="pretorin_get_stig"><a class="header" href="#pretorin_get_stig">pretorin_get_stig</a></h3>
+<p>Get STIG benchmark detail.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>stig_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Benchmark metadata including title, version, release info, and severity breakdown.</p>
+<hr>
+<h3 id="pretorin_list_stig_rules"><a class="header" href="#pretorin_list_stig_rules">pretorin_list_stig_rules</a></h3>
+<p>List rules for a STIG benchmark.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>stig_id</code> (required)</li>
+<li><code>severity</code> (optional) — Filter by severity (high, medium, low)</li>
+<li><code>cci</code> (optional) — Filter by CCI ID</li>
+<li><code>limit</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> Rule list with IDs, titles, severities, and linked CCIs.</p>
+<hr>
+<h3 id="pretorin_get_stig_rule"><a class="header" href="#pretorin_get_stig_rule">pretorin_get_stig_rule</a></h3>
+<p>Get full STIG rule detail.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>rule_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Check text, fix text, discussion, and linked CCIs.</p>
+<hr>
+<h3 id="pretorin_list_ccis"><a class="header" href="#pretorin_list_ccis">pretorin_list_ccis</a></h3>
+<p>List CCIs with optional filters.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>control</code> (optional) — Filter by NIST 800-53 control ID</li>
+<li><code>status</code> (optional)</li>
+<li><code>limit</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> CCI list with definitions and linked controls.</p>
+<hr>
+<h3 id="pretorin_get_cci"><a class="header" href="#pretorin_get_cci">pretorin_get_cci</a></h3>
+<p>Get CCI detail with linked SRGs and STIG rules.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>cci_id</code> (required) — e.g., <code>CCI-000015</code></li>
+</ul>
+<p><strong>Returns:</strong> CCI definition, linked SRGs, and linked STIG rules.</p>
+<hr>
+<h3 id="pretorin_get_cci_chain"><a class="header" href="#pretorin_get_cci_chain">pretorin_get_cci_chain</a></h3>
+<p>Get the full traceability chain: Control -&gt; CCIs -&gt; SRGs -&gt; STIG rules.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>control_id</code> (required) — NIST 800-53 control ID</li>
+<li><code>system_id</code> (optional) — Include test results when provided</li>
+</ul>
+<p><strong>Returns:</strong> Complete traceability from control requirements to technical checks.</p>
+<hr>
+<h3 id="pretorin_get_cci_status"><a class="header" href="#pretorin_get_cci_status">pretorin_get_cci_status</a></h3>
+<p>Get CCI-level compliance rollup for a system.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Per-CCI pass/fail status.</p>
+<hr>
+<h3 id="pretorin_get_stig_applicability"><a class="header" href="#pretorin_get_stig_applicability">pretorin_get_stig_applicability</a></h3>
+<p>Get which STIGs apply to a system based on its profile.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> List of applicable STIG benchmarks.</p>
+<hr>
+<h3 id="pretorin_infer_stigs"><a class="header" href="#pretorin_infer_stigs">pretorin_infer_stigs</a></h3>
+<p>AI-infer applicable STIGs from the system’s profile.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Recommended STIG benchmarks with reasoning.</p>
+<hr>
+<h3 id="pretorin_get_test_manifest"><a class="header" href="#pretorin_get_test_manifest">pretorin_get_test_manifest</a></h3>
+<p>Fetch the test manifest (applicable STIGs + rules) for a system.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Test manifest with applicable rules and scanner assignments.</p>
+<hr>
+<h3 id="pretorin_submit_test_results"><a class="header" href="#pretorin_submit_test_results">pretorin_submit_test_results</a></h3>
+<p>Upload STIG scan results to the platform.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>results</code> (required) — Scan result payload</li>
+</ul>
+<p><strong>Returns:</strong> Submission confirmation with per-result status.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="mcp-resources"><a class="header" href="#mcp-resources">MCP Resources</a></h1>
 <p>The MCP server exposes read-only resources for analysis guidance.</p>
@@ -1410,6 +2385,12 @@ pretorin --version
 <pre><code class="language-bash">command -v pretorin
 </code></pre>
 </li>
+<li>
+<p>If the MCP client can talk to Pretorin but scoped write tools behave strangely, validate the stored CLI context:</p>
+<pre><code class="language-bash">pretorin context show --quiet --check
+</code></pre>
+<p>This catches deleted systems, detached frameworks, and other stale local scope before you debug the MCP client itself.</p>
+</li>
 </ol>
 <h2 id="server-crashes-or-hangs"><a class="header" href="#server-crashes-or-hangs">Server Crashes or Hangs</a></h2>
 <p>Check the MCP server logs:</p>
@@ -1459,7 +2440,7 @@ pretorin agent run "Assess AC-02 implementation gaps for my system"
 # Use a predefined skill
 pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
 </code></pre>
-<h2 id="options"><a class="header" href="#options">Options</a></h2>
+<h2 id="options-2"><a class="header" href="#options-2">Options</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -1481,7 +2462,7 @@ pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
 pretorin login
 
 # 2. Optional: custom/self-hosted Pretorin model endpoint
-pretorin config set model_api_base_url https://platform.pretorin.com/v1
+pretorin config set model_api_base_url https://platform.pretorin.com/api/v1/public/model
 
 # 3. Validate runtime
 pretorin agent doctor
@@ -1965,6 +2946,208 @@ pretorin notes add ac-02 fedramp-moderate \
 </ol>
 <p>The response indicates whether the evidence was <code>created</code> (new) or reused, along with the <code>match_basis</code>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="campaign-workflows-1"><a class="header" href="#campaign-workflows-1">Campaign Workflows</a></h1>
+<p>Campaigns are the recommended way to run bulk compliance operations across multiple controls, policies, or scope questions. They replace manual one-at-a-time updates with a coordinated prepare-claim-propose-apply lifecycle.</p>
+<h2 id="when-to-use-campaigns"><a class="header" href="#when-to-use-campaigns">When to Use Campaigns</a></h2>
+<ul>
+<li><strong>Initial control implementation</strong> — Draft narratives and evidence for an entire control family</li>
+<li><strong>Fixing review findings</strong> — Address issues flagged by family or policy reviews</li>
+<li><strong>Answering questionnaires</strong> — Bulk-answer policy or scope questions</li>
+<li><strong>Notes remediation</strong> — Fix controls flagged by platform notes</li>
+</ul>
+<h2 id="campaign-lifecycle-1"><a class="header" href="#campaign-lifecycle-1">Campaign Lifecycle</a></h2>
+<pre><code>Prepare → Claim → Draft → Propose → Apply
+</code></pre>
+<ol>
+<li>
+<p><strong>Prepare</strong> — Snapshot platform state and create a checkpoint file. This captures the current state of all target items so the campaign works from a consistent baseline.</p>
+</li>
+<li>
+<p><strong>Claim</strong> — Lease items for drafting. TTL-based leases prevent concurrent editing when multiple agents are working in parallel.</p>
+</li>
+<li>
+<p><strong>Draft</strong> — For each claimed item, get full context (control requirements, current state, guidance) and produce a draft.</p>
+</li>
+<li>
+<p><strong>Propose</strong> — Submit drafts as proposals without writing to the platform. This provides a review opportunity before any changes are persisted.</p>
+</li>
+<li>
+<p><strong>Apply</strong> — Push all accepted proposals to the platform as a single operation.</p>
+</li>
+</ol>
+<h2 id="external-agent-pattern"><a class="header" href="#external-agent-pattern">External Agent Pattern</a></h2>
+<p>Campaigns are designed for external agents (Claude Code, Codex, Cursor, etc.) operating through MCP:</p>
+<pre><code>Agent A: prepare_campaign → claim_campaign_items → get_campaign_item_context → submit_campaign_proposal
+Agent B: claim_campaign_items → get_campaign_item_context → submit_campaign_proposal
+...
+Coordinator: get_campaign_status → apply_campaign
+</code></pre>
+<p>The checkpoint file enables independent agent execution. Agents can claim non-overlapping items and work in parallel.</p>
+<h2 id="cli-usage"><a class="header" href="#cli-usage">CLI Usage</a></h2>
+<h3 id="control-campaign"><a class="header" href="#control-campaign">Control Campaign</a></h3>
+<pre><code class="language-bash"># Draft narratives for the Access Control family
+pretorin campaign controls --mode initial --family AC \
+  --system "My System" --framework-id fedramp-moderate
+
+# Fix controls flagged by notes
+pretorin campaign controls --mode notes-fix --family AC
+
+# Fix controls flagged by review
+pretorin campaign controls --mode review-fix --family AC --review-job &lt;job-id&gt;
+
+# Auto-apply after completion
+pretorin campaign controls --mode initial --family AC --apply
+</code></pre>
+<h3 id="policy-campaign"><a class="header" href="#policy-campaign">Policy Campaign</a></h3>
+<pre><code class="language-bash"># Answer all incomplete policy questions
+pretorin campaign policy --mode answer --all-incomplete
+
+# Fix review findings for a specific policy
+pretorin campaign policy --mode review-fix --policies &lt;policy-id&gt;
+</code></pre>
+<h3 id="scope-campaign"><a class="header" href="#scope-campaign">Scope Campaign</a></h3>
+<pre><code class="language-bash">pretorin campaign scope --mode answer \
+  --system "My System" --framework-id fedramp-moderate
+</code></pre>
+<h3 id="check-status"><a class="header" href="#check-status">Check Status</a></h3>
+<pre><code class="language-bash">pretorin campaign status --checkpoint .pretorin/campaign-checkpoint.json
+</code></pre>
+<h2 id="mcp-tool-sequence"><a class="header" href="#mcp-tool-sequence">MCP Tool Sequence</a></h2>
+<p>For AI agents working through MCP:</p>
+<ol>
+<li><code>pretorin_get_workflow_state</code> — Understand what needs work</li>
+<li><code>pretorin_get_pending_families</code> — Identify target families</li>
+<li><code>pretorin_prepare_campaign</code> — Create the campaign</li>
+<li><code>pretorin_claim_campaign_items</code> — Claim items</li>
+<li><code>pretorin_get_campaign_item_context</code> — Get context per item</li>
+<li><code>pretorin_submit_campaign_proposal</code> — Submit drafts</li>
+<li><code>pretorin_get_campaign_status</code> — Review progress</li>
+<li><code>pretorin_apply_campaign</code> — Push to platform</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="policy--scope-questionnaires"><a class="header" href="#policy--scope-questionnaires">Policy &amp; Scope Questionnaires</a></h1>
+<p>Pretorin uses questionnaire workflows to capture organizational policy information and system scope details. Both follow a similar lifecycle: answer questions, generate documents, review, and iterate.</p>
+<h2 id="policy-questionnaire-workflow"><a class="header" href="#policy-questionnaire-workflow">Policy Questionnaire Workflow</a></h2>
+<p>Organization policies (e.g., Access Control Policy, Incident Response Policy) are defined at the org level and apply across systems.</p>
+<h3 id="1-list-available-policies"><a class="header" href="#1-list-available-policies">1. List Available Policies</a></h3>
+<pre><code class="language-bash">pretorin policy list
+</code></pre>
+<p>Or via MCP: <code>pretorin_list_org_policies</code></p>
+<h3 id="2-view-pending-questions"><a class="header" href="#2-view-pending-questions">2. View Pending Questions</a></h3>
+<pre><code class="language-bash"># Via MCP
+pretorin_get_pending_policy_questions  # lightweight — only unanswered
+pretorin_get_policy_question_detail    # guidance and examples per question
+</code></pre>
+<h3 id="3-answer-questions"><a class="header" href="#3-answer-questions">3. Answer Questions</a></h3>
+<p>Answer individually for precise control:</p>
+<pre><code>pretorin_answer_policy_question(policy_id, question_id, answer)
+</code></pre>
+<p>Or batch-update multiple answers:</p>
+<pre><code>pretorin_patch_org_policy_qa(policy_id, updates=[{question_id, answer}, ...])
+</code></pre>
+<h3 id="4-generate-policy-document"><a class="header" href="#4-generate-policy-document">4. Generate Policy Document</a></h3>
+<p>Once questions are answered, trigger AI document generation:</p>
+<pre><code>pretorin_trigger_policy_generation(policy_id)
+</code></pre>
+<h3 id="5-review"><a class="header" href="#5-review">5. Review</a></h3>
+<p>Trigger an AI review of the policy:</p>
+<pre><code>pretorin_trigger_policy_review(policy_id)
+pretorin_get_policy_review_results(policy_id)  # poll for results
+</code></pre>
+<p>Review results include findings with severity levels, affected sections, and recommended fixes.</p>
+<h3 id="6-track-status"><a class="header" href="#6-track-status">6. Track Status</a></h3>
+<pre><code>pretorin_get_policy_workflow_state(policy_id)
+pretorin_get_policy_analytics()
+</code></pre>
+<h2 id="scope-questionnaire-workflow"><a class="header" href="#scope-questionnaire-workflow">Scope Questionnaire Workflow</a></h2>
+<p>Scope questionnaires are system+framework specific. They define what’s in scope, what’s excluded, and system boundary details.</p>
+<h3 id="1-view-pending-questions"><a class="header" href="#1-view-pending-questions">1. View Pending Questions</a></h3>
+<pre><code>pretorin_get_pending_scope_questions(system_id, framework_id)
+pretorin_get_scope_question_detail(system_id, framework_id, question_id)
+</code></pre>
+<h3 id="2-answer-questions"><a class="header" href="#2-answer-questions">2. Answer Questions</a></h3>
+<pre><code>pretorin_answer_scope_question(system_id, framework_id, question_id, answer)
+</code></pre>
+<p>Or batch-update:</p>
+<pre><code>pretorin_patch_scope_qa(system_id, framework_id, updates=[{question_id, answer}, ...])
+</code></pre>
+<h3 id="3-generate-scope-document"><a class="header" href="#3-generate-scope-document">3. Generate Scope Document</a></h3>
+<pre><code>pretorin_trigger_scope_generation(system_id, framework_id)
+</code></pre>
+<h3 id="4-review"><a class="header" href="#4-review">4. Review</a></h3>
+<pre><code>pretorin_trigger_scope_review(system_id, framework_id)
+pretorin_get_scope_review_results(system_id, framework_id)
+</code></pre>
+<h3 id="5-view-full-scope"><a class="header" href="#5-view-full-scope">5. View Full Scope</a></h3>
+<pre><code>pretorin_get_scope(system_id, framework_id)
+</code></pre>
+<p>Returns scope narrative, excluded controls, and Q&amp;A responses.</p>
+<h2 id="bulk-questionnaire-campaigns"><a class="header" href="#bulk-questionnaire-campaigns">Bulk Questionnaire Campaigns</a></h2>
+<p>For answering many questions at once, use campaigns:</p>
+<pre><code class="language-bash"># Answer all incomplete policy questions
+pretorin campaign policy --mode answer --all-incomplete
+
+# Answer scope questions
+pretorin campaign scope --mode answer --system "My System" --framework-id fedramp-moderate
+
+# Fix review findings
+pretorin campaign policy --mode review-fix --policies &lt;policy-id&gt;
+</code></pre>
+<p>See <a href="#campaign-workflows-1">Campaign Workflows</a> for details on the campaign lifecycle.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="vendor-inheritance"><a class="header" href="#vendor-inheritance">Vendor Inheritance</a></h1>
+<p>Many compliance controls are partially or fully satisfied by external providers (cloud platforms, SaaS tools, managed services). Pretorin tracks these inheritance relationships and keeps inherited narratives in sync with vendor documentation.</p>
+<h2 id="concepts"><a class="header" href="#concepts">Concepts</a></h2>
+<ul>
+<li><strong>Vendor</strong> — An external provider or internal shared service (CSP, SaaS, managed service, internal)</li>
+<li><strong>Responsibility edge</strong> — A link between a control and a vendor indicating the control is inherited or shared</li>
+<li><strong>Stale edge</strong> — A responsibility edge where the source narrative has changed but the inherited control hasn’t been updated</li>
+</ul>
+<h2 id="workflow-1"><a class="header" href="#workflow-1">Workflow</a></h2>
+<h3 id="1-create-vendor-entities"><a class="header" href="#1-create-vendor-entities">1. Create Vendor Entities</a></h3>
+<pre><code class="language-bash">pretorin vendor create "AWS GovCloud" --type csp \
+  --description "Primary cloud infrastructure" \
+  --authorization-level "FedRAMP High P-ATO"
+
+pretorin vendor create "Okta" --type saas \
+  --description "Identity and access management"
+</code></pre>
+<h3 id="2-upload-vendor-documentation"><a class="header" href="#2-upload-vendor-documentation">2. Upload Vendor Documentation</a></h3>
+<pre><code class="language-bash">pretorin vendor upload-doc &lt;vendor_id&gt; ./aws-crm.pdf \
+  --name "AWS Customer Responsibility Matrix" \
+  --attestation-type vendor_provided
+
+pretorin vendor upload-doc &lt;vendor_id&gt; ./okta-soc2.pdf \
+  --name "Okta SOC 2 Type II Report" \
+  --attestation-type third_party_attestation
+</code></pre>
+<h3 id="3-set-control-responsibility"><a class="header" href="#3-set-control-responsibility">3. Set Control Responsibility</a></h3>
+<p>Via MCP tools:</p>
+<pre><code>pretorin_set_control_responsibility(system_id, control_id, framework_id, vendor_id, responsibility_type)
+</code></pre>
+<p>Responsibility types:</p>
+<ul>
+<li><strong>inherited</strong> — Fully satisfied by the vendor</li>
+<li><strong>shared</strong> — Partially satisfied; your system handles the remainder</li>
+</ul>
+<h3 id="4-generate-inheritance-narratives"><a class="header" href="#4-generate-inheritance-narratives">4. Generate Inheritance Narratives</a></h3>
+<pre><code>pretorin_generate_inheritance_narrative(system_id, control_id, framework_id, vendor_id)
+</code></pre>
+<p>AI generates a narrative grounded in the vendor’s uploaded documentation, explaining how the vendor satisfies the control requirements.</p>
+<h3 id="5-monitor-staleness"><a class="header" href="#5-monitor-staleness">5. Monitor Staleness</a></h3>
+<p>Over time, vendor documentation or source narratives may be updated. Check for stale inheritance:</p>
+<pre><code>pretorin_get_stale_edges(system_id, framework_id)
+</code></pre>
+<p>Returns controls where the source has changed but the inherited narrative hasn’t been refreshed.</p>
+<h3 id="6-sync-stale-edges"><a class="header" href="#6-sync-stale-edges">6. Sync Stale Edges</a></h3>
+<pre><code>pretorin_sync_stale_edges(system_id, framework_id)
+</code></pre>
+<p>Bulk updates inherited controls by regenerating narratives from the latest source.</p>
+<h2 id="linking-evidence-to-vendors"><a class="header" href="#linking-evidence-to-vendors">Linking Evidence to Vendors</a></h2>
+<pre><code>pretorin_link_evidence_to_vendor(evidence_id, vendor_id, attestation_type)
+</code></pre>
+<p>Attestation types: <code>self_attested</code>, <code>third_party_attestation</code>, <code>vendor_provided</code></p>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="gap-analysis-workflow"><a class="header" href="#gap-analysis-workflow">Gap Analysis Workflow</a></h1>
 <p>A systematic approach to assessing a codebase against a compliance framework’s controls.</p>
 <h2 id="step-1-scope-the-assessment"><a class="header" href="#step-1-scope-the-assessment">Step 1: Scope the Assessment</a></h2>
@@ -2357,7 +3540,7 @@ password, credential, hash, mfa, token
 <li><strong>Gap identification</strong> — Already compliant with 800-53 and need CMMC. Find the delta.</li>
 <li><strong>Audit preparation</strong> — Show auditors how controls in one framework map to another.</li>
 </ul>
-<h2 id="workflow"><a class="header" href="#workflow">Workflow</a></h2>
+<h2 id="workflow-2"><a class="header" href="#workflow-2">Workflow</a></h2>
 <h3 id="step-1-start-with-the-source-control"><a class="header" href="#step-1-start-with-the-source-control">Step 1: Start with the Source Control</a></h3>
 <p>Query the control with references to discover relationships:</p>
 <pre><code class="language-bash">pretorin frameworks control nist-800-53-r5 ac-02 --references
@@ -2413,6 +3596,90 @@ NIST 800-171 03.01.01
 </blockquote>
 <p>The agent will use <code>pretorin_get_control</code> and <code>pretorin_get_control_references</code> to discover and compare related controls across frameworks.</p>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="stig-compliance-scanning"><a class="header" href="#stig-compliance-scanning">STIG Compliance Scanning</a></h1>
+<p>Pretorin integrates STIG (Security Technical Implementation Guide) scanning to verify technical control implementations. The scanning workflow connects NIST 800-53 controls to specific technical checks via the CCI (Control Correlation Identifier) chain.</p>
+<h2 id="traceability-chain"><a class="header" href="#traceability-chain">Traceability Chain</a></h2>
+<pre><code>NIST 800-53 Control → CCIs → SRGs → STIG Rules → Scanner Results
+</code></pre>
+<ul>
+<li><strong>CCI</strong> — Control Correlation Identifier: bridges a control requirement to testable items</li>
+<li><strong>SRG</strong> — Security Requirements Guide: technology-neutral security requirements</li>
+<li><strong>STIG Rule</strong> — Technology-specific check with detailed test and fix procedures</li>
+</ul>
+<h2 id="browse-the-chain"><a class="header" href="#browse-the-chain">Browse the Chain</a></h2>
+<h3 id="find-applicable-stigs"><a class="header" href="#find-applicable-stigs">Find Applicable STIGs</a></h3>
+<pre><code class="language-bash"># Show STIGs applicable to your system
+pretorin stig applicable --system "My System"
+
+# AI-infer STIGs from system profile
+pretorin stig infer --system "My System"
+</code></pre>
+<h3 id="explore-the-traceability"><a class="header" href="#explore-the-traceability">Explore the Traceability</a></h3>
+<pre><code class="language-bash"># Full chain from a NIST control to STIG rules
+pretorin cci chain ac-2 --system "My System"
+
+# Browse CCIs for a control
+pretorin cci list --control ac-2
+
+# See what a specific CCI requires
+pretorin cci show CCI-000015
+
+# Browse STIG rules
+pretorin stig rules &lt;stig_id&gt; --severity high
+</code></pre>
+<h2 id="scanning-workflow"><a class="header" href="#scanning-workflow">Scanning Workflow</a></h2>
+<h3 id="1-check-scanner-availability"><a class="header" href="#1-check-scanner-availability">1. Check Scanner Availability</a></h3>
+<pre><code class="language-bash">pretorin scan doctor
+</code></pre>
+<p>Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Manual.</p>
+<h3 id="2-review-test-manifest"><a class="header" href="#2-review-test-manifest">2. Review Test Manifest</a></h3>
+<pre><code class="language-bash">pretorin scan manifest --system "My System"
+</code></pre>
+<p>Shows which STIGs, rules, and scanners apply to the system.</p>
+<h3 id="3-run-scans"><a class="header" href="#3-run-scans">3. Run Scans</a></h3>
+<pre><code class="language-bash"># Run all applicable scans
+pretorin scan run --system "My System"
+
+# Dry run first
+pretorin scan run --system "My System" --dry-run
+
+# Target specific STIG or tool
+pretorin scan run --stig &lt;stig_id&gt; --tool openscap
+</code></pre>
+<h3 id="4-review-results"><a class="header" href="#4-review-results">4. Review Results</a></h3>
+<pre><code class="language-bash"># All results
+pretorin scan results --system "My System"
+
+# Filter by control
+pretorin scan results --system "My System" --control ac-2
+</code></pre>
+<h3 id="5-submit-results-to-platform"><a class="header" href="#5-submit-results-to-platform">5. Submit Results to Platform</a></h3>
+<p>Results are automatically submitted when scanning with an active system context. For manual submission via MCP:</p>
+<pre><code>pretorin_submit_test_results(system_id, results)
+</code></pre>
+<h2 id="mcp-tools-for-stigcci"><a class="header" href="#mcp-tools-for-stigcci">MCP Tools for STIG/CCI</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Tool</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin_list_stigs</code></td><td>List benchmarks with filters</td></tr>
+<tr><td><code>pretorin_get_stig</code></td><td>Benchmark detail</td></tr>
+<tr><td><code>pretorin_list_stig_rules</code></td><td>Rules with severity/CCI filters</td></tr>
+<tr><td><code>pretorin_get_stig_rule</code></td><td>Full rule: check text, fix text, CCIs</td></tr>
+<tr><td><code>pretorin_list_ccis</code></td><td>CCIs with control filter</td></tr>
+<tr><td><code>pretorin_get_cci</code></td><td>CCI detail with linked rules</td></tr>
+<tr><td><code>pretorin_get_cci_chain</code></td><td>Full traceability chain</td></tr>
+<tr><td><code>pretorin_get_cci_status</code></td><td>CCI compliance rollup</td></tr>
+<tr><td><code>pretorin_get_stig_applicability</code></td><td>Applicable STIGs for a system</td></tr>
+<tr><td><code>pretorin_infer_stigs</code></td><td>AI-infer applicable STIGs</td></tr>
+<tr><td><code>pretorin_get_test_manifest</code></td><td>Test manifest for a system</td></tr>
+<tr><td><code>pretorin_submit_test_results</code></td><td>Upload scan results</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="environment-variables"><a class="header" href="#environment-variables">Environment Variables</a></h1>
 <p>Environment variables override stored configuration values.</p>
 <h2 id="authentication--api"><a class="header" href="#authentication--api">Authentication &amp; API</a></h2>
@@ -2425,7 +3692,7 @@ NIST 800-171 03.01.01
 <tr><td><code>PRETORIN_API_KEY</code></td><td>API key for platform access. Overrides <code>api_key</code> in config file.</td><td>—</td></tr>
 <tr><td><code>PRETORIN_PLATFORM_API_BASE_URL</code></td><td>Platform REST API base URL</td><td><code>https://platform.pretorin.com/api/v1/public</code></td></tr>
 <tr><td><code>PRETORIN_API_BASE_URL</code></td><td>Backward-compatible alias for <code>PRETORIN_PLATFORM_API_BASE_URL</code></td><td>—</td></tr>
-<tr><td><code>PRETORIN_MODEL_API_BASE_URL</code></td><td>Model API URL for agent runtime</td><td><code>https://platform.pretorin.com/v1</code></td></tr>
+<tr><td><code>PRETORIN_MODEL_API_BASE_URL</code></td><td>Model API URL for agent runtime</td><td><code>https://platform.pretorin.com/api/v1/public/model</code></td></tr>
 </tbody>
 </table>
 </div>
@@ -2563,6 +3830,22 @@ pretorin evidence push
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="contributing"><a class="header" href="#contributing">Contributing</a></h1>
 <p>Thank you for your interest in contributing to the Pretorin CLI!</p>
+<p>We welcome contributions to the CLI, MCP server, docs, scanners, developer workflows, and local tooling. This repository is open source under Apache-2.0, while Pretorin-hosted platform services, authenticated API access, and account-scoped data are governed separately by the applicable platform terms.</p>
+<h2 id="scope-1"><a class="header" href="#scope-1">Scope</a></h2>
+<p>Good fits for this repository:</p>
+<ul>
+<li>CLI commands and output improvements</li>
+<li>MCP tools, prompts, and local agent integrations</li>
+<li>Scanner integrations and developer workflow automation</li>
+<li>Documentation, examples, and tests</li>
+</ul>
+<p>Out of scope for public contributions:</p>
+<ul>
+<li>Customer data, exported platform data, or private operational runbooks</li>
+<li>Secrets, internal credentials, or private environment details</li>
+<li>Changes that imply trademark rights or suggest an unofficial fork is an official Pretorin service</li>
+</ul>
+<p>For brand usage guidance, see <a href="#trademarks-and-service-terms">Trademarks and Service Terms</a>.</p>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h2>
 <ol>
 <li>Fork the repository</li>
@@ -2583,6 +3866,7 @@ cd pretorin-cli
 <p>Integration tests require an API key and are marked with <code>@pytest.mark.integration</code>:</p>
 <pre><code class="language-bash">pytest -m integration
 </code></pre>
+<p>Integration tests require a valid API key tied to an account that has accepted the platform terms.</p>
 <h3 id="type-checking"><a class="header" href="#type-checking">Type Checking</a></h3>
 <pre><code class="language-bash">mypy src/pretorin
 </code></pre>
@@ -2596,11 +3880,18 @@ ruff format src/pretorin
 </code></pre>
 <h2 id="submitting-changes"><a class="header" href="#submitting-changes">Submitting Changes</a></h2>
 <ol>
-<li>Create a feature branch from <code>master</code></li>
+<li>Create a feature branch from <code>main</code></li>
 <li>Make your changes</li>
 <li>Ensure tests pass and code is properly formatted</li>
+<li>Add a sign-off to each commit with <code>git commit -s</code></li>
 <li>Submit a pull request</li>
 </ol>
+<p>By submitting a contribution, you certify that:</p>
+<ul>
+<li>You have the right to submit the code, docs, or other materials.</li>
+<li>Your contribution may be distributed under the Apache License, Version 2.0.</li>
+<li>You are not including confidential information, customer data, or material that is governed by separate platform terms.</li>
+</ul>
 <h2 id="code-style"><a class="header" href="#code-style">Code Style</a></h2>
 <ul>
 <li>Follow PEP 8 guidelines</li>
@@ -2616,6 +3907,12 @@ ruff format src/pretorin
 <li><strong>Type check</strong> — mypy strict mode</li>
 <li><strong>Test</strong> — pytest</li>
 </ul>
+<h2 id="legal-and-platform-boundaries"><a class="header" href="#legal-and-platform-boundaries">Legal and Platform Boundaries</a></h2>
+<ul>
+<li>The source code in this repository is licensed under Apache-2.0.</li>
+<li>The Pretorin name, logos, and other brand assets remain subject to trademark rights and are not licensed for reuse except for nominative/reference use. See <a href="#trademarks-and-service-terms">Trademarks and Service Terms</a>.</li>
+<li>Access to Pretorin-hosted APIs, services, and account-scoped data is authenticated and governed by separate platform terms.</li>
+</ul>
 <h2 id="reporting-issues"><a class="header" href="#reporting-issues">Reporting Issues</a></h2>
 <p>Use <a href="https://github.com/pretorin-ai/pretorin-cli/issues">GitHub Issues</a> to report bugs or request features. Include:</p>
 <ul>
@@ -2630,44 +3927,167 @@ ruff format src/pretorin
 <li>Platform: <a href="https://platform.pretorin.com">platform.pretorin.com</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="trademarks-and-service-terms"><a class="header" href="#trademarks-and-service-terms">Trademarks and Service Terms</a></h1>
+<p>Pretorin, the Pretorin logo, and related brand assets are trademarks or registered trademarks of Pretorin, Inc.</p>
+<p>The Apache-2.0 license for this repository covers the source code and documentation in this repo. It does not grant permission to use Pretorin trademarks, logos, or branding for derivative products or services in a way that suggests sponsorship, endorsement, or official status.</p>
+<p>Permitted uses generally include truthful, referential statements such as:</p>
+<ul>
+<li>Saying that your project is based on or compatible with Pretorin CLI</li>
+<li>Linking to this repository or to Pretorin documentation</li>
+<li>Describing changes you made in a fork, as long as you do not imply the fork is an official Pretorin release or hosted service</li>
+</ul>
+<p>Not permitted without separate permission:</p>
+<ul>
+<li>Shipping a fork under the Pretorin name as if it were the official product</li>
+<li>Reusing Pretorin logos, trade dress, or marketing assets for another hosted service</li>
+<li>Suggesting endorsement, partnership, certification, or official support where none exists</li>
+</ul>
+<p>Access to Pretorin-hosted platform services, APIs, and any account-scoped data returned by those services is governed by the applicable platform terms and account agreements, which are separate from the open-source license for this repository.</p>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>All notable changes to the Pretorin CLI are documented here. The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<h2 id="080---2026-03-07"><a class="header" href="#080---2026-03-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.7.0...v0.8.0">0.8.0</a> - 2026-03-07</a></h2>
+<h2 id="0140---2026-04-10"><a class="header" href="#0140---2026-04-10"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0">0.14.0</a> - 2026-04-10</a></h2>
+<h3 id="changed"><a class="header" href="#changed">Changed</a></h3>
+<ul>
+<li>MCP and agent write workflows now treat the active CLI context as a strict execution boundary by default, with an explicit <code>allow_scope_override</code> escape hatch for intentional cross-scope writes</li>
+<li>Control-scoped MCP and agent workflows now route through one shared scope-validation path so exact control lookup happens in the resolved framework before any write proceeds</li>
+<li>Agent guidance now tells built-in workflows to resolve an exact user-supplied control in the active framework before doing broader discovery</li>
+<li><code>pretorin mcp-serve</code> now emits a non-blocking stderr update prompt when a newer CLI release is available, so MCP-only users can discover upgrades without interrupting active tool calls</li>
+</ul>
+<h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
+<ul>
+<li><code>apply_campaign</code> now reports <code>apply: true</code> after a successful apply run and persists that state back to the checkpoint summary</li>
+<li>Stored active context and campaign checkpoints are now validated against the current API environment before campaign reads or writes proceed</li>
+<li>Control-scoped MCP and agent updates now refuse silent remaps like <code>cm-04.02</code> to a different control when the exact control does not resolve in the active framework</li>
+</ul>
 <h3 id="added"><a class="header" href="#added">Added</a></h3>
+<ul>
+<li><code>pretorin_get_cli_status</code> and the <code>status://cli</code> MCP resource expose local CLI version, update availability, and upgrade guidance to MCP hosts and agents</li>
+</ul>
+<hr>
+<h2 id="0131---2026-04-07"><a class="header" href="#0131---2026-04-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.0...v0.13.1">0.13.1</a> - 2026-04-07</a></h2>
+<h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
+<ul>
+<li><code>pretorin_get_stig</code> MCP tool for STIG benchmark detail</li>
+<li><code>pretorin_get_cci_chain</code> MCP tool for full Control → CCI → SRG → STIG rule traceability</li>
+</ul>
+<hr>
+<h2 id="0130---2026-04-07"><a class="header" href="#0130---2026-04-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.12.0...v0.13.0">0.13.0</a> - 2026-04-07</a></h2>
+<h3 id="added-2"><a class="header" href="#added-2">Added</a></h3>
+<ul>
+<li>Complete STIG/CCI MCP tools: <code>list_stigs</code>, <code>get_stig</code>, <code>list_stig_rules</code>, <code>get_stig_rule</code>, <code>list_ccis</code>, <code>get_cci</code>, <code>get_cci_chain</code>, <code>get_cci_status</code>, <code>get_stig_applicability</code>, <code>infer_stigs</code>, <code>get_test_manifest</code>, <code>submit_test_results</code></li>
+<li>STIG/CCI agent tools for OpenAI Agents SDK</li>
+<li><code>pretorin stig</code> CLI group: <code>list</code>, <code>show</code>, <code>rules</code>, <code>applicable</code>, <code>infer</code></li>
+<li><code>pretorin cci</code> CLI group: <code>list</code>, <code>show</code>, <code>chain</code></li>
+<li><code>pretorin scan</code> CLI group: <code>doctor</code>, <code>manifest</code>, <code>run</code>, <code>results</code></li>
+<li>Scanner orchestration module with support for OpenSCAP, InSpec, AWS/Azure Cloud Scanners, and Manual review</li>
+</ul>
+<hr>
+<h2 id="0120---2026-04-04"><a class="header" href="#0120---2026-04-04"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.11.0...v0.12.0">0.12.0</a> - 2026-04-04</a></h2>
+<h3 id="added-3"><a class="header" href="#added-3">Added</a></h3>
+<ul>
+<li>Vendor management CLI: <code>pretorin vendor list/create/get/update/delete/upload-doc/list-docs</code></li>
+<li>MCP vendor tools: <code>list_vendors</code>, <code>create_vendor</code>, <code>get_vendor</code>, <code>update_vendor</code>, <code>delete_vendor</code>, <code>upload_vendor_document</code>, <code>list_vendor_documents</code>, <code>link_evidence_to_vendor</code></li>
+<li>Inheritance/responsibility MCP tools: <code>set_control_responsibility</code>, <code>get_control_responsibility</code>, <code>remove_control_responsibility</code>, <code>generate_inheritance_narrative</code>, <code>get_stale_edges</code>, <code>sync_stale_edges</code></li>
+</ul>
+<hr>
+<h2 id="0110---2026-04-01"><a class="header" href="#0110---2026-04-01"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.10.0...v0.11.0">0.11.0</a> - 2026-04-01</a></h2>
+<h3 id="added-4"><a class="header" href="#added-4">Added</a></h3>
+<ul>
+<li>Campaign CLI: <code>pretorin campaign controls/policy/scope/status</code></li>
+<li>Campaign MCP tools: <code>prepare_campaign</code>, <code>claim_campaign_items</code>, <code>get_campaign_item_context</code>, <code>submit_campaign_proposal</code>, <code>apply_campaign</code>, <code>get_campaign_status</code></li>
+<li>External-agent-first campaign pattern with checkpoint persistence and lease-based concurrency</li>
+<li>Campaign builtin executor for local execution</li>
+</ul>
+<hr>
+<h2 id="0100---2026-03-28"><a class="header" href="#0100---2026-03-28"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.9.7...v0.10.0">0.10.0</a> - 2026-03-28</a></h2>
+<h3 id="added-5"><a class="header" href="#added-5">Added</a></h3>
+<ul>
+<li>Workflow state and analytics MCP tools: <code>get_workflow_state</code>, <code>get_analytics_summary</code>, <code>get_family_analytics</code>, <code>get_policy_analytics</code></li>
+<li>Family operations MCP tools: <code>get_pending_families</code>, <code>get_family_bundle</code>, <code>trigger_family_review</code>, <code>get_family_review_results</code></li>
+<li>Policy workflow MCP tools: <code>get_pending_policy_questions</code>, <code>get_policy_question_detail</code>, <code>answer_policy_question</code>, <code>get_policy_workflow_state</code>, <code>trigger_policy_generation</code>, <code>trigger_policy_review</code>, <code>get_policy_review_results</code></li>
+<li>Scope workflow MCP tools: <code>get_pending_scope_questions</code>, <code>get_scope_question_detail</code>, <code>answer_scope_question</code>, <code>trigger_scope_generation</code>, <code>trigger_scope_review</code>, <code>get_scope_review_results</code></li>
+<li>ExecutionScope for thread-safe parallel agent execution</li>
+</ul>
+<hr>
+<h2 id="097---2026-03-25"><a class="header" href="#097---2026-03-25"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.7...v0.9.7">0.9.7</a> - 2026-03-25</a></h2>
+<h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
+<ul>
+<li>Aligned CLI control status validation with the live platform status enum set, including <code>partially_implemented</code></li>
+<li>Aligned MCP control status validation with the live platform status enum set to match public API behavior</li>
+<li>Synced package version metadata and release notes so PyPI builds publish a consistent CLI version</li>
+</ul>
+<h3 id="changed-1"><a class="header" href="#changed-1">Changed</a></h3>
+<ul>
+<li>Updated CLI and MCP coverage tests to reflect the platform control status contract used by public control workflows</li>
+</ul>
+<h2 id="087---2026-03-23"><a class="header" href="#087---2026-03-23"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.6...v0.8.7">0.8.7</a> - 2026-03-23</a></h2>
+<h3 id="added-6"><a class="header" href="#added-6">Added</a></h3>
+<ul>
+<li>MCP questionnaire tooling for scope and organization policy workflows</li>
+</ul>
+<h3 id="changed-2"><a class="header" href="#changed-2">Changed</a></h3>
+<ul>
+<li>MCP documentation now reflects the full 29-tool surface, including batch evidence support</li>
+</ul>
+<h2 id="086---2026-03-23"><a class="header" href="#086---2026-03-23"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.5...v0.8.6">0.8.6</a> - 2026-03-23</a></h2>
+<h3 id="added-7"><a class="header" href="#added-7">Added</a></h3>
+<ul>
+<li><code>pretorin context show --quiet</code> for compact shell-friendly context checks</li>
+<li><code>pretorin context show --check</code> to fail fast when stored scope is missing, stale, or unverified</li>
+</ul>
+<h3 id="changed-3"><a class="header" href="#changed-3">Changed</a></h3>
+<ul>
+<li><code>context show</code> caches the last known system name so offline and stale context output stays human-friendly</li>
+</ul>
+<h3 id="fixed-2"><a class="header" href="#fixed-2">Fixed</a></h3>
+<ul>
+<li><code>context show</code> validates stored context against the platform instead of silently treating deleted systems as active</li>
+</ul>
+<h2 id="085---2026-03-23"><a class="header" href="#085---2026-03-23"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.0...v0.8.5">0.8.5</a> - 2026-03-23</a></h2>
+<h3 id="fixed-3"><a class="header" href="#fixed-3">Fixed</a></h3>
+<ul>
+<li>Reset active system/framework context when logging into a different API endpoint or with a different API key</li>
+<li>Model API base URL now follows the configured platform public API endpoint during login</li>
+<li><code>scope populate --json --apply</code> and <code>policy populate --json --apply</code> now persist questionnaire updates</li>
+<li>Larger Codex subprocess line buffer for policy questionnaire responses</li>
+</ul>
+<h2 id="080---2026-03-07"><a class="header" href="#080---2026-03-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.7.0...v0.8.0">0.8.0</a> - 2026-03-07</a></h2>
+<h3 id="added-8"><a class="header" href="#added-8">Added</a></h3>
 <ul>
 <li>MCP <code>pretorin_generate_control_artifacts</code> for read-only AI drafting of control narratives and evidence-gap assessments</li>
 <li>Shared AI drafting workflow helper for structured MCP/CLI parity</li>
 </ul>
-<h3 id="changed"><a class="header" href="#changed">Changed</a></h3>
+<h3 id="changed-4"><a class="header" href="#changed-4">Changed</a></h3>
 <ul>
 <li>MCP system-scoped tools now resolve friendly system names the same way the CLI does</li>
 <li>Codex Desktop MCP configuration can be pinned to the UV-managed Pretorin wrapper</li>
 </ul>
 <h2 id="070---2026-03-07"><a class="header" href="#070---2026-03-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.1...v0.7.0">0.7.0</a> - 2026-03-07</a></h2>
-<h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
+<h3 id="fixed-4"><a class="header" href="#fixed-4">Fixed</a></h3>
 <ul>
 <li>Control implementation parsing tolerant of <code>notes: null</code> deployments</li>
 <li>Compatibility fallback for control note reads when <code>/notes</code> endpoint returns <code>405</code></li>
 <li>Compatibility fallback for evidence search on system-scoped evidence routes</li>
 <li>Agent <code>--no-stream</code> crash on literal <code>[[PRETORIN_TODO]]</code> blocks</li>
 </ul>
-<h3 id="changed-1"><a class="header" href="#changed-1">Changed</a></h3>
+<h3 id="changed-5"><a class="header" href="#changed-5">Changed</a></h3>
 <ul>
 <li>MCP and legacy agent evidence search tools accept optional <code>system_id</code> context</li>
 </ul>
 <h2 id="061---2026-03-05"><a class="header" href="#061---2026-03-05"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.0...v0.6.1">0.6.1</a> - 2026-03-05</a></h2>
-<h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
+<h3 id="fixed-5"><a class="header" href="#fixed-5">Fixed</a></h3>
 <ul>
 <li>Added required MCP registry ownership marker for PyPI validation</li>
 </ul>
 <h2 id="060---2026-03-05"><a class="header" href="#060---2026-03-05"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.6...v0.6.0">0.6.0</a> - 2026-03-05</a></h2>
-<h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
+<h3 id="added-9"><a class="header" href="#added-9">Added</a></h3>
 <ul>
 <li>Shared markdown quality validator for auditor-readable artifacts</li>
 <li>Dedicated tests for markdown quality guardrails</li>
 <li>CLI/MCP/agent parity for reading notes via dedicated endpoint</li>
 </ul>
-<h3 id="changed-2"><a class="header" href="#changed-2">Changed</a></h3>
+<h3 id="changed-6"><a class="header" href="#changed-6">Changed</a></h3>
 <ul>
 <li>Narrative and evidence update flows enforce markdown quality checks before push/upsert</li>
 <li>Agent prompts require auditor-ready markdown (lists/tables/code/links)</li>
@@ -2678,7 +4098,7 @@ ruff format src/pretorin
 <li>Markdown image usage from narrative/evidence authoring contract (temporarily)</li>
 </ul>
 <h2 id="054---2026-03-05"><a class="header" href="#054---2026-03-05"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.3...v0.5.4">0.5.4</a> - 2026-03-05</a></h2>
-<h3 id="added-2"><a class="header" href="#added-2">Added</a></h3>
+<h3 id="added-10"><a class="header" href="#added-10">Added</a></h3>
 <ul>
 <li><code>pretorin narrative get</code> to read current control narratives</li>
 <li><code>pretorin notes list</code> and <code>pretorin notes add</code> for control-note management</li>
@@ -2687,7 +4107,7 @@ ruff format src/pretorin
 <li>Shared compliance workflow helpers (system resolution, evidence dedupe/upsert, TODO blocks, gap notes)</li>
 <li>MCP <code>pretorin_get_control_notes</code> tool</li>
 </ul>
-<h3 id="changed-3"><a class="header" href="#changed-3">Changed</a></h3>
+<h3 id="changed-7"><a class="header" href="#changed-7">Changed</a></h3>
 <ul>
 <li><code>pretorin_create_evidence</code> now upserts by default (<code>dedupe: true</code>)</li>
 <li><code>pretorin evidence push</code> uses find-or-create upsert logic</li>
@@ -2698,13 +4118,13 @@ ruff format src/pretorin
 <li>Automatic control status updates from CLI evidence push workflow</li>
 </ul>
 <h2 id="053---2026-03-02"><a class="header" href="#053---2026-03-02"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.2...v0.5.3">0.5.3</a> - 2026-03-02</a></h2>
-<h3 id="fixed-2"><a class="header" href="#fixed-2">Fixed</a></h3>
+<h3 id="fixed-6"><a class="header" href="#fixed-6">Fixed</a></h3>
 <ul>
 <li>CI lint failure formatting</li>
 <li>CLI model key precedence: <code>OPENAI_API_KEY</code> → <code>config.api_key</code> → <code>config.openai_api_key</code></li>
 </ul>
 <h2 id="052---2026-02-27"><a class="header" href="#052---2026-02-27"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.0...v0.5.2">0.5.2</a> - 2026-02-27</a></h2>
-<h3 id="fixed-3"><a class="header" href="#fixed-3">Fixed</a></h3>
+<h3 id="fixed-7"><a class="header" href="#fixed-7">Fixed</a></h3>
 <ul>
 <li>Rich markup <code>MarkupError</code> crash in login flow</li>
 <li>Evidence type mismatch (<code>documentation</code> → <code>policy_document</code>)</li>
@@ -2713,14 +4133,14 @@ ruff format src/pretorin
 <li><code>pretorin login</code> skips prompt when already authenticated</li>
 <li>Demo script <code>--json</code> flag position and stdin handling</li>
 </ul>
-<h3 id="changed-4"><a class="header" href="#changed-4">Changed</a></h3>
+<h3 id="changed-8"><a class="header" href="#changed-8">Changed</a></h3>
 <ul>
 <li>Default evidence type changed to <code>policy_document</code></li>
 <li>Valid evidence types aligned with API</li>
 <li>Added <code>.pretorin/</code> and <code>evidence/</code> to <code>.gitignore</code></li>
 </ul>
 <h2 id="050---2026-02-27"><a class="header" href="#050---2026-02-27"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.3.1...v0.5.0">0.5.0</a> - 2026-02-27</a></h2>
-<h3 id="added-3"><a class="header" href="#added-3">Added</a></h3>
+<h3 id="added-11"><a class="header" href="#added-11">Added</a></h3>
 <ul>
 <li>Context management (<code>context list/set/show/clear</code>)</li>
 <li>Evidence commands (<code>evidence create/list/push/search/upsert</code>)</li>
@@ -2734,7 +4154,7 @@ ruff format src/pretorin
 <li>Interactive demo walkthrough script</li>
 <li>Beta messaging across CLI, MCP, and README</li>
 </ul>
-<h3 id="changed-5"><a class="header" href="#changed-5">Changed</a></h3>
+<h3 id="changed-9"><a class="header" href="#changed-9">Changed</a></h3>
 <ul>
 <li>Platform API base URL changed to <code>/api/v1/public</code></li>
 <li>Evidence and linking scoped to system</li>
@@ -2754,7 +4174,7 @@ ruff format src/pretorin
 <li>Connection error URL display</li>
 </ul>
 <h2 id="020---2026-02-06"><a class="header" href="#020---2026-02-06"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.1.0...v0.2.0">0.2.0</a> - 2026-02-06</a></h2>
-<h3 id="added-4"><a class="header" href="#added-4">Added</a></h3>
+<h3 id="added-12"><a class="header" href="#added-12">Added</a></h3>
 <ul>
 <li><code>--json</code> flag for machine-readable output</li>
 <li><code>pretorin frameworks family/metadata/submit-artifact</code> commands</li>
@@ -2762,13 +4182,13 @@ ruff format src/pretorin
 <li><code>.mcp.json</code> for Claude Code auto-discovery</li>
 <li>Usage examples in command docstrings</li>
 </ul>
-<h3 id="changed-6"><a class="header" href="#changed-6">Changed</a></h3>
+<h3 id="changed-10"><a class="header" href="#changed-10">Changed</a></h3>
 <ul>
 <li>Control references shown by default (replaced <code>--references</code> with <code>--brief</code>)</li>
 <li>Default controls limit changed to 0 (show all)</li>
 </ul>
 <h2 id="010---2025-02-03"><a class="header" href="#010---2025-02-03"><a href="https://github.com/pretorin-ai/pretorin-cli/releases/tag/v0.1.0">0.1.0</a> - 2025-02-03</a></h2>
-<h3 id="added-5"><a class="header" href="#added-5">Added</a></h3>
+<h3 id="added-13"><a class="header" href="#added-13">Added</a></h3>
 <ul>
 <li>Initial public release</li>
 <li>CLI commands for browsing compliance frameworks</li>

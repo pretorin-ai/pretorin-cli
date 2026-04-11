@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-a8894136.js";
+            window.path_to_searchindex_js = "../searchindex-14ccf727.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-8de013d0.js"></script>
+        <script src="../toc-9dfb40f5.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -237,7 +237,7 @@
 <tbody>
 <tr><td><code>pretorin context list</code></td><td>List systems and frameworks with progress</td></tr>
 <tr><td><code>pretorin context set</code></td><td>Set active system/framework context (<code>--system</code>, <code>--framework</code>)</td></tr>
-<tr><td><code>pretorin context show</code></td><td>Display current active context</td></tr>
+<tr><td><code>pretorin context show</code></td><td>Display and validate current active context (<code>--quiet</code>, <code>--check</code>)</td></tr>
 <tr><td><code>pretorin context clear</code></td><td>Clear active context</td></tr>
 </tbody>
 </table>
@@ -336,6 +336,100 @@
 </tbody>
 </table>
 </div>
+<h2 id="campaign-commands"><a class="header" href="#campaign-commands">Campaign Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin campaign controls</code></td><td>Run bulk control narrative/evidence campaign (<code>--mode</code>, <code>--family</code>, <code>--controls</code>, <code>--all-controls</code>, <code>--artifacts</code>, <code>--review-job</code>, <code>--concurrency</code>, <code>--checkpoint</code>, <code>--apply</code>, <code>--output</code>)</td></tr>
+<tr><td><code>pretorin campaign policy</code></td><td>Run bulk policy questionnaire campaign (<code>--mode</code>, <code>--policies</code>, <code>--all-incomplete</code>, <code>--concurrency</code>, <code>--checkpoint</code>, <code>--apply</code>, <code>--output</code>)</td></tr>
+<tr><td><code>pretorin campaign scope</code></td><td>Run bulk scope questionnaire campaign (<code>--mode</code>, <code>--system</code>, <code>--framework-id</code>, <code>--concurrency</code>, <code>--checkpoint</code>, <code>--apply</code>, <code>--output</code>)</td></tr>
+<tr><td><code>pretorin campaign status</code></td><td>Show campaign progress from a checkpoint file (<code>--checkpoint</code>, <code>--output</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="campaign-modes"><a class="header" href="#campaign-modes">Campaign Modes</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Domain</th><th>Mode</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>controls</td><td><code>initial</code></td><td>Draft new narratives and evidence for controls</td></tr>
+<tr><td>controls</td><td><code>notes-fix</code></td><td>Address platform notes on existing controls</td></tr>
+<tr><td>controls</td><td><code>review-fix</code></td><td>Fix findings from a family review job</td></tr>
+<tr><td>policy</td><td><code>answer</code></td><td>Generate answers for policy questions</td></tr>
+<tr><td>policy</td><td><code>review-fix</code></td><td>Fix findings from a policy review</td></tr>
+<tr><td>scope</td><td><code>answer</code></td><td>Generate answers for scope questions</td></tr>
+<tr><td>scope</td><td><code>review-fix</code></td><td>Fix findings from a scope review</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="vendor-commands"><a class="header" href="#vendor-commands">Vendor Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin vendor list</code></td><td>List all vendors in the organization</td></tr>
+<tr><td><code>pretorin vendor create &lt;name&gt;</code></td><td>Create a vendor (<code>--type</code>, <code>--description</code>, <code>--authorization-level</code>)</td></tr>
+<tr><td><code>pretorin vendor get &lt;vendor_id&gt;</code></td><td>Get vendor details</td></tr>
+<tr><td><code>pretorin vendor update &lt;vendor_id&gt;</code></td><td>Update vendor fields (<code>--name</code>, <code>--description</code>, <code>--type</code>, <code>--authorization-level</code>)</td></tr>
+<tr><td><code>pretorin vendor delete &lt;vendor_id&gt;</code></td><td>Delete a vendor (<code>--force</code>)</td></tr>
+<tr><td><code>pretorin vendor upload-doc &lt;vendor_id&gt; &lt;file&gt;</code></td><td>Upload a vendor evidence document (<code>--name</code>, <code>--description</code>, <code>--attestation-type</code>)</td></tr>
+<tr><td><code>pretorin vendor list-docs &lt;vendor_id&gt;</code></td><td>List documents linked to a vendor</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="vendor-types"><a class="header" href="#vendor-types">Vendor Types</a></h3>
+<p><code>csp</code>, <code>saas</code>, <code>managed_service</code>, <code>internal</code></p>
+<h2 id="stig-commands"><a class="header" href="#stig-commands">STIG Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin stig list</code></td><td>List STIG benchmarks (<code>--technology-area</code>, <code>--product</code>, <code>--limit</code>)</td></tr>
+<tr><td><code>pretorin stig show &lt;stig_id&gt;</code></td><td>Show STIG benchmark detail with severity breakdown</td></tr>
+<tr><td><code>pretorin stig rules &lt;stig_id&gt;</code></td><td>List rules for a benchmark (<code>--severity</code>, <code>--cci</code>, <code>--limit</code>)</td></tr>
+<tr><td><code>pretorin stig applicable</code></td><td>Show applicable STIGs for the active system (<code>--system</code>)</td></tr>
+<tr><td><code>pretorin stig infer</code></td><td>AI-infer applicable STIGs from system profile (<code>--system</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="cci-commands"><a class="header" href="#cci-commands">CCI Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin cci list</code></td><td>List CCIs (<code>--control</code>, <code>--status</code>, <code>--limit</code>)</td></tr>
+<tr><td><code>pretorin cci show &lt;cci_id&gt;</code></td><td>Show CCI detail with linked SRGs and STIG rules (e.g., <code>CCI-000015</code>)</td></tr>
+<tr><td><code>pretorin cci chain &lt;control_id&gt;</code></td><td>Full traceability chain: Control -&gt; CCIs -&gt; SRGs -&gt; STIG rules (<code>--system</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="scan-commands"><a class="header" href="#scan-commands">Scan Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin scan doctor</code></td><td>Check which scanner tools are installed and available</td></tr>
+<tr><td><code>pretorin scan manifest</code></td><td>Show test manifest for the active system (<code>--system</code>, <code>--stig</code>)</td></tr>
+<tr><td><code>pretorin scan run</code></td><td>Run STIG compliance scans (<code>--system</code>, <code>--stig</code>, <code>--tool</code>, <code>--dry-run</code>)</td></tr>
+<tr><td><code>pretorin scan results</code></td><td>Show CCI-level test results (<code>--system</code>, <code>--control</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="supported-scanners"><a class="header" href="#supported-scanners">Supported Scanners</a></h3>
+<p><code>OpenSCAP</code>, <code>InSpec</code>, <code>AWS Cloud Scanner</code>, <code>Azure Cloud Scanner</code>, <code>Manual</code></p>
 <h2 id="deprecated-commands"><a class="header" href="#deprecated-commands">Deprecated Commands</a></h2>
 <div class="table-wrapper">
 <table>

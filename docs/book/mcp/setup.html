@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-a8894136.js";
+            window.path_to_searchindex_js = "../searchindex-14ccf727.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-8de013d0.js"></script>
+        <script src="../toc-9dfb40f5.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -186,6 +186,14 @@
 <pre><code class="language-bash">uv tool install pretorin
 pretorin login
 </code></pre>
+<h2 id="install-the-pretorin-skill"><a class="header" href="#install-the-pretorin-skill">Install the Pretorin Skill</a></h2>
+<p>The skill teaches your AI agent how to use MCP tools for compliance workflows — control ID formats, narrative authoring rules, gap analysis methodology, and more. Install it before setting up MCP:</p>
+<pre><code class="language-bash">pretorin skill install                # both Claude Code and Codex CLI
+pretorin skill install --agent claude # Claude Code only
+pretorin skill install --agent codex  # Codex CLI only
+pretorin skill status                 # check what's installed
+</code></pre>
+<p>The skill is copied to <code>~/.claude/skills/pretorin/</code> and/or <code>~/.codex/skills/pretorin/</code> and auto-discovered by each agent.</p>
 <h2 id="claude-code"><a class="header" href="#claude-code">Claude Code</a></h2>
 <p><strong>Quick setup</strong> — run a single command:</p>
 <pre><code class="language-bash">claude mcp add --transport stdio pretorin -- pretorin mcp-serve
@@ -273,6 +281,9 @@ command -v pretorin
 }
 </code></pre>
 <p>This is especially important for <code>uv tool</code> and <code>pipx</code> installations where the binary may not be on the PATH available to GUI applications.</p>
+<p>Before debugging scoped MCP write failures, validate the active CLI scope:</p>
+<pre><code class="language-bash">pretorin context show --quiet --check
+</code></pre>
 
                     </main>
 

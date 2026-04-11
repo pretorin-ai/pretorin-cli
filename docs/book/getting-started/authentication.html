@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-a8894136.js";
+            window.path_to_searchindex_js = "../searchindex-14ccf727.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-8de013d0.js"></script>
+        <script src="../toc-9dfb40f5.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -184,13 +184,15 @@
 <h2 id="getting-an-api-key"><a class="header" href="#getting-an-api-key">Getting an API Key</a></h2>
 <p>Get your API key from <a href="https://platform.pretorin.com/">platform.pretorin.com</a>.</p>
 <blockquote>
-<p><strong>Beta Note:</strong> Framework and control browsing works for all authenticated users. Platform write features (evidence, narratives, monitoring) require a beta code. Systems can only be created on the platform, not through the CLI or MCP. <a href="https://pretorin.com/early-access/">Sign up for early access</a>.</p>
+<p><strong>Beta Note:</strong> Framework and control browsing works for authenticated users. Platform write features (evidence, narratives, monitoring) require a beta code. Systems can only be created on the platform, not through the CLI or MCP. <a href="https://pretorin.com/early-access/">Sign up for early access</a>.</p>
 </blockquote>
+<p>All hosted API access is account-scoped and authenticated. Access to Pretorin-hosted services and any returned account-scoped data is governed by the applicable platform terms in addition to the open-source license for this repository.</p>
 <h2 id="login"><a class="header" href="#login">Login</a></h2>
 <pre><code class="language-bash">pretorin login
 </code></pre>
 <p>You’ll be prompted to enter your API key. Credentials are stored in <code>~/.pretorin/config.json</code>.</p>
 <p>If you’re already authenticated, <code>pretorin login</code> validates your existing key against the API and skips the prompt.</p>
+<p>If you log into a different API endpoint or switch API keys, Pretorin clears the stored active <code>system + framework</code> context so stale scope does not bleed into the new environment.</p>
 <h2 id="verify-authentication"><a class="header" href="#verify-authentication">Verify Authentication</a></h2>
 <pre><code class="language-bash">$ pretorin whoami
 [°~°] Checking your session...

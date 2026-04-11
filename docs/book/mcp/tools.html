@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-a8894136.js";
+            window.path_to_searchindex_js = "../searchindex-14ccf727.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-8de013d0.js"></script>
+        <script src="../toc-9dfb40f5.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -181,7 +181,7 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="mcp-tool-reference"><a class="header" href="#mcp-tool-reference">MCP Tool Reference</a></h1>
-<p>The MCP server provides 23 tools organized by category.</p>
+<p>The MCP server provides 80+ tools organized by category.</p>
 <h2 id="framework--control-reference"><a class="header" href="#framework--control-reference">Framework &amp; Control Reference</a></h2>
 <p>These tools are read-only and available to all authenticated users.</p>
 <h3 id="pretorin_list_frameworks"><a class="header" href="#pretorin_list_frameworks">pretorin_list_frameworks</a></h3>
@@ -223,6 +223,15 @@
 </ul>
 <p><strong>Returns:</strong> Control details including parameters, parts, and enhancement count.</p>
 <hr>
+<h3 id="pretorin_get_controls_batch"><a class="header" href="#pretorin_get_controls_batch">pretorin_get_controls_batch</a></h3>
+<p>Get detailed control data for many controls in one framework-scoped request.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>framework_id</code> (required)</li>
+<li><code>control_ids</code> (optional) — List of canonical control IDs; omit to retrieve all controls in the framework</li>
+</ul>
+<p><strong>Returns:</strong> Full control detail records for the requested controls.</p>
+<hr>
 <h3 id="pretorin_get_control_references"><a class="header" href="#pretorin_get_control_references">pretorin_get_control_references</a></h3>
 <p>Get reference information including statement, guidance, objectives, and related controls.</p>
 <p><strong>Parameters:</strong></p>
@@ -258,7 +267,7 @@
 <p>Get framework progress and implementation posture for a system.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
+<li><code>system_id</code> (required) — System ID or friendly system name</li>
 </ul>
 <p><strong>Returns:</strong> Framework status summaries and progress metrics.</p>
 <hr>
@@ -267,11 +276,11 @@
 <p>Search current evidence items.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (optional) — System context</li>
+<li><code>system_id</code> (optional) — System ID or friendly system name. When omitted, the active CLI scope is used if available.</li>
 <li><code>control_id</code> (optional) — Filter by control</li>
 <li><code>framework_id</code> (optional) — Filter by framework</li>
 </ul>
-<p><strong>Returns:</strong> Matching evidence items.</p>
+<p><strong>Returns:</strong> Matching evidence items. The server uses the same compatibility search path as the CLI for deployments that only expose system-scoped evidence routes.</p>
 <hr>
 <h3 id="pretorin_create_evidence"><a class="header" href="#pretorin_create_evidence">pretorin_create_evidence</a></h3>
 <p>Upsert evidence on the platform (find-or-create by default). If <code>dedupe</code> is true, exact matching evidence in the active system/framework scope is reused; otherwise a new record is created.</p>
@@ -292,6 +301,16 @@
 <li><code>linked</code> — whether control/system link succeeded</li>
 <li><code>match_basis</code> — <code>exact_name_desc_type_control_framework</code> or <code>none</code></li>
 </ul>
+<hr>
+<h3 id="pretorin_create_evidence_batch"><a class="header" href="#pretorin_create_evidence_batch">pretorin_create_evidence_batch</a></h3>
+<p>Create and link multiple evidence items within one system/framework scope in a single request.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>items</code> (required) — Array of evidence payloads with <code>name</code>, <code>description</code>, and <code>control_id</code>; may also include <code>evidence_type</code> and <code>relevance_notes</code></li>
+</ul>
+<p><strong>Returns:</strong> Batch creation summary with per-item results and created evidence IDs.</p>
 <hr>
 <h3 id="pretorin_link_evidence"><a class="header" href="#pretorin_link_evidence">pretorin_link_evidence</a></h3>
 <p>Link an existing evidence item to a control.</p>
@@ -330,8 +349,41 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> Scope narrative, excluded controls, Q&amp;A responses, and scope status.</p>
+<hr>
+<h3 id="pretorin_patch_scope_qa"><a class="header" href="#pretorin_patch_scope_qa">pretorin_patch_scope_qa</a></h3>
+<p>Apply partial scope questionnaire updates for a system/framework.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>updates</code> (required) — Non-empty list of <code>{question_id, answer}</code> objects</li>
+</ul>
+<p><strong>Returns:</strong> Updated scope questionnaire state, including the saved responses.</p>
+<hr>
+<h3 id="pretorin_list_org_policies"><a class="header" href="#pretorin_list_org_policies">pretorin_list_org_policies</a></h3>
+<p>List organization policies available for questionnaire work.</p>
+<p><strong>Parameters:</strong> None</p>
+<p><strong>Returns:</strong> Policy summaries including <code>id</code>, <code>name</code>, template linkage, and questionnaire status.</p>
+<hr>
+<h3 id="pretorin_get_org_policy_questionnaire"><a class="header" href="#pretorin_get_org_policy_questionnaire">pretorin_get_org_policy_questionnaire</a></h3>
+<p>Get the canonical questionnaire state for one organization policy.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Policy metadata, saved answers, and the merged template/question set when available.</p>
+<hr>
+<h3 id="pretorin_patch_org_policy_qa"><a class="header" href="#pretorin_patch_org_policy_qa">pretorin_patch_org_policy_qa</a></h3>
+<p>Apply partial questionnaire updates for one organization policy.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+<li><code>updates</code> (required) — Non-empty list of <code>{question_id, answer}</code> objects</li>
+</ul>
+<p><strong>Returns:</strong> Updated organization policy questionnaire state.</p>
 <hr>
 <h3 id="pretorin_get_control_implementation"><a class="header" href="#pretorin_get_control_implementation">pretorin_get_control_implementation</a></h3>
 <p>Get implementation details for a control in a system.</p>
@@ -413,6 +465,502 @@
 </ul>
 <p><strong>Returns:</strong> Draft narrative text plus evidence-gap analysis. Does not write to the platform.</p>
 <p>Use <code>pretorin_update_narrative</code>, <code>pretorin_create_evidence</code>, and <code>pretorin_add_control_note</code> to persist approved changes.</p>
+<hr>
+<h2 id="workflow-state--analytics"><a class="header" href="#workflow-state--analytics">Workflow State &amp; Analytics</a></h2>
+<h3 id="pretorin_get_workflow_state"><a class="header" href="#pretorin_get_workflow_state">pretorin_get_workflow_state</a></h3>
+<p>Get the lifecycle state for a system+framework, showing which stage needs work next (scope, policies, controls, evidence).</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Current workflow stage, completion percentages, and next recommended action.</p>
+<hr>
+<h3 id="pretorin_get_analytics_summary"><a class="header" href="#pretorin_get_analytics_summary">pretorin_get_analytics_summary</a></h3>
+<p>Get a lightweight system progress snapshot.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Scope completion, policy completion, control coverage, and evidence gaps.</p>
+<hr>
+<h3 id="pretorin_get_family_analytics"><a class="header" href="#pretorin_get_family_analytics">pretorin_get_family_analytics</a></h3>
+<p>Get per-family breakdown with narrative coverage, evidence coverage, and status distribution.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Per-family metrics.</p>
+<hr>
+<h3 id="pretorin_get_policy_analytics"><a class="header" href="#pretorin_get_policy_analytics">pretorin_get_policy_analytics</a></h3>
+<p>Get per-policy breakdown with answer completion and review status.</p>
+<p><strong>Parameters:</strong> None (uses org context)</p>
+<p><strong>Returns:</strong> Per-policy completion metrics.</p>
+<hr>
+<h2 id="family-operations"><a class="header" href="#family-operations">Family Operations</a></h2>
+<h3 id="pretorin_get_pending_families"><a class="header" href="#pretorin_get_pending_families">pretorin_get_pending_families</a></h3>
+<p>Identify which control families need work.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Families with counts of pending vs total controls.</p>
+<hr>
+<h3 id="pretorin_get_family_bundle"><a class="header" href="#pretorin_get_family_bundle">pretorin_get_family_bundle</a></h3>
+<p>Get all controls in one family with status, narrative presence, evidence presence, and note counts.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>family_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Complete family bundle with per-control details.</p>
+<hr>
+<h3 id="pretorin_trigger_family_review"><a class="header" href="#pretorin_trigger_family_review">pretorin_trigger_family_review</a></h3>
+<p>Trigger AI review of all controls in a family. Takes 2-4 minutes for large families.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>family_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Review job ID for polling.</p>
+<hr>
+<h3 id="pretorin_get_family_review_results"><a class="header" href="#pretorin_get_family_review_results">pretorin_get_family_review_results</a></h3>
+<p>Poll family review results.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>job_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Aggregated findings with severity, affected control IDs, and recommended fixes.</p>
+<hr>
+<h2 id="scope-workflow"><a class="header" href="#scope-workflow">Scope Workflow</a></h2>
+<h3 id="pretorin_get_pending_scope_questions"><a class="header" href="#pretorin_get_pending_scope_questions">pretorin_get_pending_scope_questions</a></h3>
+<p>Get only unanswered scope questions (lightweight).</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> List of unanswered questions with IDs.</p>
+<hr>
+<h3 id="pretorin_get_scope_question_detail"><a class="header" href="#pretorin_get_scope_question_detail">pretorin_get_scope_question_detail</a></h3>
+<p>Get guidance, tips, and example responses for a specific scope question.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>question_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Question text, guidance, tips, and example answers.</p>
+<hr>
+<h3 id="pretorin_answer_scope_question"><a class="header" href="#pretorin_answer_scope_question">pretorin_answer_scope_question</a></h3>
+<p>Answer one scope question.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>question_id</code> (required)</li>
+<li><code>answer</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Updated question state.</p>
+<hr>
+<h3 id="pretorin_trigger_scope_generation"><a class="header" href="#pretorin_trigger_scope_generation">pretorin_trigger_scope_generation</a></h3>
+<p>Trigger AI generation of scope document from answered questions.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Generation job status.</p>
+<hr>
+<h3 id="pretorin_trigger_scope_review"><a class="header" href="#pretorin_trigger_scope_review">pretorin_trigger_scope_review</a></h3>
+<p>Trigger AI review of scope answers.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Review job ID for polling.</p>
+<hr>
+<h3 id="pretorin_get_scope_review_results"><a class="header" href="#pretorin_get_scope_review_results">pretorin_get_scope_review_results</a></h3>
+<p>Poll for structured scope review findings.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>job_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Findings with severity levels and recommended fixes.</p>
+<hr>
+<h2 id="policy-workflow"><a class="header" href="#policy-workflow">Policy Workflow</a></h2>
+<h3 id="pretorin_get_pending_policy_questions"><a class="header" href="#pretorin_get_pending_policy_questions">pretorin_get_pending_policy_questions</a></h3>
+<p>Get only unanswered policy questions.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> List of unanswered questions.</p>
+<hr>
+<h3 id="pretorin_get_policy_question_detail"><a class="header" href="#pretorin_get_policy_question_detail">pretorin_get_policy_question_detail</a></h3>
+<p>Get guidance, tips, and examples for a specific policy question.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+<li><code>question_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Question text, guidance, and example answers.</p>
+<hr>
+<h3 id="pretorin_answer_policy_question"><a class="header" href="#pretorin_answer_policy_question">pretorin_answer_policy_question</a></h3>
+<p>Answer one policy question.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+<li><code>question_id</code> (required)</li>
+<li><code>answer</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Updated question state.</p>
+<hr>
+<h3 id="pretorin_get_policy_workflow_state"><a class="header" href="#pretorin_get_policy_workflow_state">pretorin_get_policy_workflow_state</a></h3>
+<p>Get per-policy workflow state including completion, generation, and review status.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Policy workflow state.</p>
+<hr>
+<h3 id="pretorin_trigger_policy_generation"><a class="header" href="#pretorin_trigger_policy_generation">pretorin_trigger_policy_generation</a></h3>
+<p>Trigger AI generation of policy document from answered questions.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Generation job status.</p>
+<hr>
+<h3 id="pretorin_trigger_policy_review"><a class="header" href="#pretorin_trigger_policy_review">pretorin_trigger_policy_review</a></h3>
+<p>Trigger AI review of policy answers/document.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Review job ID for polling.</p>
+<hr>
+<h3 id="pretorin_get_policy_review_results"><a class="header" href="#pretorin_get_policy_review_results">pretorin_get_policy_review_results</a></h3>
+<p>Poll for structured policy review findings.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+<li><code>job_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Findings with severity levels and recommended fixes.</p>
+<hr>
+<h2 id="campaign-operations"><a class="header" href="#campaign-operations">Campaign Operations</a></h2>
+<p>Campaigns enable bulk compliance operations with checkpoint persistence and lease-based concurrency.</p>
+<h3 id="pretorin_prepare_campaign"><a class="header" href="#pretorin_prepare_campaign">pretorin_prepare_campaign</a></h3>
+<p>Prepare a workflow-aligned campaign run with a platform state snapshot.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>domain</code> (required) — <code>controls</code>, <code>policy</code>, or <code>scope</code></li>
+<li><code>mode</code> (required) — <code>initial</code>, <code>notes-fix</code>, <code>review-fix</code>, <code>answer</code></li>
+<li><code>family_id</code> (optional) — Target family for control campaigns</li>
+<li><code>review_job</code> (optional) — Review job ID for <code>review-fix</code> mode</li>
+</ul>
+<p><strong>Returns:</strong> Campaign checkpoint with item list and metadata.</p>
+<hr>
+<h3 id="pretorin_claim_campaign_items"><a class="header" href="#pretorin_claim_campaign_items">pretorin_claim_campaign_items</a></h3>
+<p>Claim items for drafting with TTL-based leases. Safe for fan-out to multiple agents.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>checkpoint</code> (required) — Campaign checkpoint</li>
+<li><code>count</code> (optional) — Number of items to claim</li>
+</ul>
+<p><strong>Returns:</strong> Claimed items with lease metadata.</p>
+<hr>
+<h3 id="pretorin_get_campaign_item_context"><a class="header" href="#pretorin_get_campaign_item_context">pretorin_get_campaign_item_context</a></h3>
+<p>Get full item context plus drafting instructions for a claimed item.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>checkpoint</code> (required)</li>
+<li><code>item_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Control/policy/scope context, current state, and drafting guidance.</p>
+<hr>
+<h3 id="pretorin_submit_campaign_proposal"><a class="header" href="#pretorin_submit_campaign_proposal">pretorin_submit_campaign_proposal</a></h3>
+<p>Submit an external agent’s proposal without applying it to the platform.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>checkpoint</code> (required)</li>
+<li><code>item_id</code> (required)</li>
+<li><code>proposal</code> (required) — Draft content</li>
+</ul>
+<p><strong>Returns:</strong> Proposal acceptance confirmation.</p>
+<hr>
+<h3 id="pretorin_apply_campaign"><a class="header" href="#pretorin_apply_campaign">pretorin_apply_campaign</a></h3>
+<p>Push all accepted proposals to the platform as a single apply operation.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>checkpoint</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Apply results with per-item status.</p>
+<hr>
+<h3 id="pretorin_get_campaign_status"><a class="header" href="#pretorin_get_campaign_status">pretorin_get_campaign_status</a></h3>
+<p>Get structured campaign status with a stable transcript snapshot.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>checkpoint</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Campaign progress, item states, and transcript.</p>
+<hr>
+<h2 id="vendor-management"><a class="header" href="#vendor-management">Vendor Management</a></h2>
+<h3 id="pretorin_list_vendors"><a class="header" href="#pretorin_list_vendors">pretorin_list_vendors</a></h3>
+<p>List all vendor entities in the organization.</p>
+<p><strong>Parameters:</strong> None</p>
+<p><strong>Returns:</strong> Vendor list with IDs, names, types, and authorization levels.</p>
+<hr>
+<h3 id="pretorin_create_vendor"><a class="header" href="#pretorin_create_vendor">pretorin_create_vendor</a></h3>
+<p>Create a new vendor entity.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>name</code> (required)</li>
+<li><code>vendor_type</code> (optional) — <code>csp</code>, <code>saas</code>, <code>managed_service</code>, <code>internal</code></li>
+<li><code>description</code> (optional)</li>
+<li><code>authorization_level</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> Created vendor record.</p>
+<hr>
+<h3 id="pretorin_get_vendor"><a class="header" href="#pretorin_get_vendor">pretorin_get_vendor</a></h3>
+<p>Get vendor details.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>vendor_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Vendor metadata and linked documents.</p>
+<hr>
+<h3 id="pretorin_update_vendor"><a class="header" href="#pretorin_update_vendor">pretorin_update_vendor</a></h3>
+<p>Update vendor fields.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>vendor_id</code> (required)</li>
+<li><code>name</code> (optional)</li>
+<li><code>description</code> (optional)</li>
+<li><code>vendor_type</code> (optional)</li>
+<li><code>authorization_level</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> Updated vendor record.</p>
+<hr>
+<h3 id="pretorin_delete_vendor"><a class="header" href="#pretorin_delete_vendor">pretorin_delete_vendor</a></h3>
+<p>Delete a vendor entity.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>vendor_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Deletion confirmation.</p>
+<hr>
+<h3 id="pretorin_upload_vendor_document"><a class="header" href="#pretorin_upload_vendor_document">pretorin_upload_vendor_document</a></h3>
+<p>Upload vendor evidence documents (SOC 2 reports, CRMs, FedRAMP packages).</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>vendor_id</code> (required)</li>
+<li><code>file_path</code> (required)</li>
+<li><code>name</code> (optional)</li>
+<li><code>description</code> (optional)</li>
+<li><code>attestation_type</code> (optional) — <code>self_attested</code>, <code>third_party_attestation</code>, <code>vendor_provided</code></li>
+</ul>
+<p><strong>Returns:</strong> Uploaded document record.</p>
+<hr>
+<h3 id="pretorin_list_vendor_documents"><a class="header" href="#pretorin_list_vendor_documents">pretorin_list_vendor_documents</a></h3>
+<p>List documents linked to a vendor.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>vendor_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Document list with metadata.</p>
+<hr>
+<h3 id="pretorin_link_evidence_to_vendor"><a class="header" href="#pretorin_link_evidence_to_vendor">pretorin_link_evidence_to_vendor</a></h3>
+<p>Link an evidence item to a vendor with attestation type.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>evidence_id</code> (required)</li>
+<li><code>vendor_id</code> (required)</li>
+<li><code>attestation_type</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> Link confirmation.</p>
+<hr>
+<h2 id="inheritance--responsibility"><a class="header" href="#inheritance--responsibility">Inheritance &amp; Responsibility</a></h2>
+<h3 id="pretorin_set_control_responsibility"><a class="header" href="#pretorin_set_control_responsibility">pretorin_set_control_responsibility</a></h3>
+<p>Mark a control as inherited or shared from a provider.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>vendor_id</code> (required)</li>
+<li><code>responsibility_type</code> (required) — <code>inherited</code> or <code>shared</code></li>
+</ul>
+<p><strong>Returns:</strong> Created responsibility edge.</p>
+<hr>
+<h3 id="pretorin_get_control_responsibility"><a class="header" href="#pretorin_get_control_responsibility">pretorin_get_control_responsibility</a></h3>
+<p>Check if a control is inherited and from where.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Responsibility edge details or null.</p>
+<hr>
+<h3 id="pretorin_remove_control_responsibility"><a class="header" href="#pretorin_remove_control_responsibility">pretorin_remove_control_responsibility</a></h3>
+<p>Convert an inherited control back to system-specific.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Removal confirmation.</p>
+<hr>
+<h3 id="pretorin_generate_inheritance_narrative"><a class="header" href="#pretorin_generate_inheritance_narrative">pretorin_generate_inheritance_narrative</a></h3>
+<p>AI-generate an inheritance narrative grounded in vendor documentation.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+<li><code>vendor_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Draft inheritance narrative text.</p>
+<hr>
+<h3 id="pretorin_get_stale_edges"><a class="header" href="#pretorin_get_stale_edges">pretorin_get_stale_edges</a></h3>
+<p>Identify controls where the source narrative changed but the inherited control hasn’t been updated.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> List of stale inheritance edges with source change timestamps.</p>
+<hr>
+<h3 id="pretorin_sync_stale_edges"><a class="header" href="#pretorin_sync_stale_edges">pretorin_sync_stale_edges</a></h3>
+<p>Bulk update inherited controls by regenerating narratives from latest source.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Sync results with per-control status.</p>
+<hr>
+<h2 id="stig--cci"><a class="header" href="#stig--cci">STIG &amp; CCI</a></h2>
+<h3 id="pretorin_list_stigs"><a class="header" href="#pretorin_list_stigs">pretorin_list_stigs</a></h3>
+<p>List STIG benchmarks with optional filters.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>technology_area</code> (optional) — Filter by technology area</li>
+<li><code>product</code> (optional) — Filter by product name</li>
+<li><code>limit</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> STIG benchmark list with IDs, titles, and rule counts.</p>
+<hr>
+<h3 id="pretorin_get_stig"><a class="header" href="#pretorin_get_stig">pretorin_get_stig</a></h3>
+<p>Get STIG benchmark detail.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>stig_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Benchmark metadata including title, version, release info, and severity breakdown.</p>
+<hr>
+<h3 id="pretorin_list_stig_rules"><a class="header" href="#pretorin_list_stig_rules">pretorin_list_stig_rules</a></h3>
+<p>List rules for a STIG benchmark.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>stig_id</code> (required)</li>
+<li><code>severity</code> (optional) — Filter by severity (high, medium, low)</li>
+<li><code>cci</code> (optional) — Filter by CCI ID</li>
+<li><code>limit</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> Rule list with IDs, titles, severities, and linked CCIs.</p>
+<hr>
+<h3 id="pretorin_get_stig_rule"><a class="header" href="#pretorin_get_stig_rule">pretorin_get_stig_rule</a></h3>
+<p>Get full STIG rule detail.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>rule_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Check text, fix text, discussion, and linked CCIs.</p>
+<hr>
+<h3 id="pretorin_list_ccis"><a class="header" href="#pretorin_list_ccis">pretorin_list_ccis</a></h3>
+<p>List CCIs with optional filters.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>control</code> (optional) — Filter by NIST 800-53 control ID</li>
+<li><code>status</code> (optional)</li>
+<li><code>limit</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> CCI list with definitions and linked controls.</p>
+<hr>
+<h3 id="pretorin_get_cci"><a class="header" href="#pretorin_get_cci">pretorin_get_cci</a></h3>
+<p>Get CCI detail with linked SRGs and STIG rules.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>cci_id</code> (required) — e.g., <code>CCI-000015</code></li>
+</ul>
+<p><strong>Returns:</strong> CCI definition, linked SRGs, and linked STIG rules.</p>
+<hr>
+<h3 id="pretorin_get_cci_chain"><a class="header" href="#pretorin_get_cci_chain">pretorin_get_cci_chain</a></h3>
+<p>Get the full traceability chain: Control -&gt; CCIs -&gt; SRGs -&gt; STIG rules.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>control_id</code> (required) — NIST 800-53 control ID</li>
+<li><code>system_id</code> (optional) — Include test results when provided</li>
+</ul>
+<p><strong>Returns:</strong> Complete traceability from control requirements to technical checks.</p>
+<hr>
+<h3 id="pretorin_get_cci_status"><a class="header" href="#pretorin_get_cci_status">pretorin_get_cci_status</a></h3>
+<p>Get CCI-level compliance rollup for a system.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Per-CCI pass/fail status.</p>
+<hr>
+<h3 id="pretorin_get_stig_applicability"><a class="header" href="#pretorin_get_stig_applicability">pretorin_get_stig_applicability</a></h3>
+<p>Get which STIGs apply to a system based on its profile.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> List of applicable STIG benchmarks.</p>
+<hr>
+<h3 id="pretorin_infer_stigs"><a class="header" href="#pretorin_infer_stigs">pretorin_infer_stigs</a></h3>
+<p>AI-infer applicable STIGs from the system’s profile.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Recommended STIG benchmarks with reasoning.</p>
+<hr>
+<h3 id="pretorin_get_test_manifest"><a class="header" href="#pretorin_get_test_manifest">pretorin_get_test_manifest</a></h3>
+<p>Fetch the test manifest (applicable STIGs + rules) for a system.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+</ul>
+<p><strong>Returns:</strong> Test manifest with applicable rules and scanner assignments.</p>
+<hr>
+<h3 id="pretorin_submit_test_results"><a class="header" href="#pretorin_submit_test_results">pretorin_submit_test_results</a></h3>
+<p>Upload STIG scan results to the platform.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (required)</li>
+<li><code>results</code> (required) — Scan result payload</li>
+</ul>
+<p><strong>Returns:</strong> Submission confirmation with per-result status.</p>
 
                     </main>
 

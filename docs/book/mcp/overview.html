@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-a8894136.js";
+            window.path_to_searchindex_js = "../searchindex-14ccf727.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-8de013d0.js"></script>
+        <script src="../toc-9dfb40f5.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -201,6 +201,9 @@
 </code></pre>
 <h2 id="scope"><a class="header" href="#scope">Scope</a></h2>
 <p>Scoped compliance execution tools on the MCP server run inside exactly one <code>system + framework</code> pair at a time. Set the active scope with <code>pretorin context set</code>, or pass both values explicitly. If a request spans multiple frameworks or systems, split it into separate runs.</p>
+<p>Before running write-heavy MCP workflows from a shell or GUI wrapper, prefer validating the stored scope with:</p>
+<pre><code class="language-bash">pretorin context show --quiet --check
+</code></pre>
 <h2 id="tool-categories"><a class="header" href="#tool-categories">Tool Categories</a></h2>
 <p>The 23 MCP tools are organized into categories:</p>
 <div class="table-wrapper">

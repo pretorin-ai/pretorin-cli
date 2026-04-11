@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-a8894136.js";
+            window.path_to_searchindex_js = "../searchindex-14ccf727.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-8de013d0.js"></script>
+        <script src="../toc-9dfb40f5.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -210,6 +210,12 @@ pretorin --version
 <p>For <code>uv tool</code> or <code>pipx</code> installations, find the path:</p>
 <pre><code class="language-bash">command -v pretorin
 </code></pre>
+</li>
+<li>
+<p>If the MCP client can talk to Pretorin but scoped write tools behave strangely, validate the stored CLI context:</p>
+<pre><code class="language-bash">pretorin context show --quiet --check
+</code></pre>
+<p>This catches deleted systems, detached frameworks, and other stale local scope before you debug the MCP client itself.</p>
 </li>
 </ol>
 <h2 id="server-crashes-or-hangs"><a class="header" href="#server-crashes-or-hangs">Server Crashes or Hangs</a></h2>

@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-a8894136.js";
+            window.path_to_searchindex_js = "../searchindex-14ccf727.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-8de013d0.js"></script>
+        <script src="../toc-9dfb40f5.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -182,12 +182,33 @@
                     <main>
                         <h1 id="narrative-commands"><a class="header" href="#narrative-commands">Narrative Commands</a></h1>
 <p>The <code>narrative</code> command group manages implementation narratives for controls. Narratives describe how a specific control is implemented within your system.</p>
+<h2 id="create-local-narrative"><a class="header" href="#create-local-narrative">Create Local Narrative</a></h2>
+<pre><code class="language-bash">pretorin narrative create ac-02 fedramp-moderate \
+  -c "- RBAC enforced via IdP\n\n\`\`\`yaml\nroles:\n  admin: ...\n\`\`\`"
+</code></pre>
+<p>Creates a local markdown file at <code>narratives/&lt;framework&gt;/&lt;control&gt;/&lt;slug&gt;.md</code> with YAML frontmatter. Markdown is validated at create time (same rules as push).</p>
+<p>Options:</p>
+<ul>
+<li><code>--content / -c</code> — Narrative content (required)</li>
+<li><code>--name / -n</code> — Custom name (defaults to <code>&lt;control&gt;-&lt;framework&gt;</code>)</li>
+<li><code>--ai-generated</code> — Mark the narrative as AI-generated</li>
+</ul>
+<h2 id="list-local-narratives"><a class="header" href="#list-local-narratives">List Local Narratives</a></h2>
+<pre><code class="language-bash">pretorin narrative list
+pretorin narrative list --framework fedramp-moderate
+</code></pre>
+<p>Displays a table of local narrative files: Control, Framework, Name, AI Generated, Synced.</p>
+<h2 id="push-narratives"><a class="header" href="#push-narratives">Push Narratives</a></h2>
+<pre><code class="language-bash">pretorin narrative push --dry-run
+pretorin narrative push
+</code></pre>
+<p>Batch-pushes all unsynced local narratives to the platform. After a successful push, the local file’s <code>platform_synced</code> frontmatter is set to <code>true</code>.</p>
 <h2 id="get-current-narrative"><a class="header" href="#get-current-narrative">Get Current Narrative</a></h2>
 <pre><code class="language-bash">pretorin narrative get ac-02 fedramp-moderate --system "My System"
 </code></pre>
 <p>Returns the current narrative text, status, and AI confidence metadata when present.</p>
-<h2 id="push-a-narrative-file"><a class="header" href="#push-a-narrative-file">Push a Narrative File</a></h2>
-<pre><code class="language-bash">pretorin narrative push ac-02 fedramp-moderate "My System" narrative-ac02.md
+<h2 id="push-a-single-file-legacy"><a class="header" href="#push-a-single-file-legacy">Push a Single File (Legacy)</a></h2>
+<pre><code class="language-bash">pretorin narrative push-file ac-02 fedramp-moderate "My System" narrative-ac02.md
 </code></pre>
 <p>Reads a markdown or text file and submits it as the implementation narrative for the specified control.</p>
 <h2 id="markdown-quality-requirements"><a class="header" href="#markdown-quality-requirements">Markdown Quality Requirements</a></h2>
@@ -198,7 +219,7 @@
 <li>At least <strong>one structural element</strong> (code block, table, or list)</li>
 <li><strong>No markdown images</strong> (temporarily disabled pending platform image upload support)</li>
 </ul>
-<p>These requirements are validated before push.</p>
+<p>These requirements are validated at create time and before push.</p>
 <h2 id="generating-narratives-with-ai"><a class="header" href="#generating-narratives-with-ai">Generating Narratives with AI</a></h2>
 <p>To generate narratives using the agent runtime:</p>
 <pre><code class="language-bash">pretorin agent run --skill narrative-generation "Generate narrative for AC-02"

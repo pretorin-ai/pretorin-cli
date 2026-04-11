@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-a8894136.js";
+            window.path_to_searchindex_js = "../searchindex-14ccf727.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-8de013d0.js"></script>
+        <script src="../toc-9dfb40f5.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -213,15 +213,18 @@ pretorin context set --system "My Application" --framework fedramp-moderate
 <p>Or use a predefined skill:</p>
 <pre><code class="language-bash">pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
 </code></pre>
-<h2 id="connect-your-ai-tool-via-mcp"><a class="header" href="#connect-your-ai-tool-via-mcp">Connect Your AI Tool via MCP</a></h2>
-<p>If you use Claude Code, Codex CLI, Cursor, or another MCP-compatible AI tool:</p>
-<pre><code class="language-bash"># Claude Code
+<h2 id="connect-your-ai-tool"><a class="header" href="#connect-your-ai-tool">Connect Your AI Tool</a></h2>
+<p>If you use Claude Code, Codex CLI, or another MCP-compatible AI tool:</p>
+<pre><code class="language-bash"># Install the skill (teaches your agent how to use Pretorin tools)
+pretorin skill install
+
+# Add the MCP server (Claude Code example)
 claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 
 # Then ask your AI agent about compliance
 # "What controls are in the Access Control family for FedRAMP Moderate?"
 </code></pre>
-<p>See the <a href="../mcp/setup.html">MCP Setup Guides</a> for other tools.</p>
+<p>Check install status with <code>pretorin skill status</code>. See the <a href="../mcp/setup.html">MCP Setup Guides</a> for other tools.</p>
 <h2 id="run-the-demo-walkthrough"><a class="header" href="#run-the-demo-walkthrough">Run the Demo Walkthrough</a></h2>
 <p>An interactive demo script is included in the repository:</p>
 <pre><code class="language-bash">bash scripts/demo-walkthrough.sh
