@@ -41,7 +41,7 @@ $ pretorin whoami
 │ Status: Authenticated                                                        │
 │ API Key: 4MAS****...9v7o                                                     │
 │ API URL: https://platform.pretorin.com/api/v1                                │
-│ Frameworks Available: 8                                                      │
+│ Frameworks Available: 30+                                                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -76,10 +76,12 @@ $ pretorin frameworks list
 │             │ 5           │             │              │          │          │
 └─────────────┴─────────────┴─────────────┴──────────────┴──────────┴──────────┘
 
-Total: 8 framework(s)
+Total: 30+ framework(s)
 ```
 
 The **ID** column is what you'll use in all other commands.
+
+The exact total and available framework set can vary as the platform catalog expands. Use `pretorin frameworks list` to see the live catalog available to your account.
 
 ### Get Framework Details
 

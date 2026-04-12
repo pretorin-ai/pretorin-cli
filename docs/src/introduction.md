@@ -2,7 +2,7 @@
 
 > **Beta** — Pretorin is currently in closed beta. Framework and control browsing works for authenticated users. Platform write features (evidence, narratives, monitoring) require a beta code. [Sign up for early access](https://pretorin.com/early-access/).
 
-Pretorin gives developers and AI agents direct access to compliance data, implementation context, and evidence workflows. The primary surfaces are the CLI, the MCP server, and skill-driven agent workflows. It supports NIST 800-53, NIST 800-171, FedRAMP, and CMMC frameworks with over 700 controls across 8 framework profiles.
+Pretorin gives developers and AI agents direct access to compliance data, implementation context, and evidence workflows. The primary surfaces are the CLI, the MCP server, and skill-driven agent workflows. It supports 30+ compliance frameworks and profiles, including NIST 800-53, NIST 800-171, FedRAMP, and CMMC.
 
 The CLI and MCP tooling in this repository are open source under Apache-2.0. Access to Pretorin-hosted platform services, APIs, and account-scoped data is authenticated and governed separately by the applicable platform terms.
 

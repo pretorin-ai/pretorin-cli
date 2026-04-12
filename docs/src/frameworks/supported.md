@@ -1,8 +1,10 @@
 # Supported Frameworks
 
-Pretorin provides access to 8 compliance framework profiles spanning federal, contractor, and defense industrial base requirements.
+Pretorin provides access to 30+ compliance frameworks and profiles spanning federal, contractor, defense industrial base, and related compliance requirements.
 
-## Framework Overview
+## Representative Frameworks
+
+The table below highlights a representative subset of commonly used frameworks in Pretorin. Always call `pretorin frameworks list` to get the current catalog from the API for your environment.
 
 | ID | Title | Version | Families | Controls |
 |----|-------|---------|----------|----------|
@@ -14,8 +16,6 @@ Pretorin provides access to 8 compliance framework profiles spanning federal, co
 | `cmmc-l1` | CMMC 2.0 Level 1 (Foundational) | 2.0 | 6 | 17 |
 | `cmmc-l2` | CMMC 2.0 Level 2 (Advanced) | 2.0 | 14 | 110 |
 | `cmmc-l3` | CMMC 2.0 Level 3 (Expert) | 2.0 | 10 | 24 |
-
-Always call `pretorin frameworks list` to get the current list from the API.
 
 ## Framework Relationships
 

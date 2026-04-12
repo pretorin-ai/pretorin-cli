@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-829ba4b6.js";
+            window.path_to_searchindex_js = "searchindex-029c623e.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-9dfb40f5.js"></script>
@@ -182,7 +182,7 @@
 <blockquote>
 <p><strong>Beta</strong> — Pretorin is currently in closed beta. Framework and control browsing works for authenticated users. Platform write features (evidence, narratives, monitoring) require a beta code. <a href="https://pretorin.com/early-access/">Sign up for early access</a>.</p>
 </blockquote>
-<p>Pretorin gives developers and AI agents direct access to compliance data, implementation context, and evidence workflows. The primary surfaces are the CLI, the MCP server, and skill-driven agent workflows. It supports NIST 800-53, NIST 800-171, FedRAMP, and CMMC frameworks with over 700 controls across 8 framework profiles.</p>
+<p>Pretorin gives developers and AI agents direct access to compliance data, implementation context, and evidence workflows. The primary surfaces are the CLI, the MCP server, and skill-driven agent workflows. It supports 30+ compliance frameworks and profiles, including NIST 800-53, NIST 800-171, FedRAMP, and CMMC.</p>
 <p>The CLI and MCP tooling in this repository are open source under Apache-2.0. Access to Pretorin-hosted platform services, APIs, and account-scoped data is authenticated and governed separately by the applicable platform terms.</p>
 <h2 id="start-here"><a class="header" href="#start-here">Start Here</a></h2>
 <p>Choose the path that matches how you work:</p>
@@ -403,9 +403,10 @@ claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 │ ...         │             │             │              │          │          │
 └─────────────┴─────────────┴─────────────┴──────────────┴──────────┴──────────┘
 
-Total: 8 framework(s)
+Total: 30+ framework(s)
 </code></pre>
 <p>The <strong>ID</strong> column is what you use in all other commands.</p>
+<p>The exact total and available framework set can vary as the platform catalog expands. Use <code>pretorin frameworks list</code> to see the live catalog available to your account.</p>
 <h2 id="get-framework-details"><a class="header" href="#get-framework-details">Get Framework Details</a></h2>
 <pre><code class="language-bash">$ pretorin frameworks get fedramp-moderate
 [°~°] Gathering framework details...
@@ -2624,8 +2625,9 @@ pretorin agent run --skill security-review "Review this codebase for AC-02 cover
 <p>This isolation ensures the agent runtime never interferes with any user-installed Codex instances.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="supported-frameworks"><a class="header" href="#supported-frameworks">Supported Frameworks</a></h1>
-<p>Pretorin provides access to 8 compliance framework profiles spanning federal, contractor, and defense industrial base requirements.</p>
-<h2 id="framework-overview"><a class="header" href="#framework-overview">Framework Overview</a></h2>
+<p>Pretorin provides access to 30+ compliance frameworks and profiles spanning federal, contractor, defense industrial base, and related compliance requirements.</p>
+<h2 id="representative-frameworks"><a class="header" href="#representative-frameworks">Representative Frameworks</a></h2>
+<p>The table below highlights a representative subset of commonly used frameworks in Pretorin. Always call <code>pretorin frameworks list</code> to get the current catalog from the API for your environment.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -2643,7 +2645,6 @@ pretorin agent run --skill security-review "Review this codebase for AC-02 cover
 </tbody>
 </table>
 </div>
-<p>Always call <code>pretorin frameworks list</code> to get the current list from the API.</p>
 <h2 id="framework-relationships"><a class="header" href="#framework-relationships">Framework Relationships</a></h2>
 <p>Understanding how frameworks relate helps with cross-compliance:</p>
 <pre><code>NIST 800-53 Rev 5 (full catalog, 324 controls)

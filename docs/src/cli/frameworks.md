@@ -18,10 +18,12 @@ $ pretorin frameworks list
 │ ...         │             │             │              │          │          │
 └─────────────┴─────────────┴─────────────┴──────────────┴──────────┴──────────┘
 
-Total: 8 framework(s)
+Total: 30+ framework(s)
 ```
 
 The **ID** column is what you use in all other commands.
+
+The exact total and available framework set can vary as the platform catalog expands. Use `pretorin frameworks list` to see the live catalog available to your account.
 
 ## Get Framework Details
 
