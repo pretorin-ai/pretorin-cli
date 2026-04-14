@@ -34,6 +34,8 @@ pretorin notes list ac-02 fedramp-moderate
 
 Search your codebase and connected systems for evidence. Only document what is directly observable — never assume or fabricate implementation details.
 
+Treat existing Pretorin narratives, notes, and status fields as a starting point, not proof that a control gap exists. Before writing a narrative update or gap note, inspect the relevant implementation in the workspace and connected systems. If those sources show stronger implementation than the current platform record, update the narrative to reflect the observed implementation and record any remaining evidence gap separately.
+
 ### 4. Draft Updates
 
 Prepare three types of updates:

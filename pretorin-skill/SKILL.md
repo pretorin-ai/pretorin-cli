@@ -203,12 +203,14 @@ For any control update, follow this exact sequence:
    - `pretorin_get_narrative` or `pretorin_get_control_implementation`
    - `pretorin_search_evidence`
    - `pretorin_get_control_notes`
-3. Collect only observable facts from the codebase and connected MCP systems
-4. Draft updates:
+3. Treat existing Pretorin narratives, notes, and status fields as a starting point, not proof that a control gap exists
+4. Inspect the relevant implementation in the workspace and connected MCP systems, then collect only observable facts
+5. If code or connected systems show stronger implementation than the current platform record, update the narrative to reflect the observed implementation and record any remaining evidence gap separately
+6. Draft updates:
    - Narrative update (include TODO placeholders for unknowns)
    - Evidence upserts
    - Gap notes for unresolved/manual items
-5. Push updates:
+7. Push updates:
    - `pretorin_update_narrative`
    - `pretorin_create_evidence` (dedupe on by default; pass `control_id` whenever possible so the evidence auto-links)
    - `pretorin_link_evidence` for any additional controls that should reference the same evidence item
@@ -235,6 +237,9 @@ When the user wants drafts before any platform writes:
 
 - Never claim an implementation detail unless it is directly observed.
 - Mark uncertain or missing information as unknown.
+- Existing Pretorin narratives, notes, and status values are not by themselves evidence that a gap exists.
+- Before writing a narrative update or gap note, inspect the relevant implementation in the workspace and connected MCP systems.
+- If observed implementation is stronger than the current platform record, update the narrative to match the observed implementation and note any remaining evidence gap separately.
 - Use auditor-friendly markdown with no section headings.
 - Narratives must include at least two rich markdown elements and at least one structural element (`code block`, `table`, or `list`).
 - Evidence descriptions must include at least one rich markdown element.

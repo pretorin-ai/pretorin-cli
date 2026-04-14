@@ -77,6 +77,10 @@ See [Skills](../agent/skills.md) for more on agent-powered narrative generation.
 
 Generated narratives must only document observable facts. For missing information, use TODO placeholder blocks:
 
+- Treat existing Pretorin narratives, notes, and status fields as a starting point, not proof that a control gap exists.
+- Before writing a narrative update or gap note, inspect the relevant implementation in the workspace and connected systems.
+- If observed implementation is stronger than the current platform record, update the narrative to match the observed implementation and record any remaining evidence gap separately.
+
 ```text
 [[PRETORIN_TODO]]
 missing_item: <what is missing>
