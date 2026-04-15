@@ -8,21 +8,17 @@ api_base_url setter, openai properties, codex paths, etc.)
 from __future__ import annotations
 
 import inspect
-import json
 from pathlib import Path
 
 import pytest
 
 from pretorin.client import config as config_module
 from pretorin.client.config import (
-    CONFIG_DIR,
-    CONFIG_FILE,
     DEFAULT_MODEL_API_BASE_URL,
     DEFAULT_PLATFORM_API_BASE_URL,
     Config,
     _as_bool,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -385,3 +381,51 @@ class TestInvalidJsonFile:
         config_file.write_text("{invalid json!!!")
         cfg = Config()
         assert cfg.to_dict() == {}
+
+
+# ---------------------------------------------------------------------------
+# CI/CD env var context overrides
+# ---------------------------------------------------------------------------
+
+
+class TestEnvVarContextOverrides:
+    def test_system_id_from_env(self, isolated_config: Path, monkeypatch):
+        # Store a value in config
+        config_file = isolated_config / "config.json"
+        config_file.write_text('{"active_system_id": "stored-sys"}')
+        monkeypatch.setenv("PRETORIN_SYSTEM_ID", "env-sys")
+        cfg = Config()
+        assert cfg.get("active_system_id") == "env-sys"
+
+    def test_framework_id_from_env(self, isolated_config: Path, monkeypatch):
+        config_file = isolated_config / "config.json"
+        config_file.write_text('{"active_framework_id": "stored-fw"}')
+        monkeypatch.setenv("PRETORIN_FRAMEWORK_ID", "env-fw")
+        cfg = Config()
+        assert cfg.get("active_framework_id") == "env-fw"
+
+    def test_env_takes_precedence_over_stored(self, isolated_config: Path, monkeypatch):
+        config_file = isolated_config / "config.json"
+        config_file.write_text('{"active_system_id": "stored", "active_framework_id": "stored-fw"}')
+        monkeypatch.setenv("PRETORIN_SYSTEM_ID", "from-env")
+        monkeypatch.setenv("PRETORIN_FRAMEWORK_ID", "env-fw")
+        cfg = Config()
+        assert cfg.active_system_id == "from-env"
+        assert cfg.active_framework_id == "env-fw"
+
+    def test_falls_back_to_stored_without_env(self, isolated_config: Path, monkeypatch):
+        config_file = isolated_config / "config.json"
+        config_file.write_text('{"active_system_id": "stored-sys", "active_framework_id": "stored-fw"}')
+        monkeypatch.delenv("PRETORIN_SYSTEM_ID", raising=False)
+        monkeypatch.delenv("PRETORIN_FRAMEWORK_ID", raising=False)
+        cfg = Config()
+        assert cfg.active_system_id == "stored-sys"
+        assert cfg.active_framework_id == "stored-fw"
+
+    def test_empty_env_var_falls_back(self, isolated_config: Path, monkeypatch):
+        config_file = isolated_config / "config.json"
+        config_file.write_text('{"active_system_id": "stored"}')
+        monkeypatch.setenv("PRETORIN_SYSTEM_ID", "")
+        cfg = Config()
+        # Empty string is falsy, so falls back to stored
+        assert cfg.get("active_system_id") == "stored"

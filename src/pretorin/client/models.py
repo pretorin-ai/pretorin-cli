@@ -60,7 +60,7 @@ class ControlFamilySummary(BaseModel):
 
     id: str
     title: str
-    class_type: str = Field(alias="class")
+    class_type: str | None = Field(default=None, alias="class")
     controls_count: int = 0
     ai_context: dict[str, Any] | None = None
 

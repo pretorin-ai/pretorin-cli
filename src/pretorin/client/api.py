@@ -41,6 +41,13 @@ from pretorin.workflows.markdown_quality import ensure_audit_markdown
 logger = logging.getLogger(__name__)
 
 
+def _build_provenance(system_id: str, framework_id: str | None) -> dict[str, Any]:
+    """Build write provenance metadata (lazy import to avoid circular deps)."""
+    from pretorin.attestation import build_write_provenance
+
+    return build_write_provenance(system_id, framework_id or "")
+
+
 class PretorianClientError(Exception):
     """Base exception for Pretorian client errors."""
 
@@ -654,6 +661,7 @@ class PretorianClient:
         payload = evidence.model_dump(exclude_none=True)
         if payload.get("control_id"):
             payload["control_id"] = normalize_control_id(payload["control_id"])
+        payload["_provenance"] = _build_provenance(system_id, evidence.framework_id)
         data = await self._request(
             "POST",
             f"/systems/{system_id}/evidence",
@@ -677,6 +685,7 @@ class PretorianClient:
                 }
                 for item in items
             ],
+            "_provenance": _build_provenance(system_id, framework_id),
         }
         data = await self._request("POST", f"/systems/{system_id}/evidence/batch", json=payload)
         return EvidenceBatchResponse(**data)
@@ -702,6 +711,7 @@ class PretorianClient:
         payload: dict[str, Any] = {
             "control_id": normalize_control_id(control_id),
             "framework_id": framework_id,
+            "_provenance": _build_provenance(system_id, framework_id),
         }
         data = await self._request("POST", f"/systems/{system_id}/evidence/{evidence_id}/link", json=payload)
         return data
@@ -810,11 +820,16 @@ class PretorianClient:
         """
         ensure_audit_markdown(narrative, artifact_type="narrative")
         normalized_control_id = self._normalize_control_id(control_id)
+        payload = {
+            "narrative": narrative,
+            "is_ai_generated": is_ai_generated,
+            "_provenance": _build_provenance(system_id, framework_id),
+        }
         data = await self._request(
             "POST",
             f"/systems/{system_id}/controls/{normalized_control_id}/narrative",
             params={"framework_id": framework_id},
-            json={"narrative": narrative, "is_ai_generated": is_ai_generated},
+            json=payload,
         )
         return data
 
@@ -893,7 +908,11 @@ class PretorianClient:
         Returns:
             Created note response.
         """
-        payload = {"content": content, "source": source}
+        payload: dict[str, Any] = {
+            "content": content,
+            "source": source,
+            "_provenance": _build_provenance(system_id, framework_id),
+        }
         normalized_control_id = self._normalize_control_id(control_id)
         data = await self._request(
             "POST",
@@ -941,11 +960,15 @@ class PretorianClient:
         """
         params: dict[str, Any] = {"framework_id": framework_id}
         normalized_control_id = self._normalize_control_id(control_id)
+        payload = {
+            "status": status,
+            "_provenance": _build_provenance(system_id, framework_id),
+        }
         data = await self._request(
             "POST",
             f"/systems/{system_id}/controls/{normalized_control_id}/status",
             params=params,
-            json={"status": status},
+            json=payload,
         )
         return data
 
@@ -970,6 +993,9 @@ class PretorianClient:
         payload = event.model_dump(exclude_none=True)
         if payload.get("control_id"):
             payload["control_id"] = normalize_control_id(payload["control_id"])
+        event_data = payload.get("event_data", {})
+        event_data["_provenance"] = _build_provenance(system_id, event.framework_id)
+        payload["event_data"] = event_data
 
         data = await self._request(
             "POST",

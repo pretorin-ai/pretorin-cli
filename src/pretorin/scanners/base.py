@@ -7,7 +7,6 @@ checks against STIG rules, and return standardized TestResult objects.
 
 from __future__ import annotations
 
-import asyncio
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -103,25 +102,10 @@ class ScannerBase(ABC):
         ...
 
     async def _run_command(self, cmd: list[str], timeout: int = 300) -> tuple[int, str, str]:
-        """
-        Run a shell command asynchronously.
+        """Run a shell command asynchronously.
 
         Returns (return_code, stdout, stderr).
         """
-        try:
-            proc = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-            return (
-                proc.returncode or 0,
-                stdout.decode("utf-8", errors="replace"),
-                stderr.decode("utf-8", errors="replace"),
-            )
-        except asyncio.TimeoutError:
-            proc.kill()
-            return -1, "", f"Command timed out after {timeout}s"
-        except FileNotFoundError:
-            return -1, "", f"Command not found: {cmd[0]}"
+        from pretorin.utils import run_command
+
+        return await run_command(cmd, timeout=timeout)
