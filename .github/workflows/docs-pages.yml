@@ -23,6 +23,10 @@ jobs:
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          # Pin toolchain so mdbook output stays deterministic across runs.
+          # Keep in sync with .github/workflows/test.yml.
+          toolchain: 1.94.1
 
       - name: Install mdBook
         run: cargo install mdbook --version 0.5.2 --locked

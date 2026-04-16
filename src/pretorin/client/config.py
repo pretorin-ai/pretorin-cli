@@ -22,6 +22,9 @@ ENV_DISABLE_UPDATE_CHECK = "PRETORIN_DISABLE_UPDATE_CHECK"
 ENV_OPENAI_API_KEY = "OPENAI_API_KEY"
 ENV_OPENAI_BASE_URL = "OPENAI_BASE_URL"
 ENV_OPENAI_MODEL = "OPENAI_MODEL"
+ENV_SYSTEM_ID = "PRETORIN_SYSTEM_ID"
+ENV_FRAMEWORK_ID = "PRETORIN_FRAMEWORK_ID"
+ENV_SOURCE_PROVIDERS = "PRETORIN_SOURCE_PROVIDERS"
 
 
 def _as_bool(value: Any) -> bool:
@@ -84,6 +87,21 @@ class Config:
             env_value = os.environ.get(ENV_DISABLE_UPDATE_CHECK)
             if env_value is not None:
                 return env_value
+        elif key == "active_system_id":
+            env_value = os.environ.get(ENV_SYSTEM_ID)
+            if env_value:
+                return env_value
+        elif key == "active_framework_id":
+            env_value = os.environ.get(ENV_FRAMEWORK_ID)
+            if env_value:
+                return env_value
+        elif key == "source_providers":
+            env_value = os.environ.get(ENV_SOURCE_PROVIDERS)
+            if env_value:
+                try:
+                    return json.loads(env_value)
+                except json.JSONDecodeError:
+                    pass
 
         return self._config.get(key, default)
 
@@ -235,6 +253,11 @@ class Config:
             self.delete("active_framework_id")
         else:
             self.set("active_framework_id", value)
+
+    @property
+    def source_providers(self) -> list[dict[str, Any]] | None:
+        """Source provider config. None means use auto-detect defaults."""
+        return self.get("source_providers")
 
     @property
     def disable_update_check(self) -> bool:

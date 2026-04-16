@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+from datetime import datetime, timezone
 from typing import Any
 
 import typer
@@ -15,6 +16,9 @@ from rich.table import Table
 
 from pretorin.cli.output import is_json_mode, print_json
 from pretorin.scope import ExecutionScope
+
+# Lazy imports for attestation to avoid circular deps at module level.
+# Used in: resolve_execution_context, _context_verify, _context_set, context_clear.
 
 console = Console()
 
@@ -157,6 +161,43 @@ def _show_context_payload(payload: dict[str, Any], *, quiet: bool = False) -> No
     )
 
 
+def _enforce_source_attestation(
+    system_id: str,
+    framework_id: str,
+    allow_unverified_sources: bool,
+) -> None:
+    """Block writes when the verified source snapshot shows a mismatch."""
+    if allow_unverified_sources:
+        return
+
+    from pretorin.attestation import (
+        VerificationStatus,
+        check_snapshot_validity,
+        load_snapshot,
+    )
+    from pretorin.client.config import Config
+
+    snapshot = load_snapshot(system_id, framework_id)
+    if snapshot is None:
+        return
+
+    config = Config()
+    status = check_snapshot_validity(
+        snapshot,
+        system_id=system_id,
+        framework_id=framework_id,
+        api_base_url=config.platform_api_base_url,
+    )
+    if status == VerificationStatus.MISMATCH:
+        from pretorin.client.api import PretorianClientError
+
+        raise PretorianClientError(
+            "Source attestation mismatch: the verified context no longer matches "
+            "the current environment. Run 'pretorin context verify' to re-verify, "
+            "or pass allow_unverified_sources to override."
+        )
+
+
 async def resolve_execution_context(
     client: Any,
     *,
@@ -165,6 +206,7 @@ async def resolve_execution_context(
     scope: ExecutionScope | None = None,
     enforce_active_context: bool = False,
     allow_scope_override: bool = False,
+    allow_unverified_sources: bool = False,
 ) -> tuple[str, str]:
     """Resolve and validate a single execution scope against the platform.
 
@@ -221,6 +263,7 @@ async def resolve_execution_context(
                     f"'{_format_scope_label(system_id=system_id, framework_id=framework_id)}' "
                     "without explicit scope override."
                 )
+            _enforce_source_attestation(system_id, framework_id, allow_unverified_sources)
             return system_id, framework_id
 
         active_system_id = config.active_system_id
@@ -243,6 +286,8 @@ async def resolve_execution_context(
                     f"'{requested_scope_label}' "
                     "without explicit scope override."
                 )
+    if enforce_active_context:
+        _enforce_source_attestation(system_id, framework_id, allow_unverified_sources)
     return system_id, framework_id
 
 
@@ -391,17 +436,24 @@ def context_set(
         "-f",
         help="Framework ID (e.g., fedramp-moderate).",
     ),
+    no_verify: bool = typer.Option(
+        False,
+        "--no-verify",
+        help="Skip source verification after setting context.",
+    ),
 ) -> None:
     """Set the active system and framework context.
 
     If no flags are provided, runs in interactive mode.
+    After setting context, source verification runs automatically.
     """
-    asyncio.run(_context_set(system=system, framework=framework))
+    asyncio.run(_context_set(system=system, framework=framework, no_verify=no_verify))
 
 
 async def _context_set(
     system: str | None,
     framework: str | None,
+    no_verify: bool = False,
 ) -> None:
     """Set context interactively or from flags."""
     from pretorin.cli.commands import require_auth
@@ -506,6 +558,16 @@ async def _context_set(
 
         # --- Save context ---
         config = Config()
+
+        # Delete old snapshot if scope changed
+        old_system_id = config.active_system_id
+        old_framework_id = config.active_framework_id
+        if old_system_id and old_framework_id:
+            if old_system_id != system_id or old_framework_id != target_framework_id:
+                from pretorin.attestation import delete_snapshot
+
+                delete_snapshot(old_system_id, old_framework_id)
+
         config.set("active_system_id", system_id)
         config.set("active_system_name", system_name)
         config.set("active_framework_id", target_framework_id)
@@ -529,6 +591,14 @@ async def _context_set(
                     border_style="#95D7E0",
                     padding=(1, 2),
                 )
+            )
+
+        # --- Auto-verify sources ---
+        if not no_verify:
+            await _run_source_verification(
+                system_id=system_id,
+                framework_id=target_framework_id or "",
+                api_base_url=config.platform_api_base_url,
             )
 
 
@@ -671,6 +741,18 @@ async def _context_show(*, quiet: bool = False, check: bool = False) -> None:
         payload["validation_state"] = "valid"
         payload["progress"] = matched_framework.get("progress", 0)
         payload["status"] = matched_framework.get("status", "unknown")
+
+        # Add verification status from snapshot if one exists
+        from pretorin.attestation import load_snapshot as _load_snapshot
+
+        snapshot = _load_snapshot(system_id, framework_id)
+        if snapshot is not None:
+            payload["verification_status"] = snapshot.status.value
+            payload["verified_at"] = snapshot.verified_at
+            payload["verified_sources"] = [s.provider_type for s in snapshot.sources]
+        else:
+            payload["verification_status"] = "unverified"
+
         _show_context_payload(payload, quiet=quiet)
 
 
@@ -680,6 +762,15 @@ def context_clear() -> None:
     from pretorin.client.config import Config
 
     config = Config()
+    system_id = config.active_system_id
+    framework_id = config.active_framework_id
+
+    # Delete snapshot for current scope
+    if system_id and framework_id:
+        from pretorin.attestation import delete_snapshot
+
+        delete_snapshot(system_id, framework_id)
+
     config.delete("active_system_id")
     config.delete("active_system_name")
     config.delete("active_framework_id")
@@ -690,3 +781,179 @@ def context_clear() -> None:
     else:
         rprint(f"\n  {ROMEBOT_HAPPY}  Context cleared.\n")
         rprint("  Run [bold]pretorin context set[/bold] to select a new system and framework.")
+
+
+# ---------------------------------------------------------------------------
+# Source verification helpers
+# ---------------------------------------------------------------------------
+
+
+async def _run_source_verification(
+    *,
+    system_id: str,
+    framework_id: str,
+    api_base_url: str,
+    ttl: int = 3600,
+    quiet: bool = False,
+) -> None:
+    """Run source providers and persist a verified snapshot.
+
+    Best-effort: failures are logged but do not raise.
+    """
+    try:
+        from pretorin import __version__
+        from pretorin.attestation import (
+            VerificationStatus,
+            VerifiedSnapshot,
+            run_all_providers,
+            save_snapshot,
+        )
+
+        sources = await run_all_providers()
+
+        now = datetime.now(timezone.utc).isoformat()
+        status = VerificationStatus.VERIFIED if sources else VerificationStatus.PARTIAL
+
+        snapshot = VerifiedSnapshot(
+            system_id=system_id,
+            framework_id=framework_id,
+            api_base_url=api_base_url,
+            sources=tuple(sources),
+            verified_at=now,
+            ttl_seconds=ttl,
+            status=status,
+            cli_version=__version__,
+        )
+
+        save_snapshot(snapshot)
+
+        if is_json_mode():
+            return
+
+        if not quiet:
+            _display_verification_panel(snapshot)
+    except Exception:
+        import logging as _log
+
+        _log.getLogger(__name__).debug("Source verification failed", exc_info=True)
+        if not is_json_mode() and not quiet:
+            rprint(f"\n  {ROMEBOT_THINKING}  Source verification skipped.")
+
+
+def _display_verification_panel(snapshot: Any) -> None:
+    """Display a rich panel showing verification results."""
+    source_lines = ""
+    if snapshot.sources:
+        for src in snapshot.sources:
+            source_lines += f"\n  [bold]{src.provider_type}:[/bold] {src.display_name or src.identity}"
+    else:
+        source_lines = "\n  [dim]No external sources detected[/dim]"
+
+    status_color = "#95D7E0" if snapshot.status.value == "verified" else "#EAB536"
+    rprint()
+    rprint(
+        Panel(
+            f"  [bold]Status:[/bold]  {snapshot.status.value}{source_lines}",
+            title=f"{ROMEBOT_HAPPY}  Source Verification",
+            border_style=status_color,
+            padding=(1, 2),
+        )
+    )
+
+
+# ---------------------------------------------------------------------------
+# context verify command
+# ---------------------------------------------------------------------------
+
+
+@app.command("verify")
+def context_verify(
+    ttl: int = typer.Option(
+        3600,
+        "--ttl",
+        help="Verification TTL in seconds.",
+    ),
+    quiet: bool = typer.Option(
+        False,
+        "--quiet",
+        "-q",
+        help="Compact output.",
+    ),
+) -> None:
+    """Verify active context with source attestation.
+
+    Checks that the current session is connected to the expected
+    external sources (git repo, cloud account, k8s cluster) and
+    persists a verified snapshot for write guards.
+    """
+    asyncio.run(_context_verify(ttl=ttl, quiet=quiet))
+
+
+async def _context_verify(*, ttl: int = 3600, quiet: bool = False) -> None:
+    """Run source verification against the active context."""
+    from pretorin.client.api import PretorianClient, PretorianClientError
+    from pretorin.client.config import Config
+
+    config = Config()
+    system_id = config.get("active_system_id")
+    framework_id = config.get("active_framework_id")
+
+    if not system_id or not framework_id:
+        if is_json_mode():
+            print_json({"error": "No active context set."})
+        else:
+            rprint(f"\n  {ROMEBOT_SAD}  No active context set.\n")
+            rprint("  Run [bold]pretorin context set[/bold] to select a system and framework.")
+        raise typer.Exit(1)
+
+    # Validate platform context
+    env_error = config.check_context_environment()
+    if env_error:
+        if is_json_mode():
+            print_json({"error": env_error})
+        else:
+            rprint(f"\n  {ROMEBOT_SAD}  {env_error}\n")
+        raise typer.Exit(1)
+
+    async with PretorianClient() as client:
+        if not client.is_configured:
+            rprint(f"\n  {ROMEBOT_SAD}  Not logged in. Run [bold]pretorin login[/bold] first.")
+            raise typer.Exit(1)
+
+        try:
+            await resolve_execution_context(
+                client,
+                system=system_id,
+                framework=framework_id,
+                allow_unverified_sources=True,
+            )
+        except PretorianClientError as e:
+            if is_json_mode():
+                print_json({"error": e.message})
+            else:
+                rprint(f"\n  {ROMEBOT_SAD}  Context validation failed: {e.message}\n")
+            raise typer.Exit(1)
+
+    # Run source verification
+    await _run_source_verification(
+        system_id=system_id,
+        framework_id=framework_id,
+        api_base_url=config.platform_api_base_url,
+        ttl=ttl,
+        quiet=quiet,
+    )
+
+    if is_json_mode():
+        from pretorin.attestation import load_snapshot as _load
+
+        snap = _load(system_id, framework_id)
+        if snap:
+            print_json(
+                {
+                    "system_id": snap.system_id,
+                    "framework_id": snap.framework_id,
+                    "status": snap.status.value,
+                    "verified_at": snap.verified_at,
+                    "sources": [{"provider_type": s.provider_type, "identity": s.identity} for s in snap.sources],
+                }
+            )

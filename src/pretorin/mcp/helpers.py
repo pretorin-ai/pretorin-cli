@@ -92,6 +92,15 @@ def allow_scope_override_property() -> dict[str, Any]:
     }
 
 
+def allow_unverified_sources_property() -> dict[str, Any]:
+    """Return a shared JSON schema field for source attestation overrides."""
+    return {
+        "type": "boolean",
+        "description": ("Allow writes when source attestation shows a mismatch. Defaults to false."),
+        "default": False,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Response formatters
 # ---------------------------------------------------------------------------
@@ -173,6 +182,7 @@ async def resolve_execution_scope(
         scope=scope,
         enforce_active_context=enforce_active_context,
         allow_scope_override=bool(arguments.get("allow_scope_override", False)),
+        allow_unverified_sources=bool(arguments.get("allow_unverified_sources", False)),
     )
     raw_control_id = arguments.get("control_id")
     normalized_control_id = normalize_control_id(raw_control_id) if raw_control_id else None

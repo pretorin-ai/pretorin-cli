@@ -2,7 +2,33 @@
 
 from __future__ import annotations
 
+import asyncio
 import re
+
+
+async def run_command(cmd: list[str], timeout: int = 10) -> tuple[int, str, str]:
+    """Run a shell command asynchronously.
+
+    Returns (return_code, stdout, stderr).
+    """
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+        return (
+            proc.returncode or 0,
+            stdout.decode("utf-8", errors="replace"),
+            stderr.decode("utf-8", errors="replace"),
+        )
+    except asyncio.TimeoutError:
+        proc.kill()
+        await proc.wait()
+        return -1, "", f"Command timed out after {timeout}s"
+    except FileNotFoundError:
+        return -1, "", f"Command not found: {cmd[0]}"
 
 
 def normalize_control_id(control_id: str) -> str:

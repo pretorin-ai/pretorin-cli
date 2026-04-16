@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-029c623e.js";
+            window.path_to_searchindex_js = "searchindex-d32a47f7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-9dfb40f5.js"></script>
@@ -698,6 +698,11 @@ pretorin narrative push
 <p>See <a href="#agent-skills">Skills</a> for more on agent-powered narrative generation.</p>
 <h2 id="no-hallucination-requirements"><a class="header" href="#no-hallucination-requirements">No-Hallucination Requirements</a></h2>
 <p>Generated narratives must only document observable facts. For missing information, use TODO placeholder blocks:</p>
+<ul>
+<li>Treat existing Pretorin narratives, notes, and status fields as a starting point, not proof that a control gap exists.</li>
+<li>Before writing a narrative update or gap note, inspect the relevant implementation in the workspace and connected systems.</li>
+<li>If observed implementation is stronger than the current platform record, update the narrative to match the observed implementation and record any remaining evidence gap separately.</li>
+</ul>
 <pre><code class="language-text">[[PRETORIN_TODO]]
 missing_item: &lt;what is missing&gt;
 reason: Not observable from current workspace and connected MCP systems
@@ -2900,6 +2905,7 @@ pretorin notes list ac-02 fedramp-moderate
 </code></pre>
 <h3 id="3-collect-observable-facts"><a class="header" href="#3-collect-observable-facts">3. Collect Observable Facts</a></h3>
 <p>Search your codebase and connected systems for evidence. Only document what is directly observable — never assume or fabricate implementation details.</p>
+<p>Treat existing Pretorin narratives, notes, and status fields as a starting point, not proof that a control gap exists. Before writing a narrative update or gap note, inspect the relevant implementation in the workspace and connected systems. If those sources show stronger implementation than the current platform record, update the narrative to reflect the observed implementation and record any remaining evidence gap separately.</p>
 <h3 id="4-draft-updates"><a class="header" href="#4-draft-updates">4. Draft Updates</a></h3>
 <p>Prepare three types of updates:</p>
 <p><strong>Narrative</strong> — How the control is implemented. Include TODO placeholders for unknowns:</p>

@@ -15,6 +15,11 @@ jobs:
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          # Pin toolchain so mdbook search index hash stays deterministic.
+          # When upgrading: change this version, run `cargo install mdbook
+          # --version 0.5.2 --locked && mdbook build docs`, and commit docs/book.
+          toolchain: 1.94.1
 
       - name: Install mdBook
         run: cargo install mdbook --version 0.5.2 --locked
