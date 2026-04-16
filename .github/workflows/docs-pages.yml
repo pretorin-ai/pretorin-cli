@@ -32,7 +32,7 @@ jobs:
         run: cargo install mdbook --version 0.5.2 --locked
 
       - name: Build docs
-        run: mdbook build docs
+        run: ./scripts/build-docs.sh
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

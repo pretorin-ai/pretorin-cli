@@ -256,8 +256,8 @@ This starts a local server at `http://localhost:3000` with live-reload.
 To build static HTML without serving:
 
 ```bash
-cd docs && mdbook build
-# Output is in docs/book/
+./scripts/build-docs.sh
+# Output is in docs/book/ and includes llms.txt / llms-full.txt
 ```
 
 ### Quick links
