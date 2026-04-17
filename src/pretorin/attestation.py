@@ -141,10 +141,15 @@ _FAMILY_MAP_171: dict[str, str] = {
     "19": "sr",
 }
 
-# Module-level caches
+# Module-level caches and constants
 _git_root_cache: Path | None = None
 _git_root_checked: bool = False
 _MANIFEST_LOAD_CACHE: dict[str, SourceManifest] = {}  # keyed by system_id
+_LEVEL_RANK: dict[SourceLevel, int] = {
+    SourceLevel.REQUIRED: 0,
+    SourceLevel.RECOMMENDED: 1,
+    SourceLevel.OPTIONAL: 2,
+}
 
 
 # ---------------------------------------------------------------------------
@@ -609,7 +614,7 @@ def _get_git_root() -> Path | None:
     return _git_root_cache
 
 
-def load_manifest(system_id: str) -> SourceManifest | None:
+def load_manifest(system_id: str, *, use_cache: bool = True) -> SourceManifest | None:
     """Resolve a source manifest from the layered config sources.
 
     Precedence:
@@ -618,68 +623,63 @@ def load_manifest(system_id: str) -> SourceManifest | None:
     3. ``~/.pretorin/source-manifest-{system_id}.json``
     4. ``source_manifest`` key in ``~/.pretorin/config.json``
 
-    Returns ``None`` when no manifest is found.
+    Returns ``None`` when no manifest is found. Results are cached per
+    ``system_id`` to avoid repeated file I/O within a single process.
     """
+    if use_cache:
+        cached = _MANIFEST_LOAD_CACHE.get(system_id)
+        if cached is not None:
+            return cached
+
     import os
+
+    resolved: SourceManifest | None = None
 
     # 1. Environment variable
     env_val = os.environ.get("PRETORIN_SOURCE_MANIFEST", "")
     if env_val:
-        # Try as JSON string first
         try:
-            data = json.loads(env_val)
-            manifest = _parse_manifest(data)
-            if manifest is not None:
-                return manifest
+            resolved = _parse_manifest(json.loads(env_val))
         except json.JSONDecodeError:
-            pass
-        # Try as file path
-        env_path = Path(env_val)
-        if env_path.is_file():
-            try:
-                data = json.loads(env_path.read_text())
-                manifest = _parse_manifest(data)
-                if manifest is not None:
-                    return manifest
-            except (json.JSONDecodeError, OSError):
-                logger.warning("Failed to read manifest from %s", env_path)
+            env_path = Path(env_val)
+            if env_path.is_file():
+                try:
+                    resolved = _parse_manifest(json.loads(env_path.read_text()))
+                except (json.JSONDecodeError, OSError):
+                    logger.warning("Failed to read manifest from %s", env_path)
 
     # 2. Repo-local .pretorin/source-manifest.json
-    git_root = _get_git_root()
-    if git_root is not None:
-        repo_manifest = git_root / ".pretorin" / "source-manifest.json"
-        if repo_manifest.is_file():
-            try:
-                data = json.loads(repo_manifest.read_text())
-                manifest = _parse_manifest(data)
-                if manifest is not None:
-                    return manifest
-            except (json.JSONDecodeError, OSError):
-                logger.warning("Failed to read manifest from %s", repo_manifest)
+    if resolved is None:
+        git_root = _get_git_root()
+        if git_root is not None:
+            repo_path = git_root / ".pretorin" / "source-manifest.json"
+            if repo_path.is_file():
+                try:
+                    resolved = _parse_manifest(json.loads(repo_path.read_text()))
+                except (json.JSONDecodeError, OSError):
+                    logger.warning("Failed to read manifest from %s", repo_path)
 
     # 3. User config: ~/.pretorin/source-manifest-{system_id}.json
-    safe_system = system_id.replace("/", "_").replace("\\", "_")
-    user_manifest = CONFIG_DIR / f"source-manifest-{safe_system}.json"
-    if user_manifest.is_file():
-        try:
-            data = json.loads(user_manifest.read_text())
-            manifest = _parse_manifest(data)
-            if manifest is not None:
-                return manifest
-        except (json.JSONDecodeError, OSError):
-            logger.warning("Failed to read manifest from %s", user_manifest)
+    if resolved is None:
+        safe_system = system_id.replace("/", "_").replace("\\", "_")
+        user_path = CONFIG_DIR / f"source-manifest-{safe_system}.json"
+        if user_path.is_file():
+            try:
+                resolved = _parse_manifest(json.loads(user_path.read_text()))
+            except (json.JSONDecodeError, OSError):
+                logger.warning("Failed to read manifest from %s", user_path)
 
     # 4. Inline config key
-    from pretorin.client.config import Config
+    if resolved is None:
+        from pretorin.client.config import Config
 
-    config = Config()
-    inline = config.source_manifest
-    if inline and isinstance(inline, dict):
-        manifest = _parse_manifest(inline)
-        if manifest is not None:
-            return manifest
+        inline = Config().source_manifest
+        if inline and isinstance(inline, dict):
+            resolved = _parse_manifest(inline)
 
-    return None
+    if resolved is not None:
+        _MANIFEST_LOAD_CACHE[system_id] = resolved
+    return resolved
 
 
 def _matches_requirement(source: SourceIdentity, req: SourceRequirement) -> bool:
@@ -715,20 +715,18 @@ def _collect_requirements(
     When the same ``source_type`` appears at both levels, the stricter
     level wins (REQUIRED > RECOMMENDED > OPTIONAL).
     """
-    level_rank = {SourceLevel.REQUIRED: 0, SourceLevel.RECOMMENDED: 1, SourceLevel.OPTIONAL: 2}
-
     # Start with system-level requirements keyed by source_type
     by_type: dict[str, SourceRequirement] = {}
     for req in manifest.system_sources:
         existing = by_type.get(req.source_type)
-        if existing is None or level_rank[req.level] < level_rank[existing.level]:
+        if existing is None or _LEVEL_RANK[req.level] < _LEVEL_RANK[existing.level]:
             by_type[req.source_type] = req
 
     # Merge family-level requirements
     if family_id and family_id in manifest.family_sources:
         for req in manifest.family_sources[family_id]:
             existing = by_type.get(req.source_type)
-            if existing is None or level_rank[req.level] < level_rank[existing.level]:
+            if existing is None or _LEVEL_RANK[req.level] < _LEVEL_RANK[existing.level]:
                 by_type[req.source_type] = req
 
     return list(by_type.values())
@@ -859,11 +857,8 @@ def build_write_provenance(
         for s in snapshot.sources
     ]
 
-    # Manifest evaluation: use cached manifest (avoids re-reading file),
-    # but always evaluate fresh with current family_id.
-    manifest = _MANIFEST_LOAD_CACHE.get(system_id)
-    if manifest is None:
-        manifest = load_manifest(system_id)
+    # Manifest evaluation (load_manifest handles its own caching)
+    manifest = load_manifest(system_id)
 
     if manifest is not None:
         family = extract_family_from_control_id(control_id) if control_id else None

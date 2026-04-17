@@ -172,10 +172,15 @@ def _enforce_source_attestation(
         return
 
     from pretorin.attestation import (
+        ManifestStatus,
         VerificationStatus,
         check_snapshot_validity,
+        evaluate_manifest,
+        extract_family_from_control_id,
+        load_manifest,
         load_snapshot,
     )
+    from pretorin.client.api import PretorianClientError
     from pretorin.client.config import Config
 
     snapshot = load_snapshot(system_id, framework_id)
@@ -190,8 +195,6 @@ def _enforce_source_attestation(
         api_base_url=config.platform_api_base_url,
     )
     if status == VerificationStatus.MISMATCH:
-        from pretorin.client.api import PretorianClientError
-
         raise PretorianClientError(
             "Source attestation mismatch: the verified context no longer matches "
             "the current environment. Run 'pretorin context verify' to re-verify, "
@@ -199,37 +202,23 @@ def _enforce_source_attestation(
         )
 
     # Phase 3: manifest evaluation
-    from pretorin.attestation import (
-        _MANIFEST_LOAD_CACHE,
-        ManifestStatus,
-        evaluate_manifest,
-        extract_family_from_control_id,
-        load_manifest,
-    )
-
     manifest = load_manifest(system_id)
     if manifest is None:
         return
-
-    # Cache the loaded manifest so build_write_provenance can skip file I/O
-    _MANIFEST_LOAD_CACHE[system_id] = manifest
 
     family = extract_family_from_control_id(control_id) if control_id else None
     result = evaluate_manifest(manifest, snapshot.sources, family_id=family)
 
     if result.status == ManifestStatus.UNSATISFIED:
-        from pretorin.client.api import PretorianClientError as _ManifestError
-
         missing = ", ".join(r.source_type for r in result.missing_required)
-        raise _ManifestError(
+        raise PretorianClientError(
             f"Source manifest check failed: missing required sources: {missing}. "
             "Verify sources with 'pretorin context verify' or add manual attestations "
             "in your source_providers config."
         )
     if result.missing_recommended:
-        import logging as _logging
-
-        _logging.getLogger(__name__).warning(
+        logger = __import__("logging").getLogger(__name__)
+        logger.warning(
             "Recommended sources missing: %s",
             ", ".join(r.source_type for r in result.missing_recommended),
         )

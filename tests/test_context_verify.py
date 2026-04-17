@@ -18,6 +18,8 @@ from pretorin.attestation import (
 )
 from pretorin.cli.context import _enforce_source_attestation
 
+# Tests use _MANIFEST_LOAD_CACHE for cleanup only (via setup/teardown).
+
 # ---------------------------------------------------------------------------
 # Write guard tests
 # ---------------------------------------------------------------------------
@@ -250,9 +252,7 @@ class TestEnforceSourceAttestationWithManifest:
         )
         p1, p2, p3 = self._patch_snapshot_and_config(snap)
         with p1, p2, p3, patch("pretorin.attestation.load_manifest", return_value=manifest):
-            _enforce_source_attestation("sys-1", "fw-1", False)
-        # Cache stores the SourceManifest, not ManifestResult
-        assert _MANIFEST_LOAD_CACHE["sys-1"].version == "1"
+            _enforce_source_attestation("sys-1", "fw-1", False)  # should not raise
 
     def test_unsatisfied_manifest_blocks_write(self):
         snap = self._make_snapshot(sources=(
@@ -284,7 +284,7 @@ class TestEnforceSourceAttestationWithManifest:
         with p1, p2, p3, patch("pretorin.attestation.load_manifest", return_value=manifest):
             _enforce_source_attestation("sys-1", "fw-1", False)
         # Partial is allowed (not blocked), cache stores the manifest
-        assert _MANIFEST_LOAD_CACHE["sys-1"].version == "1"
+        # Partial is allowed (not blocked) — write proceeds with warning
 
     def test_override_bypasses_manifest_check(self):
         """allow_unverified_sources=True skips all checks."""

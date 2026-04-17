@@ -775,6 +775,12 @@ class TestParseManifest:
 
 
 class TestLoadManifest:
+    def setup_method(self):
+        _MANIFEST_LOAD_CACHE.clear()
+
+    def teardown_method(self):
+        _MANIFEST_LOAD_CACHE.clear()
+
     def _make_manifest_json(self):
         return json.dumps({
             "version": "1",
@@ -1209,6 +1215,12 @@ class TestManifestLoadCache:
 class TestProvenanceWithManifest:
     """Test that build_write_provenance includes manifest evaluation."""
 
+    def setup_method(self):
+        _MANIFEST_LOAD_CACHE.clear()
+
+    def teardown_method(self):
+        _MANIFEST_LOAD_CACHE.clear()
+
     def _save_verified_snapshot(self, tmp_path, monkeypatch):
         monkeypatch.setattr("pretorin.attestation.SNAPSHOT_DIR", tmp_path)
         snapshot = VerifiedSnapshot(
@@ -1225,8 +1237,6 @@ class TestProvenanceWithManifest:
 
     def test_manifest_status_in_provenance_from_cache(self, tmp_path, monkeypatch):
         self._save_verified_snapshot(tmp_path, monkeypatch)
-        _MANIFEST_LOAD_CACHE.clear()
-        # Cache a SourceManifest (not ManifestResult) — provenance evaluates fresh
         _MANIFEST_LOAD_CACHE["sys-1"] = SourceManifest(
             version="1",
             system_sources=(SourceRequirement(source_type="git_repo", level=SourceLevel.REQUIRED),),
@@ -1235,13 +1245,10 @@ class TestProvenanceWithManifest:
         mock_config.platform_api_base_url = "https://platform.pretorin.com/api/v1/public"
         with patch("pretorin.client.config.Config", return_value=mock_config):
             result = build_write_provenance("sys-1", "fw")
-        # Snapshot has git_repo source, manifest requires git_repo → satisfied
         assert result["manifest_status"] == "satisfied"
-        _MANIFEST_LOAD_CACHE.clear()
 
     def test_no_manifest_status(self, tmp_path, monkeypatch):
         self._save_verified_snapshot(tmp_path, monkeypatch)
-        _MANIFEST_LOAD_CACHE.clear()
         mock_config = MagicMock()
         mock_config.platform_api_base_url = "https://platform.pretorin.com/api/v1/public"
         mock_config.source_manifest = None
@@ -1252,12 +1259,9 @@ class TestProvenanceWithManifest:
             monkeypatch.delenv("PRETORIN_SOURCE_MANIFEST", raising=False)
             result = build_write_provenance("sys-1", "fw")
         assert result["manifest_status"] == "no_manifest"
-        _MANIFEST_LOAD_CACHE.clear()
 
     def test_missing_required_in_provenance(self, tmp_path, monkeypatch):
         self._save_verified_snapshot(tmp_path, monkeypatch)
-        _MANIFEST_LOAD_CACHE.clear()
-        # Cache a manifest that requires hris (not detected in snapshot)
         _MANIFEST_LOAD_CACHE["sys-1"] = SourceManifest(
             version="1",
             system_sources=(SourceRequirement(source_type="hris", level=SourceLevel.REQUIRED),),
@@ -1268,12 +1272,10 @@ class TestProvenanceWithManifest:
             result = build_write_provenance("sys-1", "fw")
         assert result["manifest_status"] == "unsatisfied"
         assert result["missing_required_sources"] == ["hris"]
-        _MANIFEST_LOAD_CACHE.clear()
 
     def test_backward_compat_no_control_id(self, tmp_path, monkeypatch):
         """build_write_provenance without control_id still works."""
         self._save_verified_snapshot(tmp_path, monkeypatch)
-        _MANIFEST_LOAD_CACHE.clear()
         mock_config = MagicMock()
         mock_config.platform_api_base_url = "https://platform.pretorin.com/api/v1/public"
         mock_config.source_manifest = None
@@ -1284,4 +1286,3 @@ class TestProvenanceWithManifest:
             monkeypatch.delenv("PRETORIN_SOURCE_MANIFEST", raising=False)
             result = build_write_provenance("sys-1", "fw")
         assert "verification_status" in result
-        _MANIFEST_LOAD_CACHE.clear()
