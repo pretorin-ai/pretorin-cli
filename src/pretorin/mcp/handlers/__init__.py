@@ -20,6 +20,7 @@ from pretorin.mcp.handlers.compliance import (
     handle_patch_org_policy_qa,
     handle_patch_scope_qa,
     handle_push_monitoring_event,
+    handle_resolve_control_note,
     handle_update_control_status,
     handle_update_narrative,
 )
@@ -131,6 +132,7 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pretorin_generate_control_artifacts": handle_generate_control_artifacts,
     "pretorin_push_monitoring_event": handle_push_monitoring_event,
     "pretorin_add_control_note": handle_add_control_note,
+    "pretorin_resolve_control_note": handle_resolve_control_note,
     "pretorin_get_control_notes": handle_get_control_notes,
     "pretorin_update_control_status": handle_update_control_status,
     "pretorin_get_control_implementation": handle_get_control_implementation,

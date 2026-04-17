@@ -793,6 +793,7 @@ Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Ma
 | `pretorin narrative push <ctrl> <fw> <sys> <file>` | Push a narrative file to the platform |
 | `pretorin notes list <ctrl> <fw>` | List control notes |
 | `pretorin notes add <ctrl> <fw> --content ...` | Add a control note |
+| `pretorin notes resolve <ctrl> <fw> <note_id>` | Resolve or reopen a control note |
 | `pretorin monitoring push` | Push a monitoring event to a system |
 | `pretorin campaign controls` | Run bulk control campaign (`--mode`, `--family`, `--apply`) |
 | `pretorin campaign policy` | Run bulk policy campaign (`--mode`, `--all-incomplete`) |

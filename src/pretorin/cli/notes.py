@@ -224,6 +224,36 @@ async def _push_notes(dry_run: bool) -> None:
             rprint("[dim]Nothing to push — all notes are already synced.[/dim]")
 
 
+@app.command("resolve")
+def notes_resolve(
+    control_id: str = typer.Argument(..., help="Control ID (e.g., ac-02)"),
+    framework_id: str = typer.Argument(..., help="Framework ID"),
+    note_id: str = typer.Argument(..., help="Note ID to resolve"),
+    system: str | None = typer.Option(None, "--system", "-s", help="System name or ID."),
+    reopen: bool = typer.Option(False, "--reopen", help="Reopen a resolved note instead of resolving it"),
+    content: str | None = typer.Option(None, "--content", "-c", help="Optional updated note content"),
+    pinned: bool | None = typer.Option(None, "--pinned", help="Optional pinned state"),
+) -> None:
+    """Resolve or reopen a control note on the platform.
+
+    Examples:
+        pretorin notes resolve ac-02 fedramp-moderate note-abc123
+        pretorin notes resolve ac-02 fedramp-moderate note-abc123 --reopen
+        pretorin notes resolve ac-02 fedramp-moderate note-abc123 -c "Updated content"
+    """
+    asyncio.run(
+        _resolve_note(
+            normalize_control_id(control_id),
+            framework_id,
+            note_id,
+            system,
+            is_resolved=not reopen,
+            content=content,
+            is_pinned=pinned,
+        )
+    )
+
+
 @app.command("add")
 def notes_add(
     control_id: str = typer.Argument(..., help="Control ID (e.g., ac-02)"),
@@ -330,3 +360,53 @@ async def _add_note(
             return
 
         rprint(f"[#95D7E0]Note added for {control_id.upper()} in {system_name}[/#95D7E0]")
+
+
+async def _resolve_note(
+    control_id: str,
+    framework_id: str,
+    note_id: str,
+    system: str | None,
+    is_resolved: bool = True,
+    content: str | None = None,
+    is_pinned: bool | None = None,
+) -> None:
+    from pretorin.cli.commands import require_auth
+    from pretorin.cli.context import resolve_execution_context
+    from pretorin.client.api import PretorianClient, PretorianClientError
+
+    async with PretorianClient() as client:
+        require_auth(client)
+        try:
+            system_id, resolved_framework_id = await resolve_execution_context(
+                client,
+                system=system,
+                framework=framework_id,
+            )
+            system_name = (await client.get_system(system_id)).name
+            result = await client.resolve_control_note(
+                system_id=system_id,
+                control_id=control_id,
+                note_id=note_id,
+                framework_id=resolved_framework_id,
+                is_resolved=is_resolved,
+                content=content,
+                is_pinned=is_pinned,
+            )
+        except PretorianClientError as e:
+            rprint(f"[red]Resolve failed: {e.message}[/red]")
+            raise typer.Exit(1)
+
+        payload = {
+            "system_id": system_id,
+            "system_name": system_name,
+            "control_id": control_id,
+            "framework_id": resolved_framework_id,
+            "note": result,
+        }
+        if is_json_mode():
+            print_json(payload)
+            return
+
+        action = "Reopened" if not is_resolved else "Resolved"
+        rprint(f"[#95D7E0]Note {action.lower()} for {control_id.upper()} in {system_name}[/#95D7E0]")

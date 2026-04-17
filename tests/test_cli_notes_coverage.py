@@ -255,6 +255,205 @@ def test_notes_add_error() -> None:
     assert "Control not found" in result.output
 
 
+# =============================================================================
+# notes resolve
+# =============================================================================
+
+
+def test_notes_resolve_normal_mode() -> None:
+    """notes resolve shows a success message in normal mode."""
+    client = _base_client()
+    client.resolve_control_note = AsyncMock(
+        return_value={"id": "note-1", "content": "Deploy audit log", "is_resolved": True}
+    )
+
+    result = _run_with_mock_client(
+        [
+            "notes",
+            "resolve",
+            "ac-02",
+            "fedramp-moderate",
+            "note-1",
+            "--system",
+            "Primary",
+        ],
+        client,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "resolved" in result.output.lower()
+    assert "AC-02" in result.output
+
+
+def test_notes_resolve_json_mode() -> None:
+    """notes resolve --json emits a payload with system_id, note, control_id."""
+    client = _base_client()
+    client.resolve_control_note = AsyncMock(
+        return_value={"id": "note-1", "content": "Deploy audit log", "is_resolved": True}
+    )
+
+    result = _run_with_mock_client(
+        [
+            "--json",
+            "notes",
+            "resolve",
+            "ac-02",
+            "fedramp-moderate",
+            "note-1",
+            "--system",
+            "Primary",
+        ],
+        client,
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.stdout)
+    assert payload["control_id"] == "ac-02"
+    assert payload["framework_id"] == "fedramp-moderate"
+    assert payload["system_id"] == "sys-1"
+    assert payload["note"]["is_resolved"] is True
+    client.resolve_control_note.assert_awaited_once_with(
+        system_id="sys-1",
+        control_id="ac-02",
+        note_id="note-1",
+        framework_id="fedramp-moderate",
+        is_resolved=True,
+        content=None,
+        is_pinned=None,
+    )
+
+
+def test_notes_resolve_reopen() -> None:
+    """notes resolve --reopen passes is_resolved=False."""
+    client = _base_client()
+    client.resolve_control_note = AsyncMock(
+        return_value={"id": "note-1", "content": "Deploy audit log", "is_resolved": False}
+    )
+
+    result = _run_with_mock_client(
+        [
+            "notes",
+            "resolve",
+            "ac-02",
+            "fedramp-moderate",
+            "note-1",
+            "--reopen",
+            "--system",
+            "Primary",
+        ],
+        client,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "reopened" in result.output.lower()
+    client.resolve_control_note.assert_awaited_once_with(
+        system_id="sys-1",
+        control_id="ac-02",
+        note_id="note-1",
+        framework_id="fedramp-moderate",
+        is_resolved=False,
+        content=None,
+        is_pinned=None,
+    )
+
+
+def test_notes_resolve_with_content_update() -> None:
+    """notes resolve can update content alongside resolving."""
+    client = _base_client()
+    client.resolve_control_note = AsyncMock(
+        return_value={"id": "note-1", "content": "Updated", "is_resolved": True}
+    )
+
+    result = _run_with_mock_client(
+        [
+            "--json",
+            "notes",
+            "resolve",
+            "ac-02",
+            "fedramp-moderate",
+            "note-1",
+            "--content",
+            "Updated",
+            "--system",
+            "Primary",
+        ],
+        client,
+    )
+
+    assert result.exit_code == 0, result.output
+    client.resolve_control_note.assert_awaited_once_with(
+        system_id="sys-1",
+        control_id="ac-02",
+        note_id="note-1",
+        framework_id="fedramp-moderate",
+        is_resolved=True,
+        content="Updated",
+        is_pinned=None,
+    )
+
+
+def test_notes_resolve_error() -> None:
+    """notes resolve exits 1 when the API call raises PretorianClientError."""
+    client = _base_client()
+    client.resolve_control_note = AsyncMock(
+        side_effect=PretorianClientError("Note not found")
+    )
+
+    result = _run_with_mock_client(
+        [
+            "notes",
+            "resolve",
+            "ac-02",
+            "fedramp-moderate",
+            "note-1",
+            "--system",
+            "Primary",
+        ],
+        client,
+    )
+
+    assert result.exit_code == 1
+    assert "Resolve failed" in result.output
+    assert "Note not found" in result.output
+
+
+def test_notes_resolve_normalises_control_id() -> None:
+    """notes resolve normalises the control ID before sending to the API."""
+    client = _base_client()
+    client.resolve_control_note = AsyncMock(
+        return_value={"id": "note-1", "is_resolved": True}
+    )
+
+    _run_with_mock_client(
+        [
+            "--json",
+            "notes",
+            "resolve",
+            "ac-2",
+            "fedramp-moderate",
+            "note-1",
+            "--system",
+            "Primary",
+        ],
+        client,
+    )
+
+    client.resolve_control_note.assert_awaited_once_with(
+        system_id="sys-1",
+        control_id="ac-02",
+        note_id="note-1",
+        framework_id="fedramp-moderate",
+        is_resolved=True,
+        content=None,
+        is_pinned=None,
+    )
+
+
+# =============================================================================
+# notes add (continued)
+# =============================================================================
+
+
 def test_notes_add_normalises_control_id() -> None:
     """notes add normalises the control ID before sending to the API."""
     client = _base_client()

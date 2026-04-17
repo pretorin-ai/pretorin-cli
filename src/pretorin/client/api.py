@@ -945,6 +945,47 @@ class PretorianClient:
             return data
         return data.get("notes", data.get("items", []))
 
+    async def resolve_control_note(
+        self,
+        system_id: str,
+        control_id: str,
+        note_id: str,
+        framework_id: str,
+        is_resolved: bool = True,
+        content: str | None = None,
+        is_pinned: bool | None = None,
+    ) -> dict[str, Any]:
+        """Resolve, unresolve, or update a control note.
+
+        Args:
+            system_id: ID of the system.
+            control_id: ID of the control.
+            note_id: ID of the note to update.
+            framework_id: Framework ID (required by the API).
+            is_resolved: Whether the note should be marked resolved.
+            content: Optional updated note content.
+            is_pinned: Optional pinned state.
+
+        Returns:
+            Updated note response.
+        """
+        normalized_control_id = self._normalize_control_id(control_id)
+        payload: dict[str, Any] = {
+            "is_resolved": is_resolved,
+            "_provenance": _build_provenance(system_id, framework_id, control_id=normalized_control_id),
+        }
+        if content is not None:
+            payload["content"] = content
+        if is_pinned is not None:
+            payload["is_pinned"] = is_pinned
+        data = await self._request(
+            "PATCH",
+            f"/systems/{system_id}/controls/{normalized_control_id}/notes/{note_id}",
+            params={"framework_id": framework_id},
+            json=payload,
+        )
+        return data
+
     async def update_control_status(
         self,
         system_id: str,

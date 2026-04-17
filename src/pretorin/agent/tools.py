@@ -519,6 +519,64 @@ def create_platform_tools(
         )
     )
 
+    async def resolve_control_note(
+        control_id: str,
+        note_id: str,
+        system_id: str | None = None,
+        framework_id: str | None = None,
+        is_resolved: bool = True,
+        content: str | None = None,
+        is_pinned: bool | None = None,
+        allow_scope_override: bool = False,
+    ) -> str:
+        resolved_system_id, resolved_framework_id, normalized_control_id = await _resolve_scoped_control(
+            control_id,
+            system_id,
+            framework_id,
+            enforce_active_context=True,
+            allow_scope_override=allow_scope_override,
+        )
+        result = await client.resolve_control_note(
+            system_id=resolved_system_id,
+            control_id=normalized_control_id,
+            note_id=note_id,
+            framework_id=resolved_framework_id,
+            is_resolved=is_resolved,
+            content=content,
+            is_pinned=is_pinned,
+        )
+        return json.dumps(result, default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="resolve_control_note",
+            description="Resolve, unresolve, or update an existing control note",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "system_id": {"type": "string", "description": "System ID (defaults to active scope)"},
+                    "control_id": {"type": "string", "description": "Control ID"},
+                    "note_id": {"type": "string", "description": "ID of the note to resolve or update"},
+                    "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
+                    "is_resolved": {
+                        "type": "boolean",
+                        "description": "Whether to mark resolved (true) or reopen (false)",
+                        "default": True,
+                    },
+                    "content": {"type": "string", "description": "Optional updated note content"},
+                    "is_pinned": {"type": "boolean", "description": "Optional pinned state"},
+                    "allow_scope_override": {
+                        "type": "boolean",
+                        "description": "Allow writing outside the active system/framework context",
+                        "default": False,
+                    },
+                },
+                "required": ["control_id", "note_id"],
+            },
+            handler=resolve_control_note,
+        )
+    )
+
     async def get_control_notes(
         control_id: str,
         system_id: str | None = None,

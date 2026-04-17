@@ -613,6 +613,44 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="pretorin_resolve_control_note",
+            description=(
+                "Resolve, unresolve, or update an existing control note."
+                " Use this to clear blocking notes so control status can advance."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(optional=True),
+                    "control_id": control_id_property(),
+                    "note_id": {
+                        "type": "string",
+                        "description": "ID of the note to resolve or update",
+                    },
+                    "framework_id": {
+                        "type": "string",
+                        "description": "Optional: Framework ID; defaults to active scope",
+                    },
+                    "is_resolved": {
+                        "type": "boolean",
+                        "description": "Whether to mark the note resolved (true) or reopen it (false)",
+                        "default": True,
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Optional: updated note content",
+                    },
+                    "is_pinned": {
+                        "type": "boolean",
+                        "description": "Optional: whether the note is pinned",
+                    },
+                    "allow_scope_override": allow_scope_override_property(),
+                    "allow_unverified_sources": allow_unverified_sources_property(),
+                },
+                "required": ["control_id", "note_id"],
+            },
+        ),
+        Tool(
             name="pretorin_get_control_notes",
             description="Get notes for a control implementation within exactly one active system/framework scope",
             inputSchema={

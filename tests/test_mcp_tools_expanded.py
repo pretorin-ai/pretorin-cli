@@ -47,8 +47,9 @@ class TestToolListing:
             # Narrative 2
             "pretorin_get_narrative",
             "pretorin_generate_control_artifacts",
-            # Notes 2
+            # Notes 3
             "pretorin_add_control_note",
+            "pretorin_resolve_control_note",
             "pretorin_get_control_notes",
             # Monitoring 1
             "pretorin_push_monitoring_event",
@@ -86,7 +87,7 @@ class TestToolListing:
             "pretorin_infer_stigs",
         ]
 
-        assert len(tools) == 84
+        assert len(tools) == 85
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 
