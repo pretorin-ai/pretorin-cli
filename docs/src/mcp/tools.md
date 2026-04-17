@@ -335,6 +335,23 @@ Add a note for unresolved gaps or manual follow-up actions.
 
 ---
 
+### pretorin_resolve_control_note
+
+Resolve, unresolve, or update an existing control note. Use this to clear blocking notes so control status can advance.
+
+**Parameters:**
+- `system_id` (optional, defaults to active scope)
+- `control_id` (required)
+- `note_id` (required)
+- `framework_id` (optional, defaults to active scope)
+- `is_resolved` (optional, default `true`)
+- `content` (optional, updated note content)
+- `is_pinned` (optional)
+
+**Returns:** The updated note record.
+
+---
+
 ## Compliance Updates
 
 ### pretorin_update_control_status

@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-d32a47f7.js";
+            window.path_to_searchindex_js = "searchindex-4103e2a1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-9dfb40f5.js"></script>
@@ -1223,6 +1223,7 @@ Config file: /home/user/.pretorin/config.json
 <tbody>
 <tr><td><code>pretorin notes list &lt;ctrl&gt; &lt;fw&gt;</code></td><td>List control notes (<code>--system</code>)</td></tr>
 <tr><td><code>pretorin notes add &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Add a control note (<code>--content</code>)</td></tr>
+<tr><td><code>pretorin notes resolve &lt;ctrl&gt; &lt;fw&gt; &lt;note_id&gt;</code></td><td>Resolve a control note (<code>--reopen</code>, <code>--content</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -1810,6 +1811,20 @@ command -v pretorin
 <li><code>content</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> The created note record.</p>
+<hr>
+<h3 id="pretorin_resolve_control_note"><a class="header" href="#pretorin_resolve_control_note">pretorin_resolve_control_note</a></h3>
+<p>Resolve, unresolve, or update an existing control note. Use this to clear blocking notes so control status can advance.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (optional, defaults to active scope)</li>
+<li><code>control_id</code> (required)</li>
+<li><code>note_id</code> (required)</li>
+<li><code>framework_id</code> (optional, defaults to active scope)</li>
+<li><code>is_resolved</code> (optional, default <code>true</code>)</li>
+<li><code>content</code> (optional, updated note content)</li>
+<li><code>is_pinned</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> The updated note record.</p>
 <hr>
 <h2 id="compliance-updates"><a class="header" href="#compliance-updates">Compliance Updates</a></h2>
 <h3 id="pretorin_update_control_status"><a class="header" href="#pretorin_update_control_status">pretorin_update_control_status</a></h3>

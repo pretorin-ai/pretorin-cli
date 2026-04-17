@@ -201,6 +201,7 @@ The MCP server provides 80+ tools organized by category.
 | `pretorin_get_control_notes` | Read notes for a control implementation |
 | `pretorin_update_narrative` | Push a narrative text update for a control implementation |
 | `pretorin_add_control_note` | Add a control note with manual follow-up guidance |
+| `pretorin_resolve_control_note` | Resolve, unresolve, or update an existing control note |
 | `pretorin_update_control_status` | Update a control implementation status |
 | `pretorin_generate_control_artifacts` | Generate read-only AI narrative and evidence-gap drafts |
 
@@ -675,6 +676,25 @@ Add a note for unresolved gaps or manual follow-up actions.
 **Returns:** The created note record.
 
 **Example prompt:** "Add a note that SSO evidence must be collected manually"
+
+---
+
+#### pretorin_resolve_control_note
+
+Resolve, unresolve, or update an existing control note. Use this to clear blocking notes so control status can advance.
+
+**Parameters:**
+- `system_id` (optional): Defaults to active scope
+- `control_id` (required): The control ID
+- `note_id` (required): ID of the note to resolve or update
+- `framework_id` (optional): Defaults to active scope
+- `is_resolved` (optional, default `true`): Set `false` to reopen
+- `content` (optional): Updated note content
+- `is_pinned` (optional): Whether the note is pinned
+
+**Returns:** The updated note record.
+
+**Example prompt:** "Resolve the blocking note on AC-02 now that SSO evidence has been uploaded"
 
 ---
 

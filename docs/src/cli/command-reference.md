@@ -64,6 +64,7 @@
 |---------|-------------|
 | `pretorin notes list <ctrl> <fw>` | List control notes (`--system`) |
 | `pretorin notes add <ctrl> <fw>` | Add a control note (`--content`) |
+| `pretorin notes resolve <ctrl> <fw> <note_id>` | Resolve a control note (`--reopen`, `--content`) |
 
 ## Monitoring Commands
 

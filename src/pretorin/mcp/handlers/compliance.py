@@ -227,6 +227,34 @@ async def handle_add_control_note(
     return format_json(result)
 
 
+async def handle_resolve_control_note(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Handle the resolve_control_note tool."""
+    logger.debug("handle_resolve_control_note called with %s", _safe_args(arguments))
+    err = require(arguments, "control_id", "note_id")
+    if err:
+        return format_error(err)
+
+    system_id, framework_id, normalized_control_id = await resolve_execution_scope(
+        client,
+        arguments,
+        control_required=True,
+        enforce_active_context=True,
+    )
+    result = await client.resolve_control_note(
+        system_id=system_id,
+        control_id=normalized_control_id or "",
+        note_id=arguments["note_id"],
+        framework_id=framework_id,
+        is_resolved=arguments.get("is_resolved", True),
+        content=arguments.get("content"),
+        is_pinned=arguments.get("is_pinned"),
+    )
+    return format_json(result)
+
+
 async def handle_get_control_notes(
     client: PretorianClient,
     arguments: dict[str, Any],
