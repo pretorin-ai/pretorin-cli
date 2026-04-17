@@ -27,6 +27,7 @@ from pretorin.mcp.handlers.compliance import (
 from pretorin.mcp.handlers.evidence import (
     handle_create_evidence,
     handle_create_evidence_batch,
+    handle_delete_evidence,
     handle_get_narrative,
     handle_link_evidence,
     handle_search_evidence,
@@ -128,6 +129,7 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pretorin_create_evidence": handle_create_evidence,
     "pretorin_create_evidence_batch": handle_create_evidence_batch,
     "pretorin_link_evidence": handle_link_evidence,
+    "pretorin_delete_evidence": handle_delete_evidence,
     "pretorin_get_narrative": handle_get_narrative,
     "pretorin_generate_control_artifacts": handle_generate_control_artifacts,
     "pretorin_push_monitoring_event": handle_push_monitoring_event,
