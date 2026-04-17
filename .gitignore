@@ -1,6 +1,7 @@
 # Claude context file (users can create their own)
 CLAUDE.md
 .claude/
+TODOS.md
 
 # Python
 __pycache__/

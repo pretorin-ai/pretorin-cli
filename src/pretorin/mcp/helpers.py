@@ -175,6 +175,11 @@ async def resolve_execution_scope(
     enforce_active_context: bool = False,
 ) -> tuple[str, str, str | None]:
     """Resolve one validated execution scope and optionally validate a control within it."""
+    # Normalize control_id early so manifest evaluation can use it for
+    # family-level requirement checking during resolve_execution_context.
+    raw_control_id = arguments.get("control_id")
+    normalized_control_id = normalize_control_id(raw_control_id) if raw_control_id else None
+
     system_id, framework_id = await resolve_execution_context(
         client,
         system=arguments.get("system_id"),
@@ -183,11 +188,11 @@ async def resolve_execution_scope(
         enforce_active_context=enforce_active_context,
         allow_scope_override=bool(arguments.get("allow_scope_override", False)),
         allow_unverified_sources=bool(arguments.get("allow_unverified_sources", False)),
+        control_id=normalized_control_id,
     )
-    raw_control_id = arguments.get("control_id")
-    normalized_control_id = normalize_control_id(raw_control_id) if raw_control_id else None
     if control_required and not normalized_control_id:
         raise PretorianClientError("control_id is required")
+    # Validate control exists on the platform (needs framework_id from above)
     if normalized_control_id:
         await client.get_control(framework_id, normalized_control_id)
     logger.debug(

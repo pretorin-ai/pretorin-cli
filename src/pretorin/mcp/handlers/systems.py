@@ -84,6 +84,70 @@ async def handle_get_compliance_status(
     return format_json(status)
 
 
+async def handle_get_source_manifest(
+    client: PretorianClient | None,
+    arguments: dict[str, Any],
+) -> list[TextContent]:
+    """Handle the get_source_manifest tool."""
+    from pretorin.attestation import evaluate_manifest, load_manifest, load_snapshot
+    from pretorin.client.config import Config
+
+    logger.debug("handle_get_source_manifest called with %s", _safe_args(arguments))
+
+    config = Config()
+    system_id = arguments.get("system_id") or config.active_system_id
+    if not system_id:
+        raise PretorianClientError(
+            "No system_id provided and no active context set. Run 'pretorin context set' or pass system_id."
+        )
+
+    manifest = load_manifest(system_id)
+    if manifest is None:
+        return format_json(
+            {
+                "system_id": system_id,
+                "manifest": None,
+                "message": (
+                    "No source manifest found. Create .pretorin/source-manifest.json "
+                    "in your repo root, or set the PRETORIN_SOURCE_MANIFEST env var."
+                ),
+            }
+        )
+
+    result: dict[str, Any] = {
+        "system_id": system_id,
+        "version": manifest.version,
+        "system_sources": [
+            {"source_type": r.source_type, "level": r.level.value, "description": r.description}
+            for r in manifest.system_sources
+        ],
+        "family_sources": {
+            k: [{"source_type": r.source_type, "level": r.level.value} for r in v]
+            for k, v in manifest.family_sources.items()
+        },
+    }
+
+    # Evaluate against current snapshot if available
+    framework_id = config.active_framework_id
+    if framework_id:
+        snap = load_snapshot(system_id, framework_id)
+        if snap:
+            m_result = evaluate_manifest(manifest, snap.sources)
+            result["evaluation"] = {
+                "status": m_result.status.value,
+                "satisfied": [r.source_type for r in m_result.satisfied],
+                "missing_required": [r.source_type for r in m_result.missing_required],
+                "missing_recommended": [r.source_type for r in m_result.missing_recommended],
+            }
+        else:
+            result["evaluation"] = {
+                "status": "no_snapshot",
+                "message": "Run 'pretorin context verify' to detect sources and evaluate the manifest.",
+            }
+
+    return format_json(result)
+
+
 async def handle_get_cli_status(
     _client: PretorianClient | None,
     arguments: dict[str, Any],

@@ -165,16 +165,22 @@ def _enforce_source_attestation(
     system_id: str,
     framework_id: str,
     allow_unverified_sources: bool,
+    control_id: str | None = None,
 ) -> None:
-    """Block writes when the verified source snapshot shows a mismatch."""
+    """Block writes when the verified source snapshot shows a mismatch or manifest requirements are unsatisfied."""
     if allow_unverified_sources:
         return
 
     from pretorin.attestation import (
+        ManifestStatus,
         VerificationStatus,
         check_snapshot_validity,
+        evaluate_manifest,
+        extract_family_from_control_id,
+        load_manifest,
         load_snapshot,
     )
+    from pretorin.client.api import PretorianClientError
     from pretorin.client.config import Config
 
     snapshot = load_snapshot(system_id, framework_id)
@@ -189,12 +195,32 @@ def _enforce_source_attestation(
         api_base_url=config.platform_api_base_url,
     )
     if status == VerificationStatus.MISMATCH:
-        from pretorin.client.api import PretorianClientError
-
         raise PretorianClientError(
             "Source attestation mismatch: the verified context no longer matches "
             "the current environment. Run 'pretorin context verify' to re-verify, "
             "or pass allow_unverified_sources to override."
+        )
+
+    # Phase 3: manifest evaluation
+    manifest = load_manifest(system_id)
+    if manifest is None:
+        return
+
+    family = extract_family_from_control_id(control_id) if control_id else None
+    result = evaluate_manifest(manifest, snapshot.sources, family_id=family)
+
+    if result.status == ManifestStatus.UNSATISFIED:
+        missing = ", ".join(r.source_type for r in result.missing_required)
+        raise PretorianClientError(
+            f"Source manifest check failed: missing required sources: {missing}. "
+            "Verify sources with 'pretorin context verify' or add manual attestations "
+            "in your source_providers config."
+        )
+    if result.missing_recommended:
+        logger = __import__("logging").getLogger(__name__)
+        logger.warning(
+            "Recommended sources missing: %s",
+            ", ".join(r.source_type for r in result.missing_recommended),
         )
 
 
@@ -207,6 +233,7 @@ async def resolve_execution_context(
     enforce_active_context: bool = False,
     allow_scope_override: bool = False,
     allow_unverified_sources: bool = False,
+    control_id: str | None = None,
 ) -> tuple[str, str]:
     """Resolve and validate a single execution scope against the platform.
 
@@ -263,7 +290,7 @@ async def resolve_execution_context(
                     f"'{_format_scope_label(system_id=system_id, framework_id=framework_id)}' "
                     "without explicit scope override."
                 )
-            _enforce_source_attestation(system_id, framework_id, allow_unverified_sources)
+            _enforce_source_attestation(system_id, framework_id, allow_unverified_sources, control_id=control_id)
             return system_id, framework_id
 
         active_system_id = config.active_system_id
@@ -287,7 +314,7 @@ async def resolve_execution_context(
                     "without explicit scope override."
                 )
     if enforce_active_context:
-        _enforce_source_attestation(system_id, framework_id, allow_unverified_sources)
+        _enforce_source_attestation(system_id, framework_id, allow_unverified_sources, control_id=control_id)
     return system_id, framework_id
 
 
@@ -948,12 +975,143 @@ async def _context_verify(*, ttl: int = 3600, quiet: bool = False) -> None:
 
         snap = _load(system_id, framework_id)
         if snap:
-            print_json(
-                {
-                    "system_id": snap.system_id,
-                    "framework_id": snap.framework_id,
-                    "status": snap.status.value,
-                    "verified_at": snap.verified_at,
-                    "sources": [{"provider_type": s.provider_type, "identity": s.identity} for s in snap.sources],
+            result_dict: dict[str, Any] = {
+                "system_id": snap.system_id,
+                "framework_id": snap.framework_id,
+                "status": snap.status.value,
+                "verified_at": snap.verified_at,
+                "sources": [{"provider_type": s.provider_type, "identity": s.identity} for s in snap.sources],
+            }
+            # Include manifest evaluation in JSON output
+            from pretorin.attestation import evaluate_manifest, load_manifest
+
+            manifest = load_manifest(system_id)
+            if manifest is not None:
+                m_result = evaluate_manifest(manifest, snap.sources)
+                result_dict["manifest_status"] = m_result.status.value
+                if m_result.missing_required:
+                    result_dict["missing_required_sources"] = [r.source_type for r in m_result.missing_required]
+                if m_result.missing_recommended:
+                    result_dict["missing_recommended_sources"] = [r.source_type for r in m_result.missing_recommended]
+            print_json(result_dict)
+    else:
+        # Show manifest evaluation in rich output
+        from pretorin.attestation import evaluate_manifest, load_manifest, load_snapshot
+
+        snap = load_snapshot(system_id, framework_id)
+        if snap:
+            manifest = load_manifest(system_id)
+            if manifest is not None:
+                m_result = evaluate_manifest(manifest, snap.sources)
+                lines: list[str] = []
+                for req in m_result.satisfied:
+                    desc = f" ({req.description})" if req.description else ""
+                    lines.append(f"  [green]\u2713[/green] {req.source_type}{desc}")
+                for req in m_result.missing_required:
+                    desc = f" ({req.description})" if req.description else ""
+                    lines.append(f"  [red]\u2717[/red] {req.source_type} [red](required, missing)[/red]{desc}")
+                for req in m_result.missing_recommended:
+                    desc = f" ({req.description})" if req.description else ""
+                    lines.append(
+                        f"  [yellow]![/yellow] {req.source_type} [yellow](recommended, missing)[/yellow]{desc}"
+                    )
+                if lines:
+                    rprint(
+                        Panel(
+                            "\n".join(lines),
+                            title=f"[bold]Manifest: {m_result.status.value}[/bold]",
+                            border_style="green"
+                            if m_result.status.value == "satisfied"
+                            else "yellow"
+                            if m_result.status.value == "partial"
+                            else "red",
+                        )
+                    )
+
+
+# ---------------------------------------------------------------------------
+# context manifest
+# ---------------------------------------------------------------------------
+
+
+@app.command("manifest")
+def context_manifest(
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Compact output."),
+) -> None:
+    """Show the resolved source manifest and evaluate against detected sources."""
+    from pretorin.attestation import evaluate_manifest, load_manifest, load_snapshot
+    from pretorin.client.config import Config
+
+    config = Config()
+    system_id = config.get("active_system_id")
+    framework_id = config.get("active_framework_id")
+
+    if not system_id:
+        if is_json_mode():
+            print_json({"error": "No active context set."})
+        else:
+            rprint(f"\n  {ROMEBOT_SAD}  No active context. Run [bold]pretorin context set[/bold] first.\n")
+        raise typer.Exit(1)
+
+    manifest = load_manifest(system_id)
+    if manifest is None:
+        if is_json_mode():
+            print_json({"manifest": None, "message": "No source manifest found."})
+        else:
+            rprint(f"\n  {ROMEBOT_THINKING}  No source manifest found for system [bold]{system_id}[/bold].\n")
+            rprint("  Create [bold].pretorin/source-manifest.json[/bold] in your repo root,")
+            rprint("  or set the [bold]PRETORIN_SOURCE_MANIFEST[/bold] env var.\n")
+        return
+
+    if is_json_mode():
+        result_dict: dict[str, Any] = {
+            "version": manifest.version,
+            "system_sources": [{"source_type": r.source_type, "level": r.level.value} for r in manifest.system_sources],
+            "family_sources": {
+                k: [{"source_type": r.source_type, "level": r.level.value} for r in v]
+                for k, v in manifest.family_sources.items()
+            },
+        }
+        if framework_id:
+            snap = load_snapshot(system_id, framework_id)
+            if snap:
+                m_result = evaluate_manifest(manifest, snap.sources)
+                result_dict["evaluation"] = {
+                    "status": m_result.status.value,
+                    "satisfied": [r.source_type for r in m_result.satisfied],
+                    "missing_required": [r.source_type for r in m_result.missing_required],
+                    "missing_recommended": [r.source_type for r in m_result.missing_recommended],
                 }
+        print_json(result_dict)
+    else:
+        rprint(f"\n  {ROMEBOT_HAPPY}  Source manifest (v{manifest.version})\n")
+        table = Table(title="System-level sources")
+        table.add_column("Source", style="bold")
+        table.add_column("Level")
+        table.add_column("Pattern")
+        for req in manifest.system_sources:
+            table.add_row(
+                req.source_type,
+                req.level.value,
+                req.identity_pattern or req.account_id or "",
             )
+        if manifest.system_sources:
+            rprint(table)
+
+        for family_key, family_reqs in sorted(manifest.family_sources.items()):
+            ftable = Table(title=f"Family: {family_key.upper()}")
+            ftable.add_column("Source", style="bold")
+            ftable.add_column("Level")
+            for req in family_reqs:
+                ftable.add_row(req.source_type, req.level.value)
+            rprint(ftable)
+
+        # Evaluate against current snapshot
+        if framework_id:
+            snap = load_snapshot(system_id, framework_id)
+            if snap:
+                m_result = evaluate_manifest(manifest, snap.sources)
+                rprint(f"\n  Evaluation: [bold]{m_result.status.value}[/bold]")
+            else:
+                rprint("\n  No verified snapshot. Run [bold]pretorin context verify[/bold] to evaluate.")
+        rprint()
