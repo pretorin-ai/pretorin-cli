@@ -25,6 +25,7 @@ ENV_OPENAI_MODEL = "OPENAI_MODEL"
 ENV_SYSTEM_ID = "PRETORIN_SYSTEM_ID"
 ENV_FRAMEWORK_ID = "PRETORIN_FRAMEWORK_ID"
 ENV_SOURCE_PROVIDERS = "PRETORIN_SOURCE_PROVIDERS"
+ENV_SOURCE_MANIFEST = "PRETORIN_SOURCE_MANIFEST"
 
 
 def _as_bool(value: Any) -> bool:
@@ -102,6 +103,13 @@ class Config:
                     return json.loads(env_value)
                 except json.JSONDecodeError:
                     pass
+        elif key == "source_manifest":
+            env_value = os.environ.get(ENV_SOURCE_MANIFEST)
+            if env_value:
+                try:
+                    return json.loads(env_value)
+                except json.JSONDecodeError:
+                    pass  # May be a file path, handled by load_manifest
 
         return self._config.get(key, default)
 
@@ -258,6 +266,11 @@ class Config:
     def source_providers(self) -> list[dict[str, Any]] | None:
         """Source provider config. None means use auto-detect defaults."""
         return self.get("source_providers")
+
+    @property
+    def source_manifest(self) -> dict[str, Any] | None:
+        """Inline source manifest from config. None means check file-based manifests."""
+        return self.get("source_manifest")
 
     @property
     def disable_update_check(self) -> bool:
