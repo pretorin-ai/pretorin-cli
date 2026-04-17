@@ -98,20 +98,21 @@ async def handle_get_source_manifest(
     system_id = arguments.get("system_id") or config.active_system_id
     if not system_id:
         raise PretorianClientError(
-            "No system_id provided and no active context set. "
-            "Run 'pretorin context set' or pass system_id."
+            "No system_id provided and no active context set. Run 'pretorin context set' or pass system_id."
         )
 
     manifest = load_manifest(system_id)
     if manifest is None:
-        return format_json({
-            "system_id": system_id,
-            "manifest": None,
-            "message": (
-                "No source manifest found. Create .pretorin/source-manifest.json "
-                "in your repo root, or set the PRETORIN_SOURCE_MANIFEST env var."
-            ),
-        })
+        return format_json(
+            {
+                "system_id": system_id,
+                "manifest": None,
+                "message": (
+                    "No source manifest found. Create .pretorin/source-manifest.json "
+                    "in your repo root, or set the PRETORIN_SOURCE_MANIFEST env var."
+                ),
+            }
+        )
 
     result: dict[str, Any] = {
         "system_id": system_id,

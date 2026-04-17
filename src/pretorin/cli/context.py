@@ -1020,8 +1020,11 @@ async def _context_verify(*, ttl: int = 3600, quiet: bool = False) -> None:
                         Panel(
                             "\n".join(lines),
                             title=f"[bold]Manifest: {m_result.status.value}[/bold]",
-                            border_style="green" if m_result.status.value == "satisfied" else "yellow"
-                            if m_result.status.value == "partial" else "red",
+                            border_style="green"
+                            if m_result.status.value == "satisfied"
+                            else "yellow"
+                            if m_result.status.value == "partial"
+                            else "red",
                         )
                     )
 
@@ -1063,9 +1066,7 @@ def context_manifest(
     if is_json_mode():
         result_dict: dict[str, Any] = {
             "version": manifest.version,
-            "system_sources": [
-                {"source_type": r.source_type, "level": r.level.value} for r in manifest.system_sources
-            ],
+            "system_sources": [{"source_type": r.source_type, "level": r.level.value} for r in manifest.system_sources],
             "family_sources": {
                 k: [{"source_type": r.source_type, "level": r.level.value} for r in v]
                 for k, v in manifest.family_sources.items()
