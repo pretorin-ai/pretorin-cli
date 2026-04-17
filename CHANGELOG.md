@@ -5,6 +5,27 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2026-04-16
+
+### Added
+- Source manifest requirement policy (Phase 3 of #64): declare which external sources a system expects and gate compliance writes on their presence
+- `pretorin context manifest` command for viewing the resolved manifest and evaluating it against detected sources
+- Manifest loading from four layered sources: `PRETORIN_SOURCE_MANIFEST` env var, repo-local `.pretorin/source-manifest.json`, per-system user config, or inline config key
+- Family-level source requirements: manifest can declare that AC controls need AWS, CM controls need git, PS controls need HRIS, etc.
+- Three requirement levels (required/recommended/optional) with write blocking on missing required sources and warnings for missing recommended
+- Control family extraction for NIST 800-53, CMMC, and 800-171r3 control ID formats
+- Anchored identity matching prevents org-name prefix collisions in manifest identity patterns
+- Manifest evaluation results in write provenance (`manifest_status` and `missing_required_sources` fields)
+- `control_id` threading through MCP `resolve_execution_scope` and 4 API write methods for family-level provenance
+- Manifest version validation rejects unknown schema versions with a clear warning
+- 134 new tests covering manifest models, parsing, loading, matching, evaluation, family extraction, write guard enforcement, and provenance enrichment
+
+### Changed
+- `_enforce_source_attestation` now evaluates manifest requirements after the existing MISMATCH check
+- `resolve_execution_context` accepts an optional `control_id` for family-level manifest enforcement
+- `build_write_provenance` accepts an optional `control_id` and includes manifest evaluation in provenance metadata
+- `TODOS.md` added to `.gitignore`
+
 ## [0.14.0] - 2026-04-10
 
 ### Changed
