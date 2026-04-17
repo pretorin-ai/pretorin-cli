@@ -17,6 +17,7 @@ from pretorin.client.api import PretorianClientError
 from pretorin.mcp.handlers.evidence import (
     handle_create_evidence,
     handle_create_evidence_batch,
+    handle_delete_evidence,
     handle_get_narrative,
     handle_link_evidence,
 )
@@ -155,6 +156,54 @@ class TestHandleLinkEvidence:
         result = await handle_link_evidence(client, {"evidence_id": "ev-1"})
         assert _is_error(result)
         assert "control_id" in _error_text(result)
+
+
+class TestHandleDeleteEvidence:
+    """Tests for handle_delete_evidence."""
+
+    @pytest.mark.asyncio
+    async def test_missing_evidence_id_returns_error(self):
+        """Missing evidence_id returns format_error."""
+        client = _make_client()
+        result = await handle_delete_evidence(client, {})
+        assert _is_error(result)
+        assert "evidence_id" in _error_text(result)
+
+    @pytest.mark.asyncio
+    async def test_success_returns_deleted_payload(self):
+        """Successful delete returns evidence_id and deleted flag."""
+        client = _make_client()
+        client.delete_evidence = AsyncMock(return_value=None)
+        with patch(
+            "pretorin.mcp.handlers.evidence.resolve_execution_scope",
+            new=AsyncMock(return_value=("sys-1", "fedramp-moderate", None)),
+        ):
+            result = await handle_delete_evidence(
+                client, {"evidence_id": "ev-abc123"}
+            )
+        assert not isinstance(result, CallToolResult)
+        import json
+
+        text = result[0].text
+        payload = json.loads(text)
+        assert payload["evidence_id"] == "ev-abc123"
+        assert payload["deleted"] is True
+
+    @pytest.mark.asyncio
+    async def test_client_error_bubbles_up(self):
+        """PretorianClientError from delete should propagate."""
+        client = _make_client()
+        client.delete_evidence = AsyncMock(
+            side_effect=PretorianClientError("Not found")
+        )
+        with patch(
+            "pretorin.mcp.handlers.evidence.resolve_execution_scope",
+            new=AsyncMock(return_value=("sys-1", "fedramp-moderate", None)),
+        ):
+            with pytest.raises(PretorianClientError, match="Not found"):
+                await handle_delete_evidence(
+                    client, {"evidence_id": "ev-abc123"}
+                )
 
 
 class TestHandleGetNarrative:

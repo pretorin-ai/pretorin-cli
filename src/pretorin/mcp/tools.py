@@ -338,6 +338,26 @@ async def list_tools() -> list[Tool]:
                 "required": ["evidence_id", "control_id"],
             },
         ),
+        Tool(
+            name="pretorin_delete_evidence",
+            description="Delete an evidence item from the platform (system-scoped, requires WRITE access)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(optional=True),
+                    "evidence_id": {
+                        "type": "string",
+                        "description": "The evidence item ID to delete",
+                    },
+                    "framework_id": {
+                        "type": "string",
+                        "description": "Optional: Framework ID; defaults to active scope",
+                    },
+                    "allow_scope_override": allow_scope_override_property(),
+                },
+                "required": ["evidence_id"],
+            },
+        ),
         # === Narrative Tools ===
         Tool(
             name="pretorin_get_narrative",

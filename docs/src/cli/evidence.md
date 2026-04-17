@@ -55,6 +55,23 @@ pretorin evidence upsert ac-02 fedramp-moderate \
 
 This searches for an exact match on (name + description + type + control + framework) within the active system scope. If found, it reuses the existing item; otherwise, it creates a new one. It then ensures the evidence is linked to the specified control.
 
+## Delete Evidence
+
+```bash
+# Delete with confirmation prompt
+pretorin evidence delete ev-abc123
+
+# Skip confirmation (for automation)
+pretorin evidence delete ev-abc123 --yes
+
+# Explicit system scope
+pretorin evidence delete ev-abc123 --system "My Application" --yes
+```
+
+Permanently deletes an evidence item from the platform. This is system-scoped and requires `WRITE` access. Associated evidence embeddings are removed as part of the delete lifecycle.
+
+Use `--yes` to skip the confirmation prompt in non-interactive or automation workflows.
+
 ## Evidence Types
 
 Valid evidence types:

@@ -162,6 +162,26 @@ async def handle_link_evidence(
     return format_json(result)
 
 
+async def handle_delete_evidence(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Handle the delete_evidence tool."""
+    logger.debug("handle_delete_evidence called with %s", _safe_args(arguments))
+    err = require(arguments, "evidence_id")
+    if err:
+        return format_error(err)
+
+    system_id, _framework_id, _ = await resolve_execution_scope(
+        client,
+        arguments,
+        enforce_active_context=True,
+    )
+    evidence_id = arguments["evidence_id"]
+    await client.delete_evidence(system_id=system_id, evidence_id=evidence_id)
+    return format_json({"evidence_id": evidence_id, "deleted": True})
+
+
 async def handle_get_narrative(
     client: PretorianClient,
     arguments: dict[str, Any],

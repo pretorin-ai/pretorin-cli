@@ -524,3 +524,64 @@ async def _upsert_evidence(
         )
         if result.link_error:
             rprint(f"[yellow]Warning: evidence link failed: {result.link_error}[/yellow]")
+
+
+@app.command("delete")
+def evidence_delete(
+    evidence_id: str = typer.Argument(..., help="Evidence item ID"),
+    system: str | None = typer.Option(None, "--system", "-s", help="System name or ID."),
+    framework_id: str | None = typer.Option(None, "--framework-id", "-f", help="Framework ID."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
+) -> None:
+    """Delete an evidence item from the platform.
+
+    Permanently removes the evidence item and its associated embeddings.
+    This operation is system-scoped and requires WRITE access.
+
+    Examples:
+        pretorin evidence delete ev-abc123
+        pretorin evidence delete ev-abc123 --yes
+        pretorin evidence delete ev-abc123 --system "My App" --yes
+    """
+    if not yes:
+        confirm = typer.confirm(f"Delete evidence {evidence_id}?")
+        if not confirm:
+            rprint("[dim]Cancelled.[/dim]")
+            raise typer.Exit(0)
+
+    asyncio.run(
+        _delete_evidence(
+            evidence_id=evidence_id,
+            system=system,
+            framework_id=framework_id,
+        )
+    )
+
+
+async def _delete_evidence(
+    evidence_id: str,
+    system: str | None,
+    framework_id: str | None,
+) -> None:
+    from pretorin.cli.commands import require_auth
+    from pretorin.cli.context import resolve_execution_context
+    from pretorin.client.api import PretorianClient, PretorianClientError
+
+    async with PretorianClient() as client:
+        require_auth(client)
+        try:
+            system_id, _resolved_framework_id = await resolve_execution_context(
+                client,
+                system=system,
+                framework=framework_id,
+            )
+            await client.delete_evidence(system_id=system_id, evidence_id=evidence_id)
+        except PretorianClientError as e:
+            rprint(f"[red]Delete failed: {e.message}[/red]")
+            raise typer.Exit(1)
+
+        if is_json_mode():
+            print_json({"evidence_id": evidence_id, "deleted": True})
+            return
+
+        rprint(f"[green]Evidence {evidence_id} deleted.[/green]")

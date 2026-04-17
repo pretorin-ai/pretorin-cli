@@ -721,6 +721,15 @@ class PretorianClient:
         data = await self._request("POST", f"/systems/{system_id}/evidence/{evidence_id}/link", json=payload)
         return data
 
+    async def delete_evidence(self, system_id: str, evidence_id: str) -> None:
+        """Delete an evidence item from a system.
+
+        Args:
+            system_id: System ID the evidence belongs to.
+            evidence_id: ID of the evidence item to delete.
+        """
+        await self._request("DELETE", f"/systems/{system_id}/evidence/{evidence_id}")
+
     # =========================================================================
     # Narrative Endpoints
     # =========================================================================

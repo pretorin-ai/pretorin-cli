@@ -723,3 +723,107 @@ def test_evidence_upsert_client_error() -> None:
     assert result.exit_code == 1
     assert "Upsert failed" in result.output
     assert "Platform error" in result.output
+
+
+# =============================================================================
+# evidence delete
+# =============================================================================
+
+
+def test_evidence_delete_success_json() -> None:
+    """evidence delete outputs JSON with evidence_id and deleted flag."""
+    client = AsyncMock()
+    client.is_configured = True
+    client.delete_evidence = AsyncMock()
+
+    ctx = AsyncMock()
+    ctx.__aenter__ = AsyncMock(return_value=client)
+    ctx.__aexit__ = AsyncMock(return_value=None)
+
+    with (
+        patch("pretorin.client.api.PretorianClient", return_value=ctx),
+        patch(
+            "pretorin.cli.context.resolve_execution_context",
+            new_callable=AsyncMock,
+            return_value=("sys-1", "fedramp-moderate"),
+        ),
+    ):
+        result = runner.invoke(
+            app,
+            [
+                "--json",
+                "evidence",
+                "delete",
+                "ev-abc123",
+                "--system",
+                "Primary",
+                "--yes",
+            ],
+        )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.stdout)
+    assert payload["evidence_id"] == "ev-abc123"
+    assert payload["deleted"] is True
+
+
+def test_evidence_delete_success_normal() -> None:
+    """evidence delete shows success message in normal mode."""
+    client = AsyncMock()
+    client.is_configured = True
+    client.delete_evidence = AsyncMock()
+
+    ctx = AsyncMock()
+    ctx.__aenter__ = AsyncMock(return_value=client)
+    ctx.__aexit__ = AsyncMock(return_value=None)
+
+    with (
+        patch("pretorin.client.api.PretorianClient", return_value=ctx),
+        patch(
+            "pretorin.cli.context.resolve_execution_context",
+            new_callable=AsyncMock,
+            return_value=("sys-1", "fedramp-moderate"),
+        ),
+    ):
+        result = runner.invoke(
+            app,
+            ["evidence", "delete", "ev-abc123", "--yes"],
+        )
+
+    assert result.exit_code == 0, result.output
+    assert "deleted" in result.output
+
+
+def test_evidence_delete_cancelled() -> None:
+    """evidence delete exits 0 when user declines confirmation."""
+    result = runner.invoke(app, ["evidence", "delete", "ev-abc123"], input="n\n")
+    assert result.exit_code == 0
+    assert "Cancelled" in result.output
+
+
+def test_evidence_delete_client_error() -> None:
+    """evidence delete exits 1 on PretorianClientError."""
+    client = AsyncMock()
+    client.is_configured = True
+    client.delete_evidence = AsyncMock(side_effect=PretorianClientError("Not found"))
+
+    ctx = AsyncMock()
+    ctx.__aenter__ = AsyncMock(return_value=client)
+    ctx.__aexit__ = AsyncMock(return_value=None)
+
+    with (
+        patch("pretorin.client.api.PretorianClient", return_value=ctx),
+        patch(
+            "pretorin.cli.context.resolve_execution_context",
+            new_callable=AsyncMock,
+            return_value=("sys-1", "fedramp-moderate"),
+        ),
+    ):
+        result = runner.invoke(
+            app,
+            ["evidence", "delete", "ev-abc123", "--yes"],
+        )
+
+    assert result.exit_code == 1
+    assert "Delete failed" in result.output
+    assert "Not found" in result.output

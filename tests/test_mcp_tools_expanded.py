@@ -39,11 +39,12 @@ class TestToolListing:
             "pretorin_get_source_manifest",
             "pretorin_get_system",
             "pretorin_get_compliance_status",
-            # Evidence 4
+            # Evidence 5
             "pretorin_search_evidence",
             "pretorin_create_evidence",
             "pretorin_create_evidence_batch",
             "pretorin_link_evidence",
+            "pretorin_delete_evidence",
             # Narrative 2
             "pretorin_get_narrative",
             "pretorin_generate_control_artifacts",
@@ -87,7 +88,7 @@ class TestToolListing:
             "pretorin_infer_stigs",
         ]
 
-        assert len(tools) == 85
+        assert len(tools) == 86
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 
