@@ -41,11 +41,15 @@ from pretorin.workflows.markdown_quality import ensure_audit_markdown
 logger = logging.getLogger(__name__)
 
 
-def _build_provenance(system_id: str, framework_id: str | None) -> dict[str, Any]:
+def _build_provenance(
+    system_id: str,
+    framework_id: str | None,
+    control_id: str | None = None,
+) -> dict[str, Any]:
     """Build write provenance metadata (lazy import to avoid circular deps)."""
     from pretorin.attestation import build_write_provenance
 
-    return build_write_provenance(system_id, framework_id or "")
+    return build_write_provenance(system_id, framework_id or "", control_id=control_id)
 
 
 class PretorianClientError(Exception):
@@ -708,10 +712,11 @@ class PretorianClient:
         Returns:
             Link result.
         """
+        normalized_cid = normalize_control_id(control_id)
         payload: dict[str, Any] = {
-            "control_id": normalize_control_id(control_id),
+            "control_id": normalized_cid,
             "framework_id": framework_id,
-            "_provenance": _build_provenance(system_id, framework_id),
+            "_provenance": _build_provenance(system_id, framework_id, control_id=normalized_cid),
         }
         data = await self._request("POST", f"/systems/{system_id}/evidence/{evidence_id}/link", json=payload)
         return data
@@ -823,7 +828,7 @@ class PretorianClient:
         payload = {
             "narrative": narrative,
             "is_ai_generated": is_ai_generated,
-            "_provenance": _build_provenance(system_id, framework_id),
+            "_provenance": _build_provenance(system_id, framework_id, control_id=normalized_control_id),
         }
         data = await self._request(
             "POST",
@@ -908,12 +913,12 @@ class PretorianClient:
         Returns:
             Created note response.
         """
+        normalized_control_id = self._normalize_control_id(control_id)
         payload: dict[str, Any] = {
             "content": content,
             "source": source,
-            "_provenance": _build_provenance(system_id, framework_id),
+            "_provenance": _build_provenance(system_id, framework_id, control_id=normalized_control_id),
         }
-        normalized_control_id = self._normalize_control_id(control_id)
         data = await self._request(
             "POST",
             f"/systems/{system_id}/controls/{normalized_control_id}/notes",
@@ -962,7 +967,7 @@ class PretorianClient:
         normalized_control_id = self._normalize_control_id(control_id)
         payload = {
             "status": status,
-            "_provenance": _build_provenance(system_id, framework_id),
+            "_provenance": _build_provenance(system_id, framework_id, control_id=normalized_control_id),
         }
         data = await self._request(
             "POST",
