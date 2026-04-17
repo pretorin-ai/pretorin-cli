@@ -177,6 +177,22 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="pretorin_get_source_manifest",
+            description=(
+                "Get the resolved source manifest for a system and evaluate it against "
+                "currently detected sources. Shows which external sources (git, cloud, "
+                "HRIS, etc.) are required, recommended, or optional, and whether each "
+                "is currently satisfied. Returns null manifest if none is configured."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(),
+                },
+                "required": [],
+            },
+        ),
+        Tool(
             name="pretorin_get_system",
             description=(
                 "Get detailed information about a specific system including frameworks and security impact level"
