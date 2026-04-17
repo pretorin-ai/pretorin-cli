@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-4103e2a1.js";
+            window.path_to_searchindex_js = "../searchindex-694685ba.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -215,6 +215,18 @@ pretorin evidence search --system "My Application" --framework-id fedramp-modera
   --type configuration
 </code></pre>
 <p>This searches for an exact match on (name + description + type + control + framework) within the active system scope. If found, it reuses the existing item; otherwise, it creates a new one. It then ensures the evidence is linked to the specified control.</p>
+<h2 id="delete-evidence"><a class="header" href="#delete-evidence">Delete Evidence</a></h2>
+<pre><code class="language-bash"># Delete with confirmation prompt
+pretorin evidence delete ev-abc123
+
+# Skip confirmation (for automation)
+pretorin evidence delete ev-abc123 --yes
+
+# Explicit system scope
+pretorin evidence delete ev-abc123 --system "My Application" --yes
+</code></pre>
+<p>Permanently deletes an evidence item from the platform. This is system-scoped and requires <code>WRITE</code> access. Associated evidence embeddings are removed as part of the delete lifecycle.</p>
+<p>Use <code>--yes</code> to skip the confirmation prompt in non-interactive or automation workflows.</p>
 <h2 id="evidence-types"><a class="header" href="#evidence-types">Evidence Types</a></h2>
 <p>Valid evidence types:</p>
 <div class="table-wrapper">
