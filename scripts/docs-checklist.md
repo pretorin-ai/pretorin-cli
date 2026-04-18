@@ -29,7 +29,7 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 
 ## Phase 5: Generated Artifacts & Cross-references
 
-- [ ] **14. llms.txt Manifests** - Regenerate docs/llms.txt and docs/llms-full.txt from current docs/src/ content. Verify they match the SUMMARY.md structure.
+- [x] **14. llms.txt Manifests** - Regenerate docs/llms.txt and docs/llms-full.txt from current docs/src/ content. Verify they match the SUMMARY.md structure.
 - [ ] **15. mdBook Build** - Run ./scripts/build-docs.sh to rebuild docs/book/ from docs/src/. Commit any changes to generated output.
 - [ ] **16. Dead Doc Detection** - Find docs referencing deleted CLI commands, removed MCP tools, old env vars, or nonexistent file paths. Fix or remove stale content.
 - [ ] **17. Cross-reference Validation** - Verify all internal markdown links in docs/src/ resolve to real files. Fix broken links. Check SUMMARY.md entries all point to existing pages.
@@ -50,3 +50,4 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 - **Task 11** (6b15a06): Workflow Pages — fixed narrative-evidence.md push→push-file command; removed deprecated --references flag from gap-analysis.md and cross-framework.md (references now shown by default); added CLI commands (policy show/populate, scope show/populate) to policy-scope.md.
 - **Task 12** (5ce460c): Changelog Sync — added missing v0.15.1 and v0.15.0 entries to docs/src/reference/changelog.md; fixed 0.11.0 date (04-01→04-02); added comparison links for new versions.
 - **Task 13** (3daf99f): Environment Variables — added 6 missing env vars (PRETORIN_SYSTEM_ID, PRETORIN_FRAMEWORK_ID, OPENAI_BASE_URL, OPENAI_MODEL, PRETORIN_SOURCE_PROVIDERS, PRETORIN_SOURCE_MANIFEST); added Context and Source Attestation sections; added model name precedence chain.
+- **Task 14** (4d1265c): llms.txt Manifests — added 9 missing pages to llms.txt (MCP resources/troubleshooting, agent runtime, gap-analysis-example, artifact generation, cross-framework mapping, framework selection guide, contributing, changelog); verified llms-full.txt already covered all 42 SUMMARY.md pages.
