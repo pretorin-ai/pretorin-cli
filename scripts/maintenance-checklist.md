@@ -11,8 +11,8 @@ This checklist drives automated maintenance for pretorin-cli. Each task should I
 
 ## Phase 2: Test Quality
 
-- [ ] **5. Test Coverage Analysis** - Identify files <60% coverage, write missing tests for critical code (client, attestation, MCP handlers)
-- [ ] **6. Dead Test Cleanup** - Find and remove tests for deleted features/code, fix flaky tests
+- [x] **5. Test Coverage Analysis** - Identify files <60% coverage, write missing tests for critical code (client, attestation, MCP handlers)
+- [x] **6. Dead Test Cleanup** - Find and remove tests for deleted features/code, fix flaky tests
 
 ## Phase 3: Code Quality
 
@@ -36,4 +36,6 @@ This checklist drives automated maintenance for pretorin-cli. Each task should I
 - **2026-04-18 — Task 2: Lint Fixes** — Ran `ruff check src/pretorin --fix` and `ruff format src/pretorin`. All checks passed, 85 files unchanged by formatter. No lint or format issues found. (no code commit — already clean)
 - **2026-04-18 — Task 3: Type Check Fixes** — Ran `mypy src/pretorin`. All 85 source files pass with no issues. No fixes needed. (no code commit — already clean)
 - **2026-04-18 — Task 4: TODO/FIXME Audit** — Searched all source and test files for `# TODO`, `# FIXME`, `<!-- TODO -->` comments. Found zero developer TODOs/FIXMEs. All `TODO` occurrences are `[[PRETORIN_TODO]]` markers — a domain-specific placeholder used in compliance narrative generation, not developer action items. No fixes needed. (no code commit — already clean)
+- **2026-04-18 — Task 6: Dead Test Cleanup** — Thorough audit of all 1445 tests + 38 skipped. All imports resolve; no broken references. Removed 4 dead tests: 1 sham test (TestCliMainGuard in test_small_coverage_gaps.py — mocked app then called the mock, tested nothing, already covered by test_main_entry.py) and 3 duplicate tests (TestNormalizeControlId in test_api_client_coverage2.py — exact copies of tests in test_api_client.py). The 38 skipped tests are all integration tests that conditionally skip without PRETORIN_API_KEY — legitimate, not dead. No flaky tests found. Commit: 6421c58.
+- **2026-04-18 — Task 5: Test Coverage Analysis** — Overall coverage 74%. Identified critical low-coverage MCP handler files: stig.py (22%), vendors.py (23%), workflow.py (43%). Added 104 tests across 3 new test files. Results: stig.py 22%→99%, vendors.py 23%→100%, workflow.py 43%→77%. Client (76%) and attestation (95%) already at acceptable levels. Commit: cbbd130.
 
