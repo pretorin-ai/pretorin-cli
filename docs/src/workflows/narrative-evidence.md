@@ -66,8 +66,8 @@ Manual next step: Screenshot MFA policy from Azure AD admin portal
 ### 5. Push Updates
 
 ```bash
-# Push narrative
-pretorin narrative push ac-02 fedramp-moderate "My Application" narrative-ac02.md
+# Push a single narrative file
+pretorin narrative push-file ac-02 fedramp-moderate "My Application" narrative-ac02.md
 
 # Upsert evidence (finds or creates, then links)
 pretorin evidence upsert ac-02 fedramp-moderate \
