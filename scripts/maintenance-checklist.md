@@ -5,7 +5,7 @@ This checklist drives automated maintenance for pretorin-cli. Each task should I
 ## Phase 1: Analysis & Quick Fixes
 
 - [x] **1. CI Health Check** - Review recent GitHub Actions runs, identify existing failures to fix
-- [ ] **2. Lint Fixes** - Run ruff check + format, auto-fix what's possible, document remaining issues
+- [x] **2. Lint Fixes** - Run ruff check + format, auto-fix what's possible, document remaining issues
 - [ ] **3. Type Check Fixes** - Run mypy, fix type errors in critical paths (client, MCP handlers, CLI)
 - [ ] **4. TODO/FIXME Audit** - Catalog all TODO/FIXME comments, resolve quick ones, create issues for complex ones
 
@@ -33,4 +33,5 @@ This checklist drives automated maintenance for pretorin-cli. Each task should I
 ## Progress Log
 
 - **2026-04-18 07:36 — Task 1: CI Health Check** — All 5 recent CI runs checked. 4/5 green. One prior failure on feat/evidence-delete was a docs build output mismatch (stale mdBook search index), already fixed before merge. Master CI is fully green. No action needed. (no code commit — analysis only)
+- **2026-04-18 — Task 2: Lint Fixes** — Ran `ruff check src/pretorin --fix` and `ruff format src/pretorin`. All checks passed, 85 files unchanged by formatter. No lint or format issues found. (no code commit — already clean)
 
