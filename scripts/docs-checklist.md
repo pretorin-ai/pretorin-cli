@@ -25,7 +25,7 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 
 - [x] **11. Workflow Pages** - Read src/pretorin/cli/ workflow commands (campaigns, evidence, narratives, vendors) and compare against docs/src/workflows/ pages. Update workflows that have changed.
 - [x] **12. Changelog Sync** - Verify docs/src/reference/changelog.md matches CHANGELOG.md content. Ensure the latest version entry is present.
-- [ ] **13. Environment Variables** - Read all env var references in src/pretorin/ and compare against docs/src/reference/environment.md. Add missing vars, remove stale ones.
+- [x] **13. Environment Variables** - Read all env var references in src/pretorin/ and compare against docs/src/reference/environment.md. Add missing vars, remove stale ones.
 
 ## Phase 5: Generated Artifacts & Cross-references
 
@@ -49,3 +49,4 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 - **Task 10** (e213ea1): Framework Docs — added Tier column and Framework Tiers section (foundational/operational/strategic) to supported.md; added enhancement ID formats (ac-02.1, ac-02(1)) and auto-normalization section to control-ids.md; selection.md verified accurate.
 - **Task 11** (6b15a06): Workflow Pages — fixed narrative-evidence.md push→push-file command; removed deprecated --references flag from gap-analysis.md and cross-framework.md (references now shown by default); added CLI commands (policy show/populate, scope show/populate) to policy-scope.md.
 - **Task 12** (5ce460c): Changelog Sync — added missing v0.15.1 and v0.15.0 entries to docs/src/reference/changelog.md; fixed 0.11.0 date (04-01→04-02); added comparison links for new versions.
+- **Task 13** (3daf99f): Environment Variables — added 6 missing env vars (PRETORIN_SYSTEM_ID, PRETORIN_FRAMEWORK_ID, OPENAI_BASE_URL, OPENAI_MODEL, PRETORIN_SOURCE_PROVIDERS, PRETORIN_SOURCE_MANIFEST); added Context and Source Attestation sections; added model name precedence chain.
