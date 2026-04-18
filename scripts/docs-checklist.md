@@ -14,7 +14,7 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 - [x] **5. CLI Command Reference** - Read src/pretorin/cli/ and compare against docs/src/cli/command-reference.md. Verify every command, subcommand, flag, and argument is documented. Add missing commands, remove stale ones.
 - [x] **6. CLI Feature Pages** - Read each CLI module (context.py, notes.py, evidence.py, etc.) and update the corresponding docs/src/cli/ page (context.md, notes.md, evidence.md, etc.). Verify examples work.
 - [x] **7. MCP Tool Reference** - Read src/pretorin/mcp/tools.py and compare against docs/src/mcp/tools.md. Verify every tool, parameter, and description matches. Update tool counts.
-- [ ] **8. MCP Setup & Overview** - Verify docs/src/mcp/overview.md, setup.md, resources.md, troubleshooting.md match current MCP server behavior, config format, and resource URIs.
+- [x] **8. MCP Setup & Overview** - Verify docs/src/mcp/overview.md, setup.md, resources.md, troubleshooting.md match current MCP server behavior, config format, and resource URIs.
 
 ## Phase 3: Agent & Framework Docs
 
@@ -44,3 +44,4 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 - **Task 5** (bba6235): CLI Command Reference — added Control, Policy, Scope, Skill sections; added context verify/manifest, evidence link/delete, narrative create/list/push, notes create/list/push/add commands; fixed frameworks control flag (--brief not --references), vendor delete flag (--yes not --force), agent run/mcp-add params, monitoring and review flags.
 - **Task 6** (14addda): CLI Feature Pages — replaced deprecated --references with --brief/-b in frameworks.md; added context verify/manifest to context.md; added notes resolve to notes.md; added evidence link to evidence.md; added --framework-id/-f to review status; fixed --artifacts description in campaigns.md; fixed STIG severity values to cat_i/cat_ii/cat_iii; added full options table to monitoring.md.
 - **Task 7** (fedce8f): MCP Tool Reference — updated tool count to 86; added get_cli_status, get_source_manifest, delete_evidence; fixed param names (provider_type, responsibility_mode, source_type, checkpoint_path, nist_control_id, cci_id); corrected required/optional annotations for scope-defaulting params; added missing params to campaign, STIG, and vendor tools.
+- **Task 8** (2ac883f): MCP Setup & Overview — updated overview.md tool count from 23 to 86; expanded category table from 5 to 13 categories with correct tool counts; added status://cli and workflow://recipe/{recipe_id} resources to resources.md; setup.md and troubleshooting.md verified accurate.
