@@ -19,7 +19,7 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 ## Phase 3: Agent & Framework Docs
 
 - [x] **9. Agent Docs** - Read src/pretorin/agent/ (tools.py, skills.py, runtime.py) and update docs/src/agent/ pages. Verify skill names, tool lists, and runtime behavior match code.
-- [ ] **10. Framework Docs** - Verify docs/src/frameworks/ pages (supported.md, control-ids.md, selection.md) match the current framework catalog. Check framework counts and ID format examples against actual data.
+- [x] **10. Framework Docs** - Verify docs/src/frameworks/ pages (supported.md, control-ids.md, selection.md) match the current framework catalog. Check framework counts and ID format examples against actual data.
 
 ## Phase 4: Workflow Docs
 
@@ -46,3 +46,4 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 - **Task 7** (fedce8f): MCP Tool Reference — updated tool count to 86; added get_cli_status, get_source_manifest, delete_evidence; fixed param names (provider_type, responsibility_mode, source_type, checkpoint_path, nist_control_id, cci_id); corrected required/optional annotations for scope-defaulting params; added missing params to campaign, STIG, and vendor tools.
 - **Task 8** (2ac883f): MCP Setup & Overview — updated overview.md tool count from 23 to 86; expanded category table from 5 to 13 categories with correct tool counts; added status://cli and workflow://recipe/{recipe_id} resources to resources.md; setup.md and troubleshooting.md verified accurate.
 - **Task 9** (6a1ad3f): Agent Docs — added stig-scan and cci-assessment skills to skills.md (6 total); fixed model key precedence in overview.md (config.api_key over OPENAI_API_KEY by default); added --max-turns, --no-mcp, short flags to overview.md; added --scope flag, http transport, and updated examples in runtime.md.
+- **Task 10** (e213ea1): Framework Docs — added Tier column and Framework Tiers section (foundational/operational/strategic) to supported.md; added enhancement ID formats (ac-02.1, ac-02(1)) and auto-normalization section to control-ids.md; selection.md verified accurate.
