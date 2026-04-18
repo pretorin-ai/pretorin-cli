@@ -14,6 +14,14 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# Use uv run to invoke tools when they aren't installed globally.
+# If 'uv' is available, prefix tool commands with 'uv run'; otherwise call directly.
+if command -v uv &>/dev/null; then
+    RUN="uv run"
+else
+    RUN=""
+fi
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -48,13 +56,13 @@ skip() {
 
 run_lint() {
     step "Lint (ruff)"
-    if ruff check src/pretorin; then
+    if $RUN ruff check src/pretorin; then
         pass "ruff check"
     else
         fail "ruff check"
     fi
 
-    if ruff format --check src/pretorin; then
+    if $RUN ruff format --check src/pretorin; then
         pass "ruff format"
     else
         fail "ruff format"
@@ -63,21 +71,27 @@ run_lint() {
 
 run_audit() {
     step "Dependency Audit (pip-audit)"
-    if ! command -v pip-audit &>/dev/null; then
+    if command -v pip-audit &>/dev/null; then
+        if pip-audit --skip-editable . 2>&1; then
+            pass "pip-audit"
+        else
+            fail "pip-audit"
+        fi
+    elif [ -n "$RUN" ] && $RUN python -c "import pip_audit" &>/dev/null 2>&1; then
+        if $RUN pip-audit --skip-editable . 2>&1; then
+            pass "pip-audit"
+        else
+            fail "pip-audit"
+        fi
+    else
         echo -e "${YELLOW}pip-audit not installed — run: pip install pip-audit${RESET}"
         skip "pip-audit"
-        return
-    fi
-    if pip-audit --skip-editable . 2>&1; then
-        pass "pip-audit"
-    else
-        fail "pip-audit"
     fi
 }
 
 run_typecheck() {
     step "Type Check (mypy)"
-    if mypy src/pretorin; then
+    if $RUN mypy src/pretorin; then
         pass "mypy"
     else
         fail "mypy"
@@ -86,7 +100,7 @@ run_typecheck() {
 
 run_test() {
     step "Tests (pytest)"
-    if pytest -v --cov=pretorin --cov-report=term-missing --cov-fail-under=60; then
+    if $RUN pytest -v --cov=pretorin --cov-report=term-missing --cov-fail-under=60; then
         pass "pytest"
     else
         fail "pytest"
