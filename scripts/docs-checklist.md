@@ -6,7 +6,7 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 
 - [x] **1. README.md Sync** - Verify README matches current feature set, install instructions, version, and quick-start commands. Update stale sections.
 - [x] **2. CLI.md Sync** - Read all typer commands in src/pretorin/cli/, compare against docs/CLI.md. Update command tables, examples, flags, and workflow descriptions.
-- [ ] **3. MCP.md Sync** - Read all MCP tools in src/pretorin/mcp/tools.py and handlers, compare against docs/MCP.md. Update tool tables, parameters, examples, and tool counts.
+- [x] **3. MCP.md Sync** - Read all MCP tools in src/pretorin/mcp/tools.py and handlers, compare against docs/MCP.md. Update tool tables, parameters, examples, and tool counts.
 
 ## Phase 2: mdBook Core Reference (docs/src/)
 
@@ -39,3 +39,4 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 
 - **Task 1** (7c885bd): README.md — added missing commands (login/logout/whoami, control status/context, evidence link/delete, notes resolve), added Policy & Scope Questionnaires section.
 - **Task 2** (c5d3ff2): CLI.md — added Control, Policy, Scope, Skill sections; added context verify/manifest, evidence link/delete, narrative create/list/push, notes create/push/resolve commands; fixed push vs push-file; updated reference table.
+- **Task 3** (5f36941): MCP.md — updated tool count to 86; added get_cli_status, get_source_manifest, delete_evidence to tables; added detailed entries for search_evidence, delete_evidence, get_cli_status, get_source_manifest; fixed required/optional param annotations across all detailed entries.
