@@ -17,7 +17,7 @@ pretorin review run --control-id ac-02 --framework-id nist-800-53-r5 --path ./sr
 ## Check Implementation Status
 
 ```bash
-$ pretorin review status --control-id ac-02
+$ pretorin review status --control-id ac-02 --framework-id fedramp-moderate
 ╭─────────────────── Control AC-02 Status ───────────────────────╮
 │ Status: in_progress                                             │
 │ Evidence items: 3                                               │

@@ -51,6 +51,32 @@ pretorin context show --quiet --check
 
 `context show` validates the stored system and framework against the platform when credentials are available. If the system has been deleted or the framework is no longer attached, the command reports that state explicitly instead of silently showing a stale context.
 
+## Verify Context
+
+Verify the active context against source attestation:
+
+```bash
+# Full output
+pretorin context verify
+
+# Compact output with custom TTL
+pretorin context verify --ttl 7200 --quiet
+```
+
+| Option | Description |
+|--------|-------------|
+| `--ttl` | Verification TTL in seconds (default: 3600) |
+| `--quiet` / `-q` | Compact output |
+
+## Source Manifest
+
+Show the resolved source manifest and evaluate it against detected sources:
+
+```bash
+pretorin context manifest
+pretorin context manifest --quiet
+```
+
 ## Clear Context
 
 ```bash
