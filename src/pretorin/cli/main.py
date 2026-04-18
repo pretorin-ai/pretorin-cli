@@ -1,9 +1,12 @@
 """Main CLI application setup for Pretorin."""
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 import sys
+from typing import Annotated
 
 import typer
 from rich import print as rprint
@@ -190,35 +193,71 @@ def version() -> None:
 
 
 @app.command()
-def update() -> None:
-    """Update Pretorin CLI to the latest version."""
+def update(
+    version: Annotated[
+        str | None,
+        typer.Argument(help="Target version to install (e.g. 0.15.1). Defaults to latest."),
+    ] = None,
+) -> None:
+    """Update Pretorin CLI to the latest version, or a specific version."""
     import subprocess
     import sys
 
-    from pretorin.cli.version_check import check_for_updates
+    from pretorin.cli.version_check import _fetch_latest_version, _parse_version
 
-    rprint(f"[#FF9010]→[/#FF9010] Updating pretorin from PyPI (current: [#EAB536]{__version__}[/#EAB536])...")
+    current = __version__
+
+    if version:
+        target = version
+        rprint(f"[#FF9010]→[/#FF9010] Installing pretorin {target} (current: [#EAB536]{current}[/#EAB536])...")
+        pip_spec = f"pretorin=={target}"
+    else:
+        rprint(f"[#FF9010]→[/#FF9010] Checking for updates (current: [#EAB536]{current}[/#EAB536])...")
+        target = _fetch_latest_version()
+        if not target:
+            rprint("[#FF9010]→[/#FF9010] Could not reach PyPI. Try again later or run manually:")
+            rprint("  [bold]pip install --upgrade pretorin[/bold]")
+            raise typer.Exit(1)
+
+        if _parse_version(target) <= _parse_version(current):
+            rprint(f"[#95D7E0]✓[/#95D7E0] Already on the latest version ({current})")
+            return
+
+        pip_spec = "pretorin"
+
+    rprint(f"[#FF9010]→[/#FF9010] Upgrading pretorin {current} → {target}...")
     rprint()
 
     try:
         subprocess.run(
-            [sys.executable, "-m", "pip", "install", "--upgrade", "pretorin"],
+            [sys.executable, "-m", "pip", "install", "--upgrade", pip_spec],
             check=True,
         )
     except subprocess.CalledProcessError:
         rprint()
-        rprint("[#FF9010]→[/#FF9010] Update failed. Try running manually:")
-        rprint("  [bold]pip install --upgrade pretorin[/bold]")
+        rprint("[#FF9010]→[/#FF9010] pip failed. Try running manually:")
+        rprint(f"  [bold]pip install {pip_spec}[/bold]")
         raise typer.Exit(1)
 
-    # Report what version was installed
-    result = check_for_updates(force=True)
-    latest = result.latest_version if result.checked else None
+    # Verify the upgrade actually took effect by reading the installed version
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", "from pretorin import __version__; print(__version__)"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        installed = result.stdout.strip()
+    except (subprocess.CalledProcessError, OSError):
+        installed = None
+
     rprint()
-    if latest and latest != __version__:
-        rprint(f"[#95D7E0]✓[/#95D7E0] Updated to version {latest}")
-    elif latest:
-        rprint(f"[#95D7E0]✓[/#95D7E0] You're on the latest version ({latest})")
+    if installed and _parse_version(installed) >= _parse_version(target):
+        rprint(f"[#95D7E0]✓[/#95D7E0] Updated to version {installed}")
+    elif installed and installed == current:
+        rprint(f"[#FF9010]⚠[/#FF9010] pip ran but version is still {current}.")
+        rprint("  This can happen with pipx or uv-managed installs. Try:")
+        rprint("  [bold]pipx upgrade pretorin[/bold]  or  [bold]uv tool upgrade pretorin[/bold]")
     else:
         rprint("[#95D7E0]✓[/#95D7E0] Update complete.")
 
