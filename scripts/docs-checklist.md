@@ -31,7 +31,7 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 
 - [x] **14. llms.txt Manifests** - Regenerate docs/llms.txt and docs/llms-full.txt from current docs/src/ content. Verify they match the SUMMARY.md structure.
 - [x] **15. mdBook Build** - Run ./scripts/build-docs.sh to rebuild docs/book/ from docs/src/. Commit any changes to generated output.
-- [ ] **16. Dead Doc Detection** - Find docs referencing deleted CLI commands, removed MCP tools, old env vars, or nonexistent file paths. Fix or remove stale content.
+- [x] **16. Dead Doc Detection** - Find docs referencing deleted CLI commands, removed MCP tools, old env vars, or nonexistent file paths. Fix or remove stale content.
 - [ ] **17. Cross-reference Validation** - Verify all internal markdown links in docs/src/ resolve to real files. Fix broken links. Check SUMMARY.md entries all point to existing pages.
 - [ ] **18. Local Verification** - Run `./scripts/check.sh` to ensure no docs changes broke anything. If it passes, mark complete. Do NOT push, create a PR, or run CI — the outer script handles that.
 
@@ -52,3 +52,4 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 - **Task 13** (3daf99f): Environment Variables — added 6 missing env vars (PRETORIN_SYSTEM_ID, PRETORIN_FRAMEWORK_ID, OPENAI_BASE_URL, OPENAI_MODEL, PRETORIN_SOURCE_PROVIDERS, PRETORIN_SOURCE_MANIFEST); added Context and Source Attestation sections; added model name precedence chain.
 - **Task 14** (4d1265c): llms.txt Manifests — added 9 missing pages to llms.txt (MCP resources/troubleshooting, agent runtime, gap-analysis-example, artifact generation, cross-framework mapping, framework selection guide, contributing, changelog); verified llms-full.txt already covered all 42 SUMMARY.md pages.
 - **Task 15** (6a28c64): mdBook Build — rebuilt docs/book/ from updated sources; 49 files changed reflecting all doc sync updates from tasks 1-14; new search index generated.
+- **Task 16** (9e32e56): Dead Doc Detection — removed 6 stale CLI commands from command-reference.md (policy draft/answer/review, scope draft/answer/review); added missing policy populate and scope populate with correct flags; fixed policy show syntax (--policy option); added missing skill list-agents command. MCP tools, env vars, and file paths all verified clean.
