@@ -135,16 +135,23 @@ Platform-backed review and update workflows are single-scope: set one active `sy
 
 | Command | Purpose |
 |---------|---------|
+| `pretorin login` | Authenticate with the Pretorin API |
+| `pretorin logout` | Clear stored credentials |
+| `pretorin whoami` | Show current authenticated user |
 | `pretorin frameworks list` | List available frameworks |
 | `pretorin frameworks control <framework> <control>` | Get control details and guidance |
 | `pretorin context set` | Set active system/framework context |
 | `pretorin context show` | Inspect and validate the active context |
 | `pretorin context clear` | Clear the active context |
+| `pretorin control status` | Show control implementation status |
+| `pretorin control context` | Get full control context for the active scope |
 | `pretorin evidence create` | Create local evidence file |
 | `pretorin evidence list` | List local evidence files |
 | `pretorin evidence push` | Push local evidence to Pretorin |
 | `pretorin evidence search` | Search platform evidence |
+| `pretorin evidence link` | Link evidence to a control |
 | `pretorin evidence upsert <ctrl> <fw>` | Find-or-create evidence and link it |
+| `pretorin evidence delete` | Delete an evidence record |
 | `pretorin narrative create` | Create local narrative file |
 | `pretorin narrative list` | List local narrative files |
 | `pretorin narrative push` | Push local narratives to Pretorin |
@@ -155,6 +162,7 @@ Platform-backed review and update workflows are single-scope: set one active `sy
 | `pretorin notes push` | Push local notes to Pretorin |
 | `pretorin notes list <ctrl> <fw>` | List platform control notes |
 | `pretorin notes add <ctrl> <fw> --content ...` | Add control note directly |
+| `pretorin notes resolve <note_id>` | Resolve (close) a control note |
 | `pretorin monitoring push` | Push a monitoring event |
 | `pretorin agent run "<task>"` | Run Codex-powered compliance task |
 | `pretorin review run --control-id <id> --path <dir>` | Review local code for control coverage |
@@ -186,6 +194,18 @@ Manage vendor entities (CSPs, SaaS, managed services) and track control inherita
 | `pretorin vendor get <id>` | Get vendor details |
 | `pretorin vendor upload-doc <id> <file>` | Upload vendor evidence document |
 | `pretorin vendor list-docs <id>` | List vendor documents |
+
+### Policy & Scope Questionnaires
+
+Stateful questionnaire workflows for organization policies and system scope. Answer questions interactively or in bulk via campaigns.
+
+| Command | Purpose |
+|---------|---------|
+| `pretorin policy list` | List organization policies |
+| `pretorin policy show <policy_id>` | Show policy detail and questions |
+| `pretorin policy populate` | Auto-populate policy answers from context |
+| `pretorin scope show` | Show scope questionnaire for active context |
+| `pretorin scope populate` | Auto-populate scope answers from context |
 
 ### STIG & CCI Browsing
 
