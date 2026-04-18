@@ -187,19 +187,6 @@ class DocumentRequirementList(BaseModel):
 
 
 # =============================================================================
-# Error Models
-# =============================================================================
-
-
-class APIError(BaseModel):
-    """API error response."""
-
-    detail: str
-    error: str | None = None
-    message: str | None = None
-
-
-# =============================================================================
 # Compliance Artifact Models (for Analysis Feature)
 # =============================================================================
 
@@ -275,26 +262,9 @@ class ArtifactValidationResult(BaseModel):
     warnings: list[str] = Field(default_factory=list, description="Validation warnings")
 
 
-class ArtifactSubmissionResult(BaseModel):
-    """Result of artifact submission to the Pretorin API."""
-
-    artifact_id: str = Field(..., description="Created artifact ID")
-    url: str | None = Field(default=None, description="URL to view artifact")
-    message: str = Field(default="Artifact submitted successfully")
-
-
 # =============================================================================
 # System Models
 # =============================================================================
-
-
-class SystemSummary(BaseModel):
-    """Summary information about a system."""
-
-    id: str
-    name: str
-    description: str | None = None
-    security_impact_level: str | None = None
 
 
 class SystemDetail(BaseModel):
@@ -305,14 +275,6 @@ class SystemDetail(BaseModel):
     description: str | None = None
     frameworks: list[dict[str, Any]] = Field(default_factory=list)
     security_impact_level: str | None = None
-
-
-class ComplianceStatusResponse(BaseModel):
-    """Compliance status for a system."""
-
-    system_id: str
-    system_name: str | None = None
-    frameworks: list[dict[str, Any]] = Field(default_factory=list)
 
 
 # =============================================================================
@@ -496,15 +458,6 @@ class ScopeQuestionDefinition(BaseModel):
     guidance: QuestionGuidance = Field(default_factory=QuestionGuidance)
 
 
-class ScopeQuestionResponse(BaseModel):
-    """Saved scope Q&A item."""
-
-    id: str
-    question: str
-    answer: str | None = None
-    section: str
-
-
 class ScopeResponse(BaseModel):
     """System scope/policy information."""
 
@@ -532,20 +485,6 @@ class MonitoringEventCreate(BaseModel):
     control_id: str | None = Field(default=None, description="Associated control ID")
     framework_id: str | None = Field(default=None, description="Associated framework ID")
     event_data: dict[str, Any] = Field(default_factory=dict, description="Additional event data")
-
-
-class MonitoringEventResponse(BaseModel):
-    """Monitoring event response from the platform."""
-
-    id: str
-    event_type: str | None = None
-    title: str | None = None
-    description: str | None = None
-    severity: str | None = None
-    control_id: str | None = None
-    framework_id: str | None = None
-    status: str | None = None
-    created_at: str | None = None
 
 
 class PolicyTemplateSection(BaseModel):
@@ -580,15 +519,6 @@ class PolicyTemplate(BaseModel):
     version: str | None = None
     sections: list[PolicyTemplateSection] = Field(default_factory=list)
     questions: list[PolicyQuestionDefinition] = Field(default_factory=list)
-
-
-class PolicyQuestionResponse(BaseModel):
-    """Saved policy Q&A item."""
-
-    id: str
-    question: str
-    answer: str | None = None
-    section_id: str
 
 
 class OrgPolicySummary(BaseModel):

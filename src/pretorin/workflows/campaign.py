@@ -70,10 +70,6 @@ def _safe_json_dict(value: Any) -> dict[str, Any]:
     return cast(dict[str, Any], _safe_json(value))
 
 
-def _json_text(value: Any) -> str:
-    return json.dumps(_safe_json(value), indent=2, default=str)
-
-
 def _parse_timestamp(value: str | None) -> datetime | None:
     if not value:
         return None
