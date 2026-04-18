@@ -93,19 +93,15 @@
 | Command | Description |
 |---------|-------------|
 | `pretorin policy list` | List org policies available for questionnaire work |
-| `pretorin policy show <policy>` | Show persisted policy questionnaire state (`--system/-s`, `--skip-review`) |
-| `pretorin policy draft <policy>` | Generate AI draft answers for policy questions (`--system/-s`) |
-| `pretorin policy answer <policy> <question_id> <answer>` | Answer a single policy question (`--skip-review`) |
-| `pretorin policy review <policy>` | Trigger AI review of policy answers |
+| `pretorin policy show` | Show persisted policy questionnaire state (`--policy`) |
+| `pretorin policy populate` | Draft policy questionnaire updates from the current workspace (`--policy`, `--path/-p`, `--apply`) |
 
 ## Scope Commands
 
 | Command | Description |
 |---------|-------------|
 | `pretorin scope show` | Show scope questionnaire state and review findings (`--system/-s`, `--framework-id/-f`) |
-| `pretorin scope draft` | Generate AI draft answers for scope questions (`--system/-s`, `--framework-id/-f`) |
-| `pretorin scope answer <question_id> <answer>` | Answer a single scope question (`--system/-s`, `--framework-id/-f`) |
-| `pretorin scope review` | Trigger AI review of scope answers (`--system/-s`, `--framework-id/-f`) |
+| `pretorin scope populate` | Draft scope questionnaire updates from the current workspace (`--system/-s`, `--framework-id/-f`, `--path/-p`, `--apply`) |
 
 ## Agent Commands
 
@@ -127,6 +123,7 @@
 | `pretorin skill install` | Install the Pretorin skill for AI coding agents (`--agent/-a`, `--path/-p`, `--force/-f`) |
 | `pretorin skill uninstall` | Uninstall the Pretorin skill (`--agent/-a`, `--path/-p`) |
 | `pretorin skill status` | Show installation status of the Pretorin skill (`--agent/-a`, `--path/-p`) |
+| `pretorin skill list-agents` | List all known agents and their skill directories |
 
 ## Review Commands
 
