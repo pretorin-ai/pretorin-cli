@@ -148,52 +148,64 @@ class TestShowBanner:
 
 class TestUpdateCommand:
     def test_update_already_up_to_date(self):
-        mock_result = MagicMock()
-        mock_result.checked = True
-        mock_result.latest_version = __version__
-
-        with patch("pretorin.cli.version_check.check_for_updates", return_value=mock_result):
-            with patch("subprocess.run"):
-                result = runner.invoke(app, ["update"])
+        with patch("pretorin.cli.version_check._fetch_latest_version", return_value=__version__):
+            result = runner.invoke(app, ["update"])
 
         assert result.exit_code == 0
         assert "latest" in result.output.lower() or __version__ in result.output
 
     def test_update_available_runs_pip(self):
-        mock_result = MagicMock()
-        mock_result.checked = True
-        mock_result.update_available = True
-        mock_result.latest_version = "99.9.9"
+        pip_result = MagicMock(returncode=0)
+        verify_result = MagicMock(returncode=0, stdout="99.9.9\n", stderr="")
 
-        with patch("pretorin.cli.version_check.check_for_updates", return_value=mock_result):
-            with patch("subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
+        with patch("pretorin.cli.version_check._fetch_latest_version", return_value="99.9.9"):
+            with patch("subprocess.run", side_effect=[pip_result, verify_result]) as mock_run:
                 result = runner.invoke(app, ["update"])
 
         assert result.exit_code == 0
-        mock_run.assert_called_once()
+        assert mock_run.call_count == 2
         assert "99.9.9" in result.output
 
-    def test_update_version_check_fails_still_succeeds(self):
-        mock_result = MagicMock()
-        mock_result.checked = False
-        mock_result.latest_version = None
+    def test_update_pypi_unreachable_exits_one(self):
+        with patch("pretorin.cli.version_check._fetch_latest_version", return_value=None):
+            result = runner.invoke(app, ["update"])
 
-        with patch("pretorin.cli.version_check.check_for_updates", return_value=mock_result):
-            with patch("subprocess.run"):
-                result = runner.invoke(app, ["update"])
-
-        assert result.exit_code == 0
-        assert "update complete" in result.output.lower()
+        assert result.exit_code == 1
+        assert "pypi" in result.output.lower() or "manually" in result.output.lower()
 
     def test_update_pip_fails_exits_one(self):
         import subprocess
 
-        with patch("subprocess.run", side_effect=subprocess.CalledProcessError(1, "pip")):
-            result = runner.invoke(app, ["update"])
+        with patch("pretorin.cli.version_check._fetch_latest_version", return_value="99.9.9"):
+            with patch("subprocess.run", side_effect=subprocess.CalledProcessError(1, "pip")):
+                result = runner.invoke(app, ["update"])
 
         assert result.exit_code == 1
         assert "failed" in result.output.lower() or "manually" in result.output.lower()
+
+    def test_update_pip_ran_but_version_unchanged(self):
+        pip_result = MagicMock(returncode=0)
+        verify_result = MagicMock(returncode=0, stdout=f"{__version__}\n", stderr="")
+
+        with patch("pretorin.cli.version_check._fetch_latest_version", return_value="99.9.9"):
+            with patch("subprocess.run", side_effect=[pip_result, verify_result]):
+                result = runner.invoke(app, ["update"])
+
+        assert result.exit_code == 0
+        assert "still" in result.output.lower() or "pipx" in result.output.lower()
+
+    def test_update_specific_version(self):
+        pip_result = MagicMock(returncode=0)
+        verify_result = MagicMock(returncode=0, stdout="0.14.0\n", stderr="")
+
+        with patch("subprocess.run", side_effect=[pip_result, verify_result]) as mock_run:
+            result = runner.invoke(app, ["update", "0.14.0"])
+
+        assert result.exit_code == 0
+        # Should pass pretorin==0.14.0 to pip
+        pip_call_args = mock_run.call_args_list[0]
+        assert "pretorin==0.14.0" in pip_call_args[0][0]
+        assert "0.14.0" in result.output
 
 
 # ---------------------------------------------------------------------------
