@@ -10,6 +10,8 @@ Skills are predefined task templates that guide the agent through specific compl
 | `narrative-generation` | Generate auditor-ready implementation narratives for controls |
 | `evidence-collection` | Collect and map evidence from codebase to controls |
 | `security-review` | Review codebase for security controls and compliance posture |
+| `stig-scan` | Run STIG compliance scans against a system |
+| `cci-assessment` | Assess CCI compliance for a specific control |
 
 ## Using Skills
 
@@ -25,6 +27,12 @@ pretorin agent run --skill evidence-collection "Collect evidence for AC-02 in th
 
 # Security review
 pretorin agent run --skill security-review "Review this codebase for AC-02 coverage"
+
+# STIG scan
+pretorin agent run --skill stig-scan "Check STIG applicability for my system"
+
+# CCI assessment
+pretorin agent run --skill cci-assessment "Assess CCI compliance for AC-02"
 ```
 
 ## List Skills
@@ -73,4 +81,24 @@ Reviews the codebase against specific controls:
 - Analyzes code for control coverage
 - Identifies implementation strengths and weaknesses
 - Documents findings with file paths and line numbers
+- Pushes monitoring events for critical or high-severity findings
 - Produces remediation recommendations
+
+### STIG Scan
+
+Runs STIG compliance scans against a system:
+
+- Checks which STIGs apply to the system (applicability)
+- Gets the test manifest (rules to evaluate)
+- Reports available scanners and rule coverage
+- Summarizes the scan plan and gaps in automated coverage
+
+### CCI Assessment
+
+Assesses CCI-level compliance for a specific control:
+
+- Gets control context and implementation status
+- Lists CCIs for the target control
+- Checks CCI-level test results (pass/fail/not tested)
+- Identifies CCIs with no test coverage
+- Presents results as a traceability chain: Control -> CCIs -> SRGs -> STIG rules
