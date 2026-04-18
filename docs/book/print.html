@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-e693ea67.js";
+            window.path_to_searchindex_js = "searchindex-5b7344a8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-9dfb40f5.js"></script>
@@ -1378,10 +1378,8 @@ Config file: /home/user/.pretorin/config.json
 </thead>
 <tbody>
 <tr><td><code>pretorin policy list</code></td><td>List org policies available for questionnaire work</td></tr>
-<tr><td><code>pretorin policy show &lt;policy&gt;</code></td><td>Show persisted policy questionnaire state (<code>--system/-s</code>, <code>--skip-review</code>)</td></tr>
-<tr><td><code>pretorin policy draft &lt;policy&gt;</code></td><td>Generate AI draft answers for policy questions (<code>--system/-s</code>)</td></tr>
-<tr><td><code>pretorin policy answer &lt;policy&gt; &lt;question_id&gt; &lt;answer&gt;</code></td><td>Answer a single policy question (<code>--skip-review</code>)</td></tr>
-<tr><td><code>pretorin policy review &lt;policy&gt;</code></td><td>Trigger AI review of policy answers</td></tr>
+<tr><td><code>pretorin policy show</code></td><td>Show persisted policy questionnaire state (<code>--policy</code>)</td></tr>
+<tr><td><code>pretorin policy populate</code></td><td>Draft policy questionnaire updates from the current workspace (<code>--policy</code>, <code>--path/-p</code>, <code>--apply</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -1393,9 +1391,7 @@ Config file: /home/user/.pretorin/config.json
 </thead>
 <tbody>
 <tr><td><code>pretorin scope show</code></td><td>Show scope questionnaire state and review findings (<code>--system/-s</code>, <code>--framework-id/-f</code>)</td></tr>
-<tr><td><code>pretorin scope draft</code></td><td>Generate AI draft answers for scope questions (<code>--system/-s</code>, <code>--framework-id/-f</code>)</td></tr>
-<tr><td><code>pretorin scope answer &lt;question_id&gt; &lt;answer&gt;</code></td><td>Answer a single scope question (<code>--system/-s</code>, <code>--framework-id/-f</code>)</td></tr>
-<tr><td><code>pretorin scope review</code></td><td>Trigger AI review of scope answers (<code>--system/-s</code>, <code>--framework-id/-f</code>)</td></tr>
+<tr><td><code>pretorin scope populate</code></td><td>Draft scope questionnaire updates from the current workspace (<code>--system/-s</code>, <code>--framework-id/-f</code>, <code>--path/-p</code>, <code>--apply</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -1427,6 +1423,7 @@ Config file: /home/user/.pretorin/config.json
 <tr><td><code>pretorin skill install</code></td><td>Install the Pretorin skill for AI coding agents (<code>--agent/-a</code>, <code>--path/-p</code>, <code>--force/-f</code>)</td></tr>
 <tr><td><code>pretorin skill uninstall</code></td><td>Uninstall the Pretorin skill (<code>--agent/-a</code>, <code>--path/-p</code>)</td></tr>
 <tr><td><code>pretorin skill status</code></td><td>Show installation status of the Pretorin skill (<code>--agent/-a</code>, <code>--path/-p</code>)</td></tr>
+<tr><td><code>pretorin skill list-agents</code></td><td>List all known agents and their skill directories</td></tr>
 </tbody>
 </table>
 </div>
