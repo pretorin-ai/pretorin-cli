@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-e693ea67.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -197,12 +197,14 @@ pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
 <tr><th>Option</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>--skill &lt;name&gt;</code></td><td>Use a predefined skill template</td></tr>
-<tr><td><code>--model &lt;model&gt;</code></td><td>Model override</td></tr>
+<tr><td><code>--skill/-s &lt;name&gt;</code></td><td>Use a predefined skill template</td></tr>
+<tr><td><code>--model/-m &lt;model&gt;</code></td><td>Model override</td></tr>
 <tr><td><code>--base-url &lt;url&gt;</code></td><td>Custom model API endpoint</td></tr>
-<tr><td><code>--working-dir &lt;path&gt;</code></td><td>Working directory for code analysis</td></tr>
+<tr><td><code>--working-dir/-w &lt;path&gt;</code></td><td>Working directory for code analysis</td></tr>
 <tr><td><code>--no-stream</code></td><td>Disable streaming output</td></tr>
 <tr><td><code>--legacy</code></td><td>Use legacy OpenAI Agents SDK (deprecated)</td></tr>
+<tr><td><code>--max-turns &lt;n&gt;</code></td><td>Maximum agent turns (legacy mode only, default 15)</td></tr>
+<tr><td><code>--no-mcp</code></td><td>Disable external MCP servers (legacy mode only)</td></tr>
 </tbody>
 </table>
 </div>
@@ -222,13 +224,13 @@ pretorin agent install
 pretorin agent run "Assess AC-02 implementation gaps for my system"
 </code></pre>
 <h2 id="model-key-precedence"><a class="header" href="#model-key-precedence">Model Key Precedence</a></h2>
-<p>The agent runtime resolves model keys in this order:</p>
+<p>The Codex agent resolves API keys in this order:</p>
 <ol>
+<li><code>config.api_key</code> (from <code>pretorin login</code>) — used as bearer key for the platform model proxy</li>
 <li><code>OPENAI_API_KEY</code> environment variable</li>
-<li><code>config.api_key</code> (from <code>pretorin login</code>)</li>
 <li><code>config.openai_api_key</code></li>
 </ol>
-<p>If <code>OPENAI_API_KEY</code> is set in your shell, it overrides the stored Pretorin login key.</p>
+<p>When <code>--base-url</code> is explicitly provided (non-platform endpoint), the order changes to prefer <code>OPENAI_API_KEY</code> first, then falls back to config keys.</p>
 <h2 id="custom-model-endpoints"><a class="header" href="#custom-model-endpoints">Custom Model Endpoints</a></h2>
 <p>The agent supports any OpenAI-spec LLM endpoint, including:</p>
 <ul>

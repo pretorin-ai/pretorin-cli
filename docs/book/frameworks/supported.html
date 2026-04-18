@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-e693ea67.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -187,17 +187,31 @@
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>ID</th><th>Title</th><th>Version</th><th>Families</th><th>Controls</th></tr>
+<tr><th>ID</th><th>Title</th><th>Version</th><th>Tier</th><th>Families</th><th>Controls</th></tr>
 </thead>
 <tbody>
-<tr><td><code>nist-800-53-r5</code></td><td>NIST SP 800-53 Rev 5</td><td>5.2.0</td><td>20</td><td>324</td></tr>
-<tr><td><code>nist-800-171-r3</code></td><td>NIST SP 800-171 Revision 3</td><td>1.0.0</td><td>17</td><td>130</td></tr>
-<tr><td><code>fedramp-low</code></td><td>FedRAMP Rev 5 Low Baseline</td><td>fedramp2.1.0</td><td>18</td><td>135</td></tr>
-<tr><td><code>fedramp-moderate</code></td><td>FedRAMP Rev 5 Moderate Baseline</td><td>fedramp2.1.0</td><td>18</td><td>181</td></tr>
-<tr><td><code>fedramp-high</code></td><td>FedRAMP Rev 5 High Baseline</td><td>fedramp2.1.0</td><td>18</td><td>191</td></tr>
-<tr><td><code>cmmc-l1</code></td><td>CMMC 2.0 Level 1 (Foundational)</td><td>2.0</td><td>6</td><td>17</td></tr>
-<tr><td><code>cmmc-l2</code></td><td>CMMC 2.0 Level 2 (Advanced)</td><td>2.0</td><td>14</td><td>110</td></tr>
-<tr><td><code>cmmc-l3</code></td><td>CMMC 2.0 Level 3 (Expert)</td><td>2.0</td><td>10</td><td>24</td></tr>
+<tr><td><code>nist-800-53-r5</code></td><td>NIST SP 800-53 Rev 5</td><td>5.2.0</td><td>foundational</td><td>20</td><td>324</td></tr>
+<tr><td><code>nist-800-171-r3</code></td><td>NIST SP 800-171 Revision 3</td><td>1.0.0</td><td>foundational</td><td>17</td><td>130</td></tr>
+<tr><td><code>fedramp-low</code></td><td>FedRAMP Rev 5 Low Baseline</td><td>fedramp2.1.0</td><td>operational</td><td>18</td><td>135</td></tr>
+<tr><td><code>fedramp-moderate</code></td><td>FedRAMP Rev 5 Moderate Baseline</td><td>fedramp2.1.0</td><td>operational</td><td>18</td><td>181</td></tr>
+<tr><td><code>fedramp-high</code></td><td>FedRAMP Rev 5 High Baseline</td><td>fedramp2.1.0</td><td>operational</td><td>18</td><td>191</td></tr>
+<tr><td><code>cmmc-l1</code></td><td>CMMC 2.0 Level 1 (Foundational)</td><td>2.0</td><td>operational</td><td>6</td><td>17</td></tr>
+<tr><td><code>cmmc-l2</code></td><td>CMMC 2.0 Level 2 (Advanced)</td><td>2.0</td><td>operational</td><td>14</td><td>110</td></tr>
+<tr><td><code>cmmc-l3</code></td><td>CMMC 2.0 Level 3 (Expert)</td><td>2.0</td><td>strategic</td><td>10</td><td>24</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="framework-tiers"><a class="header" href="#framework-tiers">Framework Tiers</a></h3>
+<p>Each framework has a <strong>tier</strong> classification displayed in the <code>pretorin frameworks list</code> output:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Tier</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>foundational</strong></td><td>Base catalogs that other frameworks derive from (e.g., NIST 800-53, 800-171)</td></tr>
+<tr><td><strong>operational</strong></td><td>Baselines and profiles used for day-to-day compliance (e.g., FedRAMP, CMMC L1/L2)</td></tr>
+<tr><td><strong>strategic</strong></td><td>Advanced or specialized frameworks for high-assurance environments (e.g., CMMC L3)</td></tr>
 </tbody>
 </table>
 </div>

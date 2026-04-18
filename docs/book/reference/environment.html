@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-e693ea67.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -196,6 +196,18 @@
 </tbody>
 </table>
 </div>
+<h2 id="context"><a class="header" href="#context">Context</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Description</th><th>Default</th></tr>
+</thead>
+<tbody>
+<tr><td><code>PRETORIN_SYSTEM_ID</code></td><td>Active system ID. Overrides the system set via <code>pretorin context set</code>.</td><td>—</td></tr>
+<tr><td><code>PRETORIN_FRAMEWORK_ID</code></td><td>Active framework ID. Overrides the framework set via <code>pretorin context set</code>.</td><td>—</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="agent-runtime"><a class="header" href="#agent-runtime">Agent Runtime</a></h2>
 <div class="table-wrapper">
 <table>
@@ -204,6 +216,20 @@
 </thead>
 <tbody>
 <tr><td><code>OPENAI_API_KEY</code></td><td>Model key override for agent runtime. Takes precedence over stored Pretorin login key.</td><td>—</td></tr>
+<tr><td><code>OPENAI_BASE_URL</code></td><td>Base URL for the model API endpoint. Overrides <code>openai_base_url</code> in config file.</td><td>—</td></tr>
+<tr><td><code>OPENAI_MODEL</code></td><td>Model name for the agent runtime.</td><td><code>gpt-4o</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="source-attestation"><a class="header" href="#source-attestation">Source Attestation</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Description</th><th>Default</th></tr>
+</thead>
+<tbody>
+<tr><td><code>PRETORIN_SOURCE_PROVIDERS</code></td><td>JSON array of source provider configurations. Overrides <code>source_providers</code> in config file.</td><td>—</td></tr>
+<tr><td><code>PRETORIN_SOURCE_MANIFEST</code></td><td>JSON string or file path to a source manifest. Falls back to <code>.pretorin/source-manifest.json</code> or <code>~/.pretorin/source-manifest-{system_id}.json</code>.</td><td>—</td></tr>
 </tbody>
 </table>
 </div>
@@ -231,9 +257,17 @@
 <li><code>config.api_key</code> (from <code>pretorin login</code>)</li>
 <li><code>config.openai_api_key</code></li>
 </ol>
+<p>For the model name:</p>
+<ol>
+<li><code>OPENAI_MODEL</code> environment variable (highest)</li>
+<li><code>openai_model</code> in <code>~/.pretorin/config.json</code></li>
+<li>Org AI settings from the platform (cached)</li>
+<li><code>gpt-4o</code> default</li>
+</ol>
 <h2 id="cicd-example"><a class="header" href="#cicd-example">CI/CD Example</a></h2>
 <pre><code class="language-bash">export PRETORIN_API_KEY=pretorin_your_key_here
 export PRETORIN_DISABLE_UPDATE_CHECK=1
+export PRETORIN_SYSTEM_ID=your_system_id
 
 pretorin frameworks list
 pretorin evidence push

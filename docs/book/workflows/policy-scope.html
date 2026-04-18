@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-e693ea67.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -188,13 +188,23 @@
 <pre><code class="language-bash">pretorin policy list
 </code></pre>
 <p>Or via MCP: <code>pretorin_list_org_policies</code></p>
-<h3 id="2-view-pending-questions"><a class="header" href="#2-view-pending-questions">2. View Pending Questions</a></h3>
-<pre><code class="language-bash"># Via MCP
-pretorin_get_pending_policy_questions  # lightweight — only unanswered
+<h3 id="2-view-current-state"><a class="header" href="#2-view-current-state">2. View Current State</a></h3>
+<pre><code class="language-bash"># Show questionnaire state and saved review findings
+pretorin policy show --policy &lt;policy-id-or-name&gt;
+</code></pre>
+<p>Or via MCP:</p>
+<pre><code>pretorin_get_pending_policy_questions  # lightweight — only unanswered
 pretorin_get_policy_question_detail    # guidance and examples per question
 </code></pre>
 <h3 id="3-answer-questions"><a class="header" href="#3-answer-questions">3. Answer Questions</a></h3>
-<p>Answer individually for precise control:</p>
+<p><strong>Via CLI</strong> — Draft answers from your workspace:</p>
+<pre><code class="language-bash"># Preview proposed answers
+pretorin policy populate --policy &lt;policy-id&gt;
+
+# Apply answers to the platform
+pretorin policy populate --policy &lt;policy-id&gt; --apply
+</code></pre>
+<p><strong>Via MCP</strong> — Answer individually for precise control:</p>
 <pre><code>pretorin_answer_policy_question(policy_id, question_id, answer)
 </code></pre>
 <p>Or batch-update multiple answers:</p>
@@ -216,11 +226,23 @@ pretorin_get_policy_analytics()
 </code></pre>
 <h2 id="scope-questionnaire-workflow"><a class="header" href="#scope-questionnaire-workflow">Scope Questionnaire Workflow</a></h2>
 <p>Scope questionnaires are system+framework specific. They define what’s in scope, what’s excluded, and system boundary details.</p>
-<h3 id="1-view-pending-questions"><a class="header" href="#1-view-pending-questions">1. View Pending Questions</a></h3>
+<h3 id="1-view-current-state"><a class="header" href="#1-view-current-state">1. View Current State</a></h3>
+<pre><code class="language-bash"># Show scope questionnaire state and review findings
+pretorin scope show --system "My System" --framework-id fedramp-moderate
+</code></pre>
+<p>Or via MCP:</p>
 <pre><code>pretorin_get_pending_scope_questions(system_id, framework_id)
 pretorin_get_scope_question_detail(system_id, framework_id, question_id)
 </code></pre>
 <h3 id="2-answer-questions"><a class="header" href="#2-answer-questions">2. Answer Questions</a></h3>
+<p><strong>Via CLI</strong> — Draft answers from your workspace:</p>
+<pre><code class="language-bash"># Preview proposed answers
+pretorin scope populate --system "My System" --framework-id fedramp-moderate
+
+# Apply answers to the platform
+pretorin scope populate --system "My System" --framework-id fedramp-moderate --apply
+</code></pre>
+<p><strong>Via MCP</strong> — Answer individually:</p>
 <pre><code>pretorin_answer_scope_question(system_id, framework_id, question_id, answer)
 </code></pre>
 <p>Or batch-update:</p>

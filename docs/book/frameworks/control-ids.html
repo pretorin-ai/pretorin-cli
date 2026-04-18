@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-e693ea67.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -217,6 +217,18 @@
 </tbody>
 </table>
 </div>
+<p><strong>Enhancement IDs</strong> append a dot-suffix or parenthetical suffix:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Format</th><th>Example</th></tr>
+</thead>
+<tbody>
+<tr><td>Dot notation</td><td><code>ac-02.1</code></td></tr>
+<tr><td>Parenthetical</td><td><code>ac-02(1)</code></td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="cmmc-20"><a class="header" href="#cmmc-20">CMMC 2.0</a></h2>
 <p><strong>Framework IDs:</strong> <code>cmmc-l1</code>, <code>cmmc-l2</code>, <code>cmmc-l3</code></p>
 <h3 id="family-ids-1"><a class="header" href="#family-ids-1">Family IDs</a></h3>
@@ -279,6 +291,8 @@
 </tbody>
 </table>
 </div>
+<h2 id="auto-normalization"><a class="header" href="#auto-normalization">Auto-Normalization</a></h2>
+<p>The CLI and MCP tools automatically normalize NIST 800-53 and FedRAMP control IDs: uppercase is lowered and single-digit numbers are zero-padded. For example, <code>AC-2</code> becomes <code>ac-02</code> and <code>SC-7.1</code> becomes <code>sc-07.1</code>. CMMC and NIST 800-171 IDs are passed through unchanged — use the exact format shown above.</p>
 <h2 id="discovery-workflow"><a class="header" href="#discovery-workflow">Discovery Workflow</a></h2>
 <p>When a user provides an informal control reference (e.g., “AC-2” or “access control”):</p>
 <ol>

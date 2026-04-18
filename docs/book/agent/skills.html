@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-e693ea67.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -193,6 +193,8 @@
 <tr><td><code>narrative-generation</code></td><td>Generate auditor-ready implementation narratives for controls</td></tr>
 <tr><td><code>evidence-collection</code></td><td>Collect and map evidence from codebase to controls</td></tr>
 <tr><td><code>security-review</code></td><td>Review codebase for security controls and compliance posture</td></tr>
+<tr><td><code>stig-scan</code></td><td>Run STIG compliance scans against a system</td></tr>
+<tr><td><code>cci-assessment</code></td><td>Assess CCI compliance for a specific control</td></tr>
 </tbody>
 </table>
 </div>
@@ -208,6 +210,12 @@ pretorin agent run --skill evidence-collection "Collect evidence for AC-02 in th
 
 # Security review
 pretorin agent run --skill security-review "Review this codebase for AC-02 coverage"
+
+# STIG scan
+pretorin agent run --skill stig-scan "Check STIG applicability for my system"
+
+# CCI assessment
+pretorin agent run --skill cci-assessment "Assess CCI compliance for AC-02"
 </code></pre>
 <h2 id="list-skills"><a class="header" href="#list-skills">List Skills</a></h2>
 <pre><code class="language-bash">pretorin agent skills
@@ -246,7 +254,25 @@ pretorin agent run --skill security-review "Review this codebase for AC-02 cover
 <li>Analyzes code for control coverage</li>
 <li>Identifies implementation strengths and weaknesses</li>
 <li>Documents findings with file paths and line numbers</li>
+<li>Pushes monitoring events for critical or high-severity findings</li>
 <li>Produces remediation recommendations</li>
+</ul>
+<h3 id="stig-scan"><a class="header" href="#stig-scan">STIG Scan</a></h3>
+<p>Runs STIG compliance scans against a system:</p>
+<ul>
+<li>Checks which STIGs apply to the system (applicability)</li>
+<li>Gets the test manifest (rules to evaluate)</li>
+<li>Reports available scanners and rule coverage</li>
+<li>Summarizes the scan plan and gaps in automated coverage</li>
+</ul>
+<h3 id="cci-assessment"><a class="header" href="#cci-assessment">CCI Assessment</a></h3>
+<p>Assesses CCI-level compliance for a specific control:</p>
+<ul>
+<li>Gets control context and implementation status</li>
+<li>Lists CCIs for the target control</li>
+<li>Checks CCI-level test results (pass/fail/not tested)</li>
+<li>Identifies CCIs with no test coverage</li>
+<li>Presents results as a traceability chain: Control -&gt; CCIs -&gt; SRGs -&gt; STIG rules</li>
 </ul>
 
                     </main>

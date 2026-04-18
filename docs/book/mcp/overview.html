@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-e693ea67.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -191,7 +191,7 @@
 <li><strong>Streamline workflows</strong> — No need to copy-paste control requirements or switch between tools</li>
 </ul>
 <h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
-<p>The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with <code>pretorin mcp-serve</code>, your AI tool connects and gains access to 23 compliance tools.</p>
+<p>The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with <code>pretorin mcp-serve</code>, your AI tool connects and gains access to 86 compliance tools.</p>
 <pre><code>┌──────────────┐     stdio      ┌──────────────┐     HTTPS     ┌──────────────┐
 │   AI Agent   │◄──────────────►│   Pretorin   │◄─────────────►│   Pretorin   │
 │ (Claude,     │   JSON-RPC    │   MCP Server  │              │   Platform   │
@@ -205,18 +205,26 @@
 <pre><code class="language-bash">pretorin context show --quiet --check
 </code></pre>
 <h2 id="tool-categories"><a class="header" href="#tool-categories">Tool Categories</a></h2>
-<p>The 23 MCP tools are organized into categories:</p>
+<p>The 86 MCP tools are organized into categories:</p>
 <div class="table-wrapper">
 <table>
 <thead>
 <tr><th>Category</th><th>Tools</th><th>Access</th></tr>
 </thead>
 <tbody>
-<tr><td>Framework &amp; Control Reference</td><td>7</td><td>Read-only, all users</td></tr>
-<tr><td>Systems</td><td>3</td><td>Read-only</td></tr>
-<tr><td>Evidence Management</td><td>4</td><td>Read/Write, requires beta</td></tr>
-<tr><td>Implementation Context</td><td>6</td><td>Read/Write, requires beta</td></tr>
-<tr><td>Compliance Updates</td><td>3</td><td>Write, requires beta</td></tr>
+<tr><td>Framework &amp; Control Reference</td><td>8</td><td>Read-only, all users</td></tr>
+<tr><td>Systems</td><td>5</td><td>Read-only</td></tr>
+<tr><td>Evidence Management</td><td>5</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Implementation Context</td><td>10</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Monitoring</td><td>1</td><td>Write, requires beta</td></tr>
+<tr><td>Workflow State &amp; Analytics</td><td>4</td><td>Read-only</td></tr>
+<tr><td>Family Operations</td><td>4</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Scope Workflow</td><td>7</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Policy Workflow</td><td>10</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Campaign Operations</td><td>6</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Vendor Management</td><td>8</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Inheritance &amp; Responsibility</td><td>6</td><td>Read/Write, requires beta</td></tr>
+<tr><td>STIG &amp; CCI</td><td>12</td><td>Read-only / Write mix</td></tr>
 </tbody>
 </table>
 </div>

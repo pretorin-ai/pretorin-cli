@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-e693ea67.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -219,6 +219,30 @@ pretorin context show --quiet
 pretorin context show --quiet --check
 </code></pre>
 <p><code>context show</code> validates the stored system and framework against the platform when credentials are available. If the system has been deleted or the framework is no longer attached, the command reports that state explicitly instead of silently showing a stale context.</p>
+<h2 id="verify-context"><a class="header" href="#verify-context">Verify Context</a></h2>
+<p>Verify the active context against source attestation:</p>
+<pre><code class="language-bash"># Full output
+pretorin context verify
+
+# Compact output with custom TTL
+pretorin context verify --ttl 7200 --quiet
+</code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--ttl</code></td><td>Verification TTL in seconds (default: 3600)</td></tr>
+<tr><td><code>--quiet</code> / <code>-q</code></td><td>Compact output</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="source-manifest"><a class="header" href="#source-manifest">Source Manifest</a></h2>
+<p>Show the resolved source manifest and evaluate it against detected sources:</p>
+<pre><code class="language-bash">pretorin context manifest
+pretorin context manifest --quiet
+</code></pre>
 <h2 id="clear-context"><a class="header" href="#clear-context">Clear Context</a></h2>
 <pre><code class="language-bash">pretorin context clear
 </code></pre>

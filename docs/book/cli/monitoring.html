@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-e693ea67.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -212,6 +212,24 @@
 <tr><td><code>medium</code></td><td>Moderate finding</td></tr>
 <tr><td><code>low</code></td><td>Minor finding</td></tr>
 <tr><td><code>info</code></td><td>Informational event</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="options"><a class="header" href="#options">Options</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID (uses active context if omitted)</td></tr>
+<tr><td><code>--framework</code> / <code>-f</code></td><td>Framework ID (uses active context if omitted)</td></tr>
+<tr><td><code>--title</code> / <code>-t</code></td><td>Event title (required)</td></tr>
+<tr><td><code>--severity</code></td><td>Event severity (default: <code>high</code>)</td></tr>
+<tr><td><code>--control</code> / <code>-c</code></td><td>Control ID (e.g., <code>sc-07</code>, <code>ac-02</code>)</td></tr>
+<tr><td><code>--description</code> / <code>-d</code></td><td>Detailed event description</td></tr>
+<tr><td><code>--event-type</code></td><td>Event type (default: <code>security_scan</code>)</td></tr>
+<tr><td><code>--update-control-status</code></td><td>Also update the control status to <code>in_progress</code></td></tr>
 </tbody>
 </table>
 </div>

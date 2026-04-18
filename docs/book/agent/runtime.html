@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-e693ea67.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -200,10 +200,28 @@
 <pre><code class="language-bash">pretorin agent mcp-list
 </code></pre>
 <h3 id="add-a-server"><a class="header" href="#add-a-server">Add a Server</a></h3>
-<pre><code class="language-bash">pretorin agent mcp-add &lt;name&gt; stdio &lt;command&gt; --arg &lt;arg1&gt; --arg &lt;arg2&gt;
+<pre><code class="language-bash"># stdio transport
+pretorin agent mcp-add &lt;name&gt; stdio &lt;command&gt; --arg &lt;arg1&gt; --arg &lt;arg2&gt;
+
+# http transport
+pretorin agent mcp-add &lt;name&gt; http &lt;url&gt;
 </code></pre>
-<p>Example:</p>
-<pre><code class="language-bash">pretorin agent mcp-add filesystem stdio node --arg /path/to/fs-server
+<p>Options:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--arg/-a &lt;arg&gt;</code></td><td>Additional args for stdio transport (repeatable)</td></tr>
+<tr><td><code>--scope &lt;scope&gt;</code></td><td>Config scope: <code>project</code> (default, <code>.pretorin-mcp.json</code>) or <code>global</code> (<code>~/.pretorin/mcp.json</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<p>Examples:</p>
+<pre><code class="language-bash">pretorin agent mcp-add github stdio uvx --arg mcp-server-github
+pretorin agent mcp-add aws http https://mcp.example.com/aws
+pretorin agent mcp-add tools stdio node --arg /path/to/server --scope global
 </code></pre>
 <h3 id="remove-a-server"><a class="header" href="#remove-a-server">Remove a Server</a></h3>
 <pre><code class="language-bash">pretorin agent mcp-remove &lt;name&gt;
