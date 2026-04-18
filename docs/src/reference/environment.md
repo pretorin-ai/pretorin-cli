@@ -11,11 +11,27 @@ Environment variables override stored configuration values.
 | `PRETORIN_API_BASE_URL` | Backward-compatible alias for `PRETORIN_PLATFORM_API_BASE_URL` | — |
 | `PRETORIN_MODEL_API_BASE_URL` | Model API URL for agent runtime | `https://platform.pretorin.com/api/v1/public/model` |
 
+## Context
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PRETORIN_SYSTEM_ID` | Active system ID. Overrides the system set via `pretorin context set`. | — |
+| `PRETORIN_FRAMEWORK_ID` | Active framework ID. Overrides the framework set via `pretorin context set`. | — |
+
 ## Agent Runtime
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `OPENAI_API_KEY` | Model key override for agent runtime. Takes precedence over stored Pretorin login key. | — |
+| `OPENAI_BASE_URL` | Base URL for the model API endpoint. Overrides `openai_base_url` in config file. | — |
+| `OPENAI_MODEL` | Model name for the agent runtime. | `gpt-4o` |
+
+## Source Attestation
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PRETORIN_SOURCE_PROVIDERS` | JSON array of source provider configurations. Overrides `source_providers` in config file. | — |
+| `PRETORIN_SOURCE_MANIFEST` | JSON string or file path to a source manifest. Falls back to `.pretorin/source-manifest.json` or `~/.pretorin/source-manifest-{system_id}.json`. | — |
 
 ## Behavior
 
@@ -35,11 +51,18 @@ For the model key (agent runtime):
 2. `config.api_key` (from `pretorin login`)
 3. `config.openai_api_key`
 
+For the model name:
+1. `OPENAI_MODEL` environment variable (highest)
+2. `openai_model` in `~/.pretorin/config.json`
+3. Org AI settings from the platform (cached)
+4. `gpt-4o` default
+
 ## CI/CD Example
 
 ```bash
 export PRETORIN_API_KEY=pretorin_your_key_here
 export PRETORIN_DISABLE_UPDATE_CHECK=1
+export PRETORIN_SYSTEM_ID=your_system_id
 
 pretorin frameworks list
 pretorin evidence push
