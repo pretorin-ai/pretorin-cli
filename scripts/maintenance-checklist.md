@@ -23,7 +23,7 @@ This checklist drives automated maintenance for pretorin-cli. Each task should I
 ## Phase 4: Release & Config Health
 
 - [x] **10. Version Consistency** - Verify pyproject.toml version == __init__.py __version__ == CHANGELOG.md latest heading. Fix drift.
-- [ ] **11. MCP Tool Registration Audit** - Verify every Tool in tools.py has a handler in __init__.py and vice versa. Flag orphans.
+- [x] **11. MCP Tool Registration Audit** - Verify every Tool in tools.py has a handler in __init__.py and vice versa. Flag orphans.
 - [ ] **12. Agent Skill Tool Coverage** - Verify agent skills reference tools that actually exist in agent/tools.py. Flag stale references.
 
 ## Phase 5: Wrap-up
@@ -41,5 +41,6 @@ This checklist drives automated maintenance for pretorin-cli. Each task should I
 - **2026-04-18 — Task 8: Dead Code Removal** — Audited entire src/pretorin/ for dead code. No unused imports (ruff F401 clean), no dead CLI commands, no orphaned modules. Removed 7 unused Pydantic model classes from client/models.py (APIError, ArtifactSubmissionResult, SystemSummary, ComplianceStatusResponse, ScopeQuestionResponse, MonitoringEventResponse, PolicyQuestionResponse — all defined but never referenced). Removed 1 unused helper function `_json_text()` from workflows/campaign.py. Net: 2 files changed, -74 lines. All 1441 tests pass. Commit: 03bee41.
 - **2026-04-18 — Task 9: Dependency Updates** — Ran pip-audit: found 7 known vulnerabilities in 6 packages. Updated uv.lock: cryptography 46.0.5→46.0.7 (CVE-2026-34073, CVE-2026-39892), pygments 2.19.2→2.20.0 (CVE-2026-4539), pyjwt 2.11.0→2.12.1 (CVE-2026-32597), pytest 9.0.2→9.0.3 (CVE-2025-71176), python-multipart 0.0.22→0.0.26 (CVE-2026-40347), requests 2.32.5→2.33.1 (CVE-2026-25645). All are transitive/dev deps — no pyproject.toml changes needed. 32 additional outdated packages noted but not updated (no CVEs, update risk outweighs benefit). Post-update: 0 vulnerabilities, 1441 tests pass. Commit: 0a1c88b.
 - **2026-04-18 — Task 10: Version Consistency** — Checked pyproject.toml (0.15.1), __init__.py (0.15.0), CHANGELOG.md (0.15.1). Found __init__.py was stale at 0.15.0. Updated to 0.15.1 to match. 1441 tests pass. Commit: 1dac462.
+- **2026-04-18 — Task 11: MCP Tool Registration Audit** — Compared all 85 tool names in tools.py against all 85 handler keys in handlers/__init__.py. Perfect 1:1 match — every tool has a handler and every handler has a tool. All handler imports resolve to real functions in their respective modules. No orphans found. (no code commit — already clean)
 - **2026-04-18 — Task 5: Test Coverage Analysis** — Overall coverage 74%. Identified critical low-coverage MCP handler files: stig.py (22%), vendors.py (23%), workflow.py (43%). Added 104 tests across 3 new test files. Results: stig.py 22%→99%, vendors.py 23%→100%, workflow.py 43%→77%. Client (76%) and attestation (95%) already at acceptable levels. Commit: cbbd130.
 
