@@ -213,16 +213,17 @@ def update(
         pip_spec = f"pretorin=={target}"
     else:
         rprint(f"[#FF9010]→[/#FF9010] Checking for updates (current: [#EAB536]{current}[/#EAB536])...")
-        target = _fetch_latest_version()
-        if not target:
+        latest = _fetch_latest_version()
+        if not latest:
             rprint("[#FF9010]→[/#FF9010] Could not reach PyPI. Try again later or run manually:")
             rprint("  [bold]pip install --upgrade pretorin[/bold]")
             raise typer.Exit(1)
 
-        if _parse_version(target) <= _parse_version(current):
+        if _parse_version(latest) <= _parse_version(current):
             rprint(f"[#95D7E0]✓[/#95D7E0] Already on the latest version ({current})")
             return
 
+        target = latest
         pip_spec = "pretorin"
 
     rprint(f"[#FF9010]→[/#FF9010] Upgrading pretorin {current} → {target}...")
