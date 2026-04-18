@@ -58,6 +58,16 @@ _CONTROL_ID_EXAMPLES = ["ac-02", "sc-07", "AC.L2-3.1.1", "03.01.01"]
 
 
 # ---------------------------------------------------------------------------
+# Logging helpers
+# ---------------------------------------------------------------------------
+
+
+def safe_args(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Return arguments with sensitive fields redacted for logging."""
+    return {k: ("***" if k == "api_key" else v) for k, v in arguments.items()}
+
+
+# ---------------------------------------------------------------------------
 # JSON-schema property builders (used by tool definitions)
 # ---------------------------------------------------------------------------
 

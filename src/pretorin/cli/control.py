@@ -9,6 +9,7 @@ from rich import print as rprint
 from rich.panel import Panel
 
 from pretorin.cli.output import is_json_mode, print_json
+from pretorin.mcp.helpers import VALID_CONTROL_STATUSES
 from pretorin.utils import normalize_control_id
 
 app = typer.Typer(
@@ -19,16 +20,7 @@ app = typer.Typer(
 
 ROMEBOT_CONTROL = "[#EAB536]\\[°□°][/#EAB536]"
 
-_VALID_STATUSES = {
-    "implemented",
-    "partially_implemented",
-    "planned",
-    "in_progress",
-    "ready_to_approve",
-    "not_started",
-    "not_applicable",
-    "inherited",
-}
+_VALID_STATUSES = VALID_CONTROL_STATUSES
 
 
 @app.command("status")

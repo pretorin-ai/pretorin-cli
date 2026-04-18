@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 from typing import Any
 
 import typer
@@ -14,8 +13,13 @@ from rich.table import Table
 from pretorin.cli.commands import require_auth
 from pretorin.cli.context import resolve_execution_context
 from pretorin.cli.output import is_json_mode, print_json
+from pretorin.cli.questionnaire_helpers import (
+    answer_map,
+    normalize_text,
+    platform_base_url,
+    validate_working_directory,
+)
 from pretorin.client.api import PretorianClient, PretorianClientError
-from pretorin.client.config import Config
 from pretorin.workflows.questionnaire_population import draft_scope_questionnaire
 
 app = typer.Typer(
@@ -26,33 +30,15 @@ app = typer.Typer(
 
 console = Console()
 
-
-def _platform_base_url() -> str:
-    base_url = Config().platform_api_base_url.rstrip("/")
-    for suffix in ("/api/v1/public", "/api/v1"):
-        if base_url.endswith(suffix):
-            return base_url[: -len(suffix)]
-    return base_url
+# Module-level aliases so existing call sites keep working.
+_platform_base_url = platform_base_url
+_validate_working_directory = validate_working_directory
+_answer_map = answer_map
+_normalize_text = normalize_text
 
 
 def _scope_handoff_url() -> str:
     return f"{_platform_base_url()}/compliance/scope"
-
-
-def _validate_working_directory(path: str) -> Path:
-    resolved = Path(path).expanduser().resolve()
-    if not resolved.exists():
-        raise typer.BadParameter(f"path does not exist: {resolved}")
-    return resolved
-
-
-def _answer_map(payload: dict[str, Any] | None) -> dict[str, str | None]:
-    questions = (payload or {}).get("questions", [])
-    return {str(item.get("id")): item.get("answer") for item in questions if isinstance(item, dict) and item.get("id")}
-
-
-def _normalize_text(value: str | None) -> str:
-    return (value or "").strip()
 
 
 def _build_scope_diffs(scope: Any, proposal: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:

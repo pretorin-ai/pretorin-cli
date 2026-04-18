@@ -19,16 +19,15 @@ from pretorin.mcp.helpers import (
     require,
     resolve_execution_scope,
     resolve_system_id,
+    safe_args,
     validate_enum,
 )
 from pretorin.workflows.ai_generation import draft_control_artifacts
 
 logger = logging.getLogger(__name__)
 
-
-def _safe_args(arguments: dict[str, Any]) -> dict[str, Any]:
-    """Return arguments with sensitive fields redacted."""
-    return {k: ("***" if k == "api_key" else v) for k, v in arguments.items()}
+# Alias for backward compatibility within this module.
+_safe_args = safe_args
 
 
 async def handle_generate_control_artifacts(
