@@ -10,7 +10,7 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 
 ## Phase 2: mdBook Core Reference (docs/src/)
 
-- [ ] **4. Introduction & Getting Started** - Verify docs/src/introduction.md, installation.md, authentication.md, quickstart.md match current install flow, auth setup, and first-run experience.
+- [x] **4. Introduction & Getting Started** - Verify docs/src/introduction.md, installation.md, authentication.md, quickstart.md match current install flow, auth setup, and first-run experience.
 - [ ] **5. CLI Command Reference** - Read src/pretorin/cli/ and compare against docs/src/cli/command-reference.md. Verify every command, subcommand, flag, and argument is documented. Add missing commands, remove stale ones.
 - [ ] **6. CLI Feature Pages** - Read each CLI module (context.py, notes.py, evidence.py, etc.) and update the corresponding docs/src/cli/ page (context.md, notes.md, evidence.md, etc.). Verify examples work.
 - [ ] **7. MCP Tool Reference** - Read src/pretorin/mcp/tools.py and compare against docs/src/mcp/tools.md. Verify every tool, parameter, and description matches. Update tool counts.
@@ -40,3 +40,4 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 - **Task 1** (7c885bd): README.md — added missing commands (login/logout/whoami, control status/context, evidence link/delete, notes resolve), added Policy & Scope Questionnaires section.
 - **Task 2** (c5d3ff2): CLI.md — added Control, Policy, Scope, Skill sections; added context verify/manifest, evidence link/delete, narrative create/list/push, notes create/push/resolve commands; fixed push vs push-file; updated reference table.
 - **Task 3** (5f36941): MCP.md — updated tool count to 86; added get_cli_status, get_source_manifest, delete_evidence to tables; added detailed entries for search_evidence, delete_evidence, get_cli_status, get_source_manifest; fixed required/optional param annotations across all detailed entries.
+- **Task 4** (09ca308): Introduction & Getting Started — updated version to 0.15.1 in installation.md; added login flags (--api-key/-k, --api-url) and whoami --json to authentication.md; fixed API URL to /api/v1/public; fixed evidence create example order in quickstart.md; added STIG/CCI browsing section; added vendor, STIG/CCI, policy/scope capabilities to introduction.md.
