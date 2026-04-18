@@ -31,6 +31,13 @@ Control IDs are **zero-padded** with a hyphen:
 | `au-02` | `au-2`, `AU-2` |
 | `sc-07` | `sc-7`, `SC-7` |
 
+**Enhancement IDs** append a dot-suffix or parenthetical suffix:
+
+| Format | Example |
+|--------|---------|
+| Dot notation | `ac-02.1` |
+| Parenthetical | `ac-02(1)` |
+
 ## CMMC 2.0
 
 **Framework IDs:** `cmmc-l1`, `cmmc-l2`, `cmmc-l3`
@@ -81,6 +88,10 @@ Control IDs use **dotted notation with leading zeros**:
 | `03.01.01` | `3.1.1`, `ac-01` |
 | `03.01.02` | `3.1.2`, `ac-02` |
 | `03.13.01` | `3.13.1`, `sc-01` |
+
+## Auto-Normalization
+
+The CLI and MCP tools automatically normalize NIST 800-53 and FedRAMP control IDs: uppercase is lowered and single-digit numbers are zero-padded. For example, `AC-2` becomes `ac-02` and `SC-7.1` becomes `sc-07.1`. CMMC and NIST 800-171 IDs are passed through unchanged — use the exact format shown above.
 
 ## Discovery Workflow
 

@@ -6,16 +6,26 @@ Pretorin provides access to 30+ compliance frameworks and profiles spanning fede
 
 The table below highlights a representative subset of commonly used frameworks in Pretorin. Always call `pretorin frameworks list` to get the current catalog from the API for your environment.
 
-| ID | Title | Version | Families | Controls |
-|----|-------|---------|----------|----------|
-| `nist-800-53-r5` | NIST SP 800-53 Rev 5 | 5.2.0 | 20 | 324 |
-| `nist-800-171-r3` | NIST SP 800-171 Revision 3 | 1.0.0 | 17 | 130 |
-| `fedramp-low` | FedRAMP Rev 5 Low Baseline | fedramp2.1.0 | 18 | 135 |
-| `fedramp-moderate` | FedRAMP Rev 5 Moderate Baseline | fedramp2.1.0 | 18 | 181 |
-| `fedramp-high` | FedRAMP Rev 5 High Baseline | fedramp2.1.0 | 18 | 191 |
-| `cmmc-l1` | CMMC 2.0 Level 1 (Foundational) | 2.0 | 6 | 17 |
-| `cmmc-l2` | CMMC 2.0 Level 2 (Advanced) | 2.0 | 14 | 110 |
-| `cmmc-l3` | CMMC 2.0 Level 3 (Expert) | 2.0 | 10 | 24 |
+| ID | Title | Version | Tier | Families | Controls |
+|----|-------|---------|------|----------|----------|
+| `nist-800-53-r5` | NIST SP 800-53 Rev 5 | 5.2.0 | foundational | 20 | 324 |
+| `nist-800-171-r3` | NIST SP 800-171 Revision 3 | 1.0.0 | foundational | 17 | 130 |
+| `fedramp-low` | FedRAMP Rev 5 Low Baseline | fedramp2.1.0 | operational | 18 | 135 |
+| `fedramp-moderate` | FedRAMP Rev 5 Moderate Baseline | fedramp2.1.0 | operational | 18 | 181 |
+| `fedramp-high` | FedRAMP Rev 5 High Baseline | fedramp2.1.0 | operational | 18 | 191 |
+| `cmmc-l1` | CMMC 2.0 Level 1 (Foundational) | 2.0 | operational | 6 | 17 |
+| `cmmc-l2` | CMMC 2.0 Level 2 (Advanced) | 2.0 | operational | 14 | 110 |
+| `cmmc-l3` | CMMC 2.0 Level 3 (Expert) | 2.0 | strategic | 10 | 24 |
+
+### Framework Tiers
+
+Each framework has a **tier** classification displayed in the `pretorin frameworks list` output:
+
+| Tier | Description |
+|------|-------------|
+| **foundational** | Base catalogs that other frameworks derive from (e.g., NIST 800-53, 800-171) |
+| **operational** | Baselines and profiles used for day-to-day compliance (e.g., FedRAMP, CMMC L1/L2) |
+| **strategic** | Advanced or specialized frameworks for high-assurance environments (e.g., CMMC L3) |
 
 ## Framework Relationships
 
