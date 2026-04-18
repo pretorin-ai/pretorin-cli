@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-8f1d8054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -200,8 +200,8 @@ pretorin context set --system "My Application" --framework fedramp-moderate
 <h2 id="create-evidence"><a class="header" href="#create-evidence">Create Evidence</a></h2>
 <p>Create a local evidence file:</p>
 <pre><code class="language-bash">pretorin evidence create ac-02 fedramp-moderate \
-  --name "RBAC Configuration" \
-  --description "Role-based access control in Azure AD"
+  --description "Role-based access control in Azure AD" \
+  --name "RBAC Configuration"
 </code></pre>
 <p>Push evidence to the platform:</p>
 <pre><code class="language-bash">pretorin evidence push
@@ -225,6 +225,17 @@ claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 # "What controls are in the Access Control family for FedRAMP Moderate?"
 </code></pre>
 <p>Check install status with <code>pretorin skill status</code>. See the <a href="../mcp/setup.html">MCP Setup Guides</a> for other tools.</p>
+<h2 id="browse-stigs-and-ccis"><a class="header" href="#browse-stigs-and-ccis">Browse STIGs and CCIs</a></h2>
+<p>Look up STIG benchmarks, rules, and CCI traceability:</p>
+<pre><code class="language-bash"># List available STIG benchmarks
+pretorin stig list
+
+# View a specific STIG rule
+pretorin stig rule &lt;rule-id&gt;
+
+# Trace a CCI to its parent controls
+pretorin cci chain &lt;cci-id&gt;
+</code></pre>
 <h2 id="run-the-demo-walkthrough"><a class="header" href="#run-the-demo-walkthrough">Run the Demo Walkthrough</a></h2>
 <p>An interactive demo script is included in the repository:</p>
 <pre><code class="language-bash">bash scripts/demo-walkthrough.sh

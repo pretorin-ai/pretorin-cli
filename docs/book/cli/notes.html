@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-8f1d8054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -209,6 +209,23 @@ pretorin notes list --local --framework fedramp-moderate
 <pre><code class="language-bash">pretorin notes add ac-02 fedramp-moderate \
   --content "Gap: Missing SSO evidence. Manual next step: collect IdP configuration screenshots."
 </code></pre>
+<h2 id="resolve-or-reopen-a-note"><a class="header" href="#resolve-or-reopen-a-note">Resolve or Reopen a Note</a></h2>
+<pre><code class="language-bash"># Resolve a note
+pretorin notes resolve ac-02 fedramp-moderate &lt;note_id&gt;
+
+# Resolve with updated content
+pretorin notes resolve ac-02 fedramp-moderate &lt;note_id&gt; --content "Resolved: SSO config verified."
+
+# Reopen a resolved note
+pretorin notes resolve ac-02 fedramp-moderate &lt;note_id&gt; --reopen
+</code></pre>
+<p>Options:</p>
+<ul>
+<li><code>--system / -s</code> — System name or ID</li>
+<li><code>--reopen</code> — Reopen a resolved note instead of resolving it</li>
+<li><code>--content / -c</code> — Optional updated note content</li>
+<li><code>--pinned</code> — Optional pinned state</li>
+</ul>
 <h2 id="gap-note-format"><a class="header" href="#gap-note-format">Gap Note Format</a></h2>
 <p>When adding notes for unresolved gaps, use this structured format:</p>
 <pre><code class="language-text">Gap: &lt;short title&gt;

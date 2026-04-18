@@ -14,9 +14,20 @@ All hosted API access is account-scoped and authenticated. Access to Pretorin-ho
 pretorin login
 ```
 
+Options:
+
+| Flag | Description |
+|------|-------------|
+| `--api-key`, `-k` | API key (will prompt if not provided) |
+| `--api-url` | Custom API base URL (for self-hosted instances) |
+
 You'll be prompted to enter your API key. Credentials are stored in `~/.pretorin/config.json`.
 
-If you're already authenticated, `pretorin login` validates your existing key against the API and skips the prompt.
+If you're already authenticated, `pretorin login` validates your existing key against the API and skips the prompt. To re-authenticate with a different key, pass it explicitly:
+
+```bash
+pretorin login --api-key <new-key>
+```
 
 If you log into a different API endpoint or switch API keys, Pretorin clears the stored active `system + framework` context so stale scope does not bleed into the new environment.
 
@@ -24,13 +35,18 @@ If you log into a different API endpoint or switch API keys, Pretorin clears the
 
 ```bash
 $ pretorin whoami
-[°~°] Checking your session...
 ╭──────────────────────────────── Your Session ────────────────────────────────╮
 │ Status: Authenticated                                                        │
 │ API Key: 4MAS****...9v7o                                                     │
-│ API URL: https://platform.pretorin.com/api/v1                                │
+│ API URL: https://platform.pretorin.com/api/v1/public                         │
 │ Frameworks Available: 8                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+For machine-readable output, use the global `--json` flag:
+
+```bash
+pretorin --json whoami
 ```
 
 ## Logout

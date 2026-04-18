@@ -59,9 +59,9 @@ For each high-priority family:
 
 2. For each relevant control, get AI guidance:
    ```bash
-   pretorin frameworks control fedramp-moderate ac-02 --references
+   pretorin frameworks control fedramp-moderate ac-02
    ```
-   The `ai_guidance` field provides evidence expectations, implementation considerations, and common failures.
+   References and AI guidance are shown by default. The `ai_guidance` field provides evidence expectations, implementation considerations, and common failures. Use `--brief` to show only the basic info panel.
 
 3. Search the codebase using guidance-informed patterns:
 
@@ -135,8 +135,7 @@ See the [example gap analysis](./gap-analysis-example.md) for a complete sample 
 ## Tips
 
 - Start broad (family level) and drill into specific controls where evidence exists
-- Use `pretorin frameworks control <fw> <ctrl>` for AI guidance — it provides the richest context
-- Use `--references` for formal statement, objectives, and related controls
+- Use `pretorin frameworks control <fw> <ctrl>` for AI guidance — it provides the richest context (references are included by default; use `--brief` to skip them)
 - Check related controls to identify dependencies
 - For infrastructure evidence, look at Terraform, CloudFormation, Dockerfiles, Helm charts, and CI/CD configs
 - For application evidence, focus on auth, logging, crypto, and configuration code

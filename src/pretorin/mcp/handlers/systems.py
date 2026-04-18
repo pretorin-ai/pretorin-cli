@@ -10,14 +10,12 @@ from mcp.types import TextContent
 from pretorin.cli.version_check import get_update_status
 from pretorin.client import PretorianClient
 from pretorin.client.api import PretorianClientError
-from pretorin.mcp.helpers import format_json, resolve_system_id
+from pretorin.mcp.helpers import format_json, resolve_system_id, safe_args
 
 logger = logging.getLogger(__name__)
 
-
-def _safe_args(arguments: dict[str, Any]) -> dict[str, Any]:
-    """Return arguments with sensitive fields redacted."""
-    return {k: ("***" if k == "api_key" else v) for k, v in arguments.items()}
+# Alias for backward compatibility within this module.
+_safe_args = safe_args
 
 
 async def handle_list_systems(

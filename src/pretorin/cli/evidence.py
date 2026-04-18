@@ -11,6 +11,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from pretorin.cli.output import is_json_mode, print_json
+from pretorin.mcp.helpers import VALID_EVIDENCE_TYPES
 from pretorin.utils import normalize_control_id
 
 console = Console()
@@ -22,21 +23,7 @@ app = typer.Typer(
 )
 
 ROMEBOT_EVIDENCE = "[#EAB536]\\[°□°][/#EAB536]"
-_VALID_EVIDENCE_TYPES = {
-    "screenshot",
-    "screen_recording",
-    "log_file",
-    "configuration",
-    "test_result",
-    "certificate",
-    "attestation",
-    "code_snippet",
-    "repository_link",
-    "policy_document",
-    "scan_result",
-    "interview_notes",
-    "other",
-}
+_VALID_EVIDENCE_TYPES = VALID_EVIDENCE_TYPES
 
 
 @app.command("create")

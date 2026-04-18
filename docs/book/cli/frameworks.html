@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-8f1d8054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -276,11 +276,11 @@ Parameters:
   - ac-02_odp.04: policy, procedures, prerequisites, and criteria
   - ac-02_odp.05: personnel or roles
 </code></pre>
-<h3 id="with-references"><a class="header" href="#with-references">With References</a></h3>
-<p>Add <code>--references</code> to include the statement text, guidance, and related controls:</p>
-<pre><code class="language-bash">$ pretorin frameworks control nist-800-53-r5 ac-02 --references
+<h3 id="brief-mode"><a class="header" href="#brief-mode">Brief Mode</a></h3>
+<p>By default, the full control is shown including statement, guidance, and references. Use <code>--brief</code> to show only the basic info panel:</p>
+<pre><code class="language-bash">$ pretorin frameworks control nist-800-53-r5 ac-02 --brief
 </code></pre>
-<p>This adds:</p>
+<p>The default (no flag) includes:</p>
 <ul>
 <li><strong>Statement</strong> — the formal control requirement text</li>
 <li><strong>Guidance</strong> — implementation guidance from the framework</li>

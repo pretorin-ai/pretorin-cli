@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-8f1d8054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -190,18 +190,34 @@
 <h2 id="login"><a class="header" href="#login">Login</a></h2>
 <pre><code class="language-bash">pretorin login
 </code></pre>
+<p>Options:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Flag</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--api-key</code>, <code>-k</code></td><td>API key (will prompt if not provided)</td></tr>
+<tr><td><code>--api-url</code></td><td>Custom API base URL (for self-hosted instances)</td></tr>
+</tbody>
+</table>
+</div>
 <p>You’ll be prompted to enter your API key. Credentials are stored in <code>~/.pretorin/config.json</code>.</p>
-<p>If you’re already authenticated, <code>pretorin login</code> validates your existing key against the API and skips the prompt.</p>
+<p>If you’re already authenticated, <code>pretorin login</code> validates your existing key against the API and skips the prompt. To re-authenticate with a different key, pass it explicitly:</p>
+<pre><code class="language-bash">pretorin login --api-key &lt;new-key&gt;
+</code></pre>
 <p>If you log into a different API endpoint or switch API keys, Pretorin clears the stored active <code>system + framework</code> context so stale scope does not bleed into the new environment.</p>
 <h2 id="verify-authentication"><a class="header" href="#verify-authentication">Verify Authentication</a></h2>
 <pre><code class="language-bash">$ pretorin whoami
-[°~°] Checking your session...
 ╭──────────────────────────────── Your Session ────────────────────────────────╮
 │ Status: Authenticated                                                        │
 │ API Key: 4MAS****...9v7o                                                     │
-│ API URL: https://platform.pretorin.com/api/v1                                │
+│ API URL: https://platform.pretorin.com/api/v1/public                         │
 │ Frameworks Available: 8                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────╯
+</code></pre>
+<p>For machine-readable output, use the global <code>--json</code> flag:</p>
+<pre><code class="language-bash">pretorin --json whoami
 </code></pre>
 <h2 id="logout"><a class="header" href="#logout">Logout</a></h2>
 <p>Clear stored credentials:</p>

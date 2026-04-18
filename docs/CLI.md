@@ -358,6 +358,46 @@ pretorin context show --quiet --check
 pretorin context clear
 ```
 
+### Verify Context
+
+```bash
+pretorin context verify
+pretorin context verify --ttl 7200 --quiet
+```
+
+Verifies the active context with source attestation. The `--ttl` option sets the verification TTL in seconds (default: 3600).
+
+### Source Manifest
+
+```bash
+pretorin context manifest
+pretorin context manifest --quiet
+```
+
+Shows the resolved source manifest and evaluates it against detected sources.
+
+## Control Commands
+
+The `control` command group manages control implementation status and context.
+
+### Update Control Status
+
+```bash
+pretorin control status ac-02 implemented
+pretorin control status sc-07 in_progress --system "My System" --framework-id fedramp-moderate
+```
+
+Valid statuses: `implemented`, `partially_implemented`, `planned`, `in_progress`, `ready_to_approve`, `not_started`, `not_applicable`, `inherited`
+
+### Get Control Context
+
+```bash
+pretorin control context ac-02
+pretorin control context ac-02 --framework-id nist-800-53-r5 --system "My System"
+```
+
+Returns rich control context with AI guidance for implementation.
+
 ## Evidence Commands
 
 The `evidence` command group manages local evidence files and syncs them to the platform.
@@ -387,6 +427,15 @@ pretorin evidence push
 Pushes local evidence files to the platform using find-or-create upsert logic.
 Requires an active single scope from `pretorin context set` unless both `--system` and `--framework` are provided via `evidence upsert`.
 
+### Link Evidence to a Control
+
+```bash
+pretorin evidence link abc123 ac-02
+pretorin evidence link abc123 sc-07 --framework-id fedramp-moderate
+```
+
+Links an existing evidence item to a control on the platform.
+
 ### Search Platform Evidence
 
 ```bash
@@ -407,9 +456,35 @@ Finds and reuses exact matching evidence within the active system/framework scop
 Evidence descriptions must be auditor-ready markdown with no headings and at least one rich element (code block, table, list, or link). Markdown images are currently disallowed.
 When `control_id` is involved, `framework_id` is required and the CLI validates that the framework belongs to the selected system before pushing.
 
+### Delete Evidence
+
+```bash
+pretorin evidence delete ev-abc123
+pretorin evidence delete ev-abc123 --yes   # skip confirmation
+```
+
+Permanently removes an evidence item and its associated embeddings. System-scoped, requires WRITE access.
+
 ## Narrative Commands
 
-The `narrative` command group pushes implementation narratives to the platform.
+The `narrative` command group manages local narrative files and syncs them to the platform.
+
+### Create Local Narrative
+
+```bash
+pretorin narrative create ac-02 fedramp-moderate \
+  --content "This control is implemented through centralized account management..."
+pretorin narrative create ac-02 fedramp-moderate --content "..." --ai-generated
+```
+
+Creates a local narrative file with YAML frontmatter.
+
+### List Local Narratives
+
+```bash
+pretorin narrative list
+pretorin narrative list --framework fedramp-moderate
+```
 
 ### Get Current Narrative
 
@@ -417,10 +492,17 @@ The `narrative` command group pushes implementation narratives to the platform.
 pretorin narrative get ac-02 fedramp-moderate --system "My System"
 ```
 
-### Push a Narrative File
+### Push All Local Narratives
 
 ```bash
-pretorin narrative push ac-02 fedramp-moderate "My System" narrative-ac02.md
+pretorin narrative push
+pretorin narrative push --dry-run
+```
+
+### Push a Single Narrative File
+
+```bash
+pretorin narrative push-file ac-02 fedramp-moderate "My System" narrative-ac02.md
 ```
 
 Reads a markdown/text file and submits it as the implementation narrative for a control. To generate narratives with AI, use the agent:
@@ -432,19 +514,47 @@ pretorin agent run --skill narrative-generation "Generate narrative for AC-02"
 
 ## Notes Commands
 
-The `notes` command group manages control implementation notes.
+The `notes` command group manages control implementation notes locally and on the platform.
+
+### Create Local Note
+
+```bash
+pretorin notes create ac-02 fedramp-moderate --content "Gap: Missing SSO evidence ..."
+```
+
+Creates a local note file with YAML frontmatter.
 
 ### List Notes
 
 ```bash
+# Platform notes
 pretorin notes list ac-02 fedramp-moderate --system "My System"
+
+# Local note files
+pretorin notes list --local
+pretorin notes list --local --framework fedramp-moderate
 ```
 
-### Add Note
+### Add Note (Direct to Platform)
 
 ```bash
 pretorin notes add ac-02 fedramp-moderate \
   --content "Gap: Missing SSO evidence ..."
+```
+
+### Push Local Notes
+
+```bash
+pretorin notes push
+pretorin notes push --dry-run
+```
+
+### Resolve or Reopen a Note
+
+```bash
+pretorin notes resolve ac-02 fedramp-moderate note-abc123
+pretorin notes resolve ac-02 fedramp-moderate note-abc123 --reopen
+pretorin notes resolve ac-02 fedramp-moderate note-abc123 --content "Updated content"
 ```
 
 ## Monitoring Commands
@@ -555,6 +665,60 @@ $ pretorin review status --control-id ac-02
 │ account management using Azure AD...                           │
 ╰─────────────────────────────────────────────────────────────────╯
 ```
+
+## Policy Commands
+
+The `policy` command group manages organization policy questionnaire workflows.
+
+### List Policies
+
+```bash
+pretorin policy list
+```
+
+### Show Policy State
+
+```bash
+pretorin policy show --policy "access-control-policy"
+```
+
+Shows persisted policy questionnaire state and saved review findings. The `--policy` option accepts an ID, exact template ID, or unique exact name.
+
+## Scope Commands
+
+The `scope` command group manages scope questionnaire workflows.
+
+### Show Scope State
+
+```bash
+pretorin scope show
+pretorin scope show --system "My System" --framework-id fedramp-moderate
+```
+
+Shows persisted scope questionnaire state and saved review findings.
+
+### Populate Scope from Workspace
+
+```bash
+pretorin scope populate --path ./src
+pretorin scope populate --system "My System" --framework-id fedramp-moderate --apply
+```
+
+Drafts stateful scope questionnaire updates from the current workspace. Use `--apply` to persist changed answers back to the platform.
+
+## Skill Commands
+
+The `skill` command group installs the Pretorin skill for AI coding agents.
+
+### Install Skill
+
+```bash
+pretorin skill install
+pretorin skill install --agent claude --agent codex
+pretorin skill install --path ./custom-skills --force
+```
+
+Installs the Pretorin compliance skill for AI agents (Claude Code, Codex). Omit `--agent` to install for all supported agents.
 
 ## Configuration
 
@@ -784,17 +948,32 @@ Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Ma
 | `pretorin context set` | Set active system/framework context |
 | `pretorin context show` | Display and validate current active context |
 | `pretorin context clear` | Clear active context |
+| `pretorin context verify` | Verify active context with source attestation |
+| `pretorin context manifest` | Show resolved source manifest |
+| `pretorin control status <ctrl> <status>` | Update control implementation status |
+| `pretorin control context <ctrl>` | Get rich control context with AI guidance |
 | `pretorin evidence create` | Create a local evidence file |
 | `pretorin evidence list` | List local evidence files |
 | `pretorin evidence push` | Push local evidence to the platform |
+| `pretorin evidence link <eid> <ctrl>` | Link evidence to a control |
 | `pretorin evidence search` | Search platform evidence |
 | `pretorin evidence upsert <ctrl> <fw>` | Find-or-create evidence and link it |
+| `pretorin evidence delete <eid>` | Delete an evidence item (`--yes`) |
+| `pretorin narrative create` | Create a local narrative file |
+| `pretorin narrative list` | List local narrative files |
 | `pretorin narrative get <ctrl> <fw>` | Get current control narrative |
-| `pretorin narrative push <ctrl> <fw> <sys> <file>` | Push a narrative file to the platform |
-| `pretorin notes list <ctrl> <fw>` | List control notes |
-| `pretorin notes add <ctrl> <fw> --content ...` | Add a control note |
-| `pretorin notes resolve <ctrl> <fw> <note_id>` | Resolve or reopen a control note |
+| `pretorin narrative push` | Push all local narratives to the platform |
+| `pretorin narrative push-file <ctrl> <fw> <sys> <file>` | Push a single narrative file |
+| `pretorin notes create` | Create a local note file |
+| `pretorin notes list <ctrl> <fw>` | List control notes (`--local` for local files) |
+| `pretorin notes add <ctrl> <fw> --content ...` | Add a note directly to the platform |
+| `pretorin notes push` | Push local notes to the platform |
+| `pretorin notes resolve <ctrl> <fw> <note_id>` | Resolve or reopen a control note (`--reopen`) |
 | `pretorin monitoring push` | Push a monitoring event to a system |
+| `pretorin policy list` | List org policies for questionnaire work |
+| `pretorin policy show` | Show policy questionnaire state (`--policy`) |
+| `pretorin scope show` | Show scope questionnaire state |
+| `pretorin scope populate` | Draft scope updates from workspace (`--apply`) |
 | `pretorin campaign controls` | Run bulk control campaign (`--mode`, `--family`, `--apply`) |
 | `pretorin campaign policy` | Run bulk policy campaign (`--mode`, `--all-incomplete`) |
 | `pretorin campaign scope` | Run bulk scope campaign (`--mode`) |
@@ -829,6 +1008,7 @@ Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Ma
 | `pretorin agent mcp-remove` | Remove an MCP server configuration |
 | `pretorin review run` | Review code against a control |
 | `pretorin review status` | Check implementation status for a control |
+| `pretorin skill install` | Install Pretorin skill for AI agents (`--agent`) |
 | `pretorin config list` | List all configuration |
 | `pretorin config get <key>` | Get a config value |
 | `pretorin config set <key> <value>` | Set a config value |

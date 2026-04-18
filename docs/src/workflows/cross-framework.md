@@ -16,10 +16,10 @@ Map controls across related frameworks to identify overlaps, reduce duplicate wo
 Query the control with references to discover relationships:
 
 ```bash
-pretorin frameworks control nist-800-53-r5 ac-02 --references
+pretorin frameworks control nist-800-53-r5 ac-02
 ```
 
-The **Related Controls** field reveals connections to other controls and frameworks.
+References are shown by default. The **Related Controls** field reveals connections to other controls and frameworks.
 
 ### Step 2: Build the Mapping
 
@@ -37,10 +37,10 @@ Look up the equivalent control in each target framework:
 Get details for each framework's version of the control:
 
 ```bash
-pretorin frameworks control nist-800-53-r5 ac-02 --references
-pretorin frameworks control fedramp-moderate ac-02 --references
-pretorin frameworks control nist-800-171-r3 03.01.01 --references
-pretorin frameworks control cmmc-l2 AC.L2-3.1.1 --references
+pretorin frameworks control nist-800-53-r5 ac-02
+pretorin frameworks control fedramp-moderate ac-02
+pretorin frameworks control nist-800-171-r3 03.01.01
+pretorin frameworks control cmmc-l2 AC.L2-3.1.1
 ```
 
 Compare what each framework emphasizes. For Account Management:
@@ -66,7 +66,7 @@ NIST 800-171 03.01.01
   └── Satisfies CMMC L2 AC.L2-3.1.1 ✓
 ```
 
-**Key insight:** Compliance with a parent framework generally satisfies the child framework's corresponding control. Always verify with `pretorin frameworks control <fw> <ctrl> --references` to check for framework-specific parameters or additional requirements.
+**Key insight:** Compliance with a parent framework generally satisfies the child framework's corresponding control. Always verify with `pretorin frameworks control <fw> <ctrl>` to check for framework-specific parameters or additional requirements (references are included by default).
 
 ## Using MCP for Cross-Framework Mapping
 

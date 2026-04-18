@@ -55,6 +55,19 @@ pretorin evidence upsert ac-02 fedramp-moderate \
 
 This searches for an exact match on (name + description + type + control + framework) within the active system scope. If found, it reuses the existing item; otherwise, it creates a new one. It then ensures the evidence is linked to the specified control.
 
+## Link Evidence to a Control
+
+Link an existing platform evidence item to a control:
+
+```bash
+pretorin evidence link ev-abc123 ac-02
+pretorin evidence link ev-abc123 ac-02 --framework-id fedramp-moderate --system "My System"
+```
+
+Options:
+- `--framework-id / -f` — Framework ID (uses active context if omitted)
+- `--system / -s` — System name or ID (uses active context if omitted)
+
 ## Delete Evidence
 
 ```bash

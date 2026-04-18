@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-8f1d8054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -215,6 +215,16 @@ pretorin evidence search --system "My Application" --framework-id fedramp-modera
   --type configuration
 </code></pre>
 <p>This searches for an exact match on (name + description + type + control + framework) within the active system scope. If found, it reuses the existing item; otherwise, it creates a new one. It then ensures the evidence is linked to the specified control.</p>
+<h2 id="link-evidence-to-a-control"><a class="header" href="#link-evidence-to-a-control">Link Evidence to a Control</a></h2>
+<p>Link an existing platform evidence item to a control:</p>
+<pre><code class="language-bash">pretorin evidence link ev-abc123 ac-02
+pretorin evidence link ev-abc123 ac-02 --framework-id fedramp-moderate --system "My System"
+</code></pre>
+<p>Options:</p>
+<ul>
+<li><code>--framework-id / -f</code> — Framework ID (uses active context if omitted)</li>
+<li><code>--system / -s</code> — System name or ID (uses active context if omitted)</li>
+</ul>
 <h2 id="delete-evidence"><a class="header" href="#delete-evidence">Delete Evidence</a></h2>
 <pre><code class="language-bash"># Delete with confirmation prompt
 pretorin evidence delete ev-abc123

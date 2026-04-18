@@ -8,15 +8,13 @@ from typing import Any
 from mcp.types import TextContent
 
 from pretorin.client import PretorianClient
-from pretorin.mcp.helpers import format_json
+from pretorin.mcp.helpers import format_json, safe_args
 from pretorin.utils import normalize_control_id
 
 logger = logging.getLogger(__name__)
 
-
-def _safe_args(arguments: dict[str, Any]) -> dict[str, Any]:
-    """Return arguments with sensitive fields redacted."""
-    return {k: ("***" if k == "api_key" else v) for k, v in arguments.items()}
+# Alias for backward compatibility within this module.
+_safe_args = safe_args
 
 
 async def handle_list_frameworks(client: PretorianClient, arguments: dict[str, Any]) -> list[TextContent]:

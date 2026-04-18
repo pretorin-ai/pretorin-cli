@@ -45,7 +45,7 @@ pretorin campaign controls --mode review-fix --family AC --review-job <job-id>
 | `--controls` | Specific control IDs (comma-separated) |
 | `--all-controls` | Target all controls in the framework |
 | `--mode` | Campaign mode: `initial`, `notes-fix`, `review-fix` |
-| `--artifacts` | Generate AI artifacts during the campaign |
+| `--artifacts` | Artifact types to generate: `narratives`, `evidence`, or `both` (default: `both`) |
 | `--review-job` | Review job ID (required for `review-fix` mode) |
 | `--concurrency` | Number of parallel workers |
 | `--max-retries` | Maximum retry attempts per item |

@@ -34,8 +34,8 @@ Create a local evidence file:
 
 ```bash
 pretorin evidence create ac-02 fedramp-moderate \
-  --name "RBAC Configuration" \
-  --description "Role-based access control in Azure AD"
+  --description "Role-based access control in Azure AD" \
+  --name "RBAC Configuration"
 ```
 
 Push evidence to the platform:
@@ -74,6 +74,21 @@ claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 ```
 
 Check install status with `pretorin skill status`. See the [MCP Setup Guides](../mcp/setup.md) for other tools.
+
+## Browse STIGs and CCIs
+
+Look up STIG benchmarks, rules, and CCI traceability:
+
+```bash
+# List available STIG benchmarks
+pretorin stig list
+
+# View a specific STIG rule
+pretorin stig rule <rule-id>
+
+# Trace a CCI to its parent controls
+pretorin cci chain <cci-id>
+```
 
 ## Run the Demo Walkthrough
 

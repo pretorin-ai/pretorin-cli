@@ -39,13 +39,26 @@ pretorin agent mcp-list
 ### Add a Server
 
 ```bash
+# stdio transport
 pretorin agent mcp-add <name> stdio <command> --arg <arg1> --arg <arg2>
+
+# http transport
+pretorin agent mcp-add <name> http <url>
 ```
 
-Example:
+Options:
+
+| Option | Description |
+|--------|-------------|
+| `--arg/-a <arg>` | Additional args for stdio transport (repeatable) |
+| `--scope <scope>` | Config scope: `project` (default, `.pretorin-mcp.json`) or `global` (`~/.pretorin/mcp.json`) |
+
+Examples:
 
 ```bash
-pretorin agent mcp-add filesystem stdio node --arg /path/to/fs-server
+pretorin agent mcp-add github stdio uvx --arg mcp-server-github
+pretorin agent mcp-add aws http https://mcp.example.com/aws
+pretorin agent mcp-add tools stdio node --arg /path/to/server --scope global
 ```
 
 ### Remove a Server

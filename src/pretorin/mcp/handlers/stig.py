@@ -13,14 +13,13 @@ from pretorin.mcp.helpers import (
     format_json,
     require,
     resolve_system_id,
+    safe_args,
 )
 
 logger = logging.getLogger(__name__)
 
-
-def _safe_args(arguments: dict[str, Any]) -> dict[str, Any]:
-    """Return arguments with sensitive fields redacted."""
-    return {k: ("***" if k == "api_key" else v) for k, v in arguments.items()}
+# Alias for backward compatibility within this module.
+_safe_args = safe_args
 
 
 # ---------------------------------------------------------------------------

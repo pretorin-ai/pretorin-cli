@@ -28,6 +28,19 @@ pretorin monitoring push --system "My System" --title "Quarterly Access Review" 
 | `low` | Minor finding |
 | `info` | Informational event |
 
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `--system` / `-s` | System name or ID (uses active context if omitted) |
+| `--framework` / `-f` | Framework ID (uses active context if omitted) |
+| `--title` / `-t` | Event title (required) |
+| `--severity` | Event severity (default: `high`) |
+| `--control` / `-c` | Control ID (e.g., `sc-07`, `ac-02`) |
+| `--description` / `-d` | Detailed event description |
+| `--event-type` | Event type (default: `security_scan`) |
+| `--update-control-status` | Also update the control status to `in_progress` |
+
 ## Context Requirement
 
 The `monitoring push` command requires an active system context. Set it with `pretorin context set` or pass `--system` explicitly.

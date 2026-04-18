@@ -171,6 +171,26 @@ def create_platform_tools(
         )
     )
 
+    async def list_controls(framework_id: str, family_id: str | None = None) -> str:
+        controls = await client.list_controls(framework_id, family_id=family_id)
+        return json.dumps([c.model_dump() for c in controls], default=str)
+
+    tools.append(
+        ToolDefinition(
+            name="list_controls",
+            description="List controls for a framework, optionally filtered by control family",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "framework_id": {"type": "string", "description": "Framework ID (e.g., nist-800-53-r5)"},
+                    "family_id": {"type": "string", "description": "Optional control family ID filter"},
+                },
+                "required": ["framework_id"],
+            },
+            handler=list_controls,
+        )
+    )
+
     async def get_control(framework_id: str, control_id: str) -> str:
         control = await client.get_control(framework_id, _normalize(control_id) or control_id)
         return json.dumps(control.model_dump(), default=str)

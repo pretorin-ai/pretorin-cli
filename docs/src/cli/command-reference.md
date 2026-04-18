@@ -11,7 +11,7 @@
 
 | Command | Description |
 |---------|-------------|
-| `pretorin login` | Authenticate with the Pretorin API |
+| `pretorin login` | Authenticate with the Pretorin API (`--api-key/-k`, `--api-url`) |
 | `pretorin logout` | Clear stored credentials |
 | `pretorin whoami` | Display authentication status |
 | `pretorin version` | Show CLI version |
@@ -26,8 +26,8 @@
 | `pretorin frameworks get <id>` | Get framework details |
 | `pretorin frameworks families <id>` | List control families |
 | `pretorin frameworks family <fw> <family>` | Get control family details |
-| `pretorin frameworks controls <id>` | List controls (`--family`, `--limit`) |
-| `pretorin frameworks control <fw> <ctrl>` | Get control details (`--references`) |
+| `pretorin frameworks controls <id>` | List controls (`--family/-f`, `--limit/-n`) |
+| `pretorin frameworks control <fw> <ctrl>` | Get control details (`--brief/-b`) |
 | `pretorin frameworks documents <id>` | Get document requirements |
 | `pretorin frameworks metadata <id>` | Get per-control framework metadata |
 | `pretorin frameworks submit-artifact <file>` | Submit a compliance artifact JSON file |
@@ -37,60 +37,100 @@
 | Command | Description |
 |---------|-------------|
 | `pretorin context list` | List systems and frameworks with progress |
-| `pretorin context set` | Set active system/framework context (`--system`, `--framework`) |
-| `pretorin context show` | Display and validate current active context (`--quiet`, `--check`) |
+| `pretorin context set` | Set active system/framework context (`--system/-s`, `--framework/-f`, `--no-verify`) |
+| `pretorin context show` | Display and validate current active context (`--quiet/-q`, `--check`) |
 | `pretorin context clear` | Clear active context |
+| `pretorin context verify` | Verify active context with source attestation (`--ttl`, `--quiet/-q`) |
+| `pretorin context manifest` | Show resolved source manifest and evaluate against detected sources (`--quiet/-q`) |
+
+## Control Commands
+
+| Command | Description |
+|---------|-------------|
+| `pretorin control status <ctrl> <status>` | Update control implementation status (`--framework-id/-f`, `--system/-s`) |
+| `pretorin control context <ctrl>` | Get rich control context with AI guidance (`--framework-id/-f`, `--system/-s`) |
 
 ## Evidence Commands
 
 | Command | Description |
 |---------|-------------|
-| `pretorin evidence create <ctrl> <fw>` | Create a local evidence file (`--name`, `--description`) |
-| `pretorin evidence list` | List local evidence files (`--framework`) |
-| `pretorin evidence push` | Push local evidence to the platform |
-| `pretorin evidence search` | Search platform evidence (`--control-id`, `--framework-id`, `--system`, `--limit`) |
-| `pretorin evidence upsert <ctrl> <fw>` | Find-or-create evidence and link it (`--name`, `--description`, `--type`) |
+| `pretorin evidence create <ctrl> <fw>` | Create a local evidence file (`--name/-n`, `--description/-d`, `--type/-t`) |
+| `pretorin evidence list` | List local evidence files (`--framework/-f`) |
+| `pretorin evidence push` | Push local evidence to the platform (`--dry-run`) |
+| `pretorin evidence search` | Search platform evidence (`--control-id/-c`, `--framework-id/-f`, `--system/-s`, `--limit/-n`) |
+| `pretorin evidence upsert <ctrl> <fw>` | Find-or-create evidence and link it (`--name/-n`, `--description/-d`, `--type/-t`, `--system/-s`) |
+| `pretorin evidence link <evidence_id> <ctrl>` | Link evidence to a control (`--framework-id/-f`, `--system/-s`) |
+| `pretorin evidence delete <evidence_id>` | Delete an evidence item (`--system/-s`, `--framework-id/-f`, `--yes/-y`) |
 
 ## Narrative Commands
 
 | Command | Description |
 |---------|-------------|
-| `pretorin narrative get <ctrl> <fw>` | Get current control narrative (`--system`) |
-| `pretorin narrative push <ctrl> <fw> <sys> <file>` | Push a narrative file to the platform |
+| `pretorin narrative create <ctrl> <fw>` | Create a local narrative file (`--content/-c`, `--name/-n`, `--ai-generated`) |
+| `pretorin narrative list` | List local narrative files (`--framework/-f`) |
+| `pretorin narrative push` | Push local narratives to the platform (`--dry-run`) |
+| `pretorin narrative push-file <ctrl> <fw> <sys> <file>` | Push a single narrative file to the platform |
+| `pretorin narrative get <ctrl> <fw>` | Get current control narrative (`--system/-s`) |
 
 ## Notes Commands
 
 | Command | Description |
 |---------|-------------|
-| `pretorin notes list <ctrl> <fw>` | List control notes (`--system`) |
-| `pretorin notes add <ctrl> <fw>` | Add a control note (`--content`) |
-| `pretorin notes resolve <ctrl> <fw> <note_id>` | Resolve a control note (`--reopen`, `--content`) |
+| `pretorin notes create <ctrl> <fw>` | Create a local note file (`--content/-c`, `--name/-n`) |
+| `pretorin notes list [ctrl] [fw]` | List notes — platform (`--system/-s`) or local (`--local`, `--framework/-f`) |
+| `pretorin notes push` | Push local notes to the platform (`--dry-run`) |
+| `pretorin notes add <ctrl> <fw>` | Add a note directly on the platform (`--content/-c`, `--system/-s`) |
+| `pretorin notes resolve <ctrl> <fw> <note_id>` | Resolve or reopen a control note (`--system/-s`, `--reopen`, `--content/-c`, `--pinned`) |
 
 ## Monitoring Commands
 
 | Command | Description |
 |---------|-------------|
-| `pretorin monitoring push` | Push a monitoring event (`--system`, `--title`, `--event-type`, `--severity`) |
+| `pretorin monitoring push` | Push a monitoring event (`--system/-s`, `--framework/-f`, `--title/-t`, `--event-type`, `--severity`, `--control/-c`, `--description/-d`, `--update-control-status`) |
+
+## Policy Commands
+
+| Command | Description |
+|---------|-------------|
+| `pretorin policy list` | List org policies available for questionnaire work |
+| `pretorin policy show` | Show persisted policy questionnaire state (`--policy`) |
+| `pretorin policy populate` | Draft policy questionnaire updates from the current workspace (`--policy`, `--path/-p`, `--apply`) |
+
+## Scope Commands
+
+| Command | Description |
+|---------|-------------|
+| `pretorin scope show` | Show scope questionnaire state and review findings (`--system/-s`, `--framework-id/-f`) |
+| `pretorin scope populate` | Draft scope questionnaire updates from the current workspace (`--system/-s`, `--framework-id/-f`, `--path/-p`, `--apply`) |
 
 ## Agent Commands
 
 | Command | Description |
 |---------|-------------|
-| `pretorin agent run "<task>"` | Run a compliance task (`--skill`, `--model`, `--base-url`, `--working-dir`, `--no-stream`, `--legacy`) |
+| `pretorin agent run "<task>"` | Run a compliance task (`--skill/-s`, `--model/-m`, `--base-url`, `--working-dir/-w`, `--no-stream`, `--legacy`, `--max-turns`, `--no-mcp`) |
 | `pretorin agent doctor` | Validate Codex runtime setup |
 | `pretorin agent install` | Download the pinned Codex binary |
 | `pretorin agent version` | Show pinned Codex version and install status |
 | `pretorin agent skills` | List available agent skills |
 | `pretorin agent mcp-list` | List configured MCP servers for the agent |
-| `pretorin agent mcp-add <name> stdio <cmd>` | Add an MCP server configuration (`--arg`) |
+| `pretorin agent mcp-add <name> <transport> <cmd>` | Add an MCP server configuration (`--arg`, `--scope`) |
 | `pretorin agent mcp-remove <name>` | Remove an MCP server configuration |
+
+## Skill Commands
+
+| Command | Description |
+|---------|-------------|
+| `pretorin skill install` | Install the Pretorin skill for AI coding agents (`--agent/-a`, `--path/-p`, `--force/-f`) |
+| `pretorin skill uninstall` | Uninstall the Pretorin skill (`--agent/-a`, `--path/-p`) |
+| `pretorin skill status` | Show installation status of the Pretorin skill (`--agent/-a`, `--path/-p`) |
+| `pretorin skill list-agents` | List all known agents and their skill directories |
 
 ## Review Commands
 
 | Command | Description |
 |---------|-------------|
-| `pretorin review run` | Review code against a control (`--control-id`, `--framework-id`, `--path`, `--local`, `--output-dir`) |
-| `pretorin review status` | Check implementation status for a control (`--control-id`) |
+| `pretorin review run` | Review code against a control (`--control-id/-c`, `--framework-id/-f`, `--system/-s`, `--path/-p`, `--local`, `--output-dir/-o`) |
+| `pretorin review status` | Check implementation status for a control (`--control-id/-c`, `--system/-s`) |
 
 ## Config Commands
 
@@ -105,9 +145,9 @@
 
 | Command | Description |
 |---------|-------------|
-| `pretorin campaign controls` | Run bulk control narrative/evidence campaign (`--mode`, `--family`, `--controls`, `--all-controls`, `--artifacts`, `--review-job`, `--concurrency`, `--checkpoint`, `--apply`, `--output`) |
-| `pretorin campaign policy` | Run bulk policy questionnaire campaign (`--mode`, `--policies`, `--all-incomplete`, `--concurrency`, `--checkpoint`, `--apply`, `--output`) |
-| `pretorin campaign scope` | Run bulk scope questionnaire campaign (`--mode`, `--system`, `--framework-id`, `--concurrency`, `--checkpoint`, `--apply`, `--output`) |
+| `pretorin campaign controls` | Run bulk control narrative/evidence campaign (`--system`, `--framework-id`, `--mode`, `--family`, `--controls`, `--all-controls`, `--artifacts`, `--review-job`, `--concurrency`, `--max-retries`, `--checkpoint`, `--apply`, `--output`) |
+| `pretorin campaign policy` | Run bulk policy questionnaire campaign (`--mode`, `--policies`, `--all-incomplete`, `--system`, `--concurrency`, `--max-retries`, `--checkpoint`, `--apply`, `--output`) |
+| `pretorin campaign scope` | Run bulk scope questionnaire campaign (`--system`, `--framework-id`, `--mode`, `--concurrency`, `--max-retries`, `--checkpoint`, `--apply`, `--output`) |
 | `pretorin campaign status` | Show campaign progress from a checkpoint file (`--checkpoint`, `--output`) |
 
 ### Campaign Modes
@@ -127,10 +167,10 @@
 | Command | Description |
 |---------|-------------|
 | `pretorin vendor list` | List all vendors in the organization |
-| `pretorin vendor create <name>` | Create a vendor (`--type`, `--description`, `--authorization-level`) |
+| `pretorin vendor create <name>` | Create a vendor (`--type/-t`, `--description/-d`, `--authorization-level/-a`) |
 | `pretorin vendor get <vendor_id>` | Get vendor details |
-| `pretorin vendor update <vendor_id>` | Update vendor fields (`--name`, `--description`, `--type`, `--authorization-level`) |
-| `pretorin vendor delete <vendor_id>` | Delete a vendor (`--force`) |
+| `pretorin vendor update <vendor_id>` | Update vendor fields (`--name`, `--description/-d`, `--type/-t`, `--authorization-level/-a`) |
+| `pretorin vendor delete <vendor_id>` | Delete a vendor (`--yes/-y`) |
 | `pretorin vendor upload-doc <vendor_id> <file>` | Upload a vendor evidence document (`--name`, `--description`, `--attestation-type`) |
 | `pretorin vendor list-docs <vendor_id>` | List documents linked to a vendor |
 
@@ -142,28 +182,28 @@
 
 | Command | Description |
 |---------|-------------|
-| `pretorin stig list` | List STIG benchmarks (`--technology-area`, `--product`, `--limit`) |
+| `pretorin stig list` | List STIG benchmarks (`--technology-area/-t`, `--product/-p`, `--limit/-l`) |
 | `pretorin stig show <stig_id>` | Show STIG benchmark detail with severity breakdown |
-| `pretorin stig rules <stig_id>` | List rules for a benchmark (`--severity`, `--cci`, `--limit`) |
-| `pretorin stig applicable` | Show applicable STIGs for the active system (`--system`) |
-| `pretorin stig infer` | AI-infer applicable STIGs from system profile (`--system`) |
+| `pretorin stig rules <stig_id>` | List rules for a benchmark (`--severity/-s`, `--cci`, `--limit/-l`) |
+| `pretorin stig applicable` | Show applicable STIGs for the active system (`--system/-s`) |
+| `pretorin stig infer` | AI-infer applicable STIGs from system profile (`--system/-s`) |
 
 ## CCI Commands
 
 | Command | Description |
 |---------|-------------|
-| `pretorin cci list` | List CCIs (`--control`, `--status`, `--limit`) |
+| `pretorin cci list` | List CCIs (`--control/-c`, `--status`, `--limit/-l`) |
 | `pretorin cci show <cci_id>` | Show CCI detail with linked SRGs and STIG rules (e.g., `CCI-000015`) |
-| `pretorin cci chain <control_id>` | Full traceability chain: Control -> CCIs -> SRGs -> STIG rules (`--system`) |
+| `pretorin cci chain <control_id>` | Full traceability chain: Control -> CCIs -> SRGs -> STIG rules (`--system/-s`) |
 
 ## Scan Commands
 
 | Command | Description |
 |---------|-------------|
 | `pretorin scan doctor` | Check which scanner tools are installed and available |
-| `pretorin scan manifest` | Show test manifest for the active system (`--system`, `--stig`) |
-| `pretorin scan run` | Run STIG compliance scans (`--system`, `--stig`, `--tool`, `--dry-run`) |
-| `pretorin scan results` | Show CCI-level test results (`--system`, `--control`) |
+| `pretorin scan manifest` | Show test manifest for the active system (`--system/-s`, `--stig`) |
+| `pretorin scan run` | Run STIG compliance scans (`--system/-s`, `--stig`, `--tool/-t`, `--dry-run`) |
+| `pretorin scan results` | Show CCI-level test results (`--system/-s`, `--control/-c`) |
 
 ### Supported Scanners
 

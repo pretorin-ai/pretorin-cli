@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-8f1d8054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -192,9 +192,9 @@
 <h2 id="workflow"><a class="header" href="#workflow">Workflow</a></h2>
 <h3 id="step-1-start-with-the-source-control"><a class="header" href="#step-1-start-with-the-source-control">Step 1: Start with the Source Control</a></h3>
 <p>Query the control with references to discover relationships:</p>
-<pre><code class="language-bash">pretorin frameworks control nist-800-53-r5 ac-02 --references
+<pre><code class="language-bash">pretorin frameworks control nist-800-53-r5 ac-02
 </code></pre>
-<p>The <strong>Related Controls</strong> field reveals connections to other controls and frameworks.</p>
+<p>References are shown by default. The <strong>Related Controls</strong> field reveals connections to other controls and frameworks.</p>
 <h3 id="step-2-build-the-mapping"><a class="header" href="#step-2-build-the-mapping">Step 2: Build the Mapping</a></h3>
 <p>Look up the equivalent control in each target framework:</p>
 <div class="table-wrapper">
@@ -212,10 +212,10 @@
 </div>
 <h3 id="step-3-compare-requirements"><a class="header" href="#step-3-compare-requirements">Step 3: Compare Requirements</a></h3>
 <p>Get details for each framework’s version of the control:</p>
-<pre><code class="language-bash">pretorin frameworks control nist-800-53-r5 ac-02 --references
-pretorin frameworks control fedramp-moderate ac-02 --references
-pretorin frameworks control nist-800-171-r3 03.01.01 --references
-pretorin frameworks control cmmc-l2 AC.L2-3.1.1 --references
+<pre><code class="language-bash">pretorin frameworks control nist-800-53-r5 ac-02
+pretorin frameworks control fedramp-moderate ac-02
+pretorin frameworks control nist-800-171-r3 03.01.01
+pretorin frameworks control cmmc-l2 AC.L2-3.1.1
 </code></pre>
 <p>Compare what each framework emphasizes. For Account Management:</p>
 <ul>
@@ -237,7 +237,7 @@ FedRAMP Moderate AC-02
 NIST 800-171 03.01.01
   └── Satisfies CMMC L2 AC.L2-3.1.1 ✓
 </code></pre>
-<p><strong>Key insight:</strong> Compliance with a parent framework generally satisfies the child framework’s corresponding control. Always verify with <code>pretorin frameworks control &lt;fw&gt; &lt;ctrl&gt; --references</code> to check for framework-specific parameters or additional requirements.</p>
+<p><strong>Key insight:</strong> Compliance with a parent framework generally satisfies the child framework’s corresponding control. Always verify with <code>pretorin frameworks control &lt;fw&gt; &lt;ctrl&gt;</code> to check for framework-specific parameters or additional requirements (references are included by default).</p>
 <h2 id="using-mcp-for-cross-framework-mapping"><a class="header" href="#using-mcp-for-cross-framework-mapping">Using MCP for Cross-Framework Mapping</a></h2>
 <p>With an MCP-connected AI agent, ask questions like:</p>
 <blockquote>

@@ -24,7 +24,7 @@ Shows benchmark metadata including title, version, release info, and severity br
 
 ```bash
 pretorin stig rules <stig_id>
-pretorin stig rules <stig_id> --severity high
+pretorin stig rules <stig_id> --severity cat_i
 pretorin stig rules <stig_id> --cci CCI-000015 --limit 20
 ```
 

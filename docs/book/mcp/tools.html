@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-8f1d8054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -181,7 +181,7 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="mcp-tool-reference"><a class="header" href="#mcp-tool-reference">MCP Tool Reference</a></h1>
-<p>The MCP server provides 80+ tools organized by category.</p>
+<p>The MCP server provides 86 tools organized by category.</p>
 <h2 id="framework--control-reference"><a class="header" href="#framework--control-reference">Framework &amp; Control Reference</a></h2>
 <p>These tools are read-only and available to all authenticated users.</p>
 <h3 id="pretorin_list_frameworks"><a class="header" href="#pretorin_list_frameworks">pretorin_list_frameworks</a></h3>
@@ -255,6 +255,22 @@
 <p><strong>Parameters:</strong> None</p>
 <p><strong>Returns:</strong> System IDs, names, and summary metadata.</p>
 <hr>
+<h3 id="pretorin_get_cli_status"><a class="header" href="#pretorin_get_cli_status">pretorin_get_cli_status</a></h3>
+<p>Return the local Pretorin CLI version status, including update availability and upgrade guidance for MCP hosts and agents.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>force</code> (optional) — Bypass local cache and re-check PyPI for the latest version. Default: <code>false</code></li>
+</ul>
+<p><strong>Returns:</strong> Current version, latest version, update available flag, and upgrade instructions.</p>
+<hr>
+<h3 id="pretorin_get_source_manifest"><a class="header" href="#pretorin_get_source_manifest">pretorin_get_source_manifest</a></h3>
+<p>Get the resolved source manifest for a system and evaluate it against currently detected sources. Shows which external sources (git, cloud, HRIS, etc.) are required, recommended, or optional, and whether each is currently satisfied.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>system_id</code> (optional) — System ID or name</li>
+</ul>
+<p><strong>Returns:</strong> Source manifest with per-source satisfaction status. Returns null manifest if none is configured.</p>
+<hr>
 <h3 id="pretorin_get_system"><a class="header" href="#pretorin_get_system">pretorin_get_system</a></h3>
 <p>Get system metadata including attached frameworks and security impact level.</p>
 <p><strong>Parameters:</strong></p>
@@ -279,6 +295,7 @@
 <li><code>system_id</code> (optional) — System ID or friendly system name. When omitted, the active CLI scope is used if available.</li>
 <li><code>control_id</code> (optional) — Filter by control</li>
 <li><code>framework_id</code> (optional) — Filter by framework</li>
+<li><code>limit</code> (optional) — Maximum number of results. Default: <code>20</code></li>
 </ul>
 <p><strong>Returns:</strong> Matching evidence items. The server uses the same compatibility search path as the CLI for deployments that only expose system-scoped evidence routes.</p>
 <hr>
@@ -286,9 +303,9 @@
 <p>Upsert evidence on the platform (find-or-create by default). If <code>dedupe</code> is true, exact matching evidence in the active system/framework scope is reused; otherwise a new record is created.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
 <li><code>name</code> (required)</li>
 <li><code>description</code> (required) — Must be auditor-ready markdown (no headings, at least one rich element, no images)</li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
 <li><code>evidence_type</code> (optional) — Default: <code>policy_document</code></li>
 <li><code>control_id</code> (optional)</li>
 <li><code>framework_id</code> (optional)</li>
@@ -306,9 +323,9 @@
 <p>Create and link multiple evidence items within one system/framework scope in a single request.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
 <li><code>items</code> (required) — Array of evidence payloads with <code>name</code>, <code>description</code>, and <code>control_id</code>; may also include <code>evidence_type</code> and <code>relevance_notes</code></li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
+<li><code>framework_id</code> (optional) — Defaults to active scope</li>
 </ul>
 <p><strong>Returns:</strong> Batch creation summary with per-item results and created evidence IDs.</p>
 <hr>
@@ -316,20 +333,30 @@
 <p>Link an existing evidence item to a control.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
 <li><code>evidence_id</code> (required)</li>
 <li><code>control_id</code> (required)</li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
 <li><code>framework_id</code> (optional)</li>
 </ul>
 <p><strong>Returns:</strong> Link confirmation.</p>
+<hr>
+<h3 id="pretorin_delete_evidence"><a class="header" href="#pretorin_delete_evidence">pretorin_delete_evidence</a></h3>
+<p>Delete an evidence item from the platform (system-scoped, requires WRITE access).</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>evidence_id</code> (required) — The evidence item ID to delete</li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
+<li><code>framework_id</code> (optional) — Defaults to active scope</li>
+</ul>
+<p><strong>Returns:</strong> Deletion confirmation.</p>
 <hr>
 <h3 id="pretorin_get_narrative"><a class="header" href="#pretorin_get_narrative">pretorin_get_narrative</a></h3>
 <p>Get the current narrative record for a control.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
 <li><code>control_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
+<li><code>framework_id</code> (optional) — Defaults to active scope</li>
 </ul>
 <p><strong>Returns:</strong> Narrative text, status, and AI confidence metadata.</p>
 <hr>
@@ -338,9 +365,9 @@
 <p>Get rich context for a control including AI guidance, statement, objectives, scope status, and current implementation details.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
 <li><code>control_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
+<li><code>framework_id</code> (optional) — Defaults to active scope</li>
 </ul>
 <p><strong>Returns:</strong> Combined control metadata and implementation details.</p>
 <hr>
@@ -389,9 +416,9 @@
 <p>Get implementation details for a control in a system.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
 <li><code>control_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
+<li><code>framework_id</code> (optional) — Defaults to active scope</li>
 </ul>
 <p><strong>Returns:</strong> Current status, narrative, evidence count, and notes metadata.</p>
 <hr>
@@ -399,8 +426,8 @@
 <p>Get notes for a control implementation.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
 <li><code>control_id</code> (required)</li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
 <li><code>framework_id</code> (optional)</li>
 </ul>
 <p><strong>Returns:</strong> Note list with <code>total</code> count.</p>
@@ -409,22 +436,22 @@
 <p>Push a narrative text update for a control implementation.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
 <li><code>control_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
 <li><code>narrative</code> (required) — Must be auditor-ready markdown (no headings, 2+ rich elements, 1+ structural element, no images)</li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
+<li><code>framework_id</code> (optional) — Defaults to active scope</li>
 <li><code>is_ai_generated</code> (optional) — Default: <code>false</code></li>
 </ul>
 <p><strong>Returns:</strong> Update confirmation.</p>
 <hr>
 <h3 id="pretorin_add_control_note"><a class="header" href="#pretorin_add_control_note">pretorin_add_control_note</a></h3>
-<p>Add a note for unresolved gaps or manual follow-up actions.</p>
+<p>Add a note for unresolved gaps or manual follow-up actions. Content is plain text (no markdown validation required).</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
 <li><code>control_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
 <li><code>content</code> (required)</li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
+<li><code>framework_id</code> (optional) — Defaults to active scope</li>
 </ul>
 <p><strong>Returns:</strong> The created note record.</p>
 <hr>
@@ -432,12 +459,12 @@
 <p>Resolve, unresolve, or update an existing control note. Use this to clear blocking notes so control status can advance.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (optional, defaults to active scope)</li>
 <li><code>control_id</code> (required)</li>
 <li><code>note_id</code> (required)</li>
-<li><code>framework_id</code> (optional, defaults to active scope)</li>
-<li><code>is_resolved</code> (optional, default <code>true</code>)</li>
-<li><code>content</code> (optional, updated note content)</li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
+<li><code>framework_id</code> (optional) — Defaults to active scope</li>
+<li><code>is_resolved</code> (optional) — Default: <code>true</code></li>
+<li><code>content</code> (optional) — Updated note content</li>
 <li><code>is_pinned</code> (optional)</li>
 </ul>
 <p><strong>Returns:</strong> The updated note record.</p>
@@ -447,9 +474,9 @@
 <p>Update the implementation status for a control.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
 <li><code>control_id</code> (required)</li>
-<li><code>status</code> (required)</li>
+<li><code>status</code> (required) — <code>implemented</code>, <code>in_progress</code>, <code>inherited</code>, <code>not_applicable</code>, <code>not_started</code>, <code>partially_implemented</code>, <code>planned</code>, <code>ready_to_approve</code></li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
 <li><code>framework_id</code> (optional)</li>
 </ul>
 <p><strong>Returns:</strong> Status update confirmation.</p>
@@ -458,10 +485,11 @@
 <p>Create a monitoring event for a system.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
 <li><code>title</code> (required)</li>
-<li><code>severity</code> (optional) — <code>critical</code>, <code>high</code>, <code>medium</code>, <code>low</code>, <code>info</code></li>
-<li><code>event_type</code> (optional) — <code>security_scan</code>, <code>configuration_change</code>, <code>access_review</code>, <code>compliance_check</code></li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
+<li><code>framework_id</code> (optional) — Defaults to active scope</li>
+<li><code>severity</code> (optional) — <code>critical</code>, <code>high</code>, <code>medium</code>, <code>low</code>, <code>info</code>. Default: <code>medium</code></li>
+<li><code>event_type</code> (optional) — <code>security_scan</code>, <code>configuration_change</code>, <code>access_review</code>, <code>compliance_check</code>. Default: <code>security_scan</code></li>
 <li><code>control_id</code> (optional)</li>
 <li><code>description</code> (optional)</li>
 </ul>
@@ -510,7 +538,10 @@
 <hr>
 <h3 id="pretorin_get_policy_analytics"><a class="header" href="#pretorin_get_policy_analytics">pretorin_get_policy_analytics</a></h3>
 <p>Get per-policy breakdown with answer completion and review status.</p>
-<p><strong>Parameters:</strong> None (uses org context)</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>policy_id</code> (required)</li>
+</ul>
 <p><strong>Returns:</strong> Per-policy completion metrics.</p>
 <hr>
 <h2 id="family-operations"><a class="header" href="#family-operations">Family Operations</a></h2>
@@ -528,8 +559,8 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
 <li><code>family_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> Complete family bundle with per-control details.</p>
 <hr>
@@ -538,8 +569,8 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
 <li><code>family_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> Review job ID for polling.</p>
 <hr>
@@ -548,7 +579,6 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
 <li><code>job_id</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> Aggregated findings with severity, affected control IDs, and recommended fixes.</p>
@@ -568,8 +598,8 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
 <li><code>question_id</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> Question text, guidance, tips, and example answers.</p>
 <hr>
@@ -578,9 +608,9 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
 <li><code>question_id</code> (required)</li>
 <li><code>answer</code> (required)</li>
+<li><code>framework_id</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> Updated question state.</p>
 <hr>
@@ -591,7 +621,7 @@
 <li><code>system_id</code> (required)</li>
 <li><code>framework_id</code> (required)</li>
 </ul>
-<p><strong>Returns:</strong> Generation job status.</p>
+<p><strong>Returns:</strong> Generation job ID for polling.</p>
 <hr>
 <h3 id="pretorin_trigger_scope_review"><a class="header" href="#pretorin_trigger_scope_review">pretorin_trigger_scope_review</a></h3>
 <p>Trigger AI review of scope answers.</p>
@@ -607,7 +637,6 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
 <li><code>job_id</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> Findings with severity levels and recommended fixes.</p>
@@ -653,6 +682,7 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>policy_id</code> (required)</li>
+<li><code>system_id</code> (optional) — System ID for scope context</li>
 </ul>
 <p><strong>Returns:</strong> Generation job status.</p>
 <hr>
@@ -679,12 +709,23 @@
 <p>Prepare a workflow-aligned campaign run with a platform state snapshot.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>system_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
 <li><code>domain</code> (required) — <code>controls</code>, <code>policy</code>, or <code>scope</code></li>
-<li><code>mode</code> (required) — <code>initial</code>, <code>notes-fix</code>, <code>review-fix</code>, <code>answer</code></li>
+<li><code>mode</code> (required) — Campaign mode for the selected domain</li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
+<li><code>framework_id</code> (optional) — Defaults to active scope</li>
 <li><code>family_id</code> (optional) — Target family for control campaigns</li>
-<li><code>review_job</code> (optional) — Review job ID for <code>review-fix</code> mode</li>
+<li><code>control_ids</code> (optional) — Explicit control IDs to include</li>
+<li><code>all_controls</code> (optional) — Include all controls. Default: <code>false</code></li>
+<li><code>artifacts</code> (optional) — Artifact type: <code>narratives</code>, <code>evidence</code>, or <code>both</code>. Default: <code>both</code></li>
+<li><code>review_job</code> (optional) — Family review job ID for <code>review-fix</code> mode</li>
+<li><code>policy_ids</code> (optional) — Explicit policy IDs to include</li>
+<li><code>all_incomplete</code> (optional) — Include all incomplete items. Default: <code>false</code></li>
+<li><code>apply</code> (optional) — Apply proposals immediately. Default: <code>false</code></li>
+<li><code>output</code> (optional) — Output format: <code>auto</code>, <code>live</code>, <code>compact</code>, <code>json</code>. Default: <code>json</code></li>
+<li><code>checkpoint_path</code> (optional) — Local checkpoint file path</li>
+<li><code>working_directory</code> (optional) — Working directory for executors</li>
+<li><code>concurrency</code> (optional) — Parallel execution limit. Default: <code>4</code></li>
+<li><code>max_retries</code> (optional) — Retry limit per item. Default: <code>2</code></li>
 </ul>
 <p><strong>Returns:</strong> Campaign checkpoint with item list and metadata.</p>
 <hr>
@@ -692,8 +733,10 @@
 <p>Claim items for drafting with TTL-based leases. Safe for fan-out to multiple agents.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>checkpoint</code> (required) — Campaign checkpoint</li>
-<li><code>count</code> (optional) — Number of items to claim</li>
+<li><code>checkpoint_path</code> (required) — Local campaign checkpoint path</li>
+<li><code>lease_owner</code> (required) — Stable identifier for the claiming agent</li>
+<li><code>max_items</code> (optional) — Number of items to claim. Default: <code>1</code></li>
+<li><code>lease_ttl_seconds</code> (optional) — Lease time-to-live. Default: <code>300</code></li>
 </ul>
 <p><strong>Returns:</strong> Claimed items with lease metadata.</p>
 <hr>
@@ -701,7 +744,7 @@
 <p>Get full item context plus drafting instructions for a claimed item.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>checkpoint</code> (required)</li>
+<li><code>checkpoint_path</code> (required)</li>
 <li><code>item_id</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> Control/policy/scope context, current state, and drafting guidance.</p>
@@ -710,17 +753,18 @@
 <p>Submit an external agent’s proposal without applying it to the platform.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>checkpoint</code> (required)</li>
+<li><code>checkpoint_path</code> (required)</li>
 <li><code>item_id</code> (required)</li>
-<li><code>proposal</code> (required) — Draft content</li>
+<li><code>proposal</code> (required) — Campaign proposal payload object</li>
 </ul>
 <p><strong>Returns:</strong> Proposal acceptance confirmation.</p>
 <hr>
 <h3 id="pretorin_apply_campaign"><a class="header" href="#pretorin_apply_campaign">pretorin_apply_campaign</a></h3>
-<p>Push all accepted proposals to the platform as a single apply operation.</p>
+<p>Push stored proposals to the platform.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>checkpoint</code> (required)</li>
+<li><code>checkpoint_path</code> (required)</li>
+<li><code>item_ids</code> (optional) — Subset of item IDs to apply; omit to apply all</li>
 </ul>
 <p><strong>Returns:</strong> Apply results with per-item status.</p>
 <hr>
@@ -728,7 +772,7 @@
 <p>Get structured campaign status with a stable transcript snapshot.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>checkpoint</code> (required)</li>
+<li><code>checkpoint_path</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> Campaign progress, item states, and transcript.</p>
 <hr>
@@ -743,7 +787,7 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>name</code> (required)</li>
-<li><code>vendor_type</code> (optional) — <code>csp</code>, <code>saas</code>, <code>managed_service</code>, <code>internal</code></li>
+<li><code>provider_type</code> (required) — <code>csp</code>, <code>saas</code>, <code>managed_service</code>, <code>internal</code></li>
 <li><code>description</code> (optional)</li>
 <li><code>authorization_level</code> (optional)</li>
 </ul>
@@ -764,7 +808,7 @@
 <li><code>vendor_id</code> (required)</li>
 <li><code>name</code> (optional)</li>
 <li><code>description</code> (optional)</li>
-<li><code>vendor_type</code> (optional)</li>
+<li><code>provider_type</code> (optional) — <code>csp</code>, <code>saas</code>, <code>managed_service</code>, <code>internal</code></li>
 <li><code>authorization_level</code> (optional)</li>
 </ul>
 <p><strong>Returns:</strong> Updated vendor record.</p>
@@ -785,7 +829,7 @@
 <li><code>file_path</code> (required)</li>
 <li><code>name</code> (optional)</li>
 <li><code>description</code> (optional)</li>
-<li><code>attestation_type</code> (optional) — <code>self_attested</code>, <code>third_party_attestation</code>, <code>vendor_provided</code></li>
+<li><code>attestation_type</code> (optional) — <code>self_attested</code>, <code>third_party_attestation</code>, <code>vendor_provided</code>. Default: <code>vendor_provided</code></li>
 </ul>
 <p><strong>Returns:</strong> Uploaded document record.</p>
 <hr>
@@ -798,25 +842,26 @@
 <p><strong>Returns:</strong> Document list with metadata.</p>
 <hr>
 <h3 id="pretorin_link_evidence_to_vendor"><a class="header" href="#pretorin_link_evidence_to_vendor">pretorin_link_evidence_to_vendor</a></h3>
-<p>Link an evidence item to a vendor with attestation type.</p>
+<p>Link an evidence item to a vendor with attestation type. Set <code>vendor_id</code> to null to unlink.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>evidence_id</code> (required)</li>
-<li><code>vendor_id</code> (required)</li>
-<li><code>attestation_type</code> (optional)</li>
+<li><code>vendor_id</code> (optional) — Vendor ID; null to unlink</li>
+<li><code>attestation_type</code> (optional) — <code>self_attested</code>, <code>third_party_attestation</code>, <code>vendor_provided</code></li>
 </ul>
 <p><strong>Returns:</strong> Link confirmation.</p>
 <hr>
 <h2 id="inheritance--responsibility"><a class="header" href="#inheritance--responsibility">Inheritance &amp; Responsibility</a></h2>
 <h3 id="pretorin_set_control_responsibility"><a class="header" href="#pretorin_set_control_responsibility">pretorin_set_control_responsibility</a></h3>
-<p>Mark a control as inherited or shared from a provider.</p>
+<p>Create or update an inheritance edge for a control.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
 <li><code>control_id</code> (required)</li>
 <li><code>framework_id</code> (required)</li>
-<li><code>vendor_id</code> (required)</li>
-<li><code>responsibility_type</code> (required) — <code>inherited</code> or <code>shared</code></li>
+<li><code>responsibility_mode</code> (required) — <code>inherited</code> or <code>shared</code></li>
+<li><code>source_type</code> (required) — <code>provider</code>, <code>internal</code>, or <code>hybrid</code></li>
+<li><code>vendor_id</code> (optional) — Vendor providing the inherited control</li>
 </ul>
 <p><strong>Returns:</strong> Created responsibility edge.</p>
 <hr>
@@ -847,7 +892,6 @@
 <li><code>system_id</code> (required)</li>
 <li><code>control_id</code> (required)</li>
 <li><code>framework_id</code> (required)</li>
-<li><code>vendor_id</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> Draft inheritance narrative text.</p>
 <hr>
@@ -856,7 +900,6 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> List of stale inheritance edges with source change timestamps.</p>
 <hr>
@@ -865,7 +908,6 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> Sync results with per-control status.</p>
 <hr>
@@ -876,7 +918,8 @@
 <ul>
 <li><code>technology_area</code> (optional) — Filter by technology area</li>
 <li><code>product</code> (optional) — Filter by product name</li>
-<li><code>limit</code> (optional)</li>
+<li><code>limit</code> (optional) — Default: <code>100</code></li>
+<li><code>offset</code> (optional) — Pagination offset. Default: <code>0</code></li>
 </ul>
 <p><strong>Returns:</strong> STIG benchmark list with IDs, titles, and rule counts.</p>
 <hr>
@@ -893,9 +936,10 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>stig_id</code> (required)</li>
-<li><code>severity</code> (optional) — Filter by severity (high, medium, low)</li>
-<li><code>cci</code> (optional) — Filter by CCI ID</li>
-<li><code>limit</code> (optional)</li>
+<li><code>severity</code> (optional) — Filter by severity (<code>high</code>, <code>medium</code>, <code>low</code>)</li>
+<li><code>cci_id</code> (optional) — Filter by CCI identifier</li>
+<li><code>limit</code> (optional) — Default: <code>100</code></li>
+<li><code>offset</code> (optional) — Pagination offset. Default: <code>0</code></li>
 </ul>
 <p><strong>Returns:</strong> Rule list with IDs, titles, severities, and linked CCIs.</p>
 <hr>
@@ -903,6 +947,7 @@
 <p>Get full STIG rule detail.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
+<li><code>stig_id</code> (required)</li>
 <li><code>rule_id</code> (required)</li>
 </ul>
 <p><strong>Returns:</strong> Check text, fix text, discussion, and linked CCIs.</p>
@@ -911,9 +956,10 @@
 <p>List CCIs with optional filters.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>control</code> (optional) — Filter by NIST 800-53 control ID</li>
+<li><code>nist_control_id</code> (optional) — Filter by NIST 800-53 control ID (e.g., <code>AC-2</code>)</li>
 <li><code>status</code> (optional)</li>
-<li><code>limit</code> (optional)</li>
+<li><code>limit</code> (optional) — Default: <code>100</code></li>
+<li><code>offset</code> (optional) — Pagination offset. Default: <code>0</code></li>
 </ul>
 <p><strong>Returns:</strong> CCI list with definitions and linked controls.</p>
 <hr>
@@ -929,8 +975,7 @@
 <p>Get the full traceability chain: Control -&gt; CCIs -&gt; SRGs -&gt; STIG rules.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>control_id</code> (required) — NIST 800-53 control ID</li>
-<li><code>system_id</code> (optional) — Include test results when provided</li>
+<li><code>nist_control_id</code> (required) — NIST 800-53 control ID (e.g., <code>AC-2</code>)</li>
 </ul>
 <p><strong>Returns:</strong> Complete traceability from control requirements to technical checks.</p>
 <hr>
@@ -939,7 +984,7 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
-<li><code>framework_id</code> (required)</li>
+<li><code>nist_control_id</code> (optional) — Filter by NIST control ID (e.g., <code>AC-2</code>)</li>
 </ul>
 <p><strong>Returns:</strong> Per-CCI pass/fail status.</p>
 <hr>
@@ -964,6 +1009,7 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
+<li><code>stig_id</code> (optional) — Scope manifest to a specific STIG benchmark</li>
 </ul>
 <p><strong>Returns:</strong> Test manifest with applicable rules and scanner assignments.</p>
 <hr>
@@ -972,7 +1018,9 @@
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>system_id</code> (required)</li>
-<li><code>results</code> (required) — Scan result payload</li>
+<li><code>cli_run_id</code> (required) — CLI scan run identifier</li>
+<li><code>results</code> (required) — Array of test result objects</li>
+<li><code>cli_version</code> (optional) — CLI version string</li>
 </ul>
 <p><strong>Returns:</strong> Submission confirmation with per-result status.</p>
 

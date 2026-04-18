@@ -36,6 +36,9 @@ Pretorin is usually used in one of these modes:
 - **Review code against controls** — Analyze your codebase for control coverage
 - **Track monitoring events** — Record security scans, access reviews, configuration changes, and compliance checks
 - **Generate compliance artifacts** — Produce structured JSON artifacts documenting control implementations
+- **Browse STIGs and CCIs** — Look up STIG benchmarks, rules, and trace CCIs through the full control hierarchy
+- **Manage vendors** — Track third-party vendors, link evidence to vendor assessments, and upload vendor documents
+- **Complete policy and scope questionnaires** — Answer org-policy and scope questions through a guided workflow with AI-assisted generation and review
 
 ## Recommended Sections
 

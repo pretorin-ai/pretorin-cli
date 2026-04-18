@@ -46,6 +46,25 @@ pretorin notes add ac-02 fedramp-moderate \
   --content "Gap: Missing SSO evidence. Manual next step: collect IdP configuration screenshots."
 ```
 
+## Resolve or Reopen a Note
+
+```bash
+# Resolve a note
+pretorin notes resolve ac-02 fedramp-moderate <note_id>
+
+# Resolve with updated content
+pretorin notes resolve ac-02 fedramp-moderate <note_id> --content "Resolved: SSO config verified."
+
+# Reopen a resolved note
+pretorin notes resolve ac-02 fedramp-moderate <note_id> --reopen
+```
+
+Options:
+- `--system / -s` — System name or ID
+- `--reopen` — Reopen a resolved note instead of resolving it
+- `--content / -c` — Optional updated note content
+- `--pinned` — Optional pinned state
+
 ## Gap Note Format
 
 When adding notes for unresolved gaps, use this structured format:

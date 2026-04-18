@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-8f1d8054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -200,7 +200,7 @@
 <tr><th>Command</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>pretorin login</code></td><td>Authenticate with the Pretorin API</td></tr>
+<tr><td><code>pretorin login</code></td><td>Authenticate with the Pretorin API (<code>--api-key/-k</code>, <code>--api-url</code>)</td></tr>
 <tr><td><code>pretorin logout</code></td><td>Clear stored credentials</td></tr>
 <tr><td><code>pretorin whoami</code></td><td>Display authentication status</td></tr>
 <tr><td><code>pretorin version</code></td><td>Show CLI version</td></tr>
@@ -220,8 +220,8 @@
 <tr><td><code>pretorin frameworks get &lt;id&gt;</code></td><td>Get framework details</td></tr>
 <tr><td><code>pretorin frameworks families &lt;id&gt;</code></td><td>List control families</td></tr>
 <tr><td><code>pretorin frameworks family &lt;fw&gt; &lt;family&gt;</code></td><td>Get control family details</td></tr>
-<tr><td><code>pretorin frameworks controls &lt;id&gt;</code></td><td>List controls (<code>--family</code>, <code>--limit</code>)</td></tr>
-<tr><td><code>pretorin frameworks control &lt;fw&gt; &lt;ctrl&gt;</code></td><td>Get control details (<code>--references</code>)</td></tr>
+<tr><td><code>pretorin frameworks controls &lt;id&gt;</code></td><td>List controls (<code>--family/-f</code>, <code>--limit/-n</code>)</td></tr>
+<tr><td><code>pretorin frameworks control &lt;fw&gt; &lt;ctrl&gt;</code></td><td>Get control details (<code>--brief/-b</code>)</td></tr>
 <tr><td><code>pretorin frameworks documents &lt;id&gt;</code></td><td>Get document requirements</td></tr>
 <tr><td><code>pretorin frameworks metadata &lt;id&gt;</code></td><td>Get per-control framework metadata</td></tr>
 <tr><td><code>pretorin frameworks submit-artifact &lt;file&gt;</code></td><td>Submit a compliance artifact JSON file</td></tr>
@@ -236,9 +236,23 @@
 </thead>
 <tbody>
 <tr><td><code>pretorin context list</code></td><td>List systems and frameworks with progress</td></tr>
-<tr><td><code>pretorin context set</code></td><td>Set active system/framework context (<code>--system</code>, <code>--framework</code>)</td></tr>
-<tr><td><code>pretorin context show</code></td><td>Display and validate current active context (<code>--quiet</code>, <code>--check</code>)</td></tr>
+<tr><td><code>pretorin context set</code></td><td>Set active system/framework context (<code>--system/-s</code>, <code>--framework/-f</code>, <code>--no-verify</code>)</td></tr>
+<tr><td><code>pretorin context show</code></td><td>Display and validate current active context (<code>--quiet/-q</code>, <code>--check</code>)</td></tr>
 <tr><td><code>pretorin context clear</code></td><td>Clear active context</td></tr>
+<tr><td><code>pretorin context verify</code></td><td>Verify active context with source attestation (<code>--ttl</code>, <code>--quiet/-q</code>)</td></tr>
+<tr><td><code>pretorin context manifest</code></td><td>Show resolved source manifest and evaluate against detected sources (<code>--quiet/-q</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="control-commands"><a class="header" href="#control-commands">Control Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin control status &lt;ctrl&gt; &lt;status&gt;</code></td><td>Update control implementation status (<code>--framework-id/-f</code>, <code>--system/-s</code>)</td></tr>
+<tr><td><code>pretorin control context &lt;ctrl&gt;</code></td><td>Get rich control context with AI guidance (<code>--framework-id/-f</code>, <code>--system/-s</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -249,11 +263,13 @@
 <tr><th>Command</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>pretorin evidence create &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Create a local evidence file (<code>--name</code>, <code>--description</code>)</td></tr>
-<tr><td><code>pretorin evidence list</code></td><td>List local evidence files (<code>--framework</code>)</td></tr>
-<tr><td><code>pretorin evidence push</code></td><td>Push local evidence to the platform</td></tr>
-<tr><td><code>pretorin evidence search</code></td><td>Search platform evidence (<code>--control-id</code>, <code>--framework-id</code>, <code>--system</code>, <code>--limit</code>)</td></tr>
-<tr><td><code>pretorin evidence upsert &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Find-or-create evidence and link it (<code>--name</code>, <code>--description</code>, <code>--type</code>)</td></tr>
+<tr><td><code>pretorin evidence create &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Create a local evidence file (<code>--name/-n</code>, <code>--description/-d</code>, <code>--type/-t</code>)</td></tr>
+<tr><td><code>pretorin evidence list</code></td><td>List local evidence files (<code>--framework/-f</code>)</td></tr>
+<tr><td><code>pretorin evidence push</code></td><td>Push local evidence to the platform (<code>--dry-run</code>)</td></tr>
+<tr><td><code>pretorin evidence search</code></td><td>Search platform evidence (<code>--control-id/-c</code>, <code>--framework-id/-f</code>, <code>--system/-s</code>, <code>--limit/-n</code>)</td></tr>
+<tr><td><code>pretorin evidence upsert &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Find-or-create evidence and link it (<code>--name/-n</code>, <code>--description/-d</code>, <code>--type/-t</code>, <code>--system/-s</code>)</td></tr>
+<tr><td><code>pretorin evidence link &lt;evidence_id&gt; &lt;ctrl&gt;</code></td><td>Link evidence to a control (<code>--framework-id/-f</code>, <code>--system/-s</code>)</td></tr>
+<tr><td><code>pretorin evidence delete &lt;evidence_id&gt;</code></td><td>Delete an evidence item (<code>--system/-s</code>, <code>--framework-id/-f</code>, <code>--yes/-y</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -264,8 +280,11 @@
 <tr><th>Command</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>pretorin narrative get &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Get current control narrative (<code>--system</code>)</td></tr>
-<tr><td><code>pretorin narrative push &lt;ctrl&gt; &lt;fw&gt; &lt;sys&gt; &lt;file&gt;</code></td><td>Push a narrative file to the platform</td></tr>
+<tr><td><code>pretorin narrative create &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Create a local narrative file (<code>--content/-c</code>, <code>--name/-n</code>, <code>--ai-generated</code>)</td></tr>
+<tr><td><code>pretorin narrative list</code></td><td>List local narrative files (<code>--framework/-f</code>)</td></tr>
+<tr><td><code>pretorin narrative push</code></td><td>Push local narratives to the platform (<code>--dry-run</code>)</td></tr>
+<tr><td><code>pretorin narrative push-file &lt;ctrl&gt; &lt;fw&gt; &lt;sys&gt; &lt;file&gt;</code></td><td>Push a single narrative file to the platform</td></tr>
+<tr><td><code>pretorin narrative get &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Get current control narrative (<code>--system/-s</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -276,9 +295,11 @@
 <tr><th>Command</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>pretorin notes list &lt;ctrl&gt; &lt;fw&gt;</code></td><td>List control notes (<code>--system</code>)</td></tr>
-<tr><td><code>pretorin notes add &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Add a control note (<code>--content</code>)</td></tr>
-<tr><td><code>pretorin notes resolve &lt;ctrl&gt; &lt;fw&gt; &lt;note_id&gt;</code></td><td>Resolve a control note (<code>--reopen</code>, <code>--content</code>)</td></tr>
+<tr><td><code>pretorin notes create &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Create a local note file (<code>--content/-c</code>, <code>--name/-n</code>)</td></tr>
+<tr><td><code>pretorin notes list [ctrl] [fw]</code></td><td>List notes — platform (<code>--system/-s</code>) or local (<code>--local</code>, <code>--framework/-f</code>)</td></tr>
+<tr><td><code>pretorin notes push</code></td><td>Push local notes to the platform (<code>--dry-run</code>)</td></tr>
+<tr><td><code>pretorin notes add &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Add a note directly on the platform (<code>--content/-c</code>, <code>--system/-s</code>)</td></tr>
+<tr><td><code>pretorin notes resolve &lt;ctrl&gt; &lt;fw&gt; &lt;note_id&gt;</code></td><td>Resolve or reopen a control note (<code>--system/-s</code>, <code>--reopen</code>, <code>--content/-c</code>, <code>--pinned</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -289,7 +310,32 @@
 <tr><th>Command</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>pretorin monitoring push</code></td><td>Push a monitoring event (<code>--system</code>, <code>--title</code>, <code>--event-type</code>, <code>--severity</code>)</td></tr>
+<tr><td><code>pretorin monitoring push</code></td><td>Push a monitoring event (<code>--system/-s</code>, <code>--framework/-f</code>, <code>--title/-t</code>, <code>--event-type</code>, <code>--severity</code>, <code>--control/-c</code>, <code>--description/-d</code>, <code>--update-control-status</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="policy-commands"><a class="header" href="#policy-commands">Policy Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin policy list</code></td><td>List org policies available for questionnaire work</td></tr>
+<tr><td><code>pretorin policy show</code></td><td>Show persisted policy questionnaire state (<code>--policy</code>)</td></tr>
+<tr><td><code>pretorin policy populate</code></td><td>Draft policy questionnaire updates from the current workspace (<code>--policy</code>, <code>--path/-p</code>, <code>--apply</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="scope-commands"><a class="header" href="#scope-commands">Scope Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin scope show</code></td><td>Show scope questionnaire state and review findings (<code>--system/-s</code>, <code>--framework-id/-f</code>)</td></tr>
+<tr><td><code>pretorin scope populate</code></td><td>Draft scope questionnaire updates from the current workspace (<code>--system/-s</code>, <code>--framework-id/-f</code>, <code>--path/-p</code>, <code>--apply</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -300,14 +346,28 @@
 <tr><th>Command</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>pretorin agent run "&lt;task&gt;"</code></td><td>Run a compliance task (<code>--skill</code>, <code>--model</code>, <code>--base-url</code>, <code>--working-dir</code>, <code>--no-stream</code>, <code>--legacy</code>)</td></tr>
+<tr><td><code>pretorin agent run "&lt;task&gt;"</code></td><td>Run a compliance task (<code>--skill/-s</code>, <code>--model/-m</code>, <code>--base-url</code>, <code>--working-dir/-w</code>, <code>--no-stream</code>, <code>--legacy</code>, <code>--max-turns</code>, <code>--no-mcp</code>)</td></tr>
 <tr><td><code>pretorin agent doctor</code></td><td>Validate Codex runtime setup</td></tr>
 <tr><td><code>pretorin agent install</code></td><td>Download the pinned Codex binary</td></tr>
 <tr><td><code>pretorin agent version</code></td><td>Show pinned Codex version and install status</td></tr>
 <tr><td><code>pretorin agent skills</code></td><td>List available agent skills</td></tr>
 <tr><td><code>pretorin agent mcp-list</code></td><td>List configured MCP servers for the agent</td></tr>
-<tr><td><code>pretorin agent mcp-add &lt;name&gt; stdio &lt;cmd&gt;</code></td><td>Add an MCP server configuration (<code>--arg</code>)</td></tr>
+<tr><td><code>pretorin agent mcp-add &lt;name&gt; &lt;transport&gt; &lt;cmd&gt;</code></td><td>Add an MCP server configuration (<code>--arg</code>, <code>--scope</code>)</td></tr>
 <tr><td><code>pretorin agent mcp-remove &lt;name&gt;</code></td><td>Remove an MCP server configuration</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="skill-commands"><a class="header" href="#skill-commands">Skill Commands</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin skill install</code></td><td>Install the Pretorin skill for AI coding agents (<code>--agent/-a</code>, <code>--path/-p</code>, <code>--force/-f</code>)</td></tr>
+<tr><td><code>pretorin skill uninstall</code></td><td>Uninstall the Pretorin skill (<code>--agent/-a</code>, <code>--path/-p</code>)</td></tr>
+<tr><td><code>pretorin skill status</code></td><td>Show installation status of the Pretorin skill (<code>--agent/-a</code>, <code>--path/-p</code>)</td></tr>
+<tr><td><code>pretorin skill list-agents</code></td><td>List all known agents and their skill directories</td></tr>
 </tbody>
 </table>
 </div>
@@ -318,8 +378,8 @@
 <tr><th>Command</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>pretorin review run</code></td><td>Review code against a control (<code>--control-id</code>, <code>--framework-id</code>, <code>--path</code>, <code>--local</code>, <code>--output-dir</code>)</td></tr>
-<tr><td><code>pretorin review status</code></td><td>Check implementation status for a control (<code>--control-id</code>)</td></tr>
+<tr><td><code>pretorin review run</code></td><td>Review code against a control (<code>--control-id/-c</code>, <code>--framework-id/-f</code>, <code>--system/-s</code>, <code>--path/-p</code>, <code>--local</code>, <code>--output-dir/-o</code>)</td></tr>
+<tr><td><code>pretorin review status</code></td><td>Check implementation status for a control (<code>--control-id/-c</code>, <code>--system/-s</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -344,9 +404,9 @@
 <tr><th>Command</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>pretorin campaign controls</code></td><td>Run bulk control narrative/evidence campaign (<code>--mode</code>, <code>--family</code>, <code>--controls</code>, <code>--all-controls</code>, <code>--artifacts</code>, <code>--review-job</code>, <code>--concurrency</code>, <code>--checkpoint</code>, <code>--apply</code>, <code>--output</code>)</td></tr>
-<tr><td><code>pretorin campaign policy</code></td><td>Run bulk policy questionnaire campaign (<code>--mode</code>, <code>--policies</code>, <code>--all-incomplete</code>, <code>--concurrency</code>, <code>--checkpoint</code>, <code>--apply</code>, <code>--output</code>)</td></tr>
-<tr><td><code>pretorin campaign scope</code></td><td>Run bulk scope questionnaire campaign (<code>--mode</code>, <code>--system</code>, <code>--framework-id</code>, <code>--concurrency</code>, <code>--checkpoint</code>, <code>--apply</code>, <code>--output</code>)</td></tr>
+<tr><td><code>pretorin campaign controls</code></td><td>Run bulk control narrative/evidence campaign (<code>--system</code>, <code>--framework-id</code>, <code>--mode</code>, <code>--family</code>, <code>--controls</code>, <code>--all-controls</code>, <code>--artifacts</code>, <code>--review-job</code>, <code>--concurrency</code>, <code>--max-retries</code>, <code>--checkpoint</code>, <code>--apply</code>, <code>--output</code>)</td></tr>
+<tr><td><code>pretorin campaign policy</code></td><td>Run bulk policy questionnaire campaign (<code>--mode</code>, <code>--policies</code>, <code>--all-incomplete</code>, <code>--system</code>, <code>--concurrency</code>, <code>--max-retries</code>, <code>--checkpoint</code>, <code>--apply</code>, <code>--output</code>)</td></tr>
+<tr><td><code>pretorin campaign scope</code></td><td>Run bulk scope questionnaire campaign (<code>--system</code>, <code>--framework-id</code>, <code>--mode</code>, <code>--concurrency</code>, <code>--max-retries</code>, <code>--checkpoint</code>, <code>--apply</code>, <code>--output</code>)</td></tr>
 <tr><td><code>pretorin campaign status</code></td><td>Show campaign progress from a checkpoint file (<code>--checkpoint</code>, <code>--output</code>)</td></tr>
 </tbody>
 </table>
@@ -376,10 +436,10 @@
 </thead>
 <tbody>
 <tr><td><code>pretorin vendor list</code></td><td>List all vendors in the organization</td></tr>
-<tr><td><code>pretorin vendor create &lt;name&gt;</code></td><td>Create a vendor (<code>--type</code>, <code>--description</code>, <code>--authorization-level</code>)</td></tr>
+<tr><td><code>pretorin vendor create &lt;name&gt;</code></td><td>Create a vendor (<code>--type/-t</code>, <code>--description/-d</code>, <code>--authorization-level/-a</code>)</td></tr>
 <tr><td><code>pretorin vendor get &lt;vendor_id&gt;</code></td><td>Get vendor details</td></tr>
-<tr><td><code>pretorin vendor update &lt;vendor_id&gt;</code></td><td>Update vendor fields (<code>--name</code>, <code>--description</code>, <code>--type</code>, <code>--authorization-level</code>)</td></tr>
-<tr><td><code>pretorin vendor delete &lt;vendor_id&gt;</code></td><td>Delete a vendor (<code>--force</code>)</td></tr>
+<tr><td><code>pretorin vendor update &lt;vendor_id&gt;</code></td><td>Update vendor fields (<code>--name</code>, <code>--description/-d</code>, <code>--type/-t</code>, <code>--authorization-level/-a</code>)</td></tr>
+<tr><td><code>pretorin vendor delete &lt;vendor_id&gt;</code></td><td>Delete a vendor (<code>--yes/-y</code>)</td></tr>
 <tr><td><code>pretorin vendor upload-doc &lt;vendor_id&gt; &lt;file&gt;</code></td><td>Upload a vendor evidence document (<code>--name</code>, <code>--description</code>, <code>--attestation-type</code>)</td></tr>
 <tr><td><code>pretorin vendor list-docs &lt;vendor_id&gt;</code></td><td>List documents linked to a vendor</td></tr>
 </tbody>
@@ -394,11 +454,11 @@
 <tr><th>Command</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>pretorin stig list</code></td><td>List STIG benchmarks (<code>--technology-area</code>, <code>--product</code>, <code>--limit</code>)</td></tr>
+<tr><td><code>pretorin stig list</code></td><td>List STIG benchmarks (<code>--technology-area/-t</code>, <code>--product/-p</code>, <code>--limit/-l</code>)</td></tr>
 <tr><td><code>pretorin stig show &lt;stig_id&gt;</code></td><td>Show STIG benchmark detail with severity breakdown</td></tr>
-<tr><td><code>pretorin stig rules &lt;stig_id&gt;</code></td><td>List rules for a benchmark (<code>--severity</code>, <code>--cci</code>, <code>--limit</code>)</td></tr>
-<tr><td><code>pretorin stig applicable</code></td><td>Show applicable STIGs for the active system (<code>--system</code>)</td></tr>
-<tr><td><code>pretorin stig infer</code></td><td>AI-infer applicable STIGs from system profile (<code>--system</code>)</td></tr>
+<tr><td><code>pretorin stig rules &lt;stig_id&gt;</code></td><td>List rules for a benchmark (<code>--severity/-s</code>, <code>--cci</code>, <code>--limit/-l</code>)</td></tr>
+<tr><td><code>pretorin stig applicable</code></td><td>Show applicable STIGs for the active system (<code>--system/-s</code>)</td></tr>
+<tr><td><code>pretorin stig infer</code></td><td>AI-infer applicable STIGs from system profile (<code>--system/-s</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -409,9 +469,9 @@
 <tr><th>Command</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>pretorin cci list</code></td><td>List CCIs (<code>--control</code>, <code>--status</code>, <code>--limit</code>)</td></tr>
+<tr><td><code>pretorin cci list</code></td><td>List CCIs (<code>--control/-c</code>, <code>--status</code>, <code>--limit/-l</code>)</td></tr>
 <tr><td><code>pretorin cci show &lt;cci_id&gt;</code></td><td>Show CCI detail with linked SRGs and STIG rules (e.g., <code>CCI-000015</code>)</td></tr>
-<tr><td><code>pretorin cci chain &lt;control_id&gt;</code></td><td>Full traceability chain: Control -&gt; CCIs -&gt; SRGs -&gt; STIG rules (<code>--system</code>)</td></tr>
+<tr><td><code>pretorin cci chain &lt;control_id&gt;</code></td><td>Full traceability chain: Control -&gt; CCIs -&gt; SRGs -&gt; STIG rules (<code>--system/-s</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -423,9 +483,9 @@
 </thead>
 <tbody>
 <tr><td><code>pretorin scan doctor</code></td><td>Check which scanner tools are installed and available</td></tr>
-<tr><td><code>pretorin scan manifest</code></td><td>Show test manifest for the active system (<code>--system</code>, <code>--stig</code>)</td></tr>
-<tr><td><code>pretorin scan run</code></td><td>Run STIG compliance scans (<code>--system</code>, <code>--stig</code>, <code>--tool</code>, <code>--dry-run</code>)</td></tr>
-<tr><td><code>pretorin scan results</code></td><td>Show CCI-level test results (<code>--system</code>, <code>--control</code>)</td></tr>
+<tr><td><code>pretorin scan manifest</code></td><td>Show test manifest for the active system (<code>--system/-s</code>, <code>--stig</code>)</td></tr>
+<tr><td><code>pretorin scan run</code></td><td>Run STIG compliance scans (<code>--system/-s</code>, <code>--stig</code>, <code>--tool/-t</code>, <code>--dry-run</code>)</td></tr>
+<tr><td><code>pretorin scan results</code></td><td>Show CCI-level test results (<code>--system/-s</code>, <code>--control/-c</code>)</td></tr>
 </tbody>
 </table>
 </div>

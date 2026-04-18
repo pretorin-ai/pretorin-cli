@@ -2,6 +2,37 @@
 
 All notable changes to the Pretorin CLI are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.2] - 2026-04-18
+
+### Changed
+- Documentation sync: rebuilt all docs to match current codebase
+
+---
+
+## [0.15.1] - 2026-04-17
+
+### Added
+- `pretorin evidence delete <evidence-id>` command with `--yes` flag for non-interactive workflows
+- MCP tool `pretorin_delete_evidence` for programmatic evidence deletion within system scope
+- API client method `delete_evidence` for the public DELETE endpoint
+
+---
+
+## [0.15.0] - 2026-04-16
+
+### Added
+- Source manifest requirement policy: declare which external sources a system expects and gate compliance writes on their presence
+- `pretorin context manifest` command for viewing the resolved manifest and evaluating it against detected sources
+- Manifest loading from four layered sources: env var, repo-local `.pretorin/source-manifest.json`, per-system user config, or inline config key
+- Family-level source requirements with three requirement levels (required/recommended/optional) and write blocking on missing required sources
+- Manifest evaluation results in write provenance (`manifest_status` and `missing_required_sources` fields)
+
+### Changed
+- `_enforce_source_attestation` now evaluates manifest requirements after the existing MISMATCH check
+- `resolve_execution_context` and `build_write_provenance` accept optional `control_id` for family-level manifest enforcement
+
+---
+
 ## [0.14.0] - 2026-04-10
 
 ### Changed
@@ -49,7 +80,7 @@ All notable changes to the Pretorin CLI are documented here. The format is based
 
 ---
 
-## [0.11.0] - 2026-04-01
+## [0.11.0] - 2026-04-02
 
 ### Added
 - Campaign CLI: `pretorin campaign controls/policy/scope/status`
@@ -252,6 +283,9 @@ All notable changes to the Pretorin CLI are documented here. The format is based
 - FedRAMP (Low, Moderate, High)
 - CMMC Level 1, 2, and 3
 
+[0.15.2]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.1...v0.15.2
+[0.15.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.0...v0.15.1
+[0.15.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.12.0...v0.13.0

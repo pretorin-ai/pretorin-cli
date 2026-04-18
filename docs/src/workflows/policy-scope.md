@@ -14,17 +14,33 @@ pretorin policy list
 
 Or via MCP: `pretorin_list_org_policies`
 
-### 2. View Pending Questions
+### 2. View Current State
 
 ```bash
-# Via MCP
+# Show questionnaire state and saved review findings
+pretorin policy show --policy <policy-id-or-name>
+```
+
+Or via MCP:
+
+```
 pretorin_get_pending_policy_questions  # lightweight — only unanswered
 pretorin_get_policy_question_detail    # guidance and examples per question
 ```
 
 ### 3. Answer Questions
 
-Answer individually for precise control:
+**Via CLI** — Draft answers from your workspace:
+
+```bash
+# Preview proposed answers
+pretorin policy populate --policy <policy-id>
+
+# Apply answers to the platform
+pretorin policy populate --policy <policy-id> --apply
+```
+
+**Via MCP** — Answer individually for precise control:
 
 ```
 pretorin_answer_policy_question(policy_id, question_id, answer)
@@ -66,7 +82,14 @@ pretorin_get_policy_analytics()
 
 Scope questionnaires are system+framework specific. They define what's in scope, what's excluded, and system boundary details.
 
-### 1. View Pending Questions
+### 1. View Current State
+
+```bash
+# Show scope questionnaire state and review findings
+pretorin scope show --system "My System" --framework-id fedramp-moderate
+```
+
+Or via MCP:
 
 ```
 pretorin_get_pending_scope_questions(system_id, framework_id)
@@ -74,6 +97,18 @@ pretorin_get_scope_question_detail(system_id, framework_id, question_id)
 ```
 
 ### 2. Answer Questions
+
+**Via CLI** — Draft answers from your workspace:
+
+```bash
+# Preview proposed answers
+pretorin scope populate --system "My System" --framework-id fedramp-moderate
+
+# Apply answers to the platform
+pretorin scope populate --system "My System" --framework-id fedramp-moderate --apply
+```
+
+**Via MCP** — Answer individually:
 
 ```
 pretorin_answer_scope_question(system_id, framework_id, question_id, answer)

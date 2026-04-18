@@ -1,7 +1,7 @@
 """Additional coverage tests for src/pretorin/client/api.py.
 
 Covers lines 181-184 (_handle_error 429 with Retry-After), 296-299 (_request
-retry with unparseable Retry-After), 328-329 (_normalize_control_id static).
+retry with unparseable Retry-After).
 """
 
 from __future__ import annotations
@@ -126,21 +126,3 @@ class TestRequestRetry429:
         with patch("pretorin.client.api.asyncio.sleep"):
             with pytest.raises(RateLimitError):
                 await client._request("GET", "/test")
-
-
-class TestNormalizeControlId:
-    """Tests for _normalize_control_id static method."""
-
-    def test_normalize_control_id_with_value(self):
-        """Lines 328-329: normalize with a valid control ID."""
-        result = PretorianClient._normalize_control_id("ac-2")
-        assert result == "ac-02"
-
-    def test_normalize_control_id_with_none(self):
-        """Returns None when control_id is None."""
-        result = PretorianClient._normalize_control_id(None)
-        assert result is None
-
-    def test_normalize_control_id_already_padded(self):
-        result = PretorianClient._normalize_control_id("ac-02")
-        assert result == "ac-02"

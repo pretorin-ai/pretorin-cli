@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-8f1d8054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -223,8 +223,8 @@ Why missing: IdP admin console not accessible via codebase
 Manual next step: Screenshot MFA policy from Azure AD admin portal
 </code></pre>
 <h3 id="5-push-updates"><a class="header" href="#5-push-updates">5. Push Updates</a></h3>
-<pre><code class="language-bash"># Push narrative
-pretorin narrative push ac-02 fedramp-moderate "My Application" narrative-ac02.md
+<pre><code class="language-bash"># Push a single narrative file
+pretorin narrative push-file ac-02 fedramp-moderate "My Application" narrative-ac02.md
 
 # Upsert evidence (finds or creates, then links)
 pretorin evidence upsert ac-02 fedramp-moderate \

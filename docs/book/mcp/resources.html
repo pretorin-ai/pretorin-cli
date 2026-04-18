@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-8f1d8054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -181,7 +181,7 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="mcp-resources"><a class="header" href="#mcp-resources">MCP Resources</a></h1>
-<p>The MCP server exposes read-only resources for analysis guidance.</p>
+<p>The MCP server exposes read-only resources across three URI schemes: <code>analysis://</code>, <code>status://</code>, and <code>workflow://</code>.</p>
 <h2 id="available-resources"><a class="header" href="#available-resources">Available Resources</a></h2>
 <div class="table-wrapper">
 <table>
@@ -192,6 +192,8 @@
 <tr><td><code>analysis://schema</code></td><td>JSON schema for compliance artifacts</td></tr>
 <tr><td><code>analysis://guide/{framework_id}</code></td><td>Analysis guide for a specific framework</td></tr>
 <tr><td><code>analysis://control/{framework_id}/{control_id}</code></td><td>Analysis guidance for a specific control within one framework scope</td></tr>
+<tr><td><code>status://cli</code></td><td>Current CLI version, update availability, and upgrade guidance</td></tr>
+<tr><td><code>workflow://recipe/{recipe_id}</code></td><td>Step-by-step workflow recipe for common compliance tasks</td></tr>
 </tbody>
 </table>
 </div>
@@ -213,6 +215,12 @@
 <p><code>analysis://control/{framework_id}/{control_id}</code></p>
 <p>Example: <code>analysis://control/fedramp-moderate/ac-02</code></p>
 <p>Returns control-specific analysis guidance including search patterns, evidence examples, and assessment criteria for one framework scope.</p>
+<h3 id="cli-status"><a class="header" href="#cli-status">CLI Status</a></h3>
+<p><code>status://cli</code></p>
+<p>Returns the current CLI version, latest available version, whether an update is available, passive notification status, check state (verified/unverified), and the upgrade command. MCP hosts can inspect this resource to surface update guidance.</p>
+<h3 id="workflow-recipes"><a class="header" href="#workflow-recipes">Workflow Recipes</a></h3>
+<p><code>workflow://recipe/{recipe_id}</code></p>
+<p>Returns a step-by-step workflow recipe for common compliance tasks. Available recipes are listed dynamically via the MCP <code>list_resources</code> method.</p>
 
                     </main>
 

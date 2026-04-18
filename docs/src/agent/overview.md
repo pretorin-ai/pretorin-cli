@@ -18,12 +18,14 @@ pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
 
 | Option | Description |
 |--------|-------------|
-| `--skill <name>` | Use a predefined skill template |
-| `--model <model>` | Model override |
+| `--skill/-s <name>` | Use a predefined skill template |
+| `--model/-m <model>` | Model override |
 | `--base-url <url>` | Custom model API endpoint |
-| `--working-dir <path>` | Working directory for code analysis |
+| `--working-dir/-w <path>` | Working directory for code analysis |
 | `--no-stream` | Disable streaming output |
 | `--legacy` | Use legacy OpenAI Agents SDK (deprecated) |
+| `--max-turns <n>` | Maximum agent turns (legacy mode only, default 15) |
+| `--no-mcp` | Disable external MCP servers (legacy mode only) |
 
 ## Hosted Model Setup
 
@@ -46,13 +48,13 @@ pretorin agent run "Assess AC-02 implementation gaps for my system"
 
 ## Model Key Precedence
 
-The agent runtime resolves model keys in this order:
+The Codex agent resolves API keys in this order:
 
-1. `OPENAI_API_KEY` environment variable
-2. `config.api_key` (from `pretorin login`)
+1. `config.api_key` (from `pretorin login`) — used as bearer key for the platform model proxy
+2. `OPENAI_API_KEY` environment variable
 3. `config.openai_api_key`
 
-If `OPENAI_API_KEY` is set in your shell, it overrides the stored Pretorin login key.
+When `--base-url` is explicitly provided (non-platform endpoint), the order changes to prefer `OPENAI_API_KEY` first, then falls back to config keys.
 
 ## Custom Model Endpoints
 

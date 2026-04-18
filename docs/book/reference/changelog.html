@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-8f1d8054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -182,8 +182,37 @@
                     <main>
                         <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>All notable changes to the Pretorin CLI are documented here. The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<h2 id="0140---2026-04-10"><a class="header" href="#0140---2026-04-10"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0">0.14.0</a> - 2026-04-10</a></h2>
+<h2 id="0152---2026-04-18"><a class="header" href="#0152---2026-04-18"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.1...v0.15.2">0.15.2</a> - 2026-04-18</a></h2>
 <h3 id="changed"><a class="header" href="#changed">Changed</a></h3>
+<ul>
+<li>Documentation sync: rebuilt all docs to match current codebase</li>
+</ul>
+<hr>
+<h2 id="0151---2026-04-17"><a class="header" href="#0151---2026-04-17"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.0...v0.15.1">0.15.1</a> - 2026-04-17</a></h2>
+<h3 id="added"><a class="header" href="#added">Added</a></h3>
+<ul>
+<li><code>pretorin evidence delete &lt;evidence-id&gt;</code> command with <code>--yes</code> flag for non-interactive workflows</li>
+<li>MCP tool <code>pretorin_delete_evidence</code> for programmatic evidence deletion within system scope</li>
+<li>API client method <code>delete_evidence</code> for the public DELETE endpoint</li>
+</ul>
+<hr>
+<h2 id="0150---2026-04-16"><a class="header" href="#0150---2026-04-16"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.14.0...v0.15.0">0.15.0</a> - 2026-04-16</a></h2>
+<h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
+<ul>
+<li>Source manifest requirement policy: declare which external sources a system expects and gate compliance writes on their presence</li>
+<li><code>pretorin context manifest</code> command for viewing the resolved manifest and evaluating it against detected sources</li>
+<li>Manifest loading from four layered sources: env var, repo-local <code>.pretorin/source-manifest.json</code>, per-system user config, or inline config key</li>
+<li>Family-level source requirements with three requirement levels (required/recommended/optional) and write blocking on missing required sources</li>
+<li>Manifest evaluation results in write provenance (<code>manifest_status</code> and <code>missing_required_sources</code> fields)</li>
+</ul>
+<h3 id="changed-1"><a class="header" href="#changed-1">Changed</a></h3>
+<ul>
+<li><code>_enforce_source_attestation</code> now evaluates manifest requirements after the existing MISMATCH check</li>
+<li><code>resolve_execution_context</code> and <code>build_write_provenance</code> accept optional <code>control_id</code> for family-level manifest enforcement</li>
+</ul>
+<hr>
+<h2 id="0140---2026-04-10"><a class="header" href="#0140---2026-04-10"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0">0.14.0</a> - 2026-04-10</a></h2>
+<h3 id="changed-2"><a class="header" href="#changed-2">Changed</a></h3>
 <ul>
 <li>MCP and agent write workflows now treat the active CLI context as a strict execution boundary by default, with an explicit <code>allow_scope_override</code> escape hatch for intentional cross-scope writes</li>
 <li>Control-scoped MCP and agent workflows now route through one shared scope-validation path so exact control lookup happens in the resolved framework before any write proceeds</li>
@@ -196,20 +225,20 @@
 <li>Stored active context and campaign checkpoints are now validated against the current API environment before campaign reads or writes proceed</li>
 <li>Control-scoped MCP and agent updates now refuse silent remaps like <code>cm-04.02</code> to a different control when the exact control does not resolve in the active framework</li>
 </ul>
-<h3 id="added"><a class="header" href="#added">Added</a></h3>
+<h3 id="added-2"><a class="header" href="#added-2">Added</a></h3>
 <ul>
 <li><code>pretorin_get_cli_status</code> and the <code>status://cli</code> MCP resource expose local CLI version, update availability, and upgrade guidance to MCP hosts and agents</li>
 </ul>
 <hr>
 <h2 id="0131---2026-04-07"><a class="header" href="#0131---2026-04-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.0...v0.13.1">0.13.1</a> - 2026-04-07</a></h2>
-<h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
+<h3 id="added-3"><a class="header" href="#added-3">Added</a></h3>
 <ul>
 <li><code>pretorin_get_stig</code> MCP tool for STIG benchmark detail</li>
 <li><code>pretorin_get_cci_chain</code> MCP tool for full Control → CCI → SRG → STIG rule traceability</li>
 </ul>
 <hr>
 <h2 id="0130---2026-04-07"><a class="header" href="#0130---2026-04-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.12.0...v0.13.0">0.13.0</a> - 2026-04-07</a></h2>
-<h3 id="added-2"><a class="header" href="#added-2">Added</a></h3>
+<h3 id="added-4"><a class="header" href="#added-4">Added</a></h3>
 <ul>
 <li>Complete STIG/CCI MCP tools: <code>list_stigs</code>, <code>get_stig</code>, <code>list_stig_rules</code>, <code>get_stig_rule</code>, <code>list_ccis</code>, <code>get_cci</code>, <code>get_cci_chain</code>, <code>get_cci_status</code>, <code>get_stig_applicability</code>, <code>infer_stigs</code>, <code>get_test_manifest</code>, <code>submit_test_results</code></li>
 <li>STIG/CCI agent tools for OpenAI Agents SDK</li>
@@ -220,15 +249,15 @@
 </ul>
 <hr>
 <h2 id="0120---2026-04-04"><a class="header" href="#0120---2026-04-04"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.11.0...v0.12.0">0.12.0</a> - 2026-04-04</a></h2>
-<h3 id="added-3"><a class="header" href="#added-3">Added</a></h3>
+<h3 id="added-5"><a class="header" href="#added-5">Added</a></h3>
 <ul>
 <li>Vendor management CLI: <code>pretorin vendor list/create/get/update/delete/upload-doc/list-docs</code></li>
 <li>MCP vendor tools: <code>list_vendors</code>, <code>create_vendor</code>, <code>get_vendor</code>, <code>update_vendor</code>, <code>delete_vendor</code>, <code>upload_vendor_document</code>, <code>list_vendor_documents</code>, <code>link_evidence_to_vendor</code></li>
 <li>Inheritance/responsibility MCP tools: <code>set_control_responsibility</code>, <code>get_control_responsibility</code>, <code>remove_control_responsibility</code>, <code>generate_inheritance_narrative</code>, <code>get_stale_edges</code>, <code>sync_stale_edges</code></li>
 </ul>
 <hr>
-<h2 id="0110---2026-04-01"><a class="header" href="#0110---2026-04-01"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.10.0...v0.11.0">0.11.0</a> - 2026-04-01</a></h2>
-<h3 id="added-4"><a class="header" href="#added-4">Added</a></h3>
+<h2 id="0110---2026-04-02"><a class="header" href="#0110---2026-04-02"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.10.0...v0.11.0">0.11.0</a> - 2026-04-02</a></h2>
+<h3 id="added-6"><a class="header" href="#added-6">Added</a></h3>
 <ul>
 <li>Campaign CLI: <code>pretorin campaign controls/policy/scope/status</code></li>
 <li>Campaign MCP tools: <code>prepare_campaign</code>, <code>claim_campaign_items</code>, <code>get_campaign_item_context</code>, <code>submit_campaign_proposal</code>, <code>apply_campaign</code>, <code>get_campaign_status</code></li>
@@ -237,7 +266,7 @@
 </ul>
 <hr>
 <h2 id="0100---2026-03-28"><a class="header" href="#0100---2026-03-28"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.9.7...v0.10.0">0.10.0</a> - 2026-03-28</a></h2>
-<h3 id="added-5"><a class="header" href="#added-5">Added</a></h3>
+<h3 id="added-7"><a class="header" href="#added-7">Added</a></h3>
 <ul>
 <li>Workflow state and analytics MCP tools: <code>get_workflow_state</code>, <code>get_analytics_summary</code>, <code>get_family_analytics</code>, <code>get_policy_analytics</code></li>
 <li>Family operations MCP tools: <code>get_pending_families</code>, <code>get_family_bundle</code>, <code>trigger_family_review</code>, <code>get_family_review_results</code></li>
@@ -253,26 +282,26 @@
 <li>Aligned MCP control status validation with the live platform status enum set to match public API behavior</li>
 <li>Synced package version metadata and release notes so PyPI builds publish a consistent CLI version</li>
 </ul>
-<h3 id="changed-1"><a class="header" href="#changed-1">Changed</a></h3>
+<h3 id="changed-3"><a class="header" href="#changed-3">Changed</a></h3>
 <ul>
 <li>Updated CLI and MCP coverage tests to reflect the platform control status contract used by public control workflows</li>
 </ul>
 <h2 id="087---2026-03-23"><a class="header" href="#087---2026-03-23"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.6...v0.8.7">0.8.7</a> - 2026-03-23</a></h2>
-<h3 id="added-6"><a class="header" href="#added-6">Added</a></h3>
+<h3 id="added-8"><a class="header" href="#added-8">Added</a></h3>
 <ul>
 <li>MCP questionnaire tooling for scope and organization policy workflows</li>
 </ul>
-<h3 id="changed-2"><a class="header" href="#changed-2">Changed</a></h3>
+<h3 id="changed-4"><a class="header" href="#changed-4">Changed</a></h3>
 <ul>
 <li>MCP documentation now reflects the full 29-tool surface, including batch evidence support</li>
 </ul>
 <h2 id="086---2026-03-23"><a class="header" href="#086---2026-03-23"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.5...v0.8.6">0.8.6</a> - 2026-03-23</a></h2>
-<h3 id="added-7"><a class="header" href="#added-7">Added</a></h3>
+<h3 id="added-9"><a class="header" href="#added-9">Added</a></h3>
 <ul>
 <li><code>pretorin context show --quiet</code> for compact shell-friendly context checks</li>
 <li><code>pretorin context show --check</code> to fail fast when stored scope is missing, stale, or unverified</li>
 </ul>
-<h3 id="changed-3"><a class="header" href="#changed-3">Changed</a></h3>
+<h3 id="changed-5"><a class="header" href="#changed-5">Changed</a></h3>
 <ul>
 <li><code>context show</code> caches the last known system name so offline and stale context output stays human-friendly</li>
 </ul>
@@ -289,12 +318,12 @@
 <li>Larger Codex subprocess line buffer for policy questionnaire responses</li>
 </ul>
 <h2 id="080---2026-03-07"><a class="header" href="#080---2026-03-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.7.0...v0.8.0">0.8.0</a> - 2026-03-07</a></h2>
-<h3 id="added-8"><a class="header" href="#added-8">Added</a></h3>
+<h3 id="added-10"><a class="header" href="#added-10">Added</a></h3>
 <ul>
 <li>MCP <code>pretorin_generate_control_artifacts</code> for read-only AI drafting of control narratives and evidence-gap assessments</li>
 <li>Shared AI drafting workflow helper for structured MCP/CLI parity</li>
 </ul>
-<h3 id="changed-4"><a class="header" href="#changed-4">Changed</a></h3>
+<h3 id="changed-6"><a class="header" href="#changed-6">Changed</a></h3>
 <ul>
 <li>MCP system-scoped tools now resolve friendly system names the same way the CLI does</li>
 <li>Codex Desktop MCP configuration can be pinned to the UV-managed Pretorin wrapper</li>
@@ -307,7 +336,7 @@
 <li>Compatibility fallback for evidence search on system-scoped evidence routes</li>
 <li>Agent <code>--no-stream</code> crash on literal <code>[[PRETORIN_TODO]]</code> blocks</li>
 </ul>
-<h3 id="changed-5"><a class="header" href="#changed-5">Changed</a></h3>
+<h3 id="changed-7"><a class="header" href="#changed-7">Changed</a></h3>
 <ul>
 <li>MCP and legacy agent evidence search tools accept optional <code>system_id</code> context</li>
 </ul>
@@ -317,13 +346,13 @@
 <li>Added required MCP registry ownership marker for PyPI validation</li>
 </ul>
 <h2 id="060---2026-03-05"><a class="header" href="#060---2026-03-05"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.6...v0.6.0">0.6.0</a> - 2026-03-05</a></h2>
-<h3 id="added-9"><a class="header" href="#added-9">Added</a></h3>
+<h3 id="added-11"><a class="header" href="#added-11">Added</a></h3>
 <ul>
 <li>Shared markdown quality validator for auditor-readable artifacts</li>
 <li>Dedicated tests for markdown quality guardrails</li>
 <li>CLI/MCP/agent parity for reading notes via dedicated endpoint</li>
 </ul>
-<h3 id="changed-6"><a class="header" href="#changed-6">Changed</a></h3>
+<h3 id="changed-8"><a class="header" href="#changed-8">Changed</a></h3>
 <ul>
 <li>Narrative and evidence update flows enforce markdown quality checks before push/upsert</li>
 <li>Agent prompts require auditor-ready markdown (lists/tables/code/links)</li>
@@ -334,7 +363,7 @@
 <li>Markdown image usage from narrative/evidence authoring contract (temporarily)</li>
 </ul>
 <h2 id="054---2026-03-05"><a class="header" href="#054---2026-03-05"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.3...v0.5.4">0.5.4</a> - 2026-03-05</a></h2>
-<h3 id="added-10"><a class="header" href="#added-10">Added</a></h3>
+<h3 id="added-12"><a class="header" href="#added-12">Added</a></h3>
 <ul>
 <li><code>pretorin narrative get</code> to read current control narratives</li>
 <li><code>pretorin notes list</code> and <code>pretorin notes add</code> for control-note management</li>
@@ -343,7 +372,7 @@
 <li>Shared compliance workflow helpers (system resolution, evidence dedupe/upsert, TODO blocks, gap notes)</li>
 <li>MCP <code>pretorin_get_control_notes</code> tool</li>
 </ul>
-<h3 id="changed-7"><a class="header" href="#changed-7">Changed</a></h3>
+<h3 id="changed-9"><a class="header" href="#changed-9">Changed</a></h3>
 <ul>
 <li><code>pretorin_create_evidence</code> now upserts by default (<code>dedupe: true</code>)</li>
 <li><code>pretorin evidence push</code> uses find-or-create upsert logic</li>
@@ -369,14 +398,14 @@
 <li><code>pretorin login</code> skips prompt when already authenticated</li>
 <li>Demo script <code>--json</code> flag position and stdin handling</li>
 </ul>
-<h3 id="changed-8"><a class="header" href="#changed-8">Changed</a></h3>
+<h3 id="changed-10"><a class="header" href="#changed-10">Changed</a></h3>
 <ul>
 <li>Default evidence type changed to <code>policy_document</code></li>
 <li>Valid evidence types aligned with API</li>
 <li>Added <code>.pretorin/</code> and <code>evidence/</code> to <code>.gitignore</code></li>
 </ul>
 <h2 id="050---2026-02-27"><a class="header" href="#050---2026-02-27"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.3.1...v0.5.0">0.5.0</a> - 2026-02-27</a></h2>
-<h3 id="added-11"><a class="header" href="#added-11">Added</a></h3>
+<h3 id="added-13"><a class="header" href="#added-13">Added</a></h3>
 <ul>
 <li>Context management (<code>context list/set/show/clear</code>)</li>
 <li>Evidence commands (<code>evidence create/list/push/search/upsert</code>)</li>
@@ -390,7 +419,7 @@
 <li>Interactive demo walkthrough script</li>
 <li>Beta messaging across CLI, MCP, and README</li>
 </ul>
-<h3 id="changed-9"><a class="header" href="#changed-9">Changed</a></h3>
+<h3 id="changed-11"><a class="header" href="#changed-11">Changed</a></h3>
 <ul>
 <li>Platform API base URL changed to <code>/api/v1/public</code></li>
 <li>Evidence and linking scoped to system</li>
@@ -410,7 +439,7 @@
 <li>Connection error URL display</li>
 </ul>
 <h2 id="020---2026-02-06"><a class="header" href="#020---2026-02-06"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.1.0...v0.2.0">0.2.0</a> - 2026-02-06</a></h2>
-<h3 id="added-12"><a class="header" href="#added-12">Added</a></h3>
+<h3 id="added-14"><a class="header" href="#added-14">Added</a></h3>
 <ul>
 <li><code>--json</code> flag for machine-readable output</li>
 <li><code>pretorin frameworks family/metadata/submit-artifact</code> commands</li>
@@ -418,13 +447,13 @@
 <li><code>.mcp.json</code> for Claude Code auto-discovery</li>
 <li>Usage examples in command docstrings</li>
 </ul>
-<h3 id="changed-10"><a class="header" href="#changed-10">Changed</a></h3>
+<h3 id="changed-12"><a class="header" href="#changed-12">Changed</a></h3>
 <ul>
 <li>Control references shown by default (replaced <code>--references</code> with <code>--brief</code>)</li>
 <li>Default controls limit changed to 0 (show all)</li>
 </ul>
 <h2 id="010---2025-02-03"><a class="header" href="#010---2025-02-03"><a href="https://github.com/pretorin-ai/pretorin-cli/releases/tag/v0.1.0">0.1.0</a> - 2025-02-03</a></h2>
-<h3 id="added-13"><a class="header" href="#added-13">Added</a></h3>
+<h3 id="added-15"><a class="header" href="#added-15">Added</a></h3>
 <ul>
 <li>Initial public release</li>
 <li>CLI commands for browsing compliance frameworks</li>

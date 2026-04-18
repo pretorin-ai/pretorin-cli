@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-694685ba.js";
+            window.path_to_searchindex_js = "../searchindex-8f1d8054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -191,7 +191,7 @@ pretorin review run --control-id ac-02 --framework-id nist-800-53-r5 --path ./sr
 </code></pre>
 <p><code>pretorin review run</code> does not push narratives or evidence to the platform. In normal mode, it fetches control requirements and current implementation details for comparison. In <code>--local</code> mode, it writes a markdown review artifact under <code>.pretorin/reviews/</code> or the path specified with <code>--output-dir</code>.</p>
 <h2 id="check-implementation-status"><a class="header" href="#check-implementation-status">Check Implementation Status</a></h2>
-<pre><code class="language-bash">$ pretorin review status --control-id ac-02
+<pre><code class="language-bash">$ pretorin review status --control-id ac-02 --framework-id fedramp-moderate
 ╭─────────────────── Control AC-02 Status ───────────────────────╮
 │ Status: in_progress                                             │
 │ Evidence items: 3                                               │

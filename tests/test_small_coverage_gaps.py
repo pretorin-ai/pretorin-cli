@@ -131,33 +131,6 @@ class TestNormalizeControlIdEmpty:
 
 
 # ---------------------------------------------------------------------------
-# cli/main.py line 219 – __name__ == "__main__" guard
-# ---------------------------------------------------------------------------
-
-
-class TestCliMainGuard:
-    """Cover the if __name__ == '__main__': app() guard in cli/main.py."""
-
-    def test_cli_main_guard_calls_app(self) -> None:
-        """The __name__ == '__main__' guard at line 219 calls app().
-
-        We patch app before using runpy.run_module to execute the module
-        as __main__, which triggers the guard.
-        """
-        import pretorin.cli.main as main_mod
-
-        mock_app = MagicMock()
-        with patch.object(main_mod, "app", mock_app):
-            # runpy.run_module would re-exec the entire module, which is heavy.
-            # Instead, just directly test the guard pattern:
-            # line 219 is `app()` inside `if __name__ == "__main__":`
-            # We verify app is callable and would work when called.
-            main_mod.app()
-            mock_app.assert_called_once()
-            mock_app.assert_called()
-
-
-# ---------------------------------------------------------------------------
 # workflows/markdown_quality.py lines 59-60 – empty content
 # ---------------------------------------------------------------------------
 

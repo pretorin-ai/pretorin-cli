@@ -120,15 +120,15 @@ Parameters:
   - ac-02_odp.05: personnel or roles
 ```
 
-### With References
+### Brief Mode
 
-Add `--references` to include the statement text, guidance, and related controls:
+By default, the full control is shown including statement, guidance, and references. Use `--brief` to show only the basic info panel:
 
 ```bash
-$ pretorin frameworks control nist-800-53-r5 ac-02 --references
+$ pretorin frameworks control nist-800-53-r5 ac-02 --brief
 ```
 
-This adds:
+The default (no flag) includes:
 - **Statement** — the formal control requirement text
 - **Guidance** — implementation guidance from the framework
 - **Related Controls** — other controls that relate to this one
