@@ -1,6 +1,6 @@
 # MCP Tool Reference
 
-The MCP server provides 80+ tools organized by category.
+The MCP server provides 86 tools organized by category.
 
 ## Framework & Control Reference
 
@@ -109,6 +109,28 @@ List systems in the current organization.
 
 ---
 
+### pretorin_get_cli_status
+
+Return the local Pretorin CLI version status, including update availability and upgrade guidance for MCP hosts and agents.
+
+**Parameters:**
+- `force` (optional) — Bypass local cache and re-check PyPI for the latest version. Default: `false`
+
+**Returns:** Current version, latest version, update available flag, and upgrade instructions.
+
+---
+
+### pretorin_get_source_manifest
+
+Get the resolved source manifest for a system and evaluate it against currently detected sources. Shows which external sources (git, cloud, HRIS, etc.) are required, recommended, or optional, and whether each is currently satisfied.
+
+**Parameters:**
+- `system_id` (optional) — System ID or name
+
+**Returns:** Source manifest with per-source satisfaction status. Returns null manifest if none is configured.
+
+---
+
 ### pretorin_get_system
 
 Get system metadata including attached frameworks and security impact level.
@@ -141,6 +163,7 @@ Search current evidence items.
 - `system_id` (optional) — System ID or friendly system name. When omitted, the active CLI scope is used if available.
 - `control_id` (optional) — Filter by control
 - `framework_id` (optional) — Filter by framework
+- `limit` (optional) — Maximum number of results. Default: `20`
 
 **Returns:** Matching evidence items. The server uses the same compatibility search path as the CLI for deployments that only expose system-scoped evidence routes.
 
@@ -151,9 +174,9 @@ Search current evidence items.
 Upsert evidence on the platform (find-or-create by default). If `dedupe` is true, exact matching evidence in the active system/framework scope is reused; otherwise a new record is created.
 
 **Parameters:**
-- `system_id` (required)
 - `name` (required)
 - `description` (required) — Must be auditor-ready markdown (no headings, at least one rich element, no images)
+- `system_id` (optional) — Defaults to active scope
 - `evidence_type` (optional) — Default: `policy_document`
 - `control_id` (optional)
 - `framework_id` (optional)
@@ -172,9 +195,9 @@ Upsert evidence on the platform (find-or-create by default). If `dedupe` is true
 Create and link multiple evidence items within one system/framework scope in a single request.
 
 **Parameters:**
-- `system_id` (required)
-- `framework_id` (required)
 - `items` (required) — Array of evidence payloads with `name`, `description`, and `control_id`; may also include `evidence_type` and `relevance_notes`
+- `system_id` (optional) — Defaults to active scope
+- `framework_id` (optional) — Defaults to active scope
 
 **Returns:** Batch creation summary with per-item results and created evidence IDs.
 
@@ -185,12 +208,25 @@ Create and link multiple evidence items within one system/framework scope in a s
 Link an existing evidence item to a control.
 
 **Parameters:**
-- `system_id` (required)
 - `evidence_id` (required)
 - `control_id` (required)
+- `system_id` (optional) — Defaults to active scope
 - `framework_id` (optional)
 
 **Returns:** Link confirmation.
+
+---
+
+### pretorin_delete_evidence
+
+Delete an evidence item from the platform (system-scoped, requires WRITE access).
+
+**Parameters:**
+- `evidence_id` (required) — The evidence item ID to delete
+- `system_id` (optional) — Defaults to active scope
+- `framework_id` (optional) — Defaults to active scope
+
+**Returns:** Deletion confirmation.
 
 ---
 
@@ -199,9 +235,9 @@ Link an existing evidence item to a control.
 Get the current narrative record for a control.
 
 **Parameters:**
-- `system_id` (required)
 - `control_id` (required)
-- `framework_id` (required)
+- `system_id` (optional) — Defaults to active scope
+- `framework_id` (optional) — Defaults to active scope
 
 **Returns:** Narrative text, status, and AI confidence metadata.
 
@@ -214,9 +250,9 @@ Get the current narrative record for a control.
 Get rich context for a control including AI guidance, statement, objectives, scope status, and current implementation details.
 
 **Parameters:**
-- `system_id` (required)
 - `control_id` (required)
-- `framework_id` (required)
+- `system_id` (optional) — Defaults to active scope
+- `framework_id` (optional) — Defaults to active scope
 
 **Returns:** Combined control metadata and implementation details.
 
@@ -285,9 +321,9 @@ Apply partial questionnaire updates for one organization policy.
 Get implementation details for a control in a system.
 
 **Parameters:**
-- `system_id` (required)
 - `control_id` (required)
-- `framework_id` (required)
+- `system_id` (optional) — Defaults to active scope
+- `framework_id` (optional) — Defaults to active scope
 
 **Returns:** Current status, narrative, evidence count, and notes metadata.
 
@@ -298,8 +334,8 @@ Get implementation details for a control in a system.
 Get notes for a control implementation.
 
 **Parameters:**
-- `system_id` (required)
 - `control_id` (required)
+- `system_id` (optional) — Defaults to active scope
 - `framework_id` (optional)
 
 **Returns:** Note list with `total` count.
@@ -311,10 +347,10 @@ Get notes for a control implementation.
 Push a narrative text update for a control implementation.
 
 **Parameters:**
-- `system_id` (required)
 - `control_id` (required)
-- `framework_id` (required)
 - `narrative` (required) — Must be auditor-ready markdown (no headings, 2+ rich elements, 1+ structural element, no images)
+- `system_id` (optional) — Defaults to active scope
+- `framework_id` (optional) — Defaults to active scope
 - `is_ai_generated` (optional) — Default: `false`
 
 **Returns:** Update confirmation.
@@ -323,13 +359,13 @@ Push a narrative text update for a control implementation.
 
 ### pretorin_add_control_note
 
-Add a note for unresolved gaps or manual follow-up actions.
+Add a note for unresolved gaps or manual follow-up actions. Content is plain text (no markdown validation required).
 
 **Parameters:**
-- `system_id` (required)
 - `control_id` (required)
-- `framework_id` (required)
 - `content` (required)
+- `system_id` (optional) — Defaults to active scope
+- `framework_id` (optional) — Defaults to active scope
 
 **Returns:** The created note record.
 
@@ -340,12 +376,12 @@ Add a note for unresolved gaps or manual follow-up actions.
 Resolve, unresolve, or update an existing control note. Use this to clear blocking notes so control status can advance.
 
 **Parameters:**
-- `system_id` (optional, defaults to active scope)
 - `control_id` (required)
 - `note_id` (required)
-- `framework_id` (optional, defaults to active scope)
-- `is_resolved` (optional, default `true`)
-- `content` (optional, updated note content)
+- `system_id` (optional) — Defaults to active scope
+- `framework_id` (optional) — Defaults to active scope
+- `is_resolved` (optional) — Default: `true`
+- `content` (optional) — Updated note content
 - `is_pinned` (optional)
 
 **Returns:** The updated note record.
@@ -359,9 +395,9 @@ Resolve, unresolve, or update an existing control note. Use this to clear blocki
 Update the implementation status for a control.
 
 **Parameters:**
-- `system_id` (required)
 - `control_id` (required)
-- `status` (required)
+- `status` (required) — `implemented`, `in_progress`, `inherited`, `not_applicable`, `not_started`, `partially_implemented`, `planned`, `ready_to_approve`
+- `system_id` (optional) — Defaults to active scope
 - `framework_id` (optional)
 
 **Returns:** Status update confirmation.
@@ -373,10 +409,11 @@ Update the implementation status for a control.
 Create a monitoring event for a system.
 
 **Parameters:**
-- `system_id` (required)
 - `title` (required)
-- `severity` (optional) — `critical`, `high`, `medium`, `low`, `info`
-- `event_type` (optional) — `security_scan`, `configuration_change`, `access_review`, `compliance_check`
+- `system_id` (optional) — Defaults to active scope
+- `framework_id` (optional) — Defaults to active scope
+- `severity` (optional) — `critical`, `high`, `medium`, `low`, `info`. Default: `medium`
+- `event_type` (optional) — `security_scan`, `configuration_change`, `access_review`, `compliance_check`. Default: `security_scan`
 - `control_id` (optional)
 - `description` (optional)
 
@@ -443,7 +480,8 @@ Get per-family breakdown with narrative coverage, evidence coverage, and status 
 
 Get per-policy breakdown with answer completion and review status.
 
-**Parameters:** None (uses org context)
+**Parameters:**
+- `policy_id` (required)
 
 **Returns:** Per-policy completion metrics.
 
@@ -469,8 +507,8 @@ Get all controls in one family with status, narrative presence, evidence presenc
 
 **Parameters:**
 - `system_id` (required)
-- `framework_id` (required)
 - `family_id` (required)
+- `framework_id` (required)
 
 **Returns:** Complete family bundle with per-control details.
 
@@ -482,8 +520,8 @@ Trigger AI review of all controls in a family. Takes 2-4 minutes for large famil
 
 **Parameters:**
 - `system_id` (required)
-- `framework_id` (required)
 - `family_id` (required)
+- `framework_id` (required)
 
 **Returns:** Review job ID for polling.
 
@@ -495,7 +533,6 @@ Poll family review results.
 
 **Parameters:**
 - `system_id` (required)
-- `framework_id` (required)
 - `job_id` (required)
 
 **Returns:** Aggregated findings with severity, affected control IDs, and recommended fixes.
@@ -522,8 +559,8 @@ Get guidance, tips, and example responses for a specific scope question.
 
 **Parameters:**
 - `system_id` (required)
-- `framework_id` (required)
 - `question_id` (required)
+- `framework_id` (required)
 
 **Returns:** Question text, guidance, tips, and example answers.
 
@@ -535,9 +572,9 @@ Answer one scope question.
 
 **Parameters:**
 - `system_id` (required)
-- `framework_id` (required)
 - `question_id` (required)
 - `answer` (required)
+- `framework_id` (required)
 
 **Returns:** Updated question state.
 
@@ -551,7 +588,7 @@ Trigger AI generation of scope document from answered questions.
 - `system_id` (required)
 - `framework_id` (required)
 
-**Returns:** Generation job status.
+**Returns:** Generation job ID for polling.
 
 ---
 
@@ -573,7 +610,6 @@ Poll for structured scope review findings.
 
 **Parameters:**
 - `system_id` (required)
-- `framework_id` (required)
 - `job_id` (required)
 
 **Returns:** Findings with severity levels and recommended fixes.
@@ -635,6 +671,7 @@ Trigger AI generation of policy document from answered questions.
 
 **Parameters:**
 - `policy_id` (required)
+- `system_id` (optional) — System ID for scope context
 
 **Returns:** Generation job status.
 
@@ -672,12 +709,23 @@ Campaigns enable bulk compliance operations with checkpoint persistence and leas
 Prepare a workflow-aligned campaign run with a platform state snapshot.
 
 **Parameters:**
-- `system_id` (required)
-- `framework_id` (required)
 - `domain` (required) — `controls`, `policy`, or `scope`
-- `mode` (required) — `initial`, `notes-fix`, `review-fix`, `answer`
+- `mode` (required) — Campaign mode for the selected domain
+- `system_id` (optional) — Defaults to active scope
+- `framework_id` (optional) — Defaults to active scope
 - `family_id` (optional) — Target family for control campaigns
-- `review_job` (optional) — Review job ID for `review-fix` mode
+- `control_ids` (optional) — Explicit control IDs to include
+- `all_controls` (optional) — Include all controls. Default: `false`
+- `artifacts` (optional) — Artifact type: `narratives`, `evidence`, or `both`. Default: `both`
+- `review_job` (optional) — Family review job ID for `review-fix` mode
+- `policy_ids` (optional) — Explicit policy IDs to include
+- `all_incomplete` (optional) — Include all incomplete items. Default: `false`
+- `apply` (optional) — Apply proposals immediately. Default: `false`
+- `output` (optional) — Output format: `auto`, `live`, `compact`, `json`. Default: `json`
+- `checkpoint_path` (optional) — Local checkpoint file path
+- `working_directory` (optional) — Working directory for executors
+- `concurrency` (optional) — Parallel execution limit. Default: `4`
+- `max_retries` (optional) — Retry limit per item. Default: `2`
 
 **Returns:** Campaign checkpoint with item list and metadata.
 
@@ -688,8 +736,10 @@ Prepare a workflow-aligned campaign run with a platform state snapshot.
 Claim items for drafting with TTL-based leases. Safe for fan-out to multiple agents.
 
 **Parameters:**
-- `checkpoint` (required) — Campaign checkpoint
-- `count` (optional) — Number of items to claim
+- `checkpoint_path` (required) — Local campaign checkpoint path
+- `lease_owner` (required) — Stable identifier for the claiming agent
+- `max_items` (optional) — Number of items to claim. Default: `1`
+- `lease_ttl_seconds` (optional) — Lease time-to-live. Default: `300`
 
 **Returns:** Claimed items with lease metadata.
 
@@ -700,7 +750,7 @@ Claim items for drafting with TTL-based leases. Safe for fan-out to multiple age
 Get full item context plus drafting instructions for a claimed item.
 
 **Parameters:**
-- `checkpoint` (required)
+- `checkpoint_path` (required)
 - `item_id` (required)
 
 **Returns:** Control/policy/scope context, current state, and drafting guidance.
@@ -712,9 +762,9 @@ Get full item context plus drafting instructions for a claimed item.
 Submit an external agent's proposal without applying it to the platform.
 
 **Parameters:**
-- `checkpoint` (required)
+- `checkpoint_path` (required)
 - `item_id` (required)
-- `proposal` (required) — Draft content
+- `proposal` (required) — Campaign proposal payload object
 
 **Returns:** Proposal acceptance confirmation.
 
@@ -722,10 +772,11 @@ Submit an external agent's proposal without applying it to the platform.
 
 ### pretorin_apply_campaign
 
-Push all accepted proposals to the platform as a single apply operation.
+Push stored proposals to the platform.
 
 **Parameters:**
-- `checkpoint` (required)
+- `checkpoint_path` (required)
+- `item_ids` (optional) — Subset of item IDs to apply; omit to apply all
 
 **Returns:** Apply results with per-item status.
 
@@ -736,7 +787,7 @@ Push all accepted proposals to the platform as a single apply operation.
 Get structured campaign status with a stable transcript snapshot.
 
 **Parameters:**
-- `checkpoint` (required)
+- `checkpoint_path` (required)
 
 **Returns:** Campaign progress, item states, and transcript.
 
@@ -760,7 +811,7 @@ Create a new vendor entity.
 
 **Parameters:**
 - `name` (required)
-- `vendor_type` (optional) — `csp`, `saas`, `managed_service`, `internal`
+- `provider_type` (required) — `csp`, `saas`, `managed_service`, `internal`
 - `description` (optional)
 - `authorization_level` (optional)
 
@@ -787,7 +838,7 @@ Update vendor fields.
 - `vendor_id` (required)
 - `name` (optional)
 - `description` (optional)
-- `vendor_type` (optional)
+- `provider_type` (optional) — `csp`, `saas`, `managed_service`, `internal`
 - `authorization_level` (optional)
 
 **Returns:** Updated vendor record.
@@ -814,7 +865,7 @@ Upload vendor evidence documents (SOC 2 reports, CRMs, FedRAMP packages).
 - `file_path` (required)
 - `name` (optional)
 - `description` (optional)
-- `attestation_type` (optional) — `self_attested`, `third_party_attestation`, `vendor_provided`
+- `attestation_type` (optional) — `self_attested`, `third_party_attestation`, `vendor_provided`. Default: `vendor_provided`
 
 **Returns:** Uploaded document record.
 
@@ -833,12 +884,12 @@ List documents linked to a vendor.
 
 ### pretorin_link_evidence_to_vendor
 
-Link an evidence item to a vendor with attestation type.
+Link an evidence item to a vendor with attestation type. Set `vendor_id` to null to unlink.
 
 **Parameters:**
 - `evidence_id` (required)
-- `vendor_id` (required)
-- `attestation_type` (optional)
+- `vendor_id` (optional) — Vendor ID; null to unlink
+- `attestation_type` (optional) — `self_attested`, `third_party_attestation`, `vendor_provided`
 
 **Returns:** Link confirmation.
 
@@ -848,14 +899,15 @@ Link an evidence item to a vendor with attestation type.
 
 ### pretorin_set_control_responsibility
 
-Mark a control as inherited or shared from a provider.
+Create or update an inheritance edge for a control.
 
 **Parameters:**
 - `system_id` (required)
 - `control_id` (required)
 - `framework_id` (required)
-- `vendor_id` (required)
-- `responsibility_type` (required) — `inherited` or `shared`
+- `responsibility_mode` (required) — `inherited` or `shared`
+- `source_type` (required) — `provider`, `internal`, or `hybrid`
+- `vendor_id` (optional) — Vendor providing the inherited control
 
 **Returns:** Created responsibility edge.
 
@@ -895,7 +947,6 @@ AI-generate an inheritance narrative grounded in vendor documentation.
 - `system_id` (required)
 - `control_id` (required)
 - `framework_id` (required)
-- `vendor_id` (required)
 
 **Returns:** Draft inheritance narrative text.
 
@@ -907,7 +958,6 @@ Identify controls where the source narrative changed but the inherited control h
 
 **Parameters:**
 - `system_id` (required)
-- `framework_id` (required)
 
 **Returns:** List of stale inheritance edges with source change timestamps.
 
@@ -919,7 +969,6 @@ Bulk update inherited controls by regenerating narratives from latest source.
 
 **Parameters:**
 - `system_id` (required)
-- `framework_id` (required)
 
 **Returns:** Sync results with per-control status.
 
@@ -934,7 +983,8 @@ List STIG benchmarks with optional filters.
 **Parameters:**
 - `technology_area` (optional) — Filter by technology area
 - `product` (optional) — Filter by product name
-- `limit` (optional)
+- `limit` (optional) — Default: `100`
+- `offset` (optional) — Pagination offset. Default: `0`
 
 **Returns:** STIG benchmark list with IDs, titles, and rule counts.
 
@@ -957,9 +1007,10 @@ List rules for a STIG benchmark.
 
 **Parameters:**
 - `stig_id` (required)
-- `severity` (optional) — Filter by severity (high, medium, low)
-- `cci` (optional) — Filter by CCI ID
-- `limit` (optional)
+- `severity` (optional) — Filter by severity (`high`, `medium`, `low`)
+- `cci_id` (optional) — Filter by CCI identifier
+- `limit` (optional) — Default: `100`
+- `offset` (optional) — Pagination offset. Default: `0`
 
 **Returns:** Rule list with IDs, titles, severities, and linked CCIs.
 
@@ -970,6 +1021,7 @@ List rules for a STIG benchmark.
 Get full STIG rule detail.
 
 **Parameters:**
+- `stig_id` (required)
 - `rule_id` (required)
 
 **Returns:** Check text, fix text, discussion, and linked CCIs.
@@ -981,9 +1033,10 @@ Get full STIG rule detail.
 List CCIs with optional filters.
 
 **Parameters:**
-- `control` (optional) — Filter by NIST 800-53 control ID
+- `nist_control_id` (optional) — Filter by NIST 800-53 control ID (e.g., `AC-2`)
 - `status` (optional)
-- `limit` (optional)
+- `limit` (optional) — Default: `100`
+- `offset` (optional) — Pagination offset. Default: `0`
 
 **Returns:** CCI list with definitions and linked controls.
 
@@ -1005,8 +1058,7 @@ Get CCI detail with linked SRGs and STIG rules.
 Get the full traceability chain: Control -> CCIs -> SRGs -> STIG rules.
 
 **Parameters:**
-- `control_id` (required) — NIST 800-53 control ID
-- `system_id` (optional) — Include test results when provided
+- `nist_control_id` (required) — NIST 800-53 control ID (e.g., `AC-2`)
 
 **Returns:** Complete traceability from control requirements to technical checks.
 
@@ -1018,7 +1070,7 @@ Get CCI-level compliance rollup for a system.
 
 **Parameters:**
 - `system_id` (required)
-- `framework_id` (required)
+- `nist_control_id` (optional) — Filter by NIST control ID (e.g., `AC-2`)
 
 **Returns:** Per-CCI pass/fail status.
 
@@ -1052,6 +1104,7 @@ Fetch the test manifest (applicable STIGs + rules) for a system.
 
 **Parameters:**
 - `system_id` (required)
+- `stig_id` (optional) — Scope manifest to a specific STIG benchmark
 
 **Returns:** Test manifest with applicable rules and scanner assignments.
 
@@ -1063,6 +1116,8 @@ Upload STIG scan results to the platform.
 
 **Parameters:**
 - `system_id` (required)
-- `results` (required) — Scan result payload
+- `cli_run_id` (required) — CLI scan run identifier
+- `results` (required) — Array of test result objects
+- `cli_version` (optional) — CLI version string
 
 **Returns:** Submission confirmation with per-result status.
