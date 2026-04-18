@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-ee0379a6.js";
+            window.path_to_searchindex_js = "../searchindex-220e8f5a.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -182,6 +182,13 @@
                     <main>
                         <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>All notable changes to the Pretorin CLI are documented here. The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h2 id="0154---2026-04-18"><a class="header" href="#0154---2026-04-18"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.3...v0.15.4">0.15.4</a> - 2026-04-18</a></h2>
+<h3 id="changed"><a class="header" href="#changed">Changed</a></h3>
+<ul>
+<li>Updated 6 dependencies to resolve 7 known vulnerabilities (cryptography, pygments, pyjwt, pytest, python-multipart, requests)</li>
+<li>Added CLAUDE.md and AGENTS.md for AI agent context</li>
+</ul>
+<hr>
 <h2 id="0153---2026-04-18"><a class="header" href="#0153---2026-04-18"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.2...v0.15.3">0.15.3</a> - 2026-04-18</a></h2>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
@@ -194,7 +201,7 @@
 </ul>
 <hr>
 <h2 id="0152---2026-04-18"><a class="header" href="#0152---2026-04-18"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.1...v0.15.2">0.15.2</a> - 2026-04-18</a></h2>
-<h3 id="changed"><a class="header" href="#changed">Changed</a></h3>
+<h3 id="changed-1"><a class="header" href="#changed-1">Changed</a></h3>
 <ul>
 <li>Documentation sync: rebuilt all docs to match current codebase</li>
 </ul>
@@ -216,14 +223,14 @@
 <li>Family-level source requirements with three requirement levels (required/recommended/optional) and write blocking on missing required sources</li>
 <li>Manifest evaluation results in write provenance (<code>manifest_status</code> and <code>missing_required_sources</code> fields)</li>
 </ul>
-<h3 id="changed-1"><a class="header" href="#changed-1">Changed</a></h3>
+<h3 id="changed-2"><a class="header" href="#changed-2">Changed</a></h3>
 <ul>
 <li><code>_enforce_source_attestation</code> now evaluates manifest requirements after the existing MISMATCH check</li>
 <li><code>resolve_execution_context</code> and <code>build_write_provenance</code> accept optional <code>control_id</code> for family-level manifest enforcement</li>
 </ul>
 <hr>
 <h2 id="0140---2026-04-10"><a class="header" href="#0140---2026-04-10"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0">0.14.0</a> - 2026-04-10</a></h2>
-<h3 id="changed-2"><a class="header" href="#changed-2">Changed</a></h3>
+<h3 id="changed-3"><a class="header" href="#changed-3">Changed</a></h3>
 <ul>
 <li>MCP and agent write workflows now treat the active CLI context as a strict execution boundary by default, with an explicit <code>allow_scope_override</code> escape hatch for intentional cross-scope writes</li>
 <li>Control-scoped MCP and agent workflows now route through one shared scope-validation path so exact control lookup happens in the resolved framework before any write proceeds</li>
@@ -293,7 +300,7 @@
 <li>Aligned MCP control status validation with the live platform status enum set to match public API behavior</li>
 <li>Synced package version metadata and release notes so PyPI builds publish a consistent CLI version</li>
 </ul>
-<h3 id="changed-3"><a class="header" href="#changed-3">Changed</a></h3>
+<h3 id="changed-4"><a class="header" href="#changed-4">Changed</a></h3>
 <ul>
 <li>Updated CLI and MCP coverage tests to reflect the platform control status contract used by public control workflows</li>
 </ul>
@@ -302,7 +309,7 @@
 <ul>
 <li>MCP questionnaire tooling for scope and organization policy workflows</li>
 </ul>
-<h3 id="changed-4"><a class="header" href="#changed-4">Changed</a></h3>
+<h3 id="changed-5"><a class="header" href="#changed-5">Changed</a></h3>
 <ul>
 <li>MCP documentation now reflects the full 29-tool surface, including batch evidence support</li>
 </ul>
@@ -312,7 +319,7 @@
 <li><code>pretorin context show --quiet</code> for compact shell-friendly context checks</li>
 <li><code>pretorin context show --check</code> to fail fast when stored scope is missing, stale, or unverified</li>
 </ul>
-<h3 id="changed-5"><a class="header" href="#changed-5">Changed</a></h3>
+<h3 id="changed-6"><a class="header" href="#changed-6">Changed</a></h3>
 <ul>
 <li><code>context show</code> caches the last known system name so offline and stale context output stays human-friendly</li>
 </ul>
@@ -334,7 +341,7 @@
 <li>MCP <code>pretorin_generate_control_artifacts</code> for read-only AI drafting of control narratives and evidence-gap assessments</li>
 <li>Shared AI drafting workflow helper for structured MCP/CLI parity</li>
 </ul>
-<h3 id="changed-6"><a class="header" href="#changed-6">Changed</a></h3>
+<h3 id="changed-7"><a class="header" href="#changed-7">Changed</a></h3>
 <ul>
 <li>MCP system-scoped tools now resolve friendly system names the same way the CLI does</li>
 <li>Codex Desktop MCP configuration can be pinned to the UV-managed Pretorin wrapper</li>
@@ -347,7 +354,7 @@
 <li>Compatibility fallback for evidence search on system-scoped evidence routes</li>
 <li>Agent <code>--no-stream</code> crash on literal <code>[[PRETORIN_TODO]]</code> blocks</li>
 </ul>
-<h3 id="changed-7"><a class="header" href="#changed-7">Changed</a></h3>
+<h3 id="changed-8"><a class="header" href="#changed-8">Changed</a></h3>
 <ul>
 <li>MCP and legacy agent evidence search tools accept optional <code>system_id</code> context</li>
 </ul>
@@ -363,7 +370,7 @@
 <li>Dedicated tests for markdown quality guardrails</li>
 <li>CLI/MCP/agent parity for reading notes via dedicated endpoint</li>
 </ul>
-<h3 id="changed-8"><a class="header" href="#changed-8">Changed</a></h3>
+<h3 id="changed-9"><a class="header" href="#changed-9">Changed</a></h3>
 <ul>
 <li>Narrative and evidence update flows enforce markdown quality checks before push/upsert</li>
 <li>Agent prompts require auditor-ready markdown (lists/tables/code/links)</li>
@@ -383,7 +390,7 @@
 <li>Shared compliance workflow helpers (system resolution, evidence dedupe/upsert, TODO blocks, gap notes)</li>
 <li>MCP <code>pretorin_get_control_notes</code> tool</li>
 </ul>
-<h3 id="changed-9"><a class="header" href="#changed-9">Changed</a></h3>
+<h3 id="changed-10"><a class="header" href="#changed-10">Changed</a></h3>
 <ul>
 <li><code>pretorin_create_evidence</code> now upserts by default (<code>dedupe: true</code>)</li>
 <li><code>pretorin evidence push</code> uses find-or-create upsert logic</li>
@@ -409,7 +416,7 @@
 <li><code>pretorin login</code> skips prompt when already authenticated</li>
 <li>Demo script <code>--json</code> flag position and stdin handling</li>
 </ul>
-<h3 id="changed-10"><a class="header" href="#changed-10">Changed</a></h3>
+<h3 id="changed-11"><a class="header" href="#changed-11">Changed</a></h3>
 <ul>
 <li>Default evidence type changed to <code>policy_document</code></li>
 <li>Valid evidence types aligned with API</li>
@@ -430,7 +437,7 @@
 <li>Interactive demo walkthrough script</li>
 <li>Beta messaging across CLI, MCP, and README</li>
 </ul>
-<h3 id="changed-11"><a class="header" href="#changed-11">Changed</a></h3>
+<h3 id="changed-12"><a class="header" href="#changed-12">Changed</a></h3>
 <ul>
 <li>Platform API base URL changed to <code>/api/v1/public</code></li>
 <li>Evidence and linking scoped to system</li>
@@ -458,7 +465,7 @@
 <li><code>.mcp.json</code> for Claude Code auto-discovery</li>
 <li>Usage examples in command docstrings</li>
 </ul>
-<h3 id="changed-12"><a class="header" href="#changed-12">Changed</a></h3>
+<h3 id="changed-13"><a class="header" href="#changed-13">Changed</a></h3>
 <ul>
 <li>Control references shown by default (replaced <code>--references</code> with <code>--brief</code>)</li>
 <li>Default controls limit changed to 0 (show all)</li>
