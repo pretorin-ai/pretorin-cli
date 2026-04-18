@@ -158,7 +158,7 @@ Restart the application to load the new MCP server.
 
 ## Available Tools
 
-The MCP server provides 80+ tools organized by category.
+The MCP server provides 86 tools organized by category.
 
 ### Framework & Control Reference
 
@@ -180,6 +180,8 @@ The MCP server provides 80+ tools organized by category.
 | `pretorin_list_systems` | List systems in the current organization |
 | `pretorin_get_system` | Get system metadata, attached frameworks, and impact level |
 | `pretorin_get_compliance_status` | Get implementation progress for a system |
+| `pretorin_get_cli_status` | CLI version status with update availability and upgrade guidance |
+| `pretorin_get_source_manifest` | Resolved source manifest and satisfaction status for a system |
 
 ### Evidence Management
 
@@ -189,6 +191,7 @@ The MCP server provides 80+ tools organized by category.
 | `pretorin_create_evidence` | Upsert evidence (find-or-create by default) |
 | `pretorin_create_evidence_batch` | Create and link multiple evidence items in one scoped request |
 | `pretorin_link_evidence` | Link an existing evidence item to a control |
+| `pretorin_delete_evidence` | Delete an evidence item (system-scoped, requires WRITE access) |
 
 ### Implementation Context
 
@@ -457,14 +460,71 @@ Get framework progress and implementation posture for a system.
 
 ---
 
+#### pretorin_get_cli_status
+
+Return the local Pretorin CLI version status, including update availability and upgrade guidance for MCP hosts and agents.
+
+**Parameters:**
+- `force` (optional): Bypass the local cache and re-check PyPI for the latest version (default: `false`)
+
+**Returns:** Current version, latest available version, whether an update is needed, and upgrade command.
+
+**Example prompt:** "Is my Pretorin CLI up to date?"
+
+---
+
+#### pretorin_get_source_manifest
+
+Get the resolved source manifest for a system and evaluate it against currently detected sources (git, cloud, HRIS, etc.).
+
+**Parameters:**
+- `system_id` (optional): Defaults to active scope
+
+**Returns:** Required, recommended, and optional sources with satisfaction status. Returns null manifest if none is configured.
+
+**Example prompt:** "Which data sources does my system need?"
+
+---
+
+#### pretorin_search_evidence
+
+Search evidence items within one active system/framework scope.
+
+**Parameters:**
+- `system_id` (optional): Defaults to active scope
+- `control_id` (optional): Filter by control ID
+- `framework_id` (optional): Defaults to active scope
+- `limit` (optional): Maximum results (default: 20)
+
+**Returns:** Matching evidence items with IDs, names, types, and linked controls.
+
+**Example prompt:** "Show me all evidence linked to AC-02"
+
+---
+
+#### pretorin_delete_evidence
+
+Delete an evidence item from the platform (system-scoped, requires WRITE access).
+
+**Parameters:**
+- `evidence_id` (required): The evidence item ID to delete
+- `system_id` (optional): Defaults to active scope
+- `framework_id` (optional): Defaults to active scope
+
+**Returns:** Deletion confirmation.
+
+**Example prompt:** "Delete evidence item ev_456"
+
+---
+
 #### pretorin_get_control_context
 
 Get rich context for a control including AI guidance, control statement, assessment objectives, scope status, and current implementation details.
 
 **Parameters:**
-- `system_id` (required): The system ID or name
 - `control_id` (required): The control ID (zero-padded for NIST/FedRAMP, e.g., `ac-01`)
-- `framework_id` (required): The framework ID
+- `system_id` (optional): Defaults to active scope
+- `framework_id` (optional): Defaults to active scope
 
 **Returns:** Combined control metadata and implementation details: AI guidance, statement, objectives, scope status, narrative, user context.
 
@@ -477,9 +537,9 @@ Get rich context for a control including AI guidance, control statement, assessm
 Get the current narrative record for a control.
 
 **Parameters:**
-- `system_id` (required): The system ID or name
 - `control_id` (required): The control ID
-- `framework_id` (required): The framework ID
+- `system_id` (optional): Defaults to active scope
+- `framework_id` (optional): Defaults to active scope
 
 **Returns:** Narrative text, status, and AI confidence metadata when present.
 
@@ -560,9 +620,9 @@ Apply partial organization policy questionnaire updates.
 Get implementation details for a control in a system.
 
 **Parameters:**
-- `system_id` (required): The system ID
 - `control_id` (required): The control ID
-- `framework_id` (required): The framework ID
+- `system_id` (optional): Defaults to active scope
+- `framework_id` (optional): Defaults to active scope
 
 **Returns:** Current status, narrative, evidence count, and implementation notes metadata.
 
@@ -575,10 +635,10 @@ Get implementation details for a control in a system.
 Push a narrative text update for a control implementation on the platform.
 
 **Parameters:**
-- `system_id` (required): The system ID
 - `control_id` (required): The control ID
-- `framework_id` (required): The framework ID
 - `narrative` (required): The narrative text to set
+- `system_id` (optional): Defaults to active scope
+- `framework_id` (optional): Defaults to active scope
 - `is_ai_generated` (optional): Whether the narrative was AI-generated (default: false)
 
 Validation rules:
@@ -598,12 +658,12 @@ Validation rules:
 Upsert evidence on the platform (find-or-create by default). If `dedupe` is true, exact matching evidence in the active system/framework scope is reused; otherwise a new record is created. The tool then ensures control linking inside that same scope.
 
 **Parameters:**
-- `system_id` (required): The system ID
 - `name` (required): Evidence name
 - `description` (required): Evidence description
 - `evidence_type` (optional): Evidence type (default: `policy_document`)
 - `control_id` (optional): Associated control
 - `framework_id` (optional): Associated framework
+- `system_id` (optional): Defaults to active scope
 - `dedupe` (optional): Reuse exact matches before create (default: `true`)
 
 Validation rules:
@@ -624,9 +684,9 @@ Validation rules:
 Create and link multiple evidence items within one active system/framework scope.
 
 **Parameters:**
-- `system_id` (required): The system ID
-- `framework_id` (required): The framework ID
 - `items` (required): Array of evidence payloads with `name`, `description`, and `control_id`; may also include `evidence_type` and `relevance_notes`
+- `system_id` (optional): Defaults to active scope
+- `framework_id` (optional): Defaults to active scope
 
 **Returns:** Batch creation summary with per-item status and evidence IDs.
 
@@ -639,9 +699,9 @@ Create and link multiple evidence items within one active system/framework scope
 Link an existing evidence item to a control.
 
 **Parameters:**
-- `system_id` (required): The system ID
 - `evidence_id` (required): The evidence item ID
 - `control_id` (required): The control ID
+- `system_id` (optional): Defaults to active scope
 - `framework_id` (optional): Framework context for the link
 
 **Returns:** Link confirmation for the requested control association.
@@ -655,9 +715,9 @@ Link an existing evidence item to a control.
 Get notes for a control implementation in a system.
 
 **Parameters:**
-- `system_id` (required): The system ID
 - `control_id` (required): The control ID
-- `framework_id` (optional): Framework context
+- `system_id` (optional): Defaults to active scope
+- `framework_id` (optional): Defaults to active scope
 
 **Returns:** Note list with `total` count.
 
@@ -668,10 +728,10 @@ Get notes for a control implementation in a system.
 Add a note for unresolved gaps or manual follow-up actions.
 
 **Parameters:**
-- `system_id` (required): The system ID
 - `control_id` (required): The control ID
-- `framework_id` (required): The framework ID
 - `content` (required): Note body
+- `system_id` (optional): Defaults to active scope
+- `framework_id` (optional): Defaults to active scope
 
 **Returns:** The created note record.
 
@@ -703,10 +763,10 @@ Resolve, unresolve, or update an existing control note. Use this to clear blocki
 Update the implementation status for a control.
 
 **Parameters:**
-- `system_id` (required): The system ID
 - `control_id` (required): The control ID
 - `status` (required): New status value
-- `framework_id` (optional): Framework context
+- `system_id` (optional): Defaults to active scope
+- `framework_id` (optional): Defaults to active scope
 
 **Returns:** Status update confirmation.
 
@@ -719,12 +779,13 @@ Update the implementation status for a control.
 Create a monitoring event for a system.
 
 **Parameters:**
-- `system_id` (required): The system ID
 - `title` (required): Event title
 - `severity` (optional): Severity (`critical`, `high`, `medium`, `low`, `info`)
 - `event_type` (optional): Event type (`security_scan`, `configuration_change`, `access_review`, `compliance_check`)
 - `control_id` (optional): Associated control ID
 - `description` (optional): Detailed event description
+- `system_id` (optional): Defaults to active scope
+- `framework_id` (optional): Defaults to active scope
 
 **Returns:** The created monitoring event.
 
