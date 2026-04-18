@@ -23,7 +23,7 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 
 ## Phase 4: Workflow Docs
 
-- [ ] **11. Workflow Pages** - Read src/pretorin/cli/ workflow commands (campaigns, evidence, narratives, vendors) and compare against docs/src/workflows/ pages. Update workflows that have changed.
+- [x] **11. Workflow Pages** - Read src/pretorin/cli/ workflow commands (campaigns, evidence, narratives, vendors) and compare against docs/src/workflows/ pages. Update workflows that have changed.
 - [ ] **12. Changelog Sync** - Verify docs/src/reference/changelog.md matches CHANGELOG.md content. Ensure the latest version entry is present.
 - [ ] **13. Environment Variables** - Read all env var references in src/pretorin/ and compare against docs/src/reference/environment.md. Add missing vars, remove stale ones.
 
@@ -47,3 +47,4 @@ Reads the actual pretorin-cli codebase state and updates every doc file to match
 - **Task 8** (2ac883f): MCP Setup & Overview — updated overview.md tool count from 23 to 86; expanded category table from 5 to 13 categories with correct tool counts; added status://cli and workflow://recipe/{recipe_id} resources to resources.md; setup.md and troubleshooting.md verified accurate.
 - **Task 9** (6a1ad3f): Agent Docs — added stig-scan and cci-assessment skills to skills.md (6 total); fixed model key precedence in overview.md (config.api_key over OPENAI_API_KEY by default); added --max-turns, --no-mcp, short flags to overview.md; added --scope flag, http transport, and updated examples in runtime.md.
 - **Task 10** (e213ea1): Framework Docs — added Tier column and Framework Tiers section (foundational/operational/strategic) to supported.md; added enhancement ID formats (ac-02.1, ac-02(1)) and auto-normalization section to control-ids.md; selection.md verified accurate.
+- **Task 11** (6b15a06): Workflow Pages — fixed narrative-evidence.md push→push-file command; removed deprecated --references flag from gap-analysis.md and cross-framework.md (references now shown by default); added CLI commands (policy show/populate, scope show/populate) to policy-scope.md.
