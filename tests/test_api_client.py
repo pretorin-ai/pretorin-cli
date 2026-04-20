@@ -987,6 +987,7 @@ class TestEvidenceEndpoints:
                 name="Evidence A",
                 description="Desc A",
                 control_id="ac-2",
+                evidence_type="policy_document",
             ),
         ]
         result = await client.create_evidence_batch("sys-001", "nist-800-53-r5", items)

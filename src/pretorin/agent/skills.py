@@ -16,6 +16,12 @@ class Skill:
     max_turns: int = 15
 
 
+_EVIDENCE_TYPE_ENUM = (
+    "attestation|certificate|code_snippet|configuration|interview_notes|log_file|other|"
+    "policy_document|repository_link|scan_result|screen_recording|screenshot|test_result"
+)
+
+
 _WORKFLOW_GUARDRAILS = (
     "Workflow requirements:\n"
     "- Start from the active or provided execution scope first.\n"
@@ -30,12 +36,18 @@ _WORKFLOW_GUARDRAILS = (
     "- Evidence descriptions must include at least one rich markdown element.\n"
     "- Rich markdown elements: fenced code blocks, tables, lists, and links.\n"
     "- Do not include markdown images until platform-side image evidence upload support is available.\n"
+    "- Focus on concrete, auditable artifacts (config files, code modules, docs). When drafting evidence "
+    "recommendations, reference the specific file paths, configurations, or code patterns that support the "
+    "control. Do not summarize or paraphrase when a real artifact is available.\n"
+    "- An empty evidence_recommendations list is a valid and expected outcome when the workspace has no "
+    "observable artifact for this control. Describe the gap with a recommended note instead of fabricating "
+    "evidence to fill the shape.\n"
     "- For missing information, insert this exact narrative block:\n"
     "  [[PRETORIN_TODO]]\n"
     "  missing_item: <what is missing>\n"
     "  reason: Not observable from current workspace and connected MCP systems\n"
     "  required_manual_action: <what user must do on platform/integrations>\n"
-    "  suggested_evidence_type: <policy_document|configuration|...>\n"
+    f"  suggested_evidence_type: <{_EVIDENCE_TYPE_ENUM}>\n"
     "  [[/PRETORIN_TODO]]\n"
     "- Add one control note per unresolved gap in this exact format:\n"
     "  Gap: <short title>\n"

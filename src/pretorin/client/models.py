@@ -311,7 +311,7 @@ class EvidenceBatchItemCreate(BaseModel):
     name: str
     description: str
     control_id: str
-    evidence_type: str = Field(default="policy_document")
+    evidence_type: str
     relevance_notes: str | None = None
 
 

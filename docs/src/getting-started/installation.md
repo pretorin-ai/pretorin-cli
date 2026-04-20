@@ -43,7 +43,7 @@ pretorin version
 Expected output:
 
 ```
-pretorin version 0.15.4
+pretorin version 0.15.5
 ```
 
 ## Updating
