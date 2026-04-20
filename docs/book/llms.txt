@@ -1,0 +1,45 @@
+Pretorin Developer & Agent Docs
+Canonical docs base: https://pretorin-ai.github.io/pretorin-cli/
+Audience: developers and AI agents using Pretorin via the CLI, MCP, and skill-driven workflows.
+
+Start here:
+- Introduction: https://pretorin-ai.github.io/pretorin-cli/introduction.html
+- Installation: https://pretorin-ai.github.io/pretorin-cli/getting-started/installation.html
+- Authentication: https://pretorin-ai.github.io/pretorin-cli/getting-started/authentication.html
+- Quick Start: https://pretorin-ai.github.io/pretorin-cli/getting-started/quickstart.html
+
+High-value sections:
+- CLI command reference: https://pretorin-ai.github.io/pretorin-cli/cli/command-reference.html
+- MCP overview: https://pretorin-ai.github.io/pretorin-cli/mcp/overview.html
+- MCP setup: https://pretorin-ai.github.io/pretorin-cli/mcp/setup.html
+- MCP tools: https://pretorin-ai.github.io/pretorin-cli/mcp/tools.html
+- MCP resources: https://pretorin-ai.github.io/pretorin-cli/mcp/resources.html
+- MCP troubleshooting: https://pretorin-ai.github.io/pretorin-cli/mcp/troubleshooting.html
+- Agent overview: https://pretorin-ai.github.io/pretorin-cli/agent/overview.html
+- Skills: https://pretorin-ai.github.io/pretorin-cli/agent/skills.html
+- Runtime management: https://pretorin-ai.github.io/pretorin-cli/agent/runtime.html
+
+Key workflows:
+- Narrative and evidence workflow: https://pretorin-ai.github.io/pretorin-cli/workflows/narrative-evidence.html
+- Campaign workflows: https://pretorin-ai.github.io/pretorin-cli/workflows/campaigns.html
+- Policy and scope questionnaires: https://pretorin-ai.github.io/pretorin-cli/workflows/policy-scope.html
+- Vendor inheritance: https://pretorin-ai.github.io/pretorin-cli/workflows/vendor-inheritance.html
+- Gap analysis: https://pretorin-ai.github.io/pretorin-cli/workflows/gap-analysis.html
+- Gap analysis example: https://pretorin-ai.github.io/pretorin-cli/workflows/gap-analysis-example.html
+- Artifact generation: https://pretorin-ai.github.io/pretorin-cli/workflows/artifacts.html
+- Cross-framework mapping: https://pretorin-ai.github.io/pretorin-cli/workflows/cross-framework.html
+- STIG scanning: https://pretorin-ai.github.io/pretorin-cli/workflows/stig-scanning.html
+
+Reference:
+- Supported frameworks: https://pretorin-ai.github.io/pretorin-cli/frameworks/supported.html
+- Control ID formats: https://pretorin-ai.github.io/pretorin-cli/frameworks/control-ids.html
+- Framework selection guide: https://pretorin-ai.github.io/pretorin-cli/frameworks/selection.html
+- Environment variables: https://pretorin-ai.github.io/pretorin-cli/reference/environment.html
+- Artifact schema: https://pretorin-ai.github.io/pretorin-cli/reference/artifact-schema.html
+- Contributing: https://pretorin-ai.github.io/pretorin-cli/reference/contributing.html
+- Trademarks and service terms: https://pretorin-ai.github.io/pretorin-cli/reference/trademarks.html
+- Changelog: https://pretorin-ai.github.io/pretorin-cli/reference/changelog.html
+
+Notes:
+- The docs focus on CLI, MCP, skills, and workflows rather than raw API reference.
+- Pretorin-hosted platform access is authenticated and governed separately by platform terms.

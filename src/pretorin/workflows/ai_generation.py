@@ -87,6 +87,9 @@ def _dict_list(value: Any) -> list[dict[str, str]]:
 
 def _build_generation_task(system_id: str, system_name: str, framework_id: str, control_id: str) -> str:
     """Create a tightly-scoped drafting task for the Codex agent."""
+    from pretorin.mcp.helpers import VALID_EVIDENCE_TYPES
+
+    enum_list = "|".join(sorted(VALID_EVIDENCE_TYPES))
     return (
         f"Draft compliance artifacts for system {system_name} ({system_id}), "
         f"framework {framework_id}, control {control_id}.\n\n"
@@ -97,8 +100,9 @@ def _build_generation_task(system_id: str, system_name: str, framework_id: str, 
         '  "evidence_gap_assessment": "<auditor-ready markdown>",\n'
         '  "recommended_notes": ["<canonical gap note>", "..."],\n'
         '  "evidence_recommendations": [\n'
-        '    {"name": "<short title>", "evidence_type": "<policy_document|configuration|...>", '
-        '"description": "<auditor-ready markdown>"}\n'
+        '    {"name": "<short title>", "evidence_type": "'
+        + f"<{enum_list}>"
+        + '", "description": "<auditor-ready markdown>"}\n'
         "  ]\n"
         "}\n\n"
         "Requirements:\n"
@@ -109,7 +113,10 @@ def _build_generation_task(system_id: str, system_name: str, framework_id: str, 
         "- The evidence_gap_assessment must be auditor-ready markdown and include at least one table or list.\n"
         "- If important narrative details are missing, include the exact [[PRETORIN_TODO]] block format.\n"
         "- Each recommended note must use the exact Gap/Observed/Missing/Why missing/Manual next step format.\n"
-        "- Each evidence_recommendations.description must contain at least one rich markdown element and no headings."
+        "- Each evidence_recommendations.description must contain at least one rich markdown element and no headings.\n"
+        "- An empty evidence_recommendations list is a valid and expected result when no observable "
+        "workspace artifact supports this control. Describe every unverified gap in recommended_notes "
+        "instead of fabricating evidence to fill the shape."
     )
 
 

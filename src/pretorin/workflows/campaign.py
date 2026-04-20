@@ -845,11 +845,36 @@ def _successful_batch_result(result: dict[str, Any]) -> bool:
     return status in {"ok", "success", "created", "linked", "reused"}
 
 
-def _existing_evidence_indices(item_state: CampaignItemState) -> set[int]:
-    receipts = item_state.receipts.get("evidence_batch")
-    if not isinstance(receipts, list):
+def _evidence_indices_from_receipts(receipts: dict[str, Any]) -> set[int]:
+    entries = receipts.get("evidence_batch")
+    if not isinstance(entries, list):
         return set()
-    return {int(entry["index"]) for entry in receipts if isinstance(entry, dict) and "index" in entry}
+    return {int(entry["index"]) for entry in entries if isinstance(entry, dict) and "index" in entry}
+
+
+def _note_indices_from_receipts(receipts: dict[str, Any]) -> set[int]:
+    entries = receipts.get("recommended_notes")
+    if not isinstance(entries, list):
+        return set()
+    return {
+        int(entry["index"])
+        for entry in entries
+        if isinstance(entry, dict) and "index" in entry and str(entry.get("status", "")).lower() == "ok"
+    }
+
+
+def _existing_evidence_indices(item_state: CampaignItemState) -> set[int]:
+    return _evidence_indices_from_receipts(item_state.receipts)
+
+
+def _existing_note_indices(item_state: CampaignItemState) -> set[int]:
+    return _note_indices_from_receipts(item_state.receipts)
+
+
+def _is_valid_evidence_type(value: Any) -> bool:
+    from pretorin.mcp.helpers import VALID_EVIDENCE_TYPES
+
+    return isinstance(value, str) and value in VALID_EVIDENCE_TYPES
 
 
 async def _prepare_controls_context(
@@ -1288,6 +1313,8 @@ async def _apply_control_item(
     item_state: CampaignItemState,
     snapshot: WorkflowContextSnapshot,
 ) -> bool:
+    from pretorin.workflows.gap_notes import synthesize_gap_note
+
     system_id = str(snapshot.scope["system_id"])
     framework_id = str(snapshot.scope["framework_id"])
     proposal = item_state.proposal
@@ -1295,6 +1322,7 @@ async def _apply_control_item(
     changed_parts: list[str] = []
     changed = False
 
+    # 1. Narrative
     if request.artifacts in {"narratives", "both"} and proposal.get("narrative_draft") and "narrative" not in receipts:
         await client.update_narrative(
             system_id=system_id,
@@ -1307,40 +1335,145 @@ async def _apply_control_item(
         changed = True
         changed_parts.append("narrative")
 
+    # 2. Classify evidence recommendations.
     evidence_recommendations = proposal.get("evidence_recommendations") or []
-    existing_indices = _existing_evidence_indices(item_state)
-    batch_items = [
-        EvidenceBatchItemCreate(
-            name=str(rec["name"]),
-            description=str(rec["description"]),
-            control_id=item.item_id,
-            evidence_type=str(rec.get("evidence_type", "policy_document")),
-        )
-        for index, rec in enumerate(evidence_recommendations)
-        if isinstance(rec, dict) and request.artifacts in {"evidence", "both"} and index not in existing_indices
-    ]
-    if batch_items:
+    existing_evidence_indices = _existing_evidence_indices(item_state)
+    accepted: list[tuple[int, dict[str, Any]]] = []
+    synthesized_notes: list[str] = []
+    rejected_missing_type = 0
+    rejected_invalid_type = 0
+    rejected_malformed = 0
+    types_used: dict[str, int] = {}
+    write_evidence = request.artifacts in {"evidence", "both"}
+
+    for index, rec in enumerate(evidence_recommendations):
+        if index in existing_evidence_indices:
+            continue
+        if not write_evidence:
+            continue
+        if not isinstance(rec, dict) or not rec.get("name") or not rec.get("description"):
+            rejected_malformed += 1
+            synthesized_notes.append(
+                synthesize_gap_note(
+                    rec if isinstance(rec, dict) else {},
+                    reason="AI returned a recommendation without a usable name or description",
+                )
+            )
+            continue
+        evidence_type = rec.get("evidence_type")
+        if not evidence_type:
+            rejected_missing_type += 1
+            synthesized_notes.append(synthesize_gap_note(rec, reason="AI did not specify an evidence_type"))
+            continue
+        if not _is_valid_evidence_type(evidence_type):
+            rejected_invalid_type += 1
+            synthesized_notes.append(
+                synthesize_gap_note(
+                    rec,
+                    reason=f"AI proposed unknown evidence_type '{evidence_type}'",
+                )
+            )
+            continue
+        types_used[str(evidence_type)] = types_used.get(str(evidence_type), 0) + 1
+        accepted.append((index, rec))
+
+    # 3. Notes — AI-authored `recommended_notes` first, then synthesized rejection notes.
+    ai_notes = [str(note) for note in (proposal.get("recommended_notes") or []) if note]
+    all_notes = ai_notes + synthesized_notes
+    note_receipts_raw = receipts.get("recommended_notes", [])
+    note_receipts: list[dict[str, Any]] = list(note_receipts_raw) if isinstance(note_receipts_raw, list) else []
+    applied_note_indices = _existing_note_indices(item_state)
+    failed_note_indexes: list[int] = []
+    notes_written_this_run = 0
+    for note_index, note_content in enumerate(all_notes):
+        if note_index in applied_note_indices:
+            continue
+        try:
+            note_result = await client.add_control_note(
+                system_id=system_id,
+                control_id=item.item_id,
+                framework_id=framework_id,
+                content=note_content,
+                source="cli",
+            )
+            note_receipts.append(
+                {
+                    "index": note_index,
+                    "applied_at": _utcnow(),
+                    "status": "ok",
+                    "note_id": _safe_json_dict(note_result).get("id"),
+                }
+            )
+            changed = True
+            notes_written_this_run += 1
+        except PretorianClientError as exc:
+            note_receipts.append(
+                {
+                    "index": note_index,
+                    "applied_at": _utcnow(),
+                    "status": "error",
+                    "error": str(exc),
+                }
+            )
+            failed_note_indexes.append(note_index)
+    receipts["recommended_notes"] = note_receipts
+    if notes_written_this_run or synthesized_notes:
+        changed_parts.append("notes")
+    if failed_note_indexes:
+        raise PretorianClientError(f"Control notes partially failed for {item.item_id}: indexes {failed_note_indexes}")
+
+    # 4. Evidence batch (accepted items only).
+    if accepted and write_evidence:
+        batch_items = [
+            EvidenceBatchItemCreate(
+                name=str(rec["name"]),
+                description=str(rec["description"]),
+                control_id=item.item_id,
+                evidence_type=str(rec["evidence_type"]),
+            )
+            for _, rec in accepted
+        ]
         batch_result = await client.create_evidence_batch(system_id, framework_id, batch_items)
-        prior_results = receipts.get("evidence_batch", [])
-        if not isinstance(prior_results, list):
-            prior_results = []
+        if len(batch_result.results) != len(accepted):
+            raise PretorianClientError(
+                f"Evidence batch result length mismatch for {item.item_id}: "
+                f"sent {len(accepted)} items, got {len(batch_result.results)} results"
+            )
+        prior_results_raw = receipts.get("evidence_batch", [])
+        prior_results: list[dict[str, Any]] = list(prior_results_raw) if isinstance(prior_results_raw, list) else []
         failed_indexes: list[int] = []
-        pending_indexes = [idx for idx in range(len(evidence_recommendations)) if idx not in existing_indices]
         for offset, batch_item_result in enumerate(batch_result.results):
-            index = pending_indexes[offset]
+            original_index = accepted[offset][0]
             result_payload = batch_item_result.model_dump(mode="json")
-            result_payload["index"] = index
+            result_payload["index"] = original_index
             if _successful_batch_result(result_payload):
                 prior_results.append(result_payload)
                 changed = True
             else:
-                failed_indexes.append(index)
+                failed_indexes.append(original_index)
         receipts["evidence_batch"] = prior_results
         if failed_indexes:
             raise PretorianClientError(f"Evidence batch partially failed for {item.item_id}: indexes {failed_indexes}")
         changed_parts.append("evidence")
 
-    if changed and "completion_note" not in receipts:
+    # 5. Completion note — fire when all applicable work is done, even if this run only
+    # completed the final piece. `changed` flag alone would miss resumes where the last
+    # pending step finishes with no new work left.
+    # "Done" means every item that was supposed to land has a successful receipt. We use
+    # set cardinality (accepted this run ∪ accepted on prior runs) so malformed/rejected
+    # items can't leave evidence_done stuck at False.
+    expected_written = len(accepted) + len(existing_evidence_indices)
+    completed_evidence = len(_evidence_indices_from_receipts(receipts))
+    all_notes_applied = len(_note_indices_from_receipts(receipts)) == len(all_notes)
+    narrative_done = (
+        request.artifacts not in {"narratives", "both"}
+        or not proposal.get("narrative_draft")
+        or "narrative" in receipts
+    )
+    evidence_done = not write_evidence or completed_evidence == expected_written
+    all_work_done = narrative_done and evidence_done and all_notes_applied
+
+    if all_work_done and "completion_note" not in receipts and changed_parts:
         note_result = await client.add_control_note(
             system_id=system_id,
             control_id=item.item_id,
@@ -1349,7 +1482,23 @@ async def _apply_control_item(
             source="cli",
         )
         receipts["completion_note"] = _safe_json_dict(note_result)
-        changed_parts.append("note")
+        changed = True
+
+    # 6. Telemetry — structured line for post-ship measurement of the issue #77 fix.
+    logger.info(
+        "campaign.apply.control",
+        extra={
+            "item_id": item.item_id,
+            "mode": request.mode,
+            "accepted": len(accepted),
+            "rejected_missing_type": rejected_missing_type,
+            "rejected_invalid_type": rejected_invalid_type,
+            "rejected_malformed": rejected_malformed,
+            "ai_notes_written": min(len(ai_notes), notes_written_this_run),
+            "synthesized_notes_written": len(synthesized_notes),
+            "types_used": types_used,
+        },
+    )
 
     item_state.receipts = _safe_json(receipts)
     return changed

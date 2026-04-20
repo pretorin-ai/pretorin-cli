@@ -31,12 +31,14 @@ async def _draft_control_fix(
     working_directory: Path,
 ) -> dict[str, Any]:
     from pretorin.agent.codex_agent import CodexAgent
+    from pretorin.mcp.helpers import VALID_EVIDENCE_TYPES
     from pretorin.workflows.ai_generation import _dict_list, _extract_json_object, _string_list
 
     context = await client.get_control_context(system_id, control_id, framework_id)
     implementation = await client.get_control_implementation(system_id, control_id, framework_id)
     notes = await client.list_control_notes(system_id, control_id, framework_id)
     evidence = await client.list_evidence(system_id, framework_id, control_id=control_id, limit=50)
+    enum_list = "|".join(sorted(VALID_EVIDENCE_TYPES))
     task = (
         f"Update control {control_id} for system {system_id} in framework {framework_id}.\n\n"
         "You are remediating existing platform workflow findings or notes. "
@@ -47,10 +49,15 @@ async def _draft_control_fix(
         '  "evidence_gap_assessment": "<markdown or null>",\n'
         '  "recommended_notes": ["<plain text note>", "..."],\n'
         '  "evidence_recommendations": [\n'
-        '    {"name": "<short title>", "evidence_type": "<policy_document|configuration|other>", '
-        '"description": "<auditor-ready markdown>"}\n'
+        '    {"name": "<short title>", "evidence_type": "'
+        + f"<{enum_list}>"
+        + '", "description": "<auditor-ready markdown>"}\n'
         "  ]\n"
         "}\n\n"
+        "Rules:\n"
+        "- An empty evidence_recommendations list is a valid and expected result when no observable "
+        "workspace artifact supports this control. Use recommended_notes to describe each unverified gap "
+        "rather than fabricating evidence to fill the shape.\n\n"
         "Instructions:\n"
         f"{instruction_block}\n\n"
         "Control context JSON:\n"

@@ -82,6 +82,7 @@ class TestProvenanceInjection:
                 name="item1",
                 description="desc1",
                 control_id="ac-02",
+                evidence_type="policy_document",
             )
         ]
         await client.create_evidence_batch("sys-1", "fw-1", items)
