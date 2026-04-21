@@ -1340,7 +1340,7 @@ async def _apply_control_item(
     existing_evidence_indices = _existing_evidence_indices(item_state)
     accepted: list[tuple[int, dict[str, Any]]] = []
     synthesized_notes: list[str] = []
-    rejected_missing_type = 0
+    defaulted_missing_type = 0
     rejected_invalid_type = 0
     rejected_malformed = 0
     types_used: dict[str, int] = {}
@@ -1362,9 +1362,12 @@ async def _apply_control_item(
             continue
         evidence_type = rec.get("evidence_type")
         if not evidence_type:
-            rejected_missing_type += 1
-            synthesized_notes.append(synthesize_gap_note(rec, reason="AI did not specify an evidence_type"))
-            continue
+            # Safety net: missing type shouldn't drop otherwise-valid evidence. Flood
+            # prevention is handled by the prompt ("evidence_type REQUIRED") + the
+            # invalid-type rejection below, not by requiring the field at validation.
+            defaulted_missing_type += 1
+            evidence_type = "policy_document"
+            rec["evidence_type"] = evidence_type
         if not _is_valid_evidence_type(evidence_type):
             rejected_invalid_type += 1
             synthesized_notes.append(
@@ -1491,7 +1494,7 @@ async def _apply_control_item(
             "item_id": item.item_id,
             "mode": request.mode,
             "accepted": len(accepted),
-            "rejected_missing_type": rejected_missing_type,
+            "defaulted_missing_type": defaulted_missing_type,
             "rejected_invalid_type": rejected_invalid_type,
             "rejected_malformed": rejected_malformed,
             "ai_notes_written": min(len(ai_notes), notes_written_this_run),
