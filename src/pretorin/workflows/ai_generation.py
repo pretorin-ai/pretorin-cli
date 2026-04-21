@@ -93,8 +93,14 @@ def _build_generation_task(system_id: str, system_name: str, framework_id: str, 
     return (
         f"Draft compliance artifacts for system {system_name} ({system_id}), "
         f"framework {framework_id}, control {control_id}.\n\n"
-        "Use Pretorin tools first to read current control context, current narrative, evidence, and notes. "
-        "Do not write anything back to the platform. Return ONLY valid JSON with this exact shape:\n"
+        "Step 1 — Read current platform state via Pretorin tools: control context, current narrative, "
+        "evidence, and notes.\n"
+        "Step 2 — Actively explore the working directory for concrete artifacts that back this control. "
+        "Grep for relevant config keys, read modules and docs, inspect CI/CD files. Do NOT skip this step; "
+        "an empty evidence_recommendations list is only valid AFTER you have searched the workspace and "
+        "found nothing. Platform state alone is not enough to conclude the workspace is empty.\n"
+        "Step 3 — Draft artifacts. Do not write anything back to the platform. "
+        "Return ONLY valid JSON with this exact shape:\n"
         "{\n"
         '  "narrative_draft": "<auditor-ready markdown>",\n'
         '  "evidence_gap_assessment": "<auditor-ready markdown>",\n'
@@ -106,7 +112,7 @@ def _build_generation_task(system_id: str, system_name: str, framework_id: str, 
         "  ]\n"
         "}\n\n"
         "Requirements:\n"
-        "- Use only observable facts from Pretorin tools and mark unknowns explicitly.\n"
+        "- Use only observable facts from Pretorin tools and the workspace. Mark unknowns explicitly.\n"
         "- Use zero-padded control IDs (for example, ac-02).\n"
         "- The narrative_draft must be auditor-ready markdown with no headings, at least two rich elements, "
         "and at least one structural element.\n"
@@ -114,9 +120,11 @@ def _build_generation_task(system_id: str, system_name: str, framework_id: str, 
         "- If important narrative details are missing, include the exact [[PRETORIN_TODO]] block format.\n"
         "- Each recommended note must use the exact Gap/Observed/Missing/Why missing/Manual next step format.\n"
         "- Each evidence_recommendations.description must contain at least one rich markdown element and no headings.\n"
-        "- An empty evidence_recommendations list is a valid and expected result when no observable "
-        "workspace artifact supports this control. Describe every unverified gap in recommended_notes "
-        "instead of fabricating evidence to fill the shape."
+        f"- evidence_type is REQUIRED on every evidence_recommendations entry and must be exactly one of: {enum_list}. "
+        "If you cannot pick a type, omit the entry and describe the gap in recommended_notes instead.\n"
+        "- An empty evidence_recommendations list is a valid and expected result ONLY after Step 2 confirms "
+        "no observable workspace artifact supports this control. Describe every unverified gap in "
+        "recommended_notes instead of fabricating evidence to fill the shape."
     )
 
 

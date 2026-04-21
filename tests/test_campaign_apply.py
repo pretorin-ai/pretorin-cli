@@ -65,9 +65,7 @@ def _state(proposal: dict[str, Any] | None = None, receipts: dict[str, Any] | No
 def _mock_client(batch_results: list[EvidenceBatchItemResult] | None = None) -> MagicMock:
     client = MagicMock()
     client.update_narrative = AsyncMock(return_value=None)
-    client.add_control_note = AsyncMock(
-        side_effect=lambda **_kwargs: {"id": f"note-{id(_kwargs):x}"}
-    )
+    client.add_control_note = AsyncMock(side_effect=lambda **_kwargs: {"id": f"note-{id(_kwargs):x}"})
     client.create_evidence_batch = AsyncMock(
         return_value=EvidenceBatchResponse(
             framework_id="fedramp-moderate",
@@ -111,21 +109,23 @@ def test_recommended_notes_become_platform_notes() -> None:
     assert "completion_note" in state.receipts
 
 
-def test_missing_evidence_type_becomes_synthesized_gap_note() -> None:
+def test_missing_evidence_type_defaults_to_policy_document() -> None:
     proposal = {
         "evidence_recommendations": [
             {"name": "SSO config", "description": "Some summary", "evidence_type": None},
         ],
     }
     state = _state(proposal)
-    client = _mock_client(batch_results=[])
+    client = _mock_client(batch_results=[_ok_result(0)])
 
     asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
 
-    client.create_evidence_batch.assert_not_called()
-    # 1 synthesized gap note + 1 completion note.
-    assert client.add_control_note.await_count == 2
-    assert state.receipts["recommended_notes"][0]["status"] == "ok"
+    # Safety net: missing evidence_type defaults rather than dropping the item.
+    batch_items = client.create_evidence_batch.await_args.args[2]
+    assert [item.name for item in batch_items] == ["SSO config"]
+    assert batch_items[0].evidence_type == "policy_document"
+    # No synthesized gap note for the missing-type case; only the completion note.
+    assert client.add_control_note.await_count == 1
 
 
 def test_invalid_evidence_type_becomes_synthesized_gap_note() -> None:
@@ -146,7 +146,7 @@ def test_invalid_evidence_type_becomes_synthesized_gap_note() -> None:
 
 
 def test_mixed_accept_reject_preserves_original_indexes() -> None:
-    # Five recs: indexes 0/3 valid, 1 missing type, 2 invalid type, 4 valid.
+    # Five recs: indexes 0/3/4 valid, 1 missing type (defaulted), 2 invalid type (rejected).
     proposal = {
         "evidence_recommendations": [
             {"name": "n0", "description": "d", "evidence_type": "configuration"},
@@ -157,22 +157,22 @@ def test_mixed_accept_reject_preserves_original_indexes() -> None:
         ],
     }
     state = _state(proposal)
-    client = _mock_client(batch_results=[_ok_result(0), _ok_result(1), _ok_result(2)])
+    client = _mock_client(batch_results=[_ok_result(0), _ok_result(1), _ok_result(2), _ok_result(3)])
 
     asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
 
-    # Batch received exactly the 3 accepted items, in order 0, 3, 4.
+    # Batch received 4 items — index 1 defaults to policy_document; index 2 is rejected.
     batch_call = client.create_evidence_batch.await_args
     batch_items = batch_call.args[2]
-    assert [item.name for item in batch_items] == ["n0", "n3", "n4"]
+    assert [item.name for item in batch_items] == ["n0", "n1", "n3", "n4"]
+    assert batch_items[1].evidence_type == "policy_document"
 
     # Receipts remap offsets back to original indexes.
     receipt_indexes = sorted(r["index"] for r in state.receipts["evidence_batch"])
-    assert receipt_indexes == [0, 3, 4]
+    assert receipt_indexes == [0, 1, 3, 4]
 
-    # Two synthesized gap notes were written (for indexes 1 and 2).
-    # Plus a completion note at the end → 3 add_control_note calls total.
-    assert client.add_control_note.await_count == 3
+    # One synthesized gap note (for invalid-type index 2) + one completion note.
+    assert client.add_control_note.await_count == 2
 
 
 def test_resume_skips_already_applied_notes() -> None:
@@ -211,9 +211,7 @@ def test_evidence_batch_length_mismatch_raises() -> None:
 
 
 def test_empty_proposal_writes_nothing() -> None:
-    state = _state(
-        {"evidence_recommendations": [], "recommended_notes": [], "narrative_draft": None}
-    )
+    state = _state({"evidence_recommendations": [], "recommended_notes": [], "narrative_draft": None})
     client = _mock_client(batch_results=[])
 
     changed = asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))

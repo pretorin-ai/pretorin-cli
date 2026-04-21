@@ -41,9 +41,13 @@ async def _draft_control_fix(
     enum_list = "|".join(sorted(VALID_EVIDENCE_TYPES))
     task = (
         f"Update control {control_id} for system {system_id} in framework {framework_id}.\n\n"
-        "You are remediating existing platform workflow findings or notes. "
-        "Read the provided control context, current implementation, notes, and evidence. "
-        "Return ONLY valid JSON with this exact shape:\n"
+        "You are remediating existing platform workflow findings or notes.\n"
+        "Step 1 — Read the provided control context, current implementation, notes, and evidence.\n"
+        "Step 2 — Actively explore the working directory for concrete artifacts that back this control. "
+        "Grep for relevant config keys, read modules and docs, inspect CI/CD files. Do NOT skip this step; "
+        "an empty evidence_recommendations list is only valid AFTER you have searched the workspace and "
+        "found nothing.\n"
+        "Step 3 — Return ONLY valid JSON with this exact shape:\n"
         "{\n"
         '  "narrative_draft": "<auditor-ready markdown or null>",\n'
         '  "evidence_gap_assessment": "<markdown or null>",\n'
@@ -55,9 +59,11 @@ async def _draft_control_fix(
         "  ]\n"
         "}\n\n"
         "Rules:\n"
-        "- An empty evidence_recommendations list is a valid and expected result when no observable "
-        "workspace artifact supports this control. Use recommended_notes to describe each unverified gap "
-        "rather than fabricating evidence to fill the shape.\n\n"
+        f"- evidence_type is REQUIRED on every evidence_recommendations entry and must be exactly one of: {enum_list}. "
+        "If you cannot pick a type, omit the entry and describe the gap in recommended_notes instead.\n"
+        "- An empty evidence_recommendations list is a valid and expected result ONLY after Step 2 confirms "
+        "no observable workspace artifact supports this control. Use recommended_notes to describe each "
+        "unverified gap rather than fabricating evidence to fill the shape.\n\n"
         "Instructions:\n"
         f"{instruction_block}\n\n"
         "Control context JSON:\n"
