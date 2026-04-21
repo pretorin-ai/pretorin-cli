@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7f15c34b.js";
+            window.path_to_searchindex_js = "../searchindex-1bee8e16.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -183,6 +183,10 @@
                         <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>All notable changes to the Pretorin CLI are documented here. The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <h2 id="0160---2026-04-21"><a class="header" href="#0160---2026-04-21">[0.16.0] - 2026-04-21</a></h2>
+<h3 id="changed-breaking"><a class="header" href="#changed-breaking">Changed (BREAKING)</a></h3>
+<ul>
+<li><code>evidence_type</code> is now required on every CLI, MCP, agent, and workflow write path (#79). CLI paths hard-error when the user omits <code>-t/--type</code>; every other path runs a client-side normalizer before submission.</li>
+</ul>
 <h3 id="added"><a class="header" href="#added">Added</a></h3>
 <ul>
 <li><strong>Evidence provenance fields</strong>: CLI sends <code>code_file_path</code>, <code>code_line_numbers</code>, <code>code_snippet</code>, <code>code_repository</code>, <code>code_commit_hash</code> on all evidence creation paths. Auditors can trace evidence to source files and commits.</li>
@@ -191,6 +195,7 @@
 <li><strong><code>pretorin_upload_evidence</code> MCP tool</strong>: Agents and recipes can upload evidence files via MCP.</li>
 <li><strong>File reference validation</strong>: Campaign apply reads actual file content as canonical snippet, validates paths and line ranges.</li>
 <li><strong>Code provenance on local evidence</strong>: Frontmatter supports code_* fields for local evidence create and push.</li>
+<li><code>pretorin.evidence.types</code> module: canonical 13-type enum, AI-drift alias map, and <code>normalize_evidence_type()</code> with fuzzy matching.</li>
 </ul>
 <h3 id="changed"><a class="header" href="#changed">Changed</a></h3>
 <ul>
@@ -198,8 +203,13 @@
 <li><code>upsert_evidence()</code> creates enriched evidence as new record when provenance fields are provided.</li>
 <li>AI generation prompt requests code file paths and line numbers in evidence recommendations.</li>
 </ul>
-<h2 id="0155---2026-04-20"><a class="header" href="#0155---2026-04-20"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.4...v0.15.5">0.15.5</a> - 2026-04-20</a></h2>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
+<ul>
+<li>SOC2 campaign batches with non-canonical <code>evidence_type</code> strings now succeed end-to-end via the normalizer.</li>
+<li>Non-campaign write paths can no longer silently tag missing-type evidence as <code>policy_document</code>.</li>
+</ul>
+<h2 id="0155---2026-04-20"><a class="header" href="#0155---2026-04-20"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.4...v0.15.5">0.15.5</a> - 2026-04-20</a></h2>
+<h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
 <ul>
 <li>Campaign <code>--apply</code> runs no longer flood the evidence locker with AI-authored summaries typed as <code>policy_document</code> (issue #77). The pipeline now wires <code>recommended_notes</code> through to the platform as real gap notes, rejects evidence recommendations with missing or invalid <code>evidence_type</code> (turning them into synthesized gap notes), and emits a structured <code>campaign.apply.control</code> telemetry line for post-ship measurement.</li>
 <li>Partial failures in the per-control notes write now raise <code>PretorianClientError</code> with the failing indexes, mirroring the existing evidence-batch behavior so checkpoint resumes are idempotent.</li>
@@ -221,7 +231,7 @@
 </ul>
 <hr>
 <h2 id="0153---2026-04-18"><a class="header" href="#0153---2026-04-18"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.2...v0.15.3">0.15.3</a> - 2026-04-18</a></h2>
-<h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
+<h3 id="fixed-2"><a class="header" href="#fixed-2">Fixed</a></h3>
 <ul>
 <li><code>pretorin update</code> now checks PyPI before running pip, skipping reinstall when already current</li>
 <li><code>pretorin update</code> verifies the installed version after pip runs, detecting silent failures in pipx/uv-managed environments</li>
@@ -268,7 +278,7 @@
 <li>Agent guidance now tells built-in workflows to resolve an exact user-supplied control in the active framework before doing broader discovery</li>
 <li><code>pretorin mcp-serve</code> now emits a non-blocking stderr update prompt when a newer CLI release is available, so MCP-only users can discover upgrades without interrupting active tool calls</li>
 </ul>
-<h3 id="fixed-2"><a class="header" href="#fixed-2">Fixed</a></h3>
+<h3 id="fixed-3"><a class="header" href="#fixed-3">Fixed</a></h3>
 <ul>
 <li><code>apply_campaign</code> now reports <code>apply: true</code> after a successful apply run and persists that state back to the checkpoint summary</li>
 <li>Stored active context and campaign checkpoints are now validated against the current API environment before campaign reads or writes proceed</li>
@@ -325,7 +335,7 @@
 </ul>
 <hr>
 <h2 id="097---2026-03-25"><a class="header" href="#097---2026-03-25"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.7...v0.9.7">0.9.7</a> - 2026-03-25</a></h2>
-<h3 id="fixed-3"><a class="header" href="#fixed-3">Fixed</a></h3>
+<h3 id="fixed-4"><a class="header" href="#fixed-4">Fixed</a></h3>
 <ul>
 <li>Aligned CLI control status validation with the live platform status enum set, including <code>partially_implemented</code></li>
 <li>Aligned MCP control status validation with the live platform status enum set to match public API behavior</li>
@@ -354,12 +364,12 @@
 <ul>
 <li><code>context show</code> caches the last known system name so offline and stale context output stays human-friendly</li>
 </ul>
-<h3 id="fixed-4"><a class="header" href="#fixed-4">Fixed</a></h3>
+<h3 id="fixed-5"><a class="header" href="#fixed-5">Fixed</a></h3>
 <ul>
 <li><code>context show</code> validates stored context against the platform instead of silently treating deleted systems as active</li>
 </ul>
 <h2 id="085---2026-03-23"><a class="header" href="#085---2026-03-23"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.0...v0.8.5">0.8.5</a> - 2026-03-23</a></h2>
-<h3 id="fixed-5"><a class="header" href="#fixed-5">Fixed</a></h3>
+<h3 id="fixed-6"><a class="header" href="#fixed-6">Fixed</a></h3>
 <ul>
 <li>Reset active system/framework context when logging into a different API endpoint or with a different API key</li>
 <li>Model API base URL now follows the configured platform public API endpoint during login</li>
@@ -378,7 +388,7 @@
 <li>Codex Desktop MCP configuration can be pinned to the UV-managed Pretorin wrapper</li>
 </ul>
 <h2 id="070---2026-03-07"><a class="header" href="#070---2026-03-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.1...v0.7.0">0.7.0</a> - 2026-03-07</a></h2>
-<h3 id="fixed-6"><a class="header" href="#fixed-6">Fixed</a></h3>
+<h3 id="fixed-7"><a class="header" href="#fixed-7">Fixed</a></h3>
 <ul>
 <li>Control implementation parsing tolerant of <code>notes: null</code> deployments</li>
 <li>Compatibility fallback for control note reads when <code>/notes</code> endpoint returns <code>405</code></li>
@@ -390,7 +400,7 @@
 <li>MCP and legacy agent evidence search tools accept optional <code>system_id</code> context</li>
 </ul>
 <h2 id="061---2026-03-05"><a class="header" href="#061---2026-03-05"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.0...v0.6.1">0.6.1</a> - 2026-03-05</a></h2>
-<h3 id="fixed-7"><a class="header" href="#fixed-7">Fixed</a></h3>
+<h3 id="fixed-8"><a class="header" href="#fixed-8">Fixed</a></h3>
 <ul>
 <li>Added required MCP registry ownership marker for PyPI validation</li>
 </ul>
@@ -432,13 +442,13 @@
 <li>Automatic control status updates from CLI evidence push workflow</li>
 </ul>
 <h2 id="053---2026-03-02"><a class="header" href="#053---2026-03-02"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.2...v0.5.3">0.5.3</a> - 2026-03-02</a></h2>
-<h3 id="fixed-8"><a class="header" href="#fixed-8">Fixed</a></h3>
+<h3 id="fixed-9"><a class="header" href="#fixed-9">Fixed</a></h3>
 <ul>
 <li>CI lint failure formatting</li>
 <li>CLI model key precedence: <code>OPENAI_API_KEY</code> → <code>config.api_key</code> → <code>config.openai_api_key</code></li>
 </ul>
 <h2 id="052---2026-02-27"><a class="header" href="#052---2026-02-27"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.0...v0.5.2">0.5.2</a> - 2026-02-27</a></h2>
-<h3 id="fixed-9"><a class="header" href="#fixed-9">Fixed</a></h3>
+<h3 id="fixed-10"><a class="header" href="#fixed-10">Fixed</a></h3>
 <ul>
 <li>Rich markup <code>MarkupError</code> crash in login flow</li>
 <li>Evidence type mismatch (<code>documentation</code> → <code>policy_document</code>)</li>

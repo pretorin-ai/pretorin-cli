@@ -13,6 +13,7 @@ from typing import Any
 from pretorin.cli.context import resolve_execution_context
 from pretorin.client.api import PretorianClient
 from pretorin.client.models import EvidenceBatchItemCreate
+from pretorin.evidence.types import normalize_evidence_type
 from pretorin.scope import ExecutionScope
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.compliance_updates import upsert_evidence
@@ -276,8 +277,8 @@ def create_platform_tools(
     async def create_evidence(
         name: str,
         description: str,
+        evidence_type: str,
         system_id: str | None = None,
-        evidence_type: str = "policy_document",
         control_id: str | None = None,
         framework_id: str | None = None,
         dedupe: bool = True,
@@ -293,12 +294,14 @@ def create_platform_tools(
             normalized_control_id = _normalize(control_id)
             if normalized_control_id:
                 await client.get_control(resolved_framework_id, normalized_control_id)
+            # Issue #79: normalize AI-drift evidence_type values before upsert.
+            normalized_type = normalize_evidence_type(evidence_type).value
             result = await upsert_evidence(
                 client,
                 system_id=resolved_system_id,
                 name=name,
                 description=description,
-                evidence_type=evidence_type,
+                evidence_type=normalized_type,
                 control_id=normalized_control_id,
                 framework_id=resolved_framework_id,
                 source="cli",
@@ -326,7 +329,13 @@ def create_platform_tools(
                             "(code block, table, list, or link). Images are not allowed yet."
                         ),
                     },
-                    "evidence_type": {"type": "string", "description": "Type of evidence"},
+                    "evidence_type": {
+                        "type": "string",
+                        "description": (
+                            "Type of evidence (required). Must be one of the canonical values; common aliases "
+                            "and typos are normalized client-side before submission."
+                        ),
+                    },
                     "control_id": {"type": "string", "description": "Associated control"},
                     "framework_id": {"type": "string", "description": "Framework ID (defaults to active scope)"},
                     "dedupe": {"type": "boolean", "description": "Reuse exact-matching evidence", "default": True},
@@ -336,7 +345,7 @@ def create_platform_tools(
                         "default": False,
                     },
                 },
-                "required": ["name", "description"],
+                "required": ["name", "description", "evidence_type"],
             },
             handler=create_evidence,
         )
@@ -354,12 +363,13 @@ def create_platform_tools(
             enforce_active_context=True,
             allow_scope_override=allow_scope_override,
         )
+        # Issue #79: normalize AI-drift evidence_type per item before pydantic.
         payload_items = [
             EvidenceBatchItemCreate(
                 name=item["name"],
                 description=item["description"],
                 control_id=_normalize(str(item["control_id"])) or str(item["control_id"]),
-                evidence_type=str(item.get("evidence_type", "policy_document")),
+                evidence_type=normalize_evidence_type(item.get("evidence_type")).value,
                 relevance_notes=item.get("relevance_notes"),
             )
             for item in items

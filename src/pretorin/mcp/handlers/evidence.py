@@ -9,14 +9,13 @@ from mcp.types import CallToolResult, TextContent
 
 from pretorin.client import PretorianClient
 from pretorin.client.models import EvidenceBatchItemCreate
+from pretorin.evidence.types import normalize_evidence_type
 from pretorin.mcp.helpers import (
-    VALID_EVIDENCE_TYPES,
     format_error,
     format_json,
     require,
     resolve_execution_scope,
     safe_args,
-    validate_enum,
 )
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.compliance_updates import upsert_evidence
@@ -66,14 +65,13 @@ async def handle_create_evidence(
 ) -> list[TextContent] | CallToolResult:
     """Handle the create_evidence tool."""
     logger.debug("handle_create_evidence called with %s", _safe_args(arguments))
-    err = require(arguments, "name", "description")
+    err = require(arguments, "name", "description", "evidence_type")
     if err:
         return format_error(err)
 
-    evidence_type = arguments.get("evidence_type", "policy_document")
-    enum_err = validate_enum(evidence_type, VALID_EVIDENCE_TYPES, "evidence_type")
-    if enum_err:
-        return format_error(enum_err)
+    # Issue #79: run AI-drift normalizer before the payload hits pydantic.
+    # Canonical values pass straight through; aliases and typos are mapped.
+    evidence_type = normalize_evidence_type(arguments.get("evidence_type")).value
 
     dedupe = arguments.get("dedupe", True)
     system_id, framework_id, normalized_control_id = await resolve_execution_scope(
@@ -125,10 +123,10 @@ async def handle_create_evidence_batch(
     items = arguments.get("items", [])
     payload_items = []
     for item in items:
-        evidence_type = item.get("evidence_type", "policy_document")
-        enum_err = validate_enum(evidence_type, VALID_EVIDENCE_TYPES, "evidence_type")
-        if enum_err:
-            return format_error(enum_err)
+        # Issue #79: normalize possibly-AI-generated evidence_type (aliases
+        # and typos -> canonical; unknown or missing -> "other"). Pydantic
+        # then enum-validates as the last-line defense.
+        evidence_type = normalize_evidence_type(item.get("evidence_type")).value
         payload_items.append(
             EvidenceBatchItemCreate(
                 name=item["name"],

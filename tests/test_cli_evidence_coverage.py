@@ -65,6 +65,8 @@ def test_evidence_create_json_mode() -> None:
                 "fedramp-moderate",
                 "--description",
                 "- RBAC configuration in Kubernetes",
+                "--type",
+                "configuration",
             ],
         )
 
@@ -120,6 +122,8 @@ def test_evidence_create_name_defaults_to_description() -> None:
                 "fedramp-moderate",
                 "--description",
                 "- RBAC config",
+                "--type",
+                "configuration",
             ],
         )
 
@@ -520,6 +524,8 @@ def test_evidence_upsert_success_json() -> None:
                 "- Role mapping\n\n`kubectl get roles`\n",
                 "--system",
                 "Primary",
+                "--type",
+                "configuration",
             ],
         )
 
@@ -566,6 +572,8 @@ def test_evidence_upsert_success_normal_mode() -> None:
                 "- Role mapping\n\n`kubectl get roles`\n",
                 "--system",
                 "Primary",
+                "--type",
+                "configuration",
             ],
         )
 
@@ -609,6 +617,8 @@ def test_evidence_upsert_link_error_shows_warning() -> None:
                 "- Role mapping\n\n`kubectl get roles`\n",
                 "--system",
                 "Primary",
+                "--type",
+                "configuration",
             ],
         )
 
@@ -674,6 +684,8 @@ def test_evidence_upsert_value_error_from_markdown_quality() -> None:
                 "plain text only",
                 "--system",
                 "Primary",
+                "--type",
+                "configuration",
             ],
         )
 
@@ -717,6 +729,8 @@ def test_evidence_upsert_client_error() -> None:
                 "- Role mapping\n\n`kubectl get roles`\n",
                 "--system",
                 "Primary",
+                "--type",
+                "configuration",
             ],
         )
 

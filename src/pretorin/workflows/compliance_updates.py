@@ -36,9 +36,14 @@ def _safe_value(value: str) -> str:
 def build_narrative_todo_block(
     missing_item: str,
     required_manual_action: str,
-    suggested_evidence_type: str = "policy_document",
+    suggested_evidence_type: str,
 ) -> str:
-    """Create the canonical narrative TODO placeholder block."""
+    """Create the canonical narrative TODO placeholder block.
+
+    Issue #79: `suggested_evidence_type` is required. The authoring call
+    site knows best what artifact the reviewer should produce, so there's
+    no safe default.
+    """
     return (
         "[[PRETORIN_TODO]]\n"
         f"missing_item: {_safe_value(missing_item)}\n"
@@ -170,7 +175,7 @@ async def upsert_evidence(
     system_id: str,
     name: str,
     description: str,
-    evidence_type: str = "policy_document",
+    evidence_type: str,
     control_id: str | None = None,
     framework_id: str | None = None,
     source: str = "cli",
@@ -178,7 +183,13 @@ async def upsert_evidence(
     search_limit: int = 200,
     code_context: dict[str, Any] | None = None,
 ) -> EvidenceUpsertResult:
-    """Find-or-create scoped evidence and ensure system/control link."""
+    """Find-or-create scoped evidence and ensure system/control link.
+
+    Issue #79: `evidence_type` is a required keyword argument. Callers that
+    receive a possibly-AI-generated value should run
+    `pretorin.evidence.types.normalize_evidence_type()` first; the CLI
+    entry points hard-error when the user omits `-t/--type`.
+    """
     ensure_audit_markdown(description, artifact_type="evidence_description")
 
     normalized_control_id = normalize_control_id(control_id) if control_id else None

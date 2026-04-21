@@ -67,6 +67,7 @@ class TestPushSkipAlreadySynced:
             framework_id="fedramp-moderate",
             name="Test Evidence",
             description="Already synced",
+            evidence_type="policy_document",
             platform_id="plat-123",
         )
         sync.writer = MagicMock()
@@ -94,6 +95,7 @@ class TestPushDryRun:
             framework_id="fedramp-moderate",
             name="New Evidence",
             description="Should not be created",
+            evidence_type="policy_document",
         )
         sync.writer = MagicMock()
         sync.writer.list_local.return_value = [ev]
@@ -120,6 +122,7 @@ class TestPushErrorHandling:
             framework_id="fedramp-moderate",
             name="Failing Evidence",
             description="Will fail",
+            evidence_type="policy_document",
         )
         sync.writer = MagicMock()
         sync.writer.list_local.return_value = [ev]
@@ -148,6 +151,7 @@ class TestUpdateFrontmatter:
             framework_id="fedramp-moderate",
             name="Test",
             description="Desc",
+            evidence_type="policy_document",
             platform_id="plat-1",
             path=file_path,
         )
@@ -186,6 +190,7 @@ class TestUpdateFrontmatter:
             framework_id="fedramp-moderate",
             name="Test",
             description="Desc",
+            evidence_type="policy_document",
             platform_id="plat-1",
             path=tmp_path / "nonexistent.md",
         )
@@ -199,6 +204,7 @@ class TestUpdateFrontmatter:
             framework_id="fedramp-moderate",
             name="Test",
             description="Desc",
+            evidence_type="policy_document",
             platform_id="plat-1",
             path=None,
         )

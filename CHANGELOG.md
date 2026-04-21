@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.16.0] - 2026-04-21
 
+### Changed (BREAKING)
+- `evidence_type` is now required on every CLI, MCP, agent, and workflow write path (#79). CLI paths hard-error when the user omits `-t/--type`; every other path runs a client-side normalizer before submission.
+  - `pretorin evidence create` / `pretorin evidence upsert` require `-t/--type`. The error lists all 13 canonical values so users can self-correct.
+  - `pretorin_create_evidence` MCP tool schema lists `evidence_type` in `required` and removes the `policy_document` default.
+  - `EvidenceCreate` and `EvidenceBatchItemCreate` pydantic models reject missing and non-canonical `evidence_type` values via a shared `field_validator`.
+  - `LocalEvidence` dataclass requires `evidence_type`. Existing on-disk evidence files missing the frontmatter field will fail to load — add the field manually (canonical values are listed in `pretorin.evidence.types.VALID_EVIDENCE_TYPES`).
+  - `upsert_evidence()` and `build_narrative_todo_block()` no longer default `evidence_type` / `suggested_evidence_type` to `policy_document`.
+
 ### Added
 - **Evidence provenance fields**: CLI now sends `code_file_path`, `code_line_numbers`, `code_snippet`, `code_repository`, and `code_commit_hash` to the platform on all evidence creation paths (single, batch, campaign). Auditors can trace evidence back to specific source files and commits.
 - **Source verification**: CLI maps attested source identities to the platform's `SourceVerificationPayload` schema with proper `source_type` and `source_role` mapping. Sent alongside `_provenance` on all evidence writes when session is verified.
@@ -16,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`source_role` on `SourceIdentity`**: Each attestation provider declares its compliance role (code, identity, deployment, monitoring). Used for platform source verification mapping.
 - **Git context from snapshot**: Evidence creation auto-populates `code_repository` and `code_commit_hash` from the attested snapshot instead of separate subprocess calls.
 - **Code provenance on local evidence**: `pretorin evidence create` and `push` now support `code_file_path`, `code_line_numbers`, `code_repository`, `code_commit_hash` in markdown frontmatter.
+- `pretorin.evidence.types` module: canonical 13-type enum, AI-drift alias map (`EVIDENCE_TYPE_ALIASES`), and `normalize_evidence_type()`. The normalizer uses a static alias map plus `difflib` fuzzy matching (stdlib, zero-cost, deterministic, future-proof) before falling back to `"other"`. Common AI near-misses like `audit_log` → `log_file`, plural `test_results` → `test_result`, `screenshoot` → `screenshot`, `policy_doc` → `policy_document` now normalize instead of causing HTTP 400s during campaign apply.
+- `campaign.apply.control` telemetry adds `evidence_type_normalized` (alias + fuzzy hits) and `evidence_type_fallback` (unknown → `"other"`) counters. The legacy `rejected_invalid_type` counter is now always `0` (the normalizer no longer rejects) and is **deprecated**; it will be dropped in 0.17.0. Migrate dashboards to the new counters.
+- `evidence_type.normalized` structured log records (INFO for alias/fuzzy matches, WARNING for unknown → `"other"` fallback) so post-ship telemetry can size the drift map.
 
 ### Changed
 - `EvidenceCreate` and `EvidenceBatchItemCreate` models now include 5 optional code provenance fields.
@@ -23,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AI generation prompt schema includes code provenance fields in `evidence_recommendations`.
 - `upsert_evidence()` accepts `code_context` parameter and creates enriched evidence (with provenance) as a new record rather than reusing a match that lacks provenance.
 - `evidence upsert` CLI command has new `--code-file`, `--code-lines`, `--code-repo`, `--code-commit` options.
+
+### Fixed
+- SOC2 campaign batches that previously failed partially because the AI emitted non-canonical `evidence_type` strings (`report`, `procedure`, `contract`, `audit_log`, plural `test_results`, etc.) now succeed end-to-end. Unknown strings still emit a canonical gap note so reviewers see the drift, but the evidence lands rather than being dropped.
+- Non-campaign write paths (CLI `evidence create`/`upsert`, MCP `create_evidence`/`create_evidence_batch`, agent tools, `upsert_evidence` workflow) can no longer silently tag missing-type evidence as `policy_document` and pollute the platform's custom-policies page.
 
 ## [0.15.5] - 2026-04-20
 

@@ -4,6 +4,9 @@ All notable changes to the Pretorin CLI are documented here. The format is based
 
 ## [0.16.0] - 2026-04-21
 
+### Changed (BREAKING)
+- `evidence_type` is now required on every CLI, MCP, agent, and workflow write path (#79). CLI paths hard-error when the user omits `-t/--type`; every other path runs a client-side normalizer before submission.
+
 ### Added
 - **Evidence provenance fields**: CLI sends `code_file_path`, `code_line_numbers`, `code_snippet`, `code_repository`, `code_commit_hash` on all evidence creation paths. Auditors can trace evidence to source files and commits.
 - **Source verification mapping**: Attested source identities mapped to platform's `SourceVerificationPayload` with `source_type` and `source_role`.
@@ -11,11 +14,16 @@ All notable changes to the Pretorin CLI are documented here. The format is based
 - **`pretorin_upload_evidence` MCP tool**: Agents and recipes can upload evidence files via MCP.
 - **File reference validation**: Campaign apply reads actual file content as canonical snippet, validates paths and line ranges.
 - **Code provenance on local evidence**: Frontmatter supports code_* fields for local evidence create and push.
+- `pretorin.evidence.types` module: canonical 13-type enum, AI-drift alias map, and `normalize_evidence_type()` with fuzzy matching.
 
 ### Changed
 - Evidence models include code provenance fields. Campaign extracts `code_*` and `relevance_notes` from AI recommendations.
 - `upsert_evidence()` creates enriched evidence as new record when provenance fields are provided.
 - AI generation prompt requests code file paths and line numbers in evidence recommendations.
+
+### Fixed
+- SOC2 campaign batches with non-canonical `evidence_type` strings now succeed end-to-end via the normalizer.
+- Non-campaign write paths can no longer silently tag missing-type evidence as `policy_document`.
 
 ## [0.15.5] - 2026-04-20
 

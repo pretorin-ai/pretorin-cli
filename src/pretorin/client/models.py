@@ -306,11 +306,17 @@ class EvidenceCodeContext(TypedDict, total=False):
 
 
 class EvidenceCreate(BaseModel):
-    """Data for creating evidence on the platform."""
+    """Data for creating evidence on the platform.
+
+    Issue #79: evidence_type is required and must be one of the 13 canonical
+    values defined in pretorin.evidence.types.VALID_EVIDENCE_TYPES. Callers
+    who receive a possibly-AI-generated value should run
+    normalize_evidence_type() first; this model is the last-line defense.
+    """
 
     name: str = Field(..., description="Evidence name")
     description: str = Field(..., description="Evidence description")
-    evidence_type: str = Field(default="policy_document", description="Type of evidence")
+    evidence_type: str = Field(..., description="Type of evidence")
     source: str = Field(default="cli", description="Source of evidence")
     control_id: str | None = Field(default=None, description="Associated control ID")
     framework_id: str | None = Field(default=None, description="Associated framework ID")
@@ -319,6 +325,17 @@ class EvidenceCreate(BaseModel):
     code_line_numbers: str | None = Field(default=None, description="Line range (e.g., '10-25')")
     code_repository: str | None = Field(default=None, description="Git repository URL")
     code_commit_hash: str | None = Field(default=None, description="Git commit hash")
+
+    @field_validator("evidence_type")
+    @classmethod
+    def _evidence_type_must_be_canonical(cls, value: str) -> str:
+        from pretorin.evidence.types import VALID_EVIDENCE_TYPES
+
+        if value not in VALID_EVIDENCE_TYPES:
+            raise ValueError(
+                f"evidence_type {value!r} is not one of the canonical values: {sorted(VALID_EVIDENCE_TYPES)}"
+            )
+        return value
 
 
 class EvidenceBatchItemCreate(BaseModel):
@@ -334,6 +351,17 @@ class EvidenceBatchItemCreate(BaseModel):
     code_line_numbers: str | None = None
     code_repository: str | None = None
     code_commit_hash: str | None = None
+
+    @field_validator("evidence_type")
+    @classmethod
+    def _evidence_type_must_be_canonical(cls, value: str) -> str:
+        from pretorin.evidence.types import VALID_EVIDENCE_TYPES
+
+        if value not in VALID_EVIDENCE_TYPES:
+            raise ValueError(
+                f"evidence_type {value!r} is not one of the canonical values: {sorted(VALID_EVIDENCE_TYPES)}"
+            )
+        return value
 
 
 class EvidenceBatchItemResult(BaseModel):

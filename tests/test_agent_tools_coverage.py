@@ -347,6 +347,7 @@ class TestCreateEvidence:
                 name="Test Evidence",
                 description="A description",
                 control_id="ac-2",
+                evidence_type="policy_document",
             )
 
         parsed = json.loads(result)
@@ -363,7 +364,9 @@ class TestCreateEvidence:
             mock_upsert.side_effect = ValueError("bad input")
             tools = create_platform_tools(mock_client)
             tool = _find_tool(tools, "create_evidence")
-            result = await tool.handler(name="Bad", description="Nope")
+            result = await tool.handler(
+                name="Bad", description="Nope", evidence_type="policy_document"
+            )
 
         parsed = json.loads(result)
         assert parsed["error"] == "bad input"

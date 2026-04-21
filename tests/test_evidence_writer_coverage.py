@@ -8,6 +8,7 @@ lines 186-187 (list_local read exception).
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import pytest
@@ -86,6 +87,7 @@ class TestEvidenceWriterWrite:
             framework_id="fedramp-moderate",
             name="RBAC Config",
             description="Role mapping policy",
+            evidence_type="policy_document",
         )
         path = writer.write(ev)
         assert path.exists()
@@ -103,6 +105,7 @@ class TestEvidenceWriterWrite:
             framework_id="valid",
             name="Test",
             description="Test desc",
+            evidence_type="policy_document",
         )
         # Patch file_path.resolve() to return something outside base_dir
         from unittest.mock import patch, PropertyMock
@@ -119,6 +122,24 @@ class TestEvidenceWriterWrite:
         with patch.object(Path, "is_relative_to", return_value=False):
             with pytest.raises(ValueError, match="Path traversal detected"):
                 writer.write(ev)
+
+
+class TestEvidenceWriterReadLegacyFrontmatter:
+    """Issue #79: legacy files missing evidence_type must not crash; default to 'other' + warn."""
+
+    def test_legacy_file_missing_evidence_type_defaults_to_other_with_warning(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        file_path = tmp_path / "legacy.md"
+        file_path.write_text(
+            "---\ncontrol_id: ac-02\nframework_id: fedramp-moderate\nstatus: draft\n"
+            "collected_at: 2026-01-01T00:00:00\n---\n\n# Legacy Evidence\n\n- item"
+        )
+        writer = EvidenceWriter(base_dir=tmp_path)
+        with caplog.at_level(logging.WARNING, logger="pretorin.evidence.writer"):
+            ev = writer.read(file_path)
+        assert ev.evidence_type == "other"
+        assert any("missing 'evidence_type' frontmatter" in record.message for record in caplog.records)
 
 
 class TestEvidenceWriterListLocal:
@@ -161,6 +182,7 @@ class TestEvidenceWriterListLocal:
             framework_id="fedramp-moderate",
             name="Test Evidence",
             description="Description here",
+            evidence_type="policy_document",
         )
         writer.write(ev)
 
@@ -176,12 +198,14 @@ class TestEvidenceWriterListLocal:
             framework_id="fedramp-moderate",
             name="Evidence 1",
             description="Desc 1",
+            evidence_type="policy_document",
         )
         ev2 = LocalEvidence(
             control_id="sc-07",
             framework_id="nist-800-53-r5",
             name="Evidence 2",
             description="Desc 2",
+            evidence_type="policy_document",
         )
         writer.write(ev1)
         writer.write(ev2)

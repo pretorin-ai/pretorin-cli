@@ -322,6 +322,7 @@ class TestEvidenceTools:
                 "framework_id": "fedramp-moderate",
                 "name": "New Evidence",
                 "description": "- Test",
+                "evidence_type": "policy_document",
             },
             client,
         )
@@ -354,6 +355,7 @@ class TestEvidenceTools:
                 "name": "New Evidence",
                 "description": "- Test",
                 "control_id": "ac-2",
+                "evidence_type": "policy_document",
             },
             client,
         )
@@ -371,7 +373,11 @@ class TestEvidenceTools:
         ):
             result = _run_tool(
                 "pretorin_create_evidence",
-                {"name": "New Evidence", "description": "- Test"},
+                {
+                    "name": "New Evidence",
+                    "description": "- Test",
+                    "evidence_type": "policy_document",
+                },
                 client,
             )
         assert result.isError is True

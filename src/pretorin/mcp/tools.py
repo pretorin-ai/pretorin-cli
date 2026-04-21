@@ -261,8 +261,7 @@ async def list_tools() -> list[Tool]:
                     },
                     "evidence_type": {
                         "type": "string",
-                        "description": "Type of evidence",
-                        "default": "policy_document",
+                        "description": "Type of evidence (required, must be one of the canonical values)",
                         "enum": sorted(VALID_EVIDENCE_TYPES),
                     },
                     "control_id": control_id_property(optional=True),
@@ -298,7 +297,7 @@ async def list_tools() -> list[Tool]:
                     "allow_scope_override": allow_scope_override_property(),
                     "allow_unverified_sources": allow_unverified_sources_property(),
                 },
-                "required": ["name", "description"],
+                "required": ["name", "description", "evidence_type"],
             },
         ),
         Tool(
@@ -324,6 +323,12 @@ async def list_tools() -> list[Tool]:
                                 "evidence_type": {
                                     "type": "string",
                                     "enum": sorted(VALID_EVIDENCE_TYPES),
+                                    "description": (
+                                        "Type of evidence. Required; must be one of the canonical values. "
+                                        "Non-canonical strings that slip through are normalized server-side "
+                                        "(aliases like audit_log -> log_file) but well-behaved clients should "
+                                        "pick a canonical value from the enum."
+                                    ),
                                 },
                                 "relevance_notes": {"type": "string"},
                                 "code_file_path": {"type": "string", "description": "Path to source file"},
@@ -332,7 +337,7 @@ async def list_tools() -> list[Tool]:
                                 "code_repository": {"type": "string", "description": "Git repository URL"},
                                 "code_commit_hash": {"type": "string", "description": "Git commit hash"},
                             },
-                            "required": ["name", "description", "control_id"],
+                            "required": ["name", "description", "control_id", "evidence_type"],
                         },
                     },
                     "allow_scope_override": allow_scope_override_property(),
