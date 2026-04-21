@@ -44,7 +44,7 @@ For each question:
 2. Read the guidance tips and example response
 3. Draft your answer grounded in observable workspace facts from Step 2
 4. Do NOT invent organizational facts, role titles, URLs, or procedures
-5. If something cannot be confirmed from workspace evidence, state what you know and flag what needs manual input
+5. If something cannot be confirmed from workspace evidence, ASK the user for clarification rather than guessing
 6. Call `pretorin_answer_policy_question` with your answer
 
 ### Step 3: Generate the policy document

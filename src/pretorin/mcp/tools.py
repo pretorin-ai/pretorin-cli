@@ -544,7 +544,11 @@ async def list_tools() -> list[Tool]:
             name="pretorin_patch_scope_qa",
             description=(
                 "Update scope questionnaire answers for a system/framework. "
-                "Accepts a list of question_id/answer pairs to apply as partial updates."
+                "Accepts a list of question_id/answer pairs to apply as partial updates. "
+                "IMPORTANT: Before drafting answers, research the local workspace — read "
+                "source code, infrastructure config, and documentation to ground answers "
+                "in observable facts. Ask the user for clarification on anything that "
+                "cannot be determined from the workspace."
             ),
             inputSchema={
                 "type": "object",
@@ -610,7 +614,8 @@ async def list_tools() -> list[Tool]:
                 "IMPORTANT: Before drafting answers, research the local workspace — read "
                 "source code, config files, existing policy documents, and infrastructure "
                 "definitions to ground answers in observable facts. Do not invent "
-                "organizational facts or procedures."
+                "organizational facts or procedures. Ask the user for clarification "
+                "on anything that cannot be determined from the workspace."
             ),
             inputSchema={
                 "type": "object",
@@ -848,7 +853,16 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_answer_scope_question",
-            description="Answer one scope question. Use get_scope_question_detail first for guidance.",
+            description=(
+                "Answer one scope question. IMPORTANT: Before answering, you MUST "
+                "(1) call get_scope_question_detail for guidance, and "
+                "(2) research the local workspace — read source code, config files, "
+                "infrastructure definitions, and documentation to ground your answer in "
+                "observable facts. Do not invent organizational facts, system names, "
+                "network topologies, or boundaries. If a question cannot be answered "
+                "confidently from workspace evidence, ask the user for clarification "
+                "rather than guessing."
+            ),
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -949,8 +963,8 @@ async def list_tools() -> list[Tool]:
                 "policy documents, infrastructure definitions, and documentation to ground "
                 "your answer in observable facts. Do not invent organizational facts, role "
                 "titles, URLs, procedures, or policies. If a question cannot be answered "
-                "confidently from workspace evidence, say what you know and flag what "
-                "needs manual input."
+                "confidently from workspace evidence, ask the user for clarification "
+                "rather than guessing."
             ),
             inputSchema={
                 "type": "object",
