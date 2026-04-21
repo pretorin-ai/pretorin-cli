@@ -420,6 +420,10 @@ def evidence_upsert(
     ),
     evidence_type: str = typer.Option("policy_document", "--type", "-t", help="Evidence type."),
     system: str | None = typer.Option(None, "--system", "-s", help="System name or ID."),
+    code_file: str | None = typer.Option(None, "--code-file", help="Path to source file."),
+    code_lines: str | None = typer.Option(None, "--code-lines", help="Line range (e.g., '10-25')."),
+    code_repo: str | None = typer.Option(None, "--code-repo", help="Git repository URL."),
+    code_commit: str | None = typer.Option(None, "--code-commit", help="Git commit hash."),
 ) -> None:
     """Find-or-create evidence and ensure system/control link."""
     if evidence_type not in _VALID_EVIDENCE_TYPES:
@@ -437,6 +441,10 @@ def evidence_upsert(
             description=description,
             evidence_type=evidence_type,
             system=system,
+            code_file=code_file,
+            code_lines=code_lines,
+            code_repo=code_repo,
+            code_commit=code_commit,
         )
     )
 
@@ -448,6 +456,10 @@ async def _upsert_evidence(
     description: str,
     evidence_type: str,
     system: str | None,
+    code_file: str | None = None,
+    code_lines: str | None = None,
+    code_repo: str | None = None,
+    code_commit: str | None = None,
 ) -> None:
     from pretorin.cli.commands import require_auth
     from pretorin.cli.context import resolve_execution_context
@@ -463,6 +475,29 @@ async def _upsert_evidence(
                 framework=framework_id,
             )
             system_name = (await client.get_system(system_id)).name
+
+            # Build code context from CLI options, auto-populate from snapshot if needed.
+            code_context = {}
+            if code_file:
+                code_context["code_file_path"] = code_file
+            if code_lines:
+                code_context["code_line_numbers"] = code_lines
+            if code_repo:
+                code_context["code_repository"] = code_repo
+            if code_commit:
+                code_context["code_commit_hash"] = code_commit
+
+            # Auto-populate repo/commit from attested snapshot if not provided.
+            if not code_repo or not code_commit:
+                from pretorin.attestation import extract_git_context_from_snapshot
+
+                git_ctx = extract_git_context_from_snapshot(system_id, resolved_framework_id)
+                if git_ctx:
+                    if not code_repo and "code_repository" in git_ctx:
+                        code_context["code_repository"] = git_ctx["code_repository"]
+                    if not code_commit and "code_commit_hash" in git_ctx:
+                        code_context["code_commit_hash"] = git_ctx["code_commit_hash"]
+
             result = await upsert_evidence(
                 client,
                 system_id=system_id,
@@ -473,6 +508,7 @@ async def _upsert_evidence(
                 framework_id=resolved_framework_id,
                 source="cli",
                 dedupe=True,
+                code_context=code_context or None,
             )
         except ValueError as e:
             rprint(f"[red]Upsert failed: {e}[/red]")
@@ -511,6 +547,101 @@ async def _upsert_evidence(
         )
         if result.link_error:
             rprint(f"[yellow]Warning: evidence link failed: {result.link_error}[/yellow]")
+
+
+@app.command("upload")
+def evidence_upload(
+    file_path: str = typer.Argument(..., help="Path to the file to upload"),
+    control_id: str = typer.Argument(..., help="Control ID to link to (e.g., ac-02)"),
+    framework_id: str = typer.Argument(..., help="Framework ID (e.g., fedramp-moderate)"),
+    name: str = typer.Option(..., "--name", "-n", help="Evidence name"),
+    evidence_type: str = typer.Option("other", "--type", "-t", help="Evidence type"),
+    description: str | None = typer.Option(None, "--description", "-d", help="Evidence description"),
+    system: str | None = typer.Option(None, "--system", "-s", help="System name or ID"),
+) -> None:
+    """Upload a file as evidence to the platform.
+
+    Creates an evidence record with the uploaded file and links it to the
+    specified control. The file's SHA-256 checksum is computed locally and
+    verified server-side for integrity.
+
+    Examples:
+        pretorin evidence upload screenshot.png ac-02 fedramp-moderate --name "MFA Screenshot" --type screenshot
+        pretorin evidence upload config.yaml ac-06 fedramp-moderate --name "Auth Config" --type configuration
+    """
+    if evidence_type not in _VALID_EVIDENCE_TYPES:
+        rprint(
+            f"[red]Invalid evidence type: {evidence_type}. "
+            f"Choose one of: {', '.join(sorted(_VALID_EVIDENCE_TYPES))}[/red]"
+        )
+        raise typer.Exit(1)
+
+    asyncio.run(
+        _upload_evidence(
+            file_path=file_path,
+            control_id=normalize_control_id(control_id),
+            framework_id=framework_id,
+            name=name,
+            evidence_type=evidence_type,
+            description=description,
+            system=system,
+        )
+    )
+
+
+async def _upload_evidence(
+    file_path: str,
+    control_id: str,
+    framework_id: str,
+    name: str,
+    evidence_type: str,
+    description: str | None,
+    system: str | None,
+) -> None:
+    from pretorin.cli.commands import require_auth
+    from pretorin.cli.context import resolve_execution_context
+    from pretorin.client.api import PretorianClient, PretorianClientError
+
+    async with PretorianClient() as client:
+        require_auth(client)
+        try:
+            system_id, resolved_framework_id = await resolve_execution_context(
+                client,
+                system=system,
+                framework=framework_id,
+            )
+            result = await client.upload_evidence(
+                system_id=system_id,
+                file_path=file_path,
+                name=name,
+                evidence_type=evidence_type,
+                description=description,
+                control_id=control_id,
+                framework_id=resolved_framework_id,
+            )
+        except PretorianClientError as e:
+            rprint(f"[red]Upload failed: {e.message}[/red]")
+            raise typer.Exit(1)
+        except FileNotFoundError:
+            rprint(f"[red]File not found: {file_path}[/red]")
+            raise typer.Exit(1)
+
+        if is_json_mode():
+            print_json(result)
+            return
+
+        rprint(
+            Panel(
+                f"  [bold]Evidence ID:[/bold] {result.get('evidence_id', 'N/A')}\n"
+                f"  [bold]File:[/bold]        {result.get('file_name', 'N/A')}\n"
+                f"  [bold]Size:[/bold]        {result.get('file_size', 0)} bytes\n"
+                f"  [bold]Checksum:[/bold]    {result.get('checksum', 'N/A')}\n"
+                f"  [bold]Type:[/bold]        {result.get('evidence_type', 'N/A')}\n",
+                title=f"{ROMEBOT_EVIDENCE}  Evidence Uploaded",
+                border_style="#95D7E0",
+                padding=(1, 2),
+            )
+        )
 
 
 @app.command("delete")

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field, field_validator
+from typing_extensions import TypedDict
 
 # =============================================================================
 # Framework Models
@@ -294,6 +295,16 @@ class EvidenceItemResponse(BaseModel):
     collected_at: str | None = None
 
 
+class EvidenceCodeContext(TypedDict, total=False):
+    """Typed dict for code provenance fields passed through evidence creation."""
+
+    code_file_path: str
+    code_line_numbers: str
+    code_snippet: str
+    code_repository: str
+    code_commit_hash: str
+
+
 class EvidenceCreate(BaseModel):
     """Data for creating evidence on the platform."""
 
@@ -303,6 +314,11 @@ class EvidenceCreate(BaseModel):
     source: str = Field(default="cli", description="Source of evidence")
     control_id: str | None = Field(default=None, description="Associated control ID")
     framework_id: str | None = Field(default=None, description="Associated framework ID")
+    code_snippet: str | None = Field(default=None, description="Relevant code excerpt")
+    code_file_path: str | None = Field(default=None, description="Path to source file")
+    code_line_numbers: str | None = Field(default=None, description="Line range (e.g., '10-25')")
+    code_repository: str | None = Field(default=None, description="Git repository URL")
+    code_commit_hash: str | None = Field(default=None, description="Git commit hash")
 
 
 class EvidenceBatchItemCreate(BaseModel):
@@ -313,6 +329,11 @@ class EvidenceBatchItemCreate(BaseModel):
     control_id: str
     evidence_type: str
     relevance_notes: str | None = None
+    code_snippet: str | None = None
+    code_file_path: str | None = None
+    code_line_numbers: str | None = None
+    code_repository: str | None = None
+    code_commit_hash: str | None = None
 
 
 class EvidenceBatchItemResult(BaseModel):

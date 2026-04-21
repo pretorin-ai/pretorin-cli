@@ -2,6 +2,21 @@
 
 All notable changes to the Pretorin CLI are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-04-21
+
+### Added
+- **Evidence provenance fields**: CLI sends `code_file_path`, `code_line_numbers`, `code_snippet`, `code_repository`, `code_commit_hash` on all evidence creation paths. Auditors can trace evidence to source files and commits.
+- **Source verification mapping**: Attested source identities mapped to platform's `SourceVerificationPayload` with `source_type` and `source_role`.
+- **`pretorin evidence upload`**: Upload files (screenshots, PDFs, configs) as evidence with SHA-256 integrity verification.
+- **`pretorin_upload_evidence` MCP tool**: Agents and recipes can upload evidence files via MCP.
+- **File reference validation**: Campaign apply reads actual file content as canonical snippet, validates paths and line ranges.
+- **Code provenance on local evidence**: Frontmatter supports code_* fields for local evidence create and push.
+
+### Changed
+- Evidence models include code provenance fields. Campaign extracts `code_*` and `relevance_notes` from AI recommendations.
+- `upsert_evidence()` creates enriched evidence as new record when provenance fields are provided.
+- AI generation prompt requests code file paths and line numbers in evidence recommendations.
+
 ## [0.15.5] - 2026-04-20
 
 ### Fixed

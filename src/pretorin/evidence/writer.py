@@ -21,6 +21,11 @@ class LocalEvidence:
     collected_at: str = ""
     platform_id: str | None = None
     path: Path | None = None
+    code_file_path: str | None = None
+    code_line_numbers: str | None = None
+    code_snippet: str | None = None
+    code_repository: str | None = None
+    code_commit_hash: str | None = None
 
     def __post_init__(self) -> None:
         if not self.collected_at:
@@ -59,6 +64,14 @@ def _format_frontmatter(evidence: LocalEvidence) -> str:
     ]
     if evidence.platform_id:
         lines.append(f"platform_id: {evidence.platform_id}")
+    if evidence.code_file_path:
+        lines.append(f"code_file_path: {evidence.code_file_path}")
+    if evidence.code_line_numbers:
+        lines.append(f"code_line_numbers: {evidence.code_line_numbers}")
+    if evidence.code_repository:
+        lines.append(f"code_repository: {evidence.code_repository}")
+    if evidence.code_commit_hash:
+        lines.append(f"code_commit_hash: {evidence.code_commit_hash}")
     lines.append("---")
     return "\n".join(lines)
 
@@ -160,6 +173,10 @@ class EvidenceWriter:
             collected_at=fm.get("collected_at", ""),
             platform_id=fm.get("platform_id"),
             path=path,
+            code_file_path=fm.get("code_file_path"),
+            code_line_numbers=fm.get("code_line_numbers"),
+            code_repository=fm.get("code_repository"),
+            code_commit_hash=fm.get("code_commit_hash"),
         )
 
     def list_local(self, framework_id: str | None = None) -> list[LocalEvidence]:

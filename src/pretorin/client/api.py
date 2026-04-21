@@ -52,6 +52,16 @@ def _build_provenance(
     return build_write_provenance(system_id, framework_id or "", control_id=control_id)
 
 
+def _build_source_verification(
+    system_id: str,
+    framework_id: str | None,
+) -> dict[str, Any] | None:
+    """Build platform-compatible source verification payload (lazy import)."""
+    from pretorin.attestation import build_source_verification
+
+    return build_source_verification(system_id, framework_id or "")
+
+
 class PretorianClientError(Exception):
     """Base exception for Pretorian client errors."""
 
@@ -666,6 +676,9 @@ class PretorianClient:
         if payload.get("control_id"):
             payload["control_id"] = normalize_control_id(payload["control_id"])
         payload["_provenance"] = _build_provenance(system_id, evidence.framework_id)
+        sv = _build_source_verification(system_id, evidence.framework_id)
+        if sv is not None:
+            payload["source_verification"] = sv
         data = await self._request(
             "POST",
             f"/systems/{system_id}/evidence",
@@ -680,7 +693,7 @@ class PretorianClient:
         items: list[EvidenceBatchItemCreate],
     ) -> EvidenceBatchResponse:
         """Create and link multiple evidence items within one system/framework scope."""
-        payload = {
+        payload: dict[str, Any] = {
             "framework_id": framework_id,
             "items": [
                 {
@@ -691,8 +704,87 @@ class PretorianClient:
             ],
             "_provenance": _build_provenance(system_id, framework_id),
         }
+        sv = _build_source_verification(system_id, framework_id)
+        if sv is not None:
+            payload["source_verification"] = sv
         data = await self._request("POST", f"/systems/{system_id}/evidence/batch", json=payload)
         return EvidenceBatchResponse(**data)
+
+    async def upload_evidence(
+        self,
+        system_id: str,
+        file_path: str,
+        name: str,
+        evidence_type: str = "other",
+        description: str | None = None,
+        control_id: str | None = None,
+        framework_id: str | None = None,
+        family_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Upload a file as evidence to the platform.
+
+        Computes SHA-256 checksum locally and sends for server-side verification.
+        Includes source_verification from the attested snapshot.
+        """
+        import hashlib
+        import json as json_mod
+        import os
+
+        # Client-side file validation.
+        if not os.path.isfile(file_path):
+            raise PretorianClientError(f"File not found: {file_path}")
+
+        file_size = os.path.getsize(file_path)
+        max_size = 25 * 1024 * 1024  # 25 MB
+        if file_size > max_size:
+            raise PretorianClientError(f"File size ({file_size} bytes) exceeds the 25MB limit.")
+        if file_size == 0:
+            raise PretorianClientError("Empty files are not allowed.")
+
+        ext = os.path.splitext(file_path)[1].lower()
+        blocked = {".exe", ".bat", ".sh", ".dll", ".so", ".cmd", ".ps1", ".msi"}
+        if ext in blocked:
+            raise PretorianClientError(f"File extension '{ext}' is not allowed.")
+
+        # Compute SHA-256 checksum.
+        sha256 = hashlib.sha256()
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                sha256.update(chunk)
+        checksum = sha256.hexdigest()
+
+        # Build query params.
+        params: dict[str, str] = {
+            "name": name,
+            "evidence_type": evidence_type,
+            "checksum": checksum,
+        }
+        if description:
+            params["description"] = description
+        if control_id:
+            params["control_id"] = normalize_control_id(control_id)
+        if framework_id:
+            params["framework_id"] = framework_id
+        if family_id:
+            params["family_id"] = family_id
+
+        # Include source_verification.
+        sv = _build_source_verification(system_id, framework_id)
+        if sv is not None:
+            params["source_verification"] = json_mod.dumps(sv, default=str)
+
+        # Multipart upload.
+        file_name = os.path.basename(file_path)
+        client = await self._get_client()
+        with open(file_path, "rb") as f:
+            response = await client.post(
+                f"/systems/{system_id}/evidence/upload",
+                params=params,
+                files={"file": (file_name, f)},
+            )
+        if not response.is_success:
+            self._handle_error(response)
+        return response.json()
 
     async def link_evidence_to_control(
         self,

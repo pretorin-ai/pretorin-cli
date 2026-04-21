@@ -5,6 +5,25 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-04-21
+
+### Added
+- **Evidence provenance fields**: CLI now sends `code_file_path`, `code_line_numbers`, `code_snippet`, `code_repository`, and `code_commit_hash` to the platform on all evidence creation paths (single, batch, campaign). Auditors can trace evidence back to specific source files and commits.
+- **Source verification**: CLI maps attested source identities to the platform's `SourceVerificationPayload` schema with proper `source_type` and `source_role` mapping. Sent alongside `_provenance` on all evidence writes when session is verified.
+- **`pretorin evidence upload`**: New CLI command to upload files (screenshots, PDFs, configs, logs) as evidence. Computes SHA-256 checksum locally, verifies server-side. 25MB max, restricted MIME types.
+- **`pretorin_upload_evidence` MCP tool**: AI agents and recipes can upload files as evidence via MCP.
+- **File reference validation**: Campaign apply validates AI-reported file paths and line numbers before sending to the platform. Reads actual file content as the canonical snippet instead of trusting the agent's output.
+- **`source_role` on `SourceIdentity`**: Each attestation provider declares its compliance role (code, identity, deployment, monitoring). Used for platform source verification mapping.
+- **Git context from snapshot**: Evidence creation auto-populates `code_repository` and `code_commit_hash` from the attested snapshot instead of separate subprocess calls.
+- **Code provenance on local evidence**: `pretorin evidence create` and `push` now support `code_file_path`, `code_line_numbers`, `code_repository`, `code_commit_hash` in markdown frontmatter.
+
+### Changed
+- `EvidenceCreate` and `EvidenceBatchItemCreate` models now include 5 optional code provenance fields.
+- Campaign evidence batch construction now extracts `code_file_path`, `code_line_numbers`, `code_snippet`, and `relevance_notes` from AI recommendations (previously dropped).
+- AI generation prompt schema includes code provenance fields in `evidence_recommendations`.
+- `upsert_evidence()` accepts `code_context` parameter and creates enriched evidence (with provenance) as a new record rather than reusing a match that lacks provenance.
+- `evidence upsert` CLI command has new `--code-file`, `--code-lines`, `--code-repo`, `--code-commit` options.
+
 ## [0.15.5] - 2026-04-20
 
 ### Fixed

@@ -176,6 +176,7 @@ async def upsert_evidence(
     source: str = "cli",
     dedupe: bool = True,
     search_limit: int = 200,
+    code_context: dict[str, Any] | None = None,
 ) -> EvidenceUpsertResult:
     """Find-or-create scoped evidence and ensure system/control link."""
     ensure_audit_markdown(description, artifact_type="evidence_description")
@@ -208,7 +209,13 @@ async def upsert_evidence(
         ]
         if matches:
             newest = sorted(matches, key=_sort_key_collected_at, reverse=True)[0]
-            candidate_id = newest.id
+            # If we have new code provenance fields, create enriched evidence rather
+            # than reusing a record that lacks provenance. The platform's idempotency
+            # key includes code_* fields, so the enriched record is distinct.
+            if code_context:
+                candidate_id = None
+            else:
+                candidate_id = newest.id
 
     created = False
     match_basis = MATCH_BASIS_NONE
@@ -227,6 +234,7 @@ async def upsert_evidence(
             source=source,
             control_id=normalized_control_id,
             framework_id=framework_id,
+            **(code_context or {}),
         )
         platform_response = await client.create_evidence(system_id, payload)
         evidence_id = str(platform_response.get("id", ""))

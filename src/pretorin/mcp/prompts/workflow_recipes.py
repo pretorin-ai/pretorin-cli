@@ -27,14 +27,25 @@ WORKFLOW_RECIPES: dict[str, dict[str, str]] = {
 Call `pretorin_get_policy_workflow_state` with the policy_id.
 Look at `next_action` to see what needs doing.
 
-### Step 2: Answer pending questions
+### Step 2: Research the workspace FIRST
+Before answering any questions, research the local codebase and documentation:
+- Read existing policy documents (privacy policy pages, terms of service, etc.)
+- Read infrastructure config (Helm charts, Terraform, Dockerfiles, CI/CD workflows)
+- Read security documentation (docs/security/, docs/pentest/, etc.)
+- Read auth/signup flows for consent mechanisms and user data collection
+- Read API models for what PII is stored and how data flows
+- Note what actually exists vs what is aspirational
+
+### Step 3: Answer pending questions
 Call `pretorin_get_pending_policy_questions` to see unanswered questions.
 
 For each question:
 1. Call `pretorin_get_policy_question_detail` to get guidance
 2. Read the guidance tips and example response
-3. Draft your answer based on the organization's context
-4. Call `pretorin_answer_policy_question` with your answer
+3. Draft your answer grounded in observable workspace facts from Step 2
+4. Do NOT invent organizational facts, role titles, URLs, or procedures
+5. If something cannot be confirmed from workspace evidence, ASK the user for clarification rather than guessing
+6. Call `pretorin_answer_policy_question` with your answer
 
 ### Step 3: Generate the policy document
 Once all questions are answered:
