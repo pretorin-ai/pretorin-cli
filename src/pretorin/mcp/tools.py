@@ -606,7 +606,11 @@ async def list_tools() -> list[Tool]:
             name="pretorin_patch_org_policy_qa",
             description=(
                 "Update organization policy questionnaire answers. "
-                "Accepts a list of question_id/answer pairs to apply as partial updates."
+                "Accepts a list of question_id/answer pairs to apply as partial updates. "
+                "IMPORTANT: Before drafting answers, research the local workspace — read "
+                "source code, config files, existing policy documents, and infrastructure "
+                "definitions to ground answers in observable facts. Do not invent "
+                "organizational facts or procedures."
             ),
             inputSchema={
                 "type": "object",
@@ -938,7 +942,16 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="pretorin_answer_policy_question",
-            description="Answer one policy question. Use get_policy_question_detail first for guidance.",
+            description=(
+                "Answer one policy question. IMPORTANT: Before answering, you MUST "
+                "(1) call get_policy_question_detail for guidance, and "
+                "(2) research the local workspace — read source code, config files, existing "
+                "policy documents, infrastructure definitions, and documentation to ground "
+                "your answer in observable facts. Do not invent organizational facts, role "
+                "titles, URLs, procedures, or policies. If a question cannot be answered "
+                "confidently from workspace evidence, say what you know and flag what "
+                "needs manual input."
+            ),
             inputSchema={
                 "type": "object",
                 "properties": {
