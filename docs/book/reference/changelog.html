@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-9d3c69a8.js";
+            window.path_to_searchindex_js = "../searchindex-1bee8e16.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -185,26 +185,28 @@
 <h2 id="0160---2026-04-21"><a class="header" href="#0160---2026-04-21">[0.16.0] - 2026-04-21</a></h2>
 <h3 id="changed-breaking"><a class="header" href="#changed-breaking">Changed (BREAKING)</a></h3>
 <ul>
-<li><code>evidence_type</code> is now required on every CLI, MCP, agent, and workflow write path (#79). CLI paths hard-error when the user omits <code>-t/--type</code>; every other path runs a client-side normalizer before submission.
-<ul>
-<li><code>pretorin evidence create</code> / <code>pretorin evidence upsert</code> require <code>-t/--type</code>. The error lists all 13 canonical values so users can self-correct.</li>
-<li><code>pretorin_create_evidence</code> MCP tool schema lists <code>evidence_type</code> in <code>required</code> and removes the <code>policy_document</code> default.</li>
-<li><code>EvidenceCreate</code> and <code>EvidenceBatchItemCreate</code> pydantic models reject missing and non-canonical <code>evidence_type</code> values via a shared <code>field_validator</code>.</li>
-<li><code>LocalEvidence</code> dataclass requires <code>evidence_type</code>. Existing on-disk evidence files missing the frontmatter field will fail to load — add the field manually (canonical values are listed in <code>pretorin.evidence.types.VALID_EVIDENCE_TYPES</code>).</li>
-<li><code>upsert_evidence()</code> and <code>build_narrative_todo_block()</code> no longer default <code>evidence_type</code> / <code>suggested_evidence_type</code> to <code>policy_document</code>.</li>
-</ul>
-</li>
+<li><code>evidence_type</code> is now required on every CLI, MCP, agent, and workflow write path (#79). CLI paths hard-error when the user omits <code>-t/--type</code>; every other path runs a client-side normalizer before submission.</li>
 </ul>
 <h3 id="added"><a class="header" href="#added">Added</a></h3>
 <ul>
-<li><code>pretorin.evidence.types</code> module: canonical 13-type enum, AI-drift alias map (<code>EVIDENCE_TYPE_ALIASES</code>), and <code>normalize_evidence_type()</code>. The normalizer uses a static alias map plus <code>difflib</code> fuzzy matching (stdlib, zero-cost, deterministic, future-proof) before falling back to <code>"other"</code>. Common AI near-misses like <code>audit_log</code> → <code>log_file</code>, plural <code>test_results</code> → <code>test_result</code>, <code>screenshoot</code> → <code>screenshot</code>, <code>policy_doc</code> → <code>policy_document</code> now normalize instead of causing HTTP 400s during campaign apply.</li>
-<li><code>campaign.apply.control</code> telemetry adds <code>evidence_type_normalized</code> (alias + fuzzy hits) and <code>evidence_type_fallback</code> (unknown → <code>"other"</code>) counters. The legacy <code>rejected_invalid_type</code> counter is now always <code>0</code> (the normalizer no longer rejects) and is <strong>deprecated</strong>; it will be dropped in 0.17.0. Migrate dashboards to the new counters.</li>
-<li><code>evidence_type.normalized</code> structured log records (INFO for alias/fuzzy matches, WARNING for unknown → <code>"other"</code> fallback) so post-ship telemetry can size the drift map.</li>
+<li><strong>Evidence provenance fields</strong>: CLI sends <code>code_file_path</code>, <code>code_line_numbers</code>, <code>code_snippet</code>, <code>code_repository</code>, <code>code_commit_hash</code> on all evidence creation paths. Auditors can trace evidence to source files and commits.</li>
+<li><strong>Source verification mapping</strong>: Attested source identities mapped to platform’s <code>SourceVerificationPayload</code> with <code>source_type</code> and <code>source_role</code>.</li>
+<li><strong><code>pretorin evidence upload</code></strong>: Upload files (screenshots, PDFs, configs) as evidence with SHA-256 integrity verification.</li>
+<li><strong><code>pretorin_upload_evidence</code> MCP tool</strong>: Agents and recipes can upload evidence files via MCP.</li>
+<li><strong>File reference validation</strong>: Campaign apply reads actual file content as canonical snippet, validates paths and line ranges.</li>
+<li><strong>Code provenance on local evidence</strong>: Frontmatter supports code_* fields for local evidence create and push.</li>
+<li><code>pretorin.evidence.types</code> module: canonical 13-type enum, AI-drift alias map, and <code>normalize_evidence_type()</code> with fuzzy matching.</li>
+</ul>
+<h3 id="changed"><a class="header" href="#changed">Changed</a></h3>
+<ul>
+<li>Evidence models include code provenance fields. Campaign extracts <code>code_*</code> and <code>relevance_notes</code> from AI recommendations.</li>
+<li><code>upsert_evidence()</code> creates enriched evidence as new record when provenance fields are provided.</li>
+<li>AI generation prompt requests code file paths and line numbers in evidence recommendations.</li>
 </ul>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
-<li>SOC2 campaign batches that previously failed partially because the AI emitted non-canonical <code>evidence_type</code> strings (<code>report</code>, <code>procedure</code>, <code>contract</code>, <code>audit_log</code>, plural <code>test_results</code>, etc.) now succeed end-to-end. Unknown strings still emit a canonical gap note so reviewers see the drift, but the evidence lands rather than being dropped.</li>
-<li>Non-campaign write paths (CLI <code>evidence create</code>/<code>upsert</code>, MCP <code>create_evidence</code>/<code>create_evidence_batch</code>, agent tools, <code>upsert_evidence</code> workflow) can no longer silently tag missing-type evidence as <code>policy_document</code> and pollute the platform’s custom-policies page.</li>
+<li>SOC2 campaign batches with non-canonical <code>evidence_type</code> strings now succeed end-to-end via the normalizer.</li>
+<li>Non-campaign write paths can no longer silently tag missing-type evidence as <code>policy_document</code>.</li>
 </ul>
 <h2 id="0155---2026-04-20"><a class="header" href="#0155---2026-04-20"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.4...v0.15.5">0.15.5</a> - 2026-04-20</a></h2>
 <h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
@@ -214,7 +216,7 @@
 <li>Evidence batch result mapping now aligns offsets to the original recommendation index via the accepted-items list and asserts length match, fixing a latent index-drift bug that appeared once any recommendation was rejected mid-loop.</li>
 <li>Completion note now fires when all pending work has landed across runs, not only when something new was written in the current run.</li>
 </ul>
-<h3 id="changed"><a class="header" href="#changed">Changed</a></h3>
+<h3 id="changed-1"><a class="header" href="#changed-1">Changed</a></h3>
 <ul>
 <li><code>evidence_type</code> is now required on <code>EvidenceBatchItemCreate</code>. The campaign batch write path no longer silently tags missing types as <code>policy_document</code>; pydantic validation raises instead. Other evidence write paths (CLI, MCP, direct API) keep their existing defaults.</li>
 <li>Agent drafting prompts (<code>_build_generation_task</code>, <code>_draft_control_fix</code>, <code>_WORKFLOW_GUARDRAILS</code>, codex system prompt, <code>[[PRETORIN_TODO]]</code> template) now list all 13 valid evidence types verbatim and state that an empty <code>evidence_recommendations</code> list is a valid result — gaps belong in <code>recommended_notes</code>.</li>
@@ -222,7 +224,7 @@
 </ul>
 <hr>
 <h2 id="0154---2026-04-18"><a class="header" href="#0154---2026-04-18"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.3...v0.15.4">0.15.4</a> - 2026-04-18</a></h2>
-<h3 id="changed-1"><a class="header" href="#changed-1">Changed</a></h3>
+<h3 id="changed-2"><a class="header" href="#changed-2">Changed</a></h3>
 <ul>
 <li>Updated 6 dependencies to resolve 7 known vulnerabilities (cryptography, pygments, pyjwt, pytest, python-multipart, requests)</li>
 <li>Added CLAUDE.md and AGENTS.md for AI agent context</li>
@@ -240,7 +242,7 @@
 </ul>
 <hr>
 <h2 id="0152---2026-04-18"><a class="header" href="#0152---2026-04-18"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.1...v0.15.2">0.15.2</a> - 2026-04-18</a></h2>
-<h3 id="changed-2"><a class="header" href="#changed-2">Changed</a></h3>
+<h3 id="changed-3"><a class="header" href="#changed-3">Changed</a></h3>
 <ul>
 <li>Documentation sync: rebuilt all docs to match current codebase</li>
 </ul>
@@ -262,14 +264,14 @@
 <li>Family-level source requirements with three requirement levels (required/recommended/optional) and write blocking on missing required sources</li>
 <li>Manifest evaluation results in write provenance (<code>manifest_status</code> and <code>missing_required_sources</code> fields)</li>
 </ul>
-<h3 id="changed-3"><a class="header" href="#changed-3">Changed</a></h3>
+<h3 id="changed-4"><a class="header" href="#changed-4">Changed</a></h3>
 <ul>
 <li><code>_enforce_source_attestation</code> now evaluates manifest requirements after the existing MISMATCH check</li>
 <li><code>resolve_execution_context</code> and <code>build_write_provenance</code> accept optional <code>control_id</code> for family-level manifest enforcement</li>
 </ul>
 <hr>
 <h2 id="0140---2026-04-10"><a class="header" href="#0140---2026-04-10"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0">0.14.0</a> - 2026-04-10</a></h2>
-<h3 id="changed-4"><a class="header" href="#changed-4">Changed</a></h3>
+<h3 id="changed-5"><a class="header" href="#changed-5">Changed</a></h3>
 <ul>
 <li>MCP and agent write workflows now treat the active CLI context as a strict execution boundary by default, with an explicit <code>allow_scope_override</code> escape hatch for intentional cross-scope writes</li>
 <li>Control-scoped MCP and agent workflows now route through one shared scope-validation path so exact control lookup happens in the resolved framework before any write proceeds</li>
@@ -339,7 +341,7 @@
 <li>Aligned MCP control status validation with the live platform status enum set to match public API behavior</li>
 <li>Synced package version metadata and release notes so PyPI builds publish a consistent CLI version</li>
 </ul>
-<h3 id="changed-5"><a class="header" href="#changed-5">Changed</a></h3>
+<h3 id="changed-6"><a class="header" href="#changed-6">Changed</a></h3>
 <ul>
 <li>Updated CLI and MCP coverage tests to reflect the platform control status contract used by public control workflows</li>
 </ul>
@@ -348,7 +350,7 @@
 <ul>
 <li>MCP questionnaire tooling for scope and organization policy workflows</li>
 </ul>
-<h3 id="changed-6"><a class="header" href="#changed-6">Changed</a></h3>
+<h3 id="changed-7"><a class="header" href="#changed-7">Changed</a></h3>
 <ul>
 <li>MCP documentation now reflects the full 29-tool surface, including batch evidence support</li>
 </ul>
@@ -358,7 +360,7 @@
 <li><code>pretorin context show --quiet</code> for compact shell-friendly context checks</li>
 <li><code>pretorin context show --check</code> to fail fast when stored scope is missing, stale, or unverified</li>
 </ul>
-<h3 id="changed-7"><a class="header" href="#changed-7">Changed</a></h3>
+<h3 id="changed-8"><a class="header" href="#changed-8">Changed</a></h3>
 <ul>
 <li><code>context show</code> caches the last known system name so offline and stale context output stays human-friendly</li>
 </ul>
@@ -380,7 +382,7 @@
 <li>MCP <code>pretorin_generate_control_artifacts</code> for read-only AI drafting of control narratives and evidence-gap assessments</li>
 <li>Shared AI drafting workflow helper for structured MCP/CLI parity</li>
 </ul>
-<h3 id="changed-8"><a class="header" href="#changed-8">Changed</a></h3>
+<h3 id="changed-9"><a class="header" href="#changed-9">Changed</a></h3>
 <ul>
 <li>MCP system-scoped tools now resolve friendly system names the same way the CLI does</li>
 <li>Codex Desktop MCP configuration can be pinned to the UV-managed Pretorin wrapper</li>
@@ -393,7 +395,7 @@
 <li>Compatibility fallback for evidence search on system-scoped evidence routes</li>
 <li>Agent <code>--no-stream</code> crash on literal <code>[[PRETORIN_TODO]]</code> blocks</li>
 </ul>
-<h3 id="changed-9"><a class="header" href="#changed-9">Changed</a></h3>
+<h3 id="changed-10"><a class="header" href="#changed-10">Changed</a></h3>
 <ul>
 <li>MCP and legacy agent evidence search tools accept optional <code>system_id</code> context</li>
 </ul>
@@ -409,7 +411,7 @@
 <li>Dedicated tests for markdown quality guardrails</li>
 <li>CLI/MCP/agent parity for reading notes via dedicated endpoint</li>
 </ul>
-<h3 id="changed-10"><a class="header" href="#changed-10">Changed</a></h3>
+<h3 id="changed-11"><a class="header" href="#changed-11">Changed</a></h3>
 <ul>
 <li>Narrative and evidence update flows enforce markdown quality checks before push/upsert</li>
 <li>Agent prompts require auditor-ready markdown (lists/tables/code/links)</li>
@@ -429,7 +431,7 @@
 <li>Shared compliance workflow helpers (system resolution, evidence dedupe/upsert, TODO blocks, gap notes)</li>
 <li>MCP <code>pretorin_get_control_notes</code> tool</li>
 </ul>
-<h3 id="changed-11"><a class="header" href="#changed-11">Changed</a></h3>
+<h3 id="changed-12"><a class="header" href="#changed-12">Changed</a></h3>
 <ul>
 <li><code>pretorin_create_evidence</code> now upserts by default (<code>dedupe: true</code>)</li>
 <li><code>pretorin evidence push</code> uses find-or-create upsert logic</li>
@@ -455,7 +457,7 @@
 <li><code>pretorin login</code> skips prompt when already authenticated</li>
 <li>Demo script <code>--json</code> flag position and stdin handling</li>
 </ul>
-<h3 id="changed-12"><a class="header" href="#changed-12">Changed</a></h3>
+<h3 id="changed-13"><a class="header" href="#changed-13">Changed</a></h3>
 <ul>
 <li>Default evidence type changed to <code>policy_document</code></li>
 <li>Valid evidence types aligned with API</li>
@@ -476,7 +478,7 @@
 <li>Interactive demo walkthrough script</li>
 <li>Beta messaging across CLI, MCP, and README</li>
 </ul>
-<h3 id="changed-13"><a class="header" href="#changed-13">Changed</a></h3>
+<h3 id="changed-14"><a class="header" href="#changed-14">Changed</a></h3>
 <ul>
 <li>Platform API base URL changed to <code>/api/v1/public</code></li>
 <li>Evidence and linking scoped to system</li>
@@ -504,7 +506,7 @@
 <li><code>.mcp.json</code> for Claude Code auto-discovery</li>
 <li>Usage examples in command docstrings</li>
 </ul>
-<h3 id="changed-14"><a class="header" href="#changed-14">Changed</a></h3>
+<h3 id="changed-15"><a class="header" href="#changed-15">Changed</a></h3>
 <ul>
 <li>Control references shown by default (replaced <code>--references</code> with <code>--brief</code>)</li>
 <li>Default controls limit changed to 0 (show all)</li>
