@@ -76,6 +76,18 @@ class EvidenceSync:
                 continue
 
             try:
+                code_context = {}
+                if ev.code_file_path:
+                    code_context["code_file_path"] = ev.code_file_path
+                if ev.code_line_numbers:
+                    code_context["code_line_numbers"] = ev.code_line_numbers
+                if ev.code_snippet:
+                    code_context["code_snippet"] = ev.code_snippet
+                if ev.code_repository:
+                    code_context["code_repository"] = ev.code_repository
+                if ev.code_commit_hash:
+                    code_context["code_commit_hash"] = ev.code_commit_hash
+
                 sync_result = await upsert_evidence(
                     client,
                     system_id=self._system_id,
@@ -85,6 +97,7 @@ class EvidenceSync:
                     source="cli",
                     control_id=ev.control_id,
                     framework_id=ev.framework_id,
+                    code_context=code_context or None,
                 )
                 platform_id = sync_result.evidence_id
 

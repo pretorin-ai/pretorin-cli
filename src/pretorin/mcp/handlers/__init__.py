@@ -31,6 +31,7 @@ from pretorin.mcp.handlers.evidence import (
     handle_get_narrative,
     handle_link_evidence,
     handle_search_evidence,
+    handle_upload_evidence,
 )
 from pretorin.mcp.handlers.frameworks import (
     handle_get_control,
@@ -129,6 +130,7 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pretorin_create_evidence": handle_create_evidence,
     "pretorin_create_evidence_batch": handle_create_evidence_batch,
     "pretorin_link_evidence": handle_link_evidence,
+    "pretorin_upload_evidence": handle_upload_evidence,
     "pretorin_delete_evidence": handle_delete_evidence,
     "pretorin_get_narrative": handle_get_narrative,
     "pretorin_generate_control_artifacts": handle_generate_control_artifacts,

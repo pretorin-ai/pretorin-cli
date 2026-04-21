@@ -81,6 +81,12 @@ async def handle_create_evidence(
         arguments,
         enforce_active_context=True,
     )
+    code_context = {}
+    for key in ("code_file_path", "code_line_numbers", "code_snippet", "code_repository", "code_commit_hash"):
+        val = arguments.get(key)
+        if val:
+            code_context[key] = val
+
     try:
         result = await upsert_evidence(
             client,
@@ -92,6 +98,7 @@ async def handle_create_evidence(
             framework_id=framework_id,
             source="cli",
             dedupe=bool(dedupe),
+            code_context=code_context or None,
         )
     except ValueError as e:
         return format_error(str(e))
@@ -129,6 +136,11 @@ async def handle_create_evidence_batch(
                 control_id=normalize_control_id(item["control_id"]),
                 evidence_type=evidence_type,
                 relevance_notes=item.get("relevance_notes"),
+                code_file_path=item.get("code_file_path"),
+                code_line_numbers=item.get("code_line_numbers"),
+                code_snippet=item.get("code_snippet"),
+                code_repository=item.get("code_repository"),
+                code_commit_hash=item.get("code_commit_hash"),
             )
         )
 
@@ -158,6 +170,36 @@ async def handle_link_evidence(
         system_id=system_id,
         framework_id=framework_id,
     )
+    return format_json(result)
+
+
+async def handle_upload_evidence(
+    client: PretorianClient,
+    arguments: dict[str, Any],
+) -> list[TextContent] | CallToolResult:
+    """Handle the upload_evidence tool."""
+    logger.debug("handle_upload_evidence called with %s", _safe_args(arguments))
+    err = require(arguments, "file_path", "name")
+    if err:
+        return format_error(err)
+
+    system_id, framework_id, normalized_control_id = await resolve_execution_scope(
+        client,
+        arguments,
+        enforce_active_context=True,
+    )
+    try:
+        result = await client.upload_evidence(
+            system_id=system_id,
+            file_path=arguments["file_path"],
+            name=arguments["name"],
+            evidence_type=arguments.get("evidence_type", "other"),
+            description=arguments.get("description"),
+            control_id=normalized_control_id,
+            framework_id=framework_id,
+        )
+    except (ValueError, OSError) as e:
+        return format_error(str(e))
     return format_json(result)
 
 

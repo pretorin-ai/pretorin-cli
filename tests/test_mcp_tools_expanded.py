@@ -88,7 +88,7 @@ class TestToolListing:
             "pretorin_infer_stigs",
         ]
 
-        assert len(tools) == 86
+        assert len(tools) == 87
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 

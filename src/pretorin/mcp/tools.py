@@ -270,6 +270,26 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "Optional: Associated framework ID; defaults to active scope",
                     },
+                    "code_file_path": {
+                        "type": "string",
+                        "description": "Path to source file (relative to workspace root)",
+                    },
+                    "code_line_numbers": {
+                        "type": "string",
+                        "description": "Line range (e.g., '10-25')",
+                    },
+                    "code_snippet": {
+                        "type": "string",
+                        "description": "Relevant code excerpt",
+                    },
+                    "code_repository": {
+                        "type": "string",
+                        "description": "Git repository URL",
+                    },
+                    "code_commit_hash": {
+                        "type": "string",
+                        "description": "Git commit hash",
+                    },
                     "dedupe": {
                         "type": "boolean",
                         "description": "Whether to reuse exact-matching org evidence before creating",
@@ -306,6 +326,11 @@ async def list_tools() -> list[Tool]:
                                     "enum": sorted(VALID_EVIDENCE_TYPES),
                                 },
                                 "relevance_notes": {"type": "string"},
+                                "code_file_path": {"type": "string", "description": "Path to source file"},
+                                "code_line_numbers": {"type": "string", "description": "Line range (e.g., '10-25')"},
+                                "code_snippet": {"type": "string", "description": "Relevant code excerpt"},
+                                "code_repository": {"type": "string", "description": "Git repository URL"},
+                                "code_commit_hash": {"type": "string", "description": "Git commit hash"},
                             },
                             "required": ["name", "description", "control_id"],
                         },
@@ -336,6 +361,42 @@ async def list_tools() -> list[Tool]:
                     "allow_unverified_sources": allow_unverified_sources_property(),
                 },
                 "required": ["evidence_id", "control_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_upload_evidence",
+            description="Upload a file as evidence to the platform (system-scoped, requires WRITE access)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "system_id": system_id_property(optional=True),
+                    "file_path": {
+                        "type": "string",
+                        "description": "Absolute path to the file to upload",
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Evidence name",
+                    },
+                    "evidence_type": {
+                        "type": "string",
+                        "description": "Type of evidence",
+                        "default": "other",
+                        "enum": sorted(VALID_EVIDENCE_TYPES),
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Evidence description",
+                    },
+                    "control_id": control_id_property(optional=True),
+                    "framework_id": {
+                        "type": "string",
+                        "description": "Optional: Framework ID; defaults to active scope",
+                    },
+                    "allow_scope_override": allow_scope_override_property(),
+                    "allow_unverified_sources": allow_unverified_sources_property(),
+                },
+                "required": ["file_path", "name"],
             },
         ),
         Tool(

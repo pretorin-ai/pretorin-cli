@@ -49,6 +49,7 @@ class SourceIdentity:
     identity: str
     account_id: str | None = None
     display_name: str = ""
+    source_role: str = ""
     raw: dict[str, Any] = field(default_factory=dict)
 
 
@@ -188,6 +189,7 @@ class GitRepoProvider(SourceProvider):
             provider_type=self.provider_type,
             identity=remote,
             display_name=remote,
+            source_role="code",
             raw={"remote_url": remote, "head_commit": commit},
         )
 
@@ -216,6 +218,7 @@ class AWSIdentityProvider(SourceProvider):
             identity=arn,
             account_id=account_id,
             display_name=f"AWS {account_id}",
+            source_role="identity",
             raw=data,
         )
 
@@ -245,6 +248,7 @@ class AzureIdentityProvider(SourceProvider):
             identity=subscription_id,
             account_id=tenant_id,
             display_name=f"Azure {name}" if name else f"Azure {subscription_id}",
+            source_role="identity",
             raw=data,
         )
 
@@ -278,6 +282,7 @@ class KubernetesContextProvider(SourceProvider):
             provider_type=self.provider_type,
             identity=context_name,
             display_name=f"k8s:{context_name}",
+            source_role="deployment",
             raw=raw,
         )
 
@@ -295,11 +300,13 @@ class ManualAttestationProvider(SourceProvider):
         identity: str,
         display_name: str = "",
         account_id: str | None = None,
+        source_role: str = "monitoring",
     ) -> None:
         self._source_type = source_type
         self._identity = identity
         self._display_name = display_name or identity
         self._account_id = account_id
+        self._source_role = source_role
 
     @property
     def provider_type(self) -> str:
@@ -313,6 +320,7 @@ class ManualAttestationProvider(SourceProvider):
             identity=self._identity,
             account_id=self._account_id,
             display_name=self._display_name,
+            source_role=self._source_role,
             raw={"attestation_type": "manual"},
         )
 
@@ -362,6 +370,7 @@ def resolve_providers(
                     identity=identity,
                     display_name=entry.get("display_name", ""),
                     account_id=entry.get("account_id"),
+                    source_role=entry.get("source_role", "monitoring"),
                 )
             )
         elif ptype in _AUTO_PROVIDER_REGISTRY:
@@ -870,3 +879,91 @@ def build_write_provenance(
         provenance["manifest_status"] = ManifestStatus.NO_MANIFEST.value
 
     return provenance
+
+
+# ---------------------------------------------------------------------------
+# Source verification mapping (platform SourceVerificationPayload shape)
+# ---------------------------------------------------------------------------
+
+# Maps CLI provider_type to platform CanonicalSourceType enum values.
+# Translation happens at serialization time — SourceIdentity.provider_type is unchanged.
+PROVIDER_TO_CANONICAL_SOURCE_TYPE: dict[str, str] = {
+    "git_repo": "github_repo",
+    "aws_identity": "aws_account",
+    "azure_identity": "entra_tenant",
+    "k8s_context": "kubernetes_cluster",
+}
+
+
+def build_source_verification(
+    system_id: str,
+    framework_id: str,
+) -> dict[str, Any] | None:
+    """Build a platform-compatible source verification payload.
+
+    Returns None if no snapshot exists or session is unverified.
+    The returned dict matches the platform's SourceVerificationPayload schema.
+    """
+    snapshot = load_snapshot(system_id, framework_id)
+    if snapshot is None:
+        return None
+
+    from pretorin.client.config import Config
+
+    config = Config()
+    status = check_snapshot_validity(
+        snapshot,
+        system_id=system_id,
+        framework_id=framework_id,
+        api_base_url=config.platform_api_base_url,
+    )
+
+    if status == VerificationStatus.UNVERIFIED:
+        return None
+
+    sources = []
+    for s in snapshot.sources:
+        canonical_type = PROVIDER_TO_CANONICAL_SOURCE_TYPE.get(s.provider_type, "custom")
+        role = s.source_role or "monitoring"
+        sources.append(
+            {
+                "source_type": canonical_type,
+                "source_role": role,
+                "identifier": s.identity,
+                "verified": status == VerificationStatus.VERIFIED,
+                "verified_at": snapshot.verified_at,
+            }
+        )
+
+    return {
+        "overall_state": status.value,
+        "verified_at": snapshot.verified_at,
+        "ttl_seconds": 3600,
+        "sources": sources,
+    }
+
+
+def extract_git_context_from_snapshot(
+    system_id: str,
+    framework_id: str,
+) -> dict[str, str] | None:
+    """Extract git repo URL and commit hash from the attested snapshot.
+
+    Returns a dict with code_repository and code_commit_hash, or None
+    if no snapshot or no git provider in the snapshot.
+    """
+    snapshot = load_snapshot(system_id, framework_id)
+    if snapshot is None:
+        return None
+
+    for s in snapshot.sources:
+        if s.provider_type == "git_repo":
+            result: dict[str, str] = {}
+            if s.identity:
+                result["code_repository"] = s.identity
+            commit = s.raw.get("head_commit", "")
+            if commit:
+                result["code_commit_hash"] = commit
+            return result if result else None
+
+    return None

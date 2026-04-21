@@ -108,7 +108,10 @@ def _build_generation_task(system_id: str, system_name: str, framework_id: str, 
         '  "evidence_recommendations": [\n'
         '    {"name": "<short title>", "evidence_type": "'
         + f"<{enum_list}>"
-        + '", "description": "<auditor-ready markdown>"}\n'
+        + '", "description": "<auditor-ready markdown>", '
+        '"code_file_path": "<path/to/file or null>", '
+        '"code_line_numbers": "<start-end or null>", '
+        '"code_snippet": "<relevant excerpt or null>"}\n'
         "  ]\n"
         "}\n\n"
         "Requirements:\n"
@@ -122,6 +125,9 @@ def _build_generation_task(system_id: str, system_name: str, framework_id: str, 
         "- Each evidence_recommendations.description must contain at least one rich markdown element and no headings.\n"
         f"- evidence_type is REQUIRED on every evidence_recommendations entry and must be exactly one of: {enum_list}. "
         "If you cannot pick a type, omit the entry and describe the gap in recommended_notes instead.\n"
+        "- When evidence is found in a workspace file, set code_file_path to the file path relative to "
+        "the workspace root, code_line_numbers to the relevant line range (e.g. '42-67'), and code_snippet "
+        "to the relevant excerpt. These fields are optional but strongly preferred for traceability.\n"
         "- An empty evidence_recommendations list is a valid and expected result ONLY after Step 2 confirms "
         "no observable workspace artifact supports this control. Describe every unverified gap in "
         "recommended_notes instead of fabricating evidence to fill the shape."

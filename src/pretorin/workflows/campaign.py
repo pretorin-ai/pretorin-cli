@@ -1425,6 +1425,13 @@ async def _apply_control_item(
     if failed_note_indexes:
         raise PretorianClientError(f"Control notes partially failed for {item.item_id}: indexes {failed_note_indexes}")
 
+    # 3b. Validate code references — read actual file content as canonical snippet.
+    if accepted and write_evidence:
+        from pretorin.workflows.evidence_validation import enrich_evidence_recommendations
+
+        recs_to_validate = [rec for _, rec in accepted]
+        enrich_evidence_recommendations(recs_to_validate, request.working_directory)
+
     # 4. Evidence batch (accepted items only).
     if accepted and write_evidence:
         batch_items = [
@@ -1433,6 +1440,12 @@ async def _apply_control_item(
                 description=str(rec["description"]),
                 control_id=item.item_id,
                 evidence_type=str(rec["evidence_type"]),
+                relevance_notes=rec.get("relevance_notes"),
+                code_file_path=rec.get("code_file_path"),
+                code_line_numbers=rec.get("code_line_numbers"),
+                code_snippet=rec.get("code_snippet"),
+                code_repository=rec.get("code_repository"),
+                code_commit_hash=rec.get("code_commit_hash"),
             )
             for _, rec in accepted
         ]
