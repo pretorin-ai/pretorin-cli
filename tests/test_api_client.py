@@ -952,6 +952,7 @@ class TestEvidenceEndpoints:
             name="New Evidence",
             description="Description",
             control_id="ac-2",
+            evidence_type="policy_document",
         )
         result = await client.create_evidence("sys-001", evidence)
         assert result["id"] == "ev-new"
@@ -968,6 +969,7 @@ class TestEvidenceEndpoints:
         evidence = EvidenceCreate(
             name="New Evidence",
             description="Description",
+            evidence_type="policy_document",
         )
         result = await client.create_evidence("sys-001", evidence)
         assert result["id"] == "ev-new"

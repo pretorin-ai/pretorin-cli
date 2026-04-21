@@ -872,7 +872,7 @@ def _existing_note_indices(item_state: CampaignItemState) -> set[int]:
 
 
 def _is_valid_evidence_type(value: Any) -> bool:
-    from pretorin.mcp.helpers import VALID_EVIDENCE_TYPES
+    from pretorin.evidence.types import VALID_EVIDENCE_TYPES
 
     return isinstance(value, str) and value in VALID_EVIDENCE_TYPES
 
@@ -1313,6 +1313,7 @@ async def _apply_control_item(
     item_state: CampaignItemState,
     snapshot: WorkflowContextSnapshot,
 ) -> bool:
+    from pretorin.evidence.types import normalize_evidence_type
     from pretorin.workflows.gap_notes import synthesize_gap_note
 
     system_id = str(snapshot.scope["system_id"])
@@ -1341,8 +1342,15 @@ async def _apply_control_item(
     accepted: list[tuple[int, dict[str, Any]]] = []
     synthesized_notes: list[str] = []
     defaulted_missing_type = 0
+    # `rejected_invalid_type` is kept for backward-compat telemetry after
+    # issue #79 — the normalizer no longer rejects, so this counter is
+    # always 0 in 0.16.0. Downstream consumers should migrate to
+    # `evidence_type_normalized` + `evidence_type_fallback`. Field will
+    # be dropped in 0.17.0.
     rejected_invalid_type = 0
     rejected_malformed = 0
+    evidence_type_normalized = 0  # issue #79: alias + fuzzy matches
+    evidence_type_fallback = 0  # issue #79: unknown -> "other"
     types_used: dict[str, int] = {}
     write_evidence = request.artifacts in {"evidence", "both"}
 
@@ -1360,24 +1368,31 @@ async def _apply_control_item(
                 )
             )
             continue
-        evidence_type = rec.get("evidence_type")
-        if not evidence_type:
-            # Safety net: missing type shouldn't drop otherwise-valid evidence. Flood
-            # prevention is handled by the prompt ("evidence_type REQUIRED") + the
-            # invalid-type rejection below, not by requiring the field at validation.
-            defaulted_missing_type += 1
-            evidence_type = "policy_document"
-            rec["evidence_type"] = evidence_type
-        if not _is_valid_evidence_type(evidence_type):
-            rejected_invalid_type += 1
-            synthesized_notes.append(
-                synthesize_gap_note(
-                    rec,
-                    reason=f"AI proposed unknown evidence_type '{evidence_type}'",
+        # Issue #79: layer the AI-drift normalizer between "unknown" and
+        # "rejected" so aliases and typos recover to a canonical type
+        # without polluting the evidence locker. Unknown non-empty strings
+        # still emit a gap note so reviewers see what the AI tried.
+        raw_type = rec.get("evidence_type")
+        normalized = normalize_evidence_type(raw_type)
+        rec["evidence_type"] = normalized.value
+        if normalized.strategy in ("alias", "fuzzy"):
+            evidence_type_normalized += 1
+        elif normalized.strategy == "fallback":
+            # Treat missing, non-string, and whitespace-only inputs as "not
+            # provided" (matches the normalizer's own logic). Only truly
+            # unknown non-empty strings get a reviewer gap note.
+            provided = isinstance(raw_type, str) and bool(raw_type.strip())
+            if not provided:
+                defaulted_missing_type += 1
+            else:
+                evidence_type_fallback += 1
+                synthesized_notes.append(
+                    synthesize_gap_note(
+                        rec,
+                        reason=(f"AI proposed unknown evidence_type {raw_type!r}; normalized to 'other'"),
+                    )
                 )
-            )
-            continue
-        types_used[str(evidence_type)] = types_used.get(str(evidence_type), 0) + 1
+        types_used[normalized.value] = types_used.get(normalized.value, 0) + 1
         accepted.append((index, rec))
 
     # 3. Notes — AI-authored `recommended_notes` first, then synthesized rejection notes.
@@ -1510,6 +1525,8 @@ async def _apply_control_item(
             "defaulted_missing_type": defaulted_missing_type,
             "rejected_invalid_type": rejected_invalid_type,
             "rejected_malformed": rejected_malformed,
+            "evidence_type_normalized": evidence_type_normalized,
+            "evidence_type_fallback": evidence_type_fallback,
             "ai_notes_written": min(len(ai_notes), notes_written_this_run),
             "synthesized_notes_written": len(synthesized_notes),
             "types_used": types_used,

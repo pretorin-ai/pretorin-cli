@@ -16,7 +16,15 @@ class TestEvidenceCreateValidation:
         """Evidence create should reject description with no rich elements."""
         result = runner.invoke(
             app,
-            ["create", "ac-02", "fedramp-moderate", "-d", "plain text with no markdown"],
+            [
+                "create",
+                "ac-02",
+                "fedramp-moderate",
+                "-d",
+                "plain text with no markdown",
+                "-t",
+                "policy_document",
+            ],
         )
         assert result.exit_code != 0
         assert "Validation failed" in result.output or "rich" in result.output.lower()
@@ -32,6 +40,8 @@ class TestEvidenceCreateValidation:
                     "fedramp-moderate",
                     "-d",
                     "- RBAC configuration verified",
+                    "-t",
+                    "configuration",
                 ],
             )
             assert result.exit_code == 0
@@ -40,7 +50,15 @@ class TestEvidenceCreateValidation:
         """Evidence create should reject description with headings."""
         result = runner.invoke(
             app,
-            ["create", "ac-02", "fedramp-moderate", "-d", "# Heading\n- list item"],
+            [
+                "create",
+                "ac-02",
+                "fedramp-moderate",
+                "-d",
+                "# Heading\n- list item",
+                "-t",
+                "policy_document",
+            ],
         )
         assert result.exit_code != 0
         assert "Validation failed" in result.output or "heading" in result.output.lower()
@@ -56,6 +74,8 @@ class TestEvidenceCreateValidation:
                     "fedramp-moderate",
                     "-d",
                     "```yaml\nkey: value\n```",
+                    "-t",
+                    "configuration",
                 ],
             )
             assert result.exit_code == 0

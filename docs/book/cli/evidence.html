@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7f15c34b.js";
+            window.path_to_searchindex_js = "../searchindex-9d3c69a8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -185,9 +185,11 @@
 <h2 id="create-local-evidence"><a class="header" href="#create-local-evidence">Create Local Evidence</a></h2>
 <pre><code class="language-bash">pretorin evidence create ac-02 fedramp-moderate \
   --name "RBAC Configuration" \
-  --description "Role-based access control in Azure AD"
+  --description "Role-based access control in Azure AD" \
+  --type configuration
 </code></pre>
 <p>Creates a markdown file under <code>evidence/&lt;framework&gt;/&lt;control&gt;/</code> with YAML frontmatter containing metadata (control ID, framework, name, type, status).</p>
+<p><code>--type / -t</code> is <strong>required</strong> — the CLI no longer defaults to <code>policy_document</code>. See <a href="#evidence-types">Evidence Types</a> below for the 13 canonical values.</p>
 <h2 id="list-local-evidence"><a class="header" href="#list-local-evidence">List Local Evidence</a></h2>
 <pre><code class="language-bash"># List all local evidence
 pretorin evidence list
@@ -245,7 +247,7 @@ pretorin evidence delete ev-abc123 --system "My Application" --yes
 <tr><th>Type</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>policy_document</code></td><td>Policy or procedure document (default)</td></tr>
+<tr><td><code>policy_document</code></td><td>Policy or procedure document</td></tr>
 <tr><td><code>screenshot</code></td><td>Screenshot evidence</td></tr>
 <tr><td><code>screen_recording</code></td><td>Screen recording</td></tr>
 <tr><td><code>log_file</code></td><td>Log file extract</td></tr>
@@ -261,6 +263,8 @@ pretorin evidence delete ev-abc123 --system "My Application" --yes
 </tbody>
 </table>
 </div>
+<h3 id="ai-drift-normalization"><a class="header" href="#ai-drift-normalization">AI-Drift Normalization</a></h3>
+<p>Non-CLI write paths (MCP handlers, agent tools, <code>upsert_evidence</code> workflow, campaign apply) run a client-side normalizer before submitting evidence to the platform. It maps known AI-drift aliases to canonical types (e.g. <code>audit_log</code> → <code>log_file</code>, plural <code>test_results</code> → <code>test_result</code>, <code>screenshoot</code> → <code>screenshot</code>) and uses <code>difflib</code> fuzzy matching for novel typos before falling back to <code>other</code>. The CLI itself does <strong>not</strong> run the normalizer; users get a hard error listing all 13 canonical types and can self-correct.</p>
 <h2 id="markdown-quality-requirements"><a class="header" href="#markdown-quality-requirements">Markdown Quality Requirements</a></h2>
 <p>Evidence descriptions must be auditor-ready markdown:</p>
 <ul>

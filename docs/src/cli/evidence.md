@@ -7,10 +7,13 @@ The `evidence` command group manages local evidence files and syncs them to the 
 ```bash
 pretorin evidence create ac-02 fedramp-moderate \
   --name "RBAC Configuration" \
-  --description "Role-based access control in Azure AD"
+  --description "Role-based access control in Azure AD" \
+  --type configuration
 ```
 
 Creates a markdown file under `evidence/<framework>/<control>/` with YAML frontmatter containing metadata (control ID, framework, name, type, status).
+
+`--type / -t` is **required** — the CLI no longer defaults to `policy_document`. See [Evidence Types](#evidence-types) below for the 13 canonical values.
 
 ## List Local Evidence
 
@@ -91,7 +94,7 @@ Valid evidence types:
 
 | Type | Description |
 |------|-------------|
-| `policy_document` | Policy or procedure document (default) |
+| `policy_document` | Policy or procedure document |
 | `screenshot` | Screenshot evidence |
 | `screen_recording` | Screen recording |
 | `log_file` | Log file extract |
@@ -104,6 +107,10 @@ Valid evidence types:
 | `scan_result` | Security scan output |
 | `interview_notes` | Interview or assessment notes |
 | `other` | Other evidence type |
+
+### AI-Drift Normalization
+
+Non-CLI write paths (MCP handlers, agent tools, `upsert_evidence` workflow, campaign apply) run a client-side normalizer before submitting evidence to the platform. It maps known AI-drift aliases to canonical types (e.g. `audit_log` → `log_file`, plural `test_results` → `test_result`, `screenshoot` → `screenshot`) and uses `difflib` fuzzy matching for novel typos before falling back to `other`. The CLI itself does **not** run the normalizer; users get a hard error listing all 13 canonical types and can self-correct.
 
 ## Markdown Quality Requirements
 

@@ -8,6 +8,7 @@ line 170 (PretorianClientError in get_narrative).
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -61,12 +62,33 @@ class TestHandleCreateEvidence:
         assert "description" in _error_text(result)
 
     @pytest.mark.asyncio
-    async def test_invalid_evidence_type_returns_error(self):
-        """Line 79: invalid evidence_type returns format_error."""
+    async def test_missing_evidence_type_returns_error(self):
+        """Issue #79: evidence_type is required on the single-create path."""
         client = _make_client()
-        with patch(
-            "pretorin.mcp.handlers.evidence.resolve_execution_scope",
-            new=AsyncMock(return_value=("sys-1", "fedramp-moderate", "ac-02")),
+        result = await handle_create_evidence(
+            client,
+            {"name": "Test", "description": "Desc"},
+        )
+        assert _is_error(result)
+        assert "evidence_type" in _error_text(result)
+
+    @pytest.mark.asyncio
+    async def test_unknown_evidence_type_falls_back_to_other(self):
+        """Issue #79: unknown strings normalize to 'other' and proceed."""
+        client = _make_client()
+        upsert_result = SimpleNamespace(
+            evidence_id="ev-1",
+            to_dict=lambda: {"id": "ev-1"},
+        )
+        with (
+            patch(
+                "pretorin.mcp.handlers.evidence.resolve_execution_scope",
+                new=AsyncMock(return_value=("sys-1", "fedramp-moderate", "ac-02")),
+            ),
+            patch(
+                "pretorin.mcp.handlers.evidence.upsert_evidence",
+                new=AsyncMock(return_value=upsert_result),
+            ) as upsert_mock,
         ):
             result = await handle_create_evidence(
                 client,
@@ -76,19 +98,22 @@ class TestHandleCreateEvidence:
                     "evidence_type": "INVALID_TYPE",
                 },
             )
-        assert _is_error(result)
-        assert "evidence_type" in _error_text(result)
+        assert not _is_error(result)
+        assert upsert_mock.await_args.kwargs["evidence_type"] == "other"
 
     @pytest.mark.asyncio
     async def test_value_error_during_upsert(self):
         """Lines 95-96: ValueError from upsert_evidence returns format_error."""
         client = _make_client()
-        with patch(
-            "pretorin.mcp.handlers.evidence.resolve_execution_scope",
-            new=AsyncMock(return_value=("sys-1", "fedramp-moderate", "ac-02")),
-        ), patch(
-            "pretorin.mcp.handlers.evidence.upsert_evidence",
-            new=AsyncMock(side_effect=ValueError("framework_id is required")),
+        with (
+            patch(
+                "pretorin.mcp.handlers.evidence.resolve_execution_scope",
+                new=AsyncMock(return_value=("sys-1", "fedramp-moderate", "ac-02")),
+            ),
+            patch(
+                "pretorin.mcp.handlers.evidence.upsert_evidence",
+                new=AsyncMock(side_effect=ValueError("framework_id is required")),
+            ),
         ):
             result = await handle_create_evidence(
                 client,
@@ -114,9 +139,36 @@ class TestHandleCreateEvidenceBatch:
         assert "items" in _error_text(result)
 
     @pytest.mark.asyncio
-    async def test_invalid_evidence_type_in_batch(self):
-        """Line 119: invalid evidence_type in batch item returns format_error."""
+    async def test_batch_alias_normalizes_to_canonical(self):
+        """Issue #79: AI-drift aliases (e.g. test_results plural) map to canonical."""
         client = _make_client()
+        client.create_evidence_batch = AsyncMock(return_value=SimpleNamespace(model_dump=lambda: {"results": []}))
+        with patch(
+            "pretorin.mcp.handlers.evidence.resolve_execution_scope",
+            new=AsyncMock(return_value=("sys-1", "fedramp-moderate", None)),
+        ):
+            result = await handle_create_evidence_batch(
+                client,
+                {
+                    "items": [
+                        {
+                            "name": "Test",
+                            "description": "Desc",
+                            "control_id": "ac-02",
+                            "evidence_type": "test_results",
+                        }
+                    ],
+                },
+            )
+        assert not _is_error(result)
+        sent_items = client.create_evidence_batch.await_args.args[2]
+        assert sent_items[0].evidence_type == "test_result"
+
+    @pytest.mark.asyncio
+    async def test_batch_unknown_evidence_type_falls_back_to_other(self):
+        """Issue #79: unknown strings in batch items normalize to 'other'."""
+        client = _make_client()
+        client.create_evidence_batch = AsyncMock(return_value=SimpleNamespace(model_dump=lambda: {"results": []}))
         with patch(
             "pretorin.mcp.handlers.evidence.resolve_execution_scope",
             new=AsyncMock(return_value=("sys-1", "fedramp-moderate", None)),
@@ -134,8 +186,9 @@ class TestHandleCreateEvidenceBatch:
                     ],
                 },
             )
-        assert _is_error(result)
-        assert "evidence_type" in _error_text(result)
+        assert not _is_error(result)
+        sent_items = client.create_evidence_batch.await_args.args[2]
+        assert sent_items[0].evidence_type == "other"
 
 
 class TestHandleLinkEvidence:
@@ -178,9 +231,7 @@ class TestHandleDeleteEvidence:
             "pretorin.mcp.handlers.evidence.resolve_execution_scope",
             new=AsyncMock(return_value=("sys-1", "fedramp-moderate", None)),
         ):
-            result = await handle_delete_evidence(
-                client, {"evidence_id": "ev-abc123"}
-            )
+            result = await handle_delete_evidence(client, {"evidence_id": "ev-abc123"})
         assert not isinstance(result, CallToolResult)
         import json
 
@@ -193,17 +244,13 @@ class TestHandleDeleteEvidence:
     async def test_client_error_bubbles_up(self):
         """PretorianClientError from delete should propagate."""
         client = _make_client()
-        client.delete_evidence = AsyncMock(
-            side_effect=PretorianClientError("Not found")
-        )
+        client.delete_evidence = AsyncMock(side_effect=PretorianClientError("Not found"))
         with patch(
             "pretorin.mcp.handlers.evidence.resolve_execution_scope",
             new=AsyncMock(return_value=("sys-1", "fedramp-moderate", None)),
         ):
             with pytest.raises(PretorianClientError, match="Not found"):
-                await handle_delete_evidence(
-                    client, {"evidence_id": "ev-abc123"}
-                )
+                await handle_delete_evidence(client, {"evidence_id": "ev-abc123"})
 
 
 class TestHandleGetNarrative:

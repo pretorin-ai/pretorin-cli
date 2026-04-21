@@ -26,6 +26,21 @@ ROMEBOT_EVIDENCE = "[#EAB536]\\[°□°][/#EAB536]"
 _VALID_EVIDENCE_TYPES = VALID_EVIDENCE_TYPES
 
 
+def _require_valid_evidence_type(evidence_type: str) -> None:
+    """Exit 1 with a helpful error if the user passed an unsupported type.
+
+    Issue #79: the CLI does NOT run the AI-drift normalizer — users get a
+    clear, actionable error instead. Typer's native `Missing option` handles
+    the omission case; this helper handles wrong-value cases.
+    """
+    if evidence_type not in _VALID_EVIDENCE_TYPES:
+        rprint(
+            f"[red]Invalid evidence type: {evidence_type}. "
+            f"Choose one of: {', '.join(sorted(_VALID_EVIDENCE_TYPES))}[/red]"
+        )
+        raise typer.Exit(1)
+
+
 @app.command("create")
 def evidence_create(
     control_id: str = typer.Argument(..., help="Control ID (e.g., ac-02)"),
@@ -43,11 +58,11 @@ def evidence_create(
         help="Evidence name (defaults to description summary)",
     ),
     evidence_type: str = typer.Option(
-        "policy_document",
+        ...,
         "--type",
         "-t",
         help=(
-            "Evidence type: screenshot, screen_recording, log_file, configuration, "
+            "Evidence type (required): screenshot, screen_recording, log_file, configuration, "
             "test_result, certificate, attestation, code_snippet, repository_link, "
             "policy_document, scan_result, interview_notes, other"
         ),
@@ -59,12 +74,13 @@ def evidence_create(
     with YAML frontmatter for tracking.
 
     Examples:
-        pretorin evidence create ac-02 fedramp-moderate -d "RBAC configuration in Kubernetes"
+        pretorin evidence create ac-02 fedramp-moderate -d "RBAC configuration in Kubernetes" -t configuration
         pretorin evidence create sc-07 nist-800-53-r5 -d "Firewall rules" -t configuration
     """
     from pretorin.evidence.writer import EvidenceWriter, LocalEvidence
     from pretorin.workflows.markdown_quality import validate_audit_markdown
 
+    _require_valid_evidence_type(evidence_type)
     control_id = normalize_control_id(control_id)
     evidence_name = name or description[:60]
 
@@ -418,7 +434,7 @@ def evidence_upsert(
             "(code block, table, list, or link). Images are not allowed yet."
         ),
     ),
-    evidence_type: str = typer.Option("policy_document", "--type", "-t", help="Evidence type."),
+    evidence_type: str = typer.Option(..., "--type", "-t", help="Evidence type (required)."),
     system: str | None = typer.Option(None, "--system", "-s", help="System name or ID."),
     code_file: str | None = typer.Option(None, "--code-file", help="Path to source file."),
     code_lines: str | None = typer.Option(None, "--code-lines", help="Line range (e.g., '10-25')."),
@@ -426,12 +442,7 @@ def evidence_upsert(
     code_commit: str | None = typer.Option(None, "--code-commit", help="Git commit hash."),
 ) -> None:
     """Find-or-create evidence and ensure system/control link."""
-    if evidence_type not in _VALID_EVIDENCE_TYPES:
-        rprint(
-            f"[red]Invalid evidence type: {evidence_type}. "
-            f"Choose one of: {', '.join(sorted(_VALID_EVIDENCE_TYPES))}[/red]"
-        )
-        raise typer.Exit(1)
+    _require_valid_evidence_type(evidence_type)
 
     asyncio.run(
         _upsert_evidence(

@@ -51,6 +51,7 @@ async def test_client_create_evidence_normalizes_control_id_in_payload() -> None
         description="Role mapping",
         control_id="ac-2",
         framework_id="fedramp-moderate",
+        evidence_type="configuration",
     )
     await client.create_evidence("sys-1", evidence)
 

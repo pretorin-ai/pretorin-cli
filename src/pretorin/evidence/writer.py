@@ -2,21 +2,30 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class LocalEvidence:
-    """A locally stored evidence item."""
+    """A locally stored evidence item.
+
+    Issue #79: `evidence_type` is required. Existing on-disk evidence
+    files whose frontmatter is missing the field will fail to reconstruct
+    with a clean TypeError — add the field manually (the canonical values
+    are listed in pretorin.evidence.types.VALID_EVIDENCE_TYPES).
+    """
 
     control_id: str
     framework_id: str
     name: str
     description: str
-    evidence_type: str = "policy_document"
+    evidence_type: str
     status: str = "draft"
     collected_at: str = ""
     platform_id: str | None = None
@@ -163,12 +172,26 @@ class EvidenceWriter:
                 desc_lines.append(line)
         description = "\n".join(desc_lines).strip()
 
+        # Issue #79: legacy on-disk files may be missing `evidence_type`, and
+        # previous versions of the CLI silently defaulted to the non-canonical
+        # string "documentation" which now fails pydantic validation downstream.
+        # Fall back to the canonical "other" and warn loudly so the user knows
+        # to fix the frontmatter.
+        raw_type = fm.get("evidence_type")
+        if not raw_type:
+            logger.warning(
+                "Evidence file %s is missing 'evidence_type' frontmatter; "
+                "defaulting to 'other'. Add the field manually to tag it correctly.",
+                path,
+            )
+            raw_type = "other"
+
         return LocalEvidence(
             control_id=fm.get("control_id", ""),
             framework_id=fm.get("framework_id", ""),
             name=name,
             description=description,
-            evidence_type=fm.get("evidence_type", "documentation"),
+            evidence_type=raw_type,
             status=fm.get("status", "draft"),
             collected_at=fm.get("collected_at", ""),
             platform_id=fm.get("platform_id"),

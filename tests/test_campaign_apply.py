@@ -109,7 +109,13 @@ def test_recommended_notes_become_platform_notes() -> None:
     assert "completion_note" in state.receipts
 
 
-def test_missing_evidence_type_defaults_to_policy_document() -> None:
+def test_missing_evidence_type_falls_back_to_other() -> None:
+    """Issue #79: missing evidence_type normalizes to 'other' via the normalizer.
+
+    Previously the safety net defaulted to 'policy_document'; that polluted the
+    platform's custom-policies page. The fallback is now 'other' so summary-
+    shaped evidence does not land as a tagged policy document.
+    """
     proposal = {
         "evidence_recommendations": [
             {"name": "SSO config", "description": "Some summary", "evidence_type": None},
@@ -120,58 +126,112 @@ def test_missing_evidence_type_defaults_to_policy_document() -> None:
 
     asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
 
-    # Safety net: missing evidence_type defaults rather than dropping the item.
     batch_items = client.create_evidence_batch.await_args.args[2]
     assert [item.name for item in batch_items] == ["SSO config"]
-    assert batch_items[0].evidence_type == "policy_document"
+    assert batch_items[0].evidence_type == "other"
     # No synthesized gap note for the missing-type case; only the completion note.
     assert client.add_control_note.await_count == 1
 
 
-def test_invalid_evidence_type_becomes_synthesized_gap_note() -> None:
+def test_whitespace_only_evidence_type_treated_as_missing() -> None:
+    """Issue #79: `"   "` should count as missing (not unknown-drift).
+
+    The normalizer treats it as fallback; the campaign pipeline must
+    classify it under defaulted_missing_type (like None/"") and NOT
+    emit a drift gap note for it — the AI effectively didn't provide a
+    type, and the prompt already tells them it's required.
+    """
+    proposal = {
+        "evidence_recommendations": [
+            {"name": "SSO config", "description": "d", "evidence_type": "   "},
+        ],
+    }
+    state = _state(proposal)
+    client = _mock_client(batch_results=[_ok_result(0)])
+
+    asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
+
+    batch_items = client.create_evidence_batch.await_args.args[2]
+    assert batch_items[0].evidence_type == "other"
+    # Only the completion note (no drift gap note) fires.
+    assert client.add_control_note.await_count == 1
+
+
+def test_unknown_evidence_type_normalizes_and_emits_gap_note() -> None:
+    """Issue #79: unknown non-empty strings normalize to 'other' AND emit a gap note.
+
+    The evidence still lands (so reviewers see the artifact) but the gap note
+    surfaces what the AI originally tried so drift is visible in the UI.
+    """
     proposal = {
         "evidence_recommendations": [
             {"name": "rec", "description": "desc", "evidence_type": "not-a-real-type"},
         ],
     }
     state = _state(proposal)
-    client = _mock_client(batch_results=[])
+    client = _mock_client(batch_results=[_ok_result(0)])
 
     asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
 
-    client.create_evidence_batch.assert_not_called()
-    # The synthesized note references the rejected type.
+    batch_items = client.create_evidence_batch.await_args.args[2]
+    assert batch_items[0].evidence_type == "other"
+    # Gap note references the original drift string.
     synthesized_call = client.add_control_note.await_args_list[0]
     assert "not-a-real-type" in synthesized_call.kwargs["content"]
 
 
+def test_alias_evidence_type_normalizes_to_canonical() -> None:
+    """Issue #79: AI-drift aliases like 'audit_log' map to canonical 'log_file'."""
+    proposal = {
+        "evidence_recommendations": [
+            {"name": "app audit", "description": "d", "evidence_type": "audit_log"},
+            {"name": "unit tests", "description": "d", "evidence_type": "test_results"},
+        ],
+    }
+    state = _state(proposal)
+    client = _mock_client(batch_results=[_ok_result(0), _ok_result(1)])
+
+    asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
+
+    batch_items = client.create_evidence_batch.await_args.args[2]
+    assert batch_items[0].evidence_type == "log_file"
+    assert batch_items[1].evidence_type == "test_result"
+    # Aliases don't emit gap notes (they're legitimate near-misses) — only completion note.
+    assert client.add_control_note.await_count == 1
+
+
 def test_mixed_accept_reject_preserves_original_indexes() -> None:
-    # Five recs: indexes 0/3/4 valid, 1 missing type (defaulted), 2 invalid type (rejected).
+    """Issue #79: with the normalizer, formerly-rejected types now reach batch as 'other'.
+
+    Five recs: 0/3/4 canonical, 1 missing (fallback -> other), 2 unknown (fallback -> other
+    with gap note). All five reach the batch; the unknown still emits a gap note so
+    reviewers see the drift.
+    """
     proposal = {
         "evidence_recommendations": [
             {"name": "n0", "description": "d", "evidence_type": "configuration"},
             {"name": "n1", "description": "d"},
-            {"name": "n2", "description": "d", "evidence_type": "bogus"},
+            {"name": "n2", "description": "d", "evidence_type": "bogus_xyzzy"},
             {"name": "n3", "description": "d", "evidence_type": "configuration"},
             {"name": "n4", "description": "d", "evidence_type": "code_snippet"},
         ],
     }
     state = _state(proposal)
-    client = _mock_client(batch_results=[_ok_result(0), _ok_result(1), _ok_result(2), _ok_result(3)])
+    client = _mock_client(batch_results=[_ok_result(i) for i in range(5)])
 
     asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
 
-    # Batch received 4 items — index 1 defaults to policy_document; index 2 is rejected.
     batch_call = client.create_evidence_batch.await_args
     batch_items = batch_call.args[2]
-    assert [item.name for item in batch_items] == ["n0", "n1", "n3", "n4"]
-    assert batch_items[1].evidence_type == "policy_document"
+    assert [item.name for item in batch_items] == ["n0", "n1", "n2", "n3", "n4"]
+    assert batch_items[1].evidence_type == "other"  # missing -> fallback
+    assert batch_items[2].evidence_type == "other"  # unknown -> fallback
 
-    # Receipts remap offsets back to original indexes.
+    # Receipts keep original indexes 0..4.
     receipt_indexes = sorted(r["index"] for r in state.receipts["evidence_batch"])
-    assert receipt_indexes == [0, 1, 3, 4]
+    assert receipt_indexes == [0, 1, 2, 3, 4]
 
-    # One synthesized gap note (for invalid-type index 2) + one completion note.
+    # One synthesized gap note (only for the unknown-string index 2) + one completion note.
     assert client.add_control_note.await_count == 2
 
 

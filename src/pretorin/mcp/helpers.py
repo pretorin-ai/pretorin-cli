@@ -11,6 +11,7 @@ from mcp.types import CallToolResult, TextContent
 from pretorin.cli.context import resolve_execution_context
 from pretorin.client import PretorianClient
 from pretorin.client.api import PretorianClientError
+from pretorin.evidence.types import VALID_EVIDENCE_TYPES as VALID_EVIDENCE_TYPES
 from pretorin.scope import ExecutionScope
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.compliance_updates import resolve_system
@@ -21,21 +22,9 @@ logger = logging.getLogger(__name__)
 # Validation constants
 # ---------------------------------------------------------------------------
 
-VALID_EVIDENCE_TYPES = {
-    "screenshot",
-    "screen_recording",
-    "log_file",
-    "configuration",
-    "test_result",
-    "certificate",
-    "attestation",
-    "code_snippet",
-    "repository_link",
-    "policy_document",
-    "scan_result",
-    "interview_notes",
-    "other",
-}
+# VALID_EVIDENCE_TYPES is re-exported from pretorin.evidence.types (issue #79).
+# Kept here for backward compatibility with existing imports; new code should
+# import from pretorin.evidence.types directly.
 VALID_SEVERITIES = {"critical", "high", "medium", "low", "info"}
 VALID_EVENT_TYPES = {"security_scan", "configuration_change", "access_review", "compliance_check"}
 VALID_CONTROL_STATUSES = {
