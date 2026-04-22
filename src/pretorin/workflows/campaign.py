@@ -877,6 +877,65 @@ def _is_valid_evidence_type(value: Any) -> bool:
     return isinstance(value, str) and value in VALID_EVIDENCE_TYPES
 
 
+async def _resolve_family_id(
+    client: PretorianClient,
+    framework_id: str,
+    raw: str,
+) -> str:
+    """Resolve user-supplied family input to the framework's canonical family ID.
+
+    Match order (each case-insensitive via ``str.casefold`` and whitespace-stripped):
+
+    1. ``family.id`` — the canonical slug or abbreviation the backend stores
+       (e.g., SOC 2 ``CC6``, NIST/FedRAMP ``access-control``, CMMC
+       ``access-control-level-2``).
+    2. ``family.class_type`` — the abbreviation field. Lets users type what they
+       naturally know (NIST/FedRAMP ``AC``/``ac``, CMMC ``AC-L2``) and have it
+       resolve to the canonical id.
+
+    Raises ``PretorianClientError`` listing valid families on miss — with a
+    structured ``details`` payload so MCP-driven agents can recover
+    programmatically.
+    """
+    needle = (raw or "").strip()
+    if not needle:
+        raise PretorianClientError(
+            "--family cannot be empty.",
+            details={"framework_id": framework_id},
+        )
+    families = await client.list_control_families(framework_id)
+    if not families:
+        raise PretorianClientError(
+            f"Framework {framework_id!r} declares no control families.",
+            details={"framework_id": framework_id, "available_families": []},
+        )
+    target = needle.casefold()
+    # Primary: match against canonical id.
+    for family in families:
+        if family.id.strip().casefold() == target:
+            return family.id
+    # Fallback: match against class abbreviation (e.g., NIST `ac`, CMMC `AC-L2`).
+    for family in families:
+        if (family.class_type or "").strip().casefold() == target:
+            return family.id
+    available = sorted(f.id for f in families)
+    raise PretorianClientError(
+        f"Unknown family {raw!r} for framework {framework_id!r}. "
+        f"Available families: {', '.join(available)}. "
+        f"CLI: `pretorin frameworks families {framework_id}`. "
+        f"MCP: `pretorin_list_control_families` tool.",
+        details={
+            "framework_id": framework_id,
+            "requested_family_id": raw,
+            "available_families": available,
+            "discovery": {
+                "cli": f"pretorin frameworks families {framework_id}",
+                "mcp_tool": "pretorin_list_control_families",
+            },
+        },
+    )
+
+
 async def _prepare_controls_context(
     client: PretorianClient,
     request: CampaignRunRequest,
@@ -901,8 +960,13 @@ async def _prepare_controls_context(
         raise PretorianClientError("Exactly one of --family, --controls, or --all-controls is required.")
 
     if request.family_id:
-        summaries = await client.list_controls(framework_id, request.family_id)
-        family_bundle = await client.get_family_bundle(system_id, request.family_id, framework_id)
+        resolved_family_id = await _resolve_family_id(client, framework_id, request.family_id)
+        summaries = await client.list_controls(framework_id, resolved_family_id)
+        if not summaries:
+            # Belt-and-suspenders: backend may ignore the query param. Filter client-side.
+            unfiltered_controls = await client.list_controls(framework_id)
+            summaries = [c for c in unfiltered_controls if c.family_id == resolved_family_id]
+        family_bundle = await client.get_family_bundle(system_id, resolved_family_id, framework_id)
     elif request.control_ids:
         normalized = [normalize_control_id(control_id) for control_id in request.control_ids]
         all_controls = await client.list_controls(framework_id)

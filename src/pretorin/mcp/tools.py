@@ -1107,7 +1107,15 @@ async def list_tools() -> list[Tool]:
                 "type": "object",
                 "properties": {
                     "system_id": system_id_property(),
-                    "family_id": {"type": "string", "description": "Control family ID (e.g., AC, SC, IA)"},
+                    "family_id": {
+                        "type": "string",
+                        "description": (
+                            "Canonical control family ID for this framework "
+                            "(e.g. 'access-control' for NIST/FedRAMP, 'CC6' for SOC 2, "
+                            "'access-control-level-2' for CMMC). Use "
+                            "`pretorin_list_control_families` to list valid values."
+                        ),
+                    },
                     "framework_id": {"type": "string", "description": "Framework ID"},
                 },
                 "required": ["system_id", "family_id", "framework_id"],
@@ -1124,7 +1132,14 @@ async def list_tools() -> list[Tool]:
                 "type": "object",
                 "properties": {
                     "system_id": system_id_property(),
-                    "family_id": {"type": "string", "description": "Control family ID (e.g., AC)"},
+                    "family_id": {
+                        "type": "string",
+                        "description": (
+                            "Canonical control family ID for this framework "
+                            "(e.g. 'access-control' for NIST/FedRAMP, 'CC6' for SOC 2). "
+                            "Use `pretorin_list_control_families` to list valid values."
+                        ),
+                    },
                     "framework_id": {"type": "string", "description": "Framework ID"},
                 },
                 "required": ["system_id", "family_id", "framework_id"],
@@ -1209,7 +1224,15 @@ async def list_tools() -> list[Tool]:
                     "max_retries": {"type": "integer", "default": 2},
                     "system_id": system_id_property(optional=True),
                     "framework_id": {"type": "string", "description": "Optional framework ID"},
-                    "family_id": {"type": "string", "description": "Optional control family selector"},
+                    "family_id": {
+                        "type": "string",
+                        "description": (
+                            "Optional control family selector. Accepts canonical ID or abbreviation "
+                            "(case-insensitive). e.g. 'AC' or 'access-control' for NIST/FedRAMP, "
+                            "'CC6' for SOC 2, 'AC-L2' for CMMC. "
+                            "Use `pretorin_list_control_families` to list valid values per framework."
+                        ),
+                    },
                     "control_ids": {
                         "type": "array",
                         "items": {"type": "string"},
