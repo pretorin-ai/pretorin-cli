@@ -5,6 +5,11 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.2] - 2026-04-21
+
+### Fixed
+- **`pretorin campaign controls --family` case-insensitive resolution (#84)**: `--family cc6` (or any casing/whitespace variant) now resolves to the canonical `CC6` before hitting the backend's case-sensitive `list_controls(family_id=...)`. Unknown families raise a structured `PretorianClientError` whose message lists available families and points at `pretorin frameworks families <framework-id>`; MCP clients receive `framework_id`, `requested_family_id`, and `available_families` in `details` for programmatic recovery. Raw user input is preserved on the campaign checkpoint's `request.family_id` field. Same resolver applied to the `pretorin_prepare_campaign` MCP handler. `--family` help text now references the discovery command.
+
 ## [0.16.1] - 2026-04-21
 
 ### Added
@@ -367,6 +372,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CMMC Level 1, 2, and 3
 - Additional frameworks available on the platform
 
+[0.16.2]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.1...v0.16.2
 [0.16.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.0...v0.16.1
 [0.8.7]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.6...v0.8.7
 [0.8.6]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.5...v0.8.6
