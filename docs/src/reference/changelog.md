@@ -2,6 +2,11 @@
 
 All notable changes to the Pretorin CLI are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.1] - 2026-04-21
+
+### Added
+- **Gap questions for policy and scope Q&A**: MCP tool descriptions guide agents through answer-first workflow with structured gap questions for organizational knowledge gaps.
+
 ## [0.16.0] - 2026-04-21
 
 ### Changed (BREAKING)

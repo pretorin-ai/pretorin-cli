@@ -829,7 +829,12 @@ async def list_tools() -> list[Tool]:
             description=(
                 "Use this to see which scope questions still need answers. Returns only unanswered "
                 "questions — much smaller than the full scope dump. Call get_scope_question_detail "
-                "for guidance on a specific question."
+                "for guidance on a specific question.\n\n"
+                "WORKFLOW: After fetching pending questions, explore the local workspace (source code, "
+                "config files, infrastructure definitions, documentation) to gather evidence. Answer as "
+                "many questions as possible from workspace evidence WITHOUT asking the user. Only use "
+                "interview mode (see answer_scope_question) for genuine gaps that require organizational "
+                "knowledge not present in the workspace."
             ),
             inputSchema={
                 "type": "object",
@@ -864,9 +869,24 @@ async def list_tools() -> list[Tool]:
                 "(2) research the local workspace — read source code, config files, "
                 "infrastructure definitions, and documentation to ground your answer in "
                 "observable facts. Do not invent organizational facts, system names, "
-                "network topologies, or boundaries. If a question cannot be answered "
-                "confidently from workspace evidence, ask the user for clarification "
-                "rather than guessing."
+                "network topologies, or boundaries.\n\n"
+                "ANSWER-FIRST MODE — answer as many questions as possible directly from workspace "
+                "evidence without involving the user. Submit these answers silently.\n\n"
+                "INTERVIEW MODE — only for questions that require organizational knowledge not "
+                "present in the workspace (e.g., role assignments, review frequencies, policy "
+                "decisions, org-specific processes). Do NOT ask about things you can observe in "
+                "code, config, CI, or docs. When you must ask, use this format:\n\n"
+                "── Scope Question [N of TOTAL] ──────────────────\n"
+                "[Short clarifying question — what you specifically need to know]\n\n"
+                "  Context: [1 sentence on what you already found]\n\n"
+                "  Suggested answers:\n"
+                "    a) [likely option]\n"
+                "    b) [alternative]\n"
+                "    c) Other\n"
+                "──────────────────────────────────────────────────\n\n"
+                "Present ONE clarifying question at a time. Wait for the user's response, "
+                "compose the final answer combining their input with workspace evidence, "
+                "submit it, then move on."
             ),
             inputSchema={
                 "type": "object",
@@ -934,7 +954,12 @@ async def list_tools() -> list[Tool]:
             name="pretorin_get_pending_policy_questions",
             description=(
                 "Use this to see which policy questions still need answers. Returns only unanswered "
-                "questions — much smaller than the full policy questionnaire dump."
+                "questions — much smaller than the full policy questionnaire dump.\n\n"
+                "WORKFLOW: After fetching pending questions, explore the local workspace (source code, "
+                "config files, existing policy documents, infrastructure definitions, documentation) to "
+                "gather evidence. Answer as many questions as possible from workspace evidence WITHOUT "
+                "asking the user. Only use gap questions (see answer_policy_question) for genuine gaps "
+                "that require organizational knowledge not present in the workspace."
             ),
             inputSchema={
                 "type": "object",
@@ -967,9 +992,24 @@ async def list_tools() -> list[Tool]:
                 "(2) research the local workspace — read source code, config files, existing "
                 "policy documents, infrastructure definitions, and documentation to ground "
                 "your answer in observable facts. Do not invent organizational facts, role "
-                "titles, URLs, procedures, or policies. If a question cannot be answered "
-                "confidently from workspace evidence, ask the user for clarification "
-                "rather than guessing."
+                "titles, URLs, procedures, or policies.\n\n"
+                "ANSWER-FIRST MODE — answer as many questions as possible directly from workspace "
+                "evidence without involving the user. Submit these answers silently.\n\n"
+                "GAP QUESTIONS — only for questions that require organizational knowledge not "
+                "present in the workspace (e.g., role assignments, review frequencies, policy "
+                "decisions, org-specific processes). Do NOT ask about things you can observe in "
+                "code, config, CI, or docs. When you must ask, use this format:\n\n"
+                "── Gap Question [N of TOTAL gaps] ──────────────────\n"
+                "[Short clarifying question — what you specifically need to know]\n\n"
+                "  Context: [1 sentence on what you already found]\n\n"
+                "  Suggested answers:\n"
+                "    a) [likely option]\n"
+                "    b) [alternative]\n"
+                "    c) Other\n"
+                "──────────────────────────────────────────────────\n\n"
+                "Present ONE gap question at a time. Wait for the user's response, "
+                "compose the final answer combining their input with workspace evidence, "
+                "submit it, then move on."
             ),
             inputSchema={
                 "type": "object",
