@@ -2,6 +2,11 @@
 
 All notable changes to the Pretorin CLI are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.2] - 2026-04-21
+
+### Fixed
+- **`pretorin campaign controls --family` case-insensitive resolution (#84)**: `--family cc6` now resolves to canonical `CC6` before hitting the backend. Unknown families raise a structured error listing available families and pointing at `pretorin frameworks families <framework-id>`. Same fix applied to `pretorin_prepare_campaign` MCP handler.
+
 ## [0.16.1] - 2026-04-21
 
 ### Added
@@ -345,6 +350,9 @@ All notable changes to the Pretorin CLI are documented here. The format is based
 - FedRAMP (Low, Moderate, High)
 - CMMC Level 1, 2, and 3
 
+[0.16.2]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.1...v0.16.2
+[0.16.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.0...v0.16.1
+[0.16.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.5...v0.16.0
 [0.15.5]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.4...v0.15.5
 [0.15.4]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.3...v0.15.4
 [0.15.3]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.2...v0.15.3

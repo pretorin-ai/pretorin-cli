@@ -64,7 +64,14 @@ def _validate_output(value: str) -> None:
 def controls_campaign(
     system: str = typer.Option(..., "--system", help="System name or ID."),
     framework_id: str = typer.Option(..., "--framework-id", help="Framework ID."),
-    family: str | None = typer.Option(None, "--family", help="Control family ID."),
+    family: str | None = typer.Option(
+        None,
+        "--family",
+        help=(
+            "Control family ID or abbreviation (case-insensitive). "
+            "List with `pretorin frameworks families <framework-id>`."
+        ),
+    ),
     controls: str | None = typer.Option(None, "--controls", help="Comma-separated control IDs."),
     all_controls: bool = typer.Option(False, "--all-controls", help="Target all controls in the framework."),
     mode: str = typer.Option(..., "--mode", help="initial, notes-fix, or review-fix"),

@@ -15,6 +15,7 @@ from pretorin.cli.output import set_json_mode
 from pretorin.client.api import PretorianClientError
 from pretorin.client.models import (
     ControlBatchResponse,
+    ControlFamilySummary,
     ControlSummary,
     OrgPolicyListResponse,
     OrgPolicyQuestionnaireResponse,
@@ -381,6 +382,16 @@ async def test_prepare_campaign_controls_review_fix_filters_to_findings(tmp_path
     client.get_workflow_state = AsyncMock(return_value={"lifecycle_stage": "controls"})
     client.get_analytics_summary = AsyncMock(return_value={"controls_total": 2})
     client.get_family_analytics = AsyncMock(return_value={"families": []})
+    client.list_control_families = AsyncMock(
+        return_value=[
+            ControlFamilySummary(
+                id="AC",
+                title="Access Control",
+                controls_count=2,
+                **{"class": "nist"},
+            )
+        ]
+    )
     client.list_controls = AsyncMock(
         return_value=[
             ControlSummary(id="ac-02", title="Account Management", family_id="AC"),
@@ -419,6 +430,324 @@ async def test_prepare_campaign_controls_review_fix_filters_to_findings(tmp_path
         checkpoint = await prepare_campaign(client, request)
 
     assert set(checkpoint.items.keys()) == {"ac-02"}
+
+
+def _soc2_cc6_client(*, list_controls_return: list[ControlSummary] | None = None) -> AsyncMock:
+    """Build a mock client preloaded for SOC 2 CC6 family_id resolution tests."""
+    client = _mock_campaign_client()
+    client.get_system = AsyncMock(return_value=SimpleNamespace(name="Primary"))
+    client.get_workflow_state = AsyncMock(return_value={"lifecycle_stage": "controls"})
+    client.get_analytics_summary = AsyncMock(return_value={"controls_total": 2})
+    client.get_family_analytics = AsyncMock(return_value={"families": []})
+    client.list_control_families = AsyncMock(
+        return_value=[
+            ControlFamilySummary(id="CC1", title="Control Environment", controls_count=4, **{"class": "soc2"}),
+            ControlFamilySummary(id="CC6", title="Logical and Physical Access", controls_count=8, **{"class": "soc2"}),
+            ControlFamilySummary(id="PI1", title="Processing Integrity", controls_count=3, **{"class": "soc2"}),
+        ]
+    )
+    controls = list_controls_return
+    if controls is None:
+        controls = [
+            ControlSummary(id="CC6.1", title="Logical Access Security", family_id="CC6"),
+            ControlSummary(id="CC6.2", title="Access Provisioning", family_id="CC6"),
+        ]
+    client.list_controls = AsyncMock(return_value=controls)
+    client.get_family_bundle = AsyncMock(return_value={"family_id": "CC6"})
+    client.get_controls_batch = AsyncMock(return_value=ControlBatchResponse(controls=[], total=0))
+    return client
+
+
+def _soc2_cc6_request(tmp_path: Path, *, family_id: str) -> CampaignRunRequest:
+    return CampaignRunRequest(
+        domain="controls",
+        mode="initial",
+        apply=False,
+        output="json",
+        concurrency=2,
+        max_retries=1,
+        checkpoint_path=tmp_path / "controls-cc6.json",
+        working_directory=tmp_path,
+        system="Primary",
+        framework_id="soc2",
+        family_id=family_id,
+    )
+
+
+@pytest.mark.asyncio
+async def test_prepare_campaign_resolves_soc2_exact_family(tmp_path: Path) -> None:
+    """CC6 (canonical, exact match) resolves and drives list_controls + get_family_bundle."""
+    client = _soc2_cc6_client()
+    request = _soc2_cc6_request(tmp_path, family_id="CC6")
+
+    with patch(
+        "pretorin.workflows.campaign.resolve_execution_context",
+        AsyncMock(return_value=("sys-1", "soc2")),
+    ):
+        checkpoint = await prepare_campaign(client, request)
+
+    assert set(checkpoint.items.keys()) == {"CC6.1", "CC6.2"}
+    client.list_controls.assert_any_call("soc2", "CC6")
+    client.get_family_bundle.assert_awaited_once_with("sys-1", "CC6", "soc2")
+
+
+@pytest.mark.asyncio
+async def test_prepare_campaign_resolves_soc2_mixed_case_family(tmp_path: Path) -> None:
+    """Lowercase cc6 resolves to canonical CC6; resolved value flows to downstream calls."""
+    client = _soc2_cc6_client()
+    request = _soc2_cc6_request(tmp_path, family_id="cc6")
+
+    with patch(
+        "pretorin.workflows.campaign.resolve_execution_context",
+        AsyncMock(return_value=("sys-1", "soc2")),
+    ):
+        checkpoint = await prepare_campaign(client, request)
+
+    assert set(checkpoint.items.keys()) == {"CC6.1", "CC6.2"}
+    client.list_controls.assert_any_call("soc2", "CC6")
+    client.get_family_bundle.assert_awaited_once_with("sys-1", "CC6", "soc2")
+
+
+@pytest.mark.asyncio
+async def test_prepare_campaign_resolves_family_with_whitespace(tmp_path: Path) -> None:
+    """' CC6 ' (whitespace) resolves to canonical CC6."""
+    client = _soc2_cc6_client()
+    request = _soc2_cc6_request(tmp_path, family_id=" CC6 ")
+
+    with patch(
+        "pretorin.workflows.campaign.resolve_execution_context",
+        AsyncMock(return_value=("sys-1", "soc2")),
+    ):
+        checkpoint = await prepare_campaign(client, request)
+
+    assert set(checkpoint.items.keys()) == {"CC6.1", "CC6.2"}
+    client.list_controls.assert_any_call("soc2", "CC6")
+
+
+@pytest.mark.asyncio
+async def test_prepare_campaign_unknown_family_raises_with_available(tmp_path: Path) -> None:
+    """Unknown family raises PretorianClientError with sorted available list + structured details."""
+    client = _soc2_cc6_client()
+    request = _soc2_cc6_request(tmp_path, family_id="CCX")
+
+    with (
+        patch(
+            "pretorin.workflows.campaign.resolve_execution_context",
+            AsyncMock(return_value=("sys-1", "soc2")),
+        ),
+        pytest.raises(PretorianClientError) as exc_info,
+    ):
+        await prepare_campaign(client, request)
+
+    err = exc_info.value
+    assert "'CCX'" in err.message
+    assert "CC1" in err.message and "CC6" in err.message and "PI1" in err.message
+    # Both CLI and MCP discovery pointers appear in the message
+    assert "pretorin frameworks families soc2" in err.message
+    assert "pretorin_list_control_families" in err.message
+    assert err.details["framework_id"] == "soc2"
+    assert err.details["requested_family_id"] == "CCX"
+    assert err.details["available_families"] == ["CC1", "CC6", "PI1"]
+    # Structured discovery payload for MCP agents
+    assert err.details["discovery"] == {
+        "cli": "pretorin frameworks families soc2",
+        "mcp_tool": "pretorin_list_control_families",
+    }
+
+
+@pytest.mark.asyncio
+async def test_prepare_campaign_framework_with_no_families_raises(tmp_path: Path) -> None:
+    """Framework with zero declared families raises an explicit error."""
+    client = _soc2_cc6_client()
+    client.list_control_families = AsyncMock(return_value=[])
+    request = _soc2_cc6_request(tmp_path, family_id="CC6")
+
+    with (
+        patch(
+            "pretorin.workflows.campaign.resolve_execution_context",
+            AsyncMock(return_value=("sys-1", "soc2")),
+        ),
+        pytest.raises(PretorianClientError) as exc_info,
+    ):
+        await prepare_campaign(client, request)
+
+    assert "declares no control families" in exc_info.value.message
+    assert exc_info.value.details["available_families"] == []
+
+
+@pytest.mark.asyncio
+async def test_prepare_campaign_belt_and_suspenders_filters_client_side(tmp_path: Path) -> None:
+    """When list_controls with family filter returns [], fall back to unfiltered + client-side filter."""
+    client = _soc2_cc6_client(list_controls_return=[])
+
+    # First call (filtered by family_id) returns []. Second call (unfiltered) returns
+    # controls from multiple families. Only CC6 controls should survive.
+    mixed_controls = [
+        ControlSummary(id="CC1.1", title="Org Values", family_id="CC1"),
+        ControlSummary(id="CC6.1", title="Logical Access Security", family_id="CC6"),
+        ControlSummary(id="CC6.2", title="Access Provisioning", family_id="CC6"),
+        ControlSummary(id="PI1.1", title="Processing Integrity", family_id="PI1"),
+    ]
+    client.list_controls = AsyncMock(side_effect=[[], mixed_controls])
+    request = _soc2_cc6_request(tmp_path, family_id="cc6")
+
+    with patch(
+        "pretorin.workflows.campaign.resolve_execution_context",
+        AsyncMock(return_value=("sys-1", "soc2")),
+    ):
+        checkpoint = await prepare_campaign(client, request)
+
+    assert set(checkpoint.items.keys()) == {"CC6.1", "CC6.2"}
+    assert client.list_controls.await_count == 2
+
+
+def _nist_families() -> list[ControlFamilySummary]:
+    """Shape matches the live fedramp-moderate / nist-800-53-r5 backend response:
+    canonical id is the slugified title, class_type holds the natural abbreviation.
+    """
+    return [
+        ControlFamilySummary(id="access-control", title="Access Control", controls_count=17, **{"class": "ac"}),
+        ControlFamilySummary(
+            id="system-and-communications-protection",
+            title="System and Communications Protection",
+            controls_count=19,
+            **{"class": "sc"},
+        ),
+        ControlFamilySummary(
+            id="identification-and-authentication",
+            title="Identification and Authentication",
+            controls_count=10,
+            **{"class": "ia"},
+        ),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_resolve_family_id_class_fallback_nist_abbreviation() -> None:
+    """User-facing abbreviations (NIST 'AC') resolve to the canonical slug id via class fallback."""
+    from pretorin.workflows.campaign import _resolve_family_id
+
+    client = _mock_campaign_client()
+    client.list_control_families = AsyncMock(return_value=_nist_families())
+
+    for raw in ["AC", "ac", " Ac ", "SC", "IA"]:
+        resolved = await _resolve_family_id(client, "fedramp-moderate", raw)
+        expected = {
+            "AC": "access-control",
+            "ac": "access-control",
+            " Ac ": "access-control",
+            "SC": "system-and-communications-protection",
+            "IA": "identification-and-authentication",
+        }[raw]
+        assert resolved == expected, f"{raw!r} resolved to {resolved!r}, expected {expected!r}"
+
+
+@pytest.mark.asyncio
+async def test_resolve_family_id_class_fallback_cmmc_suffix() -> None:
+    """CMMC-style class abbreviations with suffixes ('AC-L2') resolve to their canonical id."""
+    from pretorin.workflows.campaign import _resolve_family_id
+
+    client = _mock_campaign_client()
+    client.list_control_families = AsyncMock(
+        return_value=[
+            ControlFamilySummary(
+                id="access-control-level-2",
+                title="Access Control (Level 2)",
+                controls_count=22,
+                **{"class": "AC-L2"},
+            ),
+        ]
+    )
+
+    for raw in ["AC-L2", "ac-l2", "Ac-L2"]:
+        resolved = await _resolve_family_id(client, "cmmc-l2", raw)
+        assert resolved == "access-control-level-2"
+
+
+@pytest.mark.asyncio
+async def test_resolve_family_id_id_match_takes_precedence_over_class() -> None:
+    """If the input matches both a family's id and another family's class, id wins."""
+    from pretorin.workflows.campaign import _resolve_family_id
+
+    # Contrived pathological case: one family has id='AC', another has class='AC'.
+    # The id match should win (primary pass).
+    client = _mock_campaign_client()
+    client.list_control_families = AsyncMock(
+        return_value=[
+            ControlFamilySummary(id="access-control", title="Access Control", controls_count=17, **{"class": "ac"}),
+            ControlFamilySummary(id="AC", title="Edge Case", controls_count=1, **{"class": "other"}),
+        ]
+    )
+
+    resolved = await _resolve_family_id(client, "weird-fw", "AC")
+    assert resolved == "AC"  # id match wins over class="ac" match
+
+
+@pytest.mark.asyncio
+async def test_resolve_family_id_null_class_is_skipped_gracefully() -> None:
+    """SOC 2 families have class=None; that must not raise when the class fallback runs."""
+    from pretorin.workflows.campaign import _resolve_family_id
+
+    client = _mock_campaign_client()
+    # SOC 2-shaped: class is None on the model.
+    client.list_control_families = AsyncMock(
+        return_value=[
+            ControlFamilySummary(id="CC6", title="Logical Access", controls_count=8, class_type=None),
+        ]
+    )
+
+    # Exact id match still works
+    assert await _resolve_family_id(client, "soc2", "CC6") == "CC6"
+    # Miss still errors cleanly (doesn't crash on None in class fallback)
+    with pytest.raises(PretorianClientError, match="Unknown family"):
+        await _resolve_family_id(client, "soc2", "ZZZ")
+
+
+@pytest.mark.asyncio
+async def test_resolve_family_id_empty_input_raises() -> None:
+    """Defensive branch: direct call to _resolve_family_id with empty input raises."""
+    from pretorin.workflows.campaign import _resolve_family_id
+
+    client = _mock_campaign_client()
+    client.list_control_families = AsyncMock(return_value=[])
+
+    with pytest.raises(PretorianClientError) as exc_info:
+        await _resolve_family_id(client, "soc2", "")
+
+    assert "cannot be empty" in exc_info.value.message
+    assert exc_info.value.details == {"framework_id": "soc2"}
+    # list_control_families should not be called when input is empty
+    client.list_control_families.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_resolve_family_id_whitespace_only_raises() -> None:
+    """' \\t\\n ' should be treated as empty after strip."""
+    from pretorin.workflows.campaign import _resolve_family_id
+
+    client = _mock_campaign_client()
+    client.list_control_families = AsyncMock(return_value=[])
+
+    with pytest.raises(PretorianClientError) as exc_info:
+        await _resolve_family_id(client, "soc2", "  \t\n  ")
+
+    assert "cannot be empty" in exc_info.value.message
+    client.list_control_families.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_prepare_campaign_preserves_raw_family_id_on_request(tmp_path: Path) -> None:
+    """Raw user input on request.family_id is not mutated by the resolver (checkpoint determinism)."""
+    client = _soc2_cc6_client()
+    request = _soc2_cc6_request(tmp_path, family_id="cc6")
+
+    with patch(
+        "pretorin.workflows.campaign.resolve_execution_context",
+        AsyncMock(return_value=("sys-1", "soc2")),
+    ):
+        await prepare_campaign(client, request)
+
+    assert request.family_id == "cc6"
 
 
 @pytest.mark.asyncio
