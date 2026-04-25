@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
 from pretorin.scope import ExecutionScope
-
 
 # ---------------------------------------------------------------------------
 # ExecutionScope basics
@@ -61,9 +60,7 @@ async def test_resolve_execution_context_explicit_flags_override_scope() -> None
 
     client = AsyncMock()
     client.list_systems = AsyncMock(return_value=[{"id": "sys-2", "name": "Other System"}])
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": [{"framework_id": "nist-800-53-r5"}]}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": [{"framework_id": "nist-800-53-r5"}]})
     scope = ExecutionScope(system_id="sys-1", framework_id="fedramp-moderate")
 
     system_id, framework_id = await resolve_execution_context(
@@ -97,9 +94,7 @@ def test_resolve_context_values_flags_override_scope() -> None:
 
     scope = ExecutionScope(system_id="sys-1", framework_id="fw-1")
     # When explicit flags are provided, scope is not used
-    system_id, framework_id = _resolve_context_values(
-        system="sys-2", framework="fw-2", scope=scope
-    )
+    system_id, framework_id = _resolve_context_values(system="sys-2", framework="fw-2", scope=scope)
 
     assert system_id == "sys-2"
     assert framework_id == "fw-2"
@@ -211,9 +206,7 @@ async def test_mcp_resolve_execution_scope_threads_scope() -> None:
     client = AsyncMock()
     scope = ExecutionScope(system_id="sys-1", framework_id="fedramp-moderate")
 
-    system_id, framework_id, control_id = await resolve_execution_scope(
-        client, {}, scope=scope
-    )
+    system_id, framework_id, control_id = await resolve_execution_scope(client, {}, scope=scope)
 
     assert system_id == "sys-1"
     assert framework_id == "fedramp-moderate"

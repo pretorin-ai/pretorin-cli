@@ -34,6 +34,4 @@ def test_workflow_guardrails_include_concrete_artifact_language() -> None:
 
 def test_workflow_guardrails_list_every_evidence_type_for_todo_block() -> None:
     for evidence_type in VALID_EVIDENCE_TYPES:
-        assert evidence_type in _WORKFLOW_GUARDRAILS, (
-            f"[[PRETORIN_TODO]] enum missing: {evidence_type}"
-        )
+        assert evidence_type in _WORKFLOW_GUARDRAILS, f"[[PRETORIN_TODO]] enum missing: {evidence_type}"

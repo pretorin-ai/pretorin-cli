@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -71,8 +71,8 @@ def test_evidence_push_skipped_items_normal_mode():
         skipped=["fedramp-moderate/ac-02/RBAC Config", "fedramp-moderate/sc-07/Firewall"],
     )
 
-    with patch("pretorin.evidence.sync.EvidenceSync") as MockSync:
-        MockSync.return_value.push = AsyncMock(return_value=sync_result)
+    with patch("pretorin.evidence.sync.EvidenceSync") as mock_sync_cls:
+        mock_sync_cls.return_value.push = AsyncMock(return_value=sync_result)
         result = _run_with_mock_client(["evidence", "push"], client)
 
     assert result.exit_code == 0
@@ -90,8 +90,8 @@ def test_evidence_push_skipped_with_created_normal_mode():
         skipped=["fedramp-moderate/sc-07/Existing Evidence"],
     )
 
-    with patch("pretorin.evidence.sync.EvidenceSync") as MockSync:
-        MockSync.return_value.push = AsyncMock(return_value=sync_result)
+    with patch("pretorin.evidence.sync.EvidenceSync") as mock_sync_cls:
+        mock_sync_cls.return_value.push = AsyncMock(return_value=sync_result)
         result = _run_with_mock_client(["evidence", "push"], client)
 
     assert result.exit_code == 0
@@ -115,12 +115,14 @@ def test_evidence_link_json_mode_success():
     ctx.__aenter__ = AsyncMock(return_value=client)
     ctx.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("pretorin.client.api.PretorianClient", return_value=ctx), \
-         patch(
-             "pretorin.cli.context.resolve_execution_context",
-             new_callable=AsyncMock,
-             return_value=("sys-1", "fedramp-moderate"),
-         ):
+    with (
+        patch("pretorin.client.api.PretorianClient", return_value=ctx),
+        patch(
+            "pretorin.cli.context.resolve_execution_context",
+            new_callable=AsyncMock,
+            return_value=("sys-1", "fedramp-moderate"),
+        ),
+    ):
         result = runner.invoke(
             app,
             [
@@ -157,12 +159,14 @@ def test_evidence_link_normal_mode_success():
     ctx.__aenter__ = AsyncMock(return_value=client)
     ctx.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("pretorin.client.api.PretorianClient", return_value=ctx), \
-         patch(
-             "pretorin.cli.context.resolve_execution_context",
-             new_callable=AsyncMock,
-             return_value=("sys-1", "fedramp-moderate"),
-         ):
+    with (
+        patch("pretorin.client.api.PretorianClient", return_value=ctx),
+        patch(
+            "pretorin.cli.context.resolve_execution_context",
+            new_callable=AsyncMock,
+            return_value=("sys-1", "fedramp-moderate"),
+        ),
+    ):
         result = runner.invoke(
             app,
             [
@@ -190,12 +194,14 @@ def test_evidence_link_client_error():
     ctx.__aenter__ = AsyncMock(return_value=client)
     ctx.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("pretorin.client.api.PretorianClient", return_value=ctx), \
-         patch(
-             "pretorin.cli.context.resolve_execution_context",
-             new_callable=AsyncMock,
-             side_effect=PretorianClientError("scope resolution failed"),
-         ):
+    with (
+        patch("pretorin.client.api.PretorianClient", return_value=ctx),
+        patch(
+            "pretorin.cli.context.resolve_execution_context",
+            new_callable=AsyncMock,
+            side_effect=PretorianClientError("scope resolution failed"),
+        ),
+    ):
         result = runner.invoke(
             app,
             [
@@ -219,20 +225,20 @@ def test_evidence_link_link_api_error():
     client = AsyncMock()
     client.is_configured = True
     client.get_system = AsyncMock(return_value=SimpleNamespace(name="Primary"))
-    client.link_evidence_to_control = AsyncMock(
-        side_effect=PretorianClientError("evidence not found")
-    )
+    client.link_evidence_to_control = AsyncMock(side_effect=PretorianClientError("evidence not found"))
 
     ctx = AsyncMock()
     ctx.__aenter__ = AsyncMock(return_value=client)
     ctx.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("pretorin.client.api.PretorianClient", return_value=ctx), \
-         patch(
-             "pretorin.cli.context.resolve_execution_context",
-             new_callable=AsyncMock,
-             return_value=("sys-1", "fedramp-moderate"),
-         ):
+    with (
+        patch("pretorin.client.api.PretorianClient", return_value=ctx),
+        patch(
+            "pretorin.cli.context.resolve_execution_context",
+            new_callable=AsyncMock,
+            return_value=("sys-1", "fedramp-moderate"),
+        ),
+    ):
         result = runner.invoke(
             app,
             [
@@ -260,12 +266,14 @@ def test_evidence_link_without_flags_uses_context():
     ctx.__aenter__ = AsyncMock(return_value=client)
     ctx.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("pretorin.client.api.PretorianClient", return_value=ctx), \
-         patch(
-             "pretorin.cli.context.resolve_execution_context",
-             new_callable=AsyncMock,
-             return_value=("sys-1", "fedramp-moderate"),
-         ) as mock_resolve:
+    with (
+        patch("pretorin.client.api.PretorianClient", return_value=ctx),
+        patch(
+            "pretorin.cli.context.resolve_execution_context",
+            new_callable=AsyncMock,
+            return_value=("sys-1", "fedramp-moderate"),
+        ) as mock_resolve,
+    ):
         result = runner.invoke(
             app,
             [

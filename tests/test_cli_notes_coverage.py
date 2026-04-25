@@ -45,9 +45,7 @@ def _base_client() -> AsyncMock:
     client = AsyncMock()
     client.is_configured = True
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary"}])
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]})
     client.get_system = AsyncMock(return_value=SimpleNamespace(name="Primary"))
     return client
 
@@ -94,9 +92,7 @@ def test_notes_list_normal_empty() -> None:
 def test_notes_list_json_mode() -> None:
     """notes list --json emits a structured payload with total and notes."""
     client = _base_client()
-    client.list_control_notes = AsyncMock(
-        return_value=[{"content": "Manual SSO evidence upload required"}]
-    )
+    client.list_control_notes = AsyncMock(return_value=[{"content": "Manual SSO evidence upload required"}])
 
     result = _run_with_mock_client(
         ["--json", "notes", "list", "ac-02", "fedramp-moderate", "--system", "Primary"],
@@ -136,9 +132,7 @@ def test_notes_list_json_empty() -> None:
 def test_notes_list_error() -> None:
     """notes list exits 1 on PretorianClientError."""
     client = _base_client()
-    client.list_control_notes = AsyncMock(
-        side_effect=PretorianClientError("Not authorized")
-    )
+    client.list_control_notes = AsyncMock(side_effect=PretorianClientError("Not authorized"))
 
     result = _run_with_mock_client(
         ["notes", "list", "ac-02", "fedramp-moderate", "--system", "Primary"],
@@ -154,9 +148,7 @@ def test_notes_list_resolve_context_error() -> None:
     """notes list exits 1 when context resolution raises PretorianClientError."""
     client = _base_client()
     # Simulate missing framework in compliance status so resolve_execution_context fails
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": []}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": []})
 
     result = _run_with_mock_client(
         ["notes", "list", "ac-02", "fedramp-moderate", "--system", "Primary"],
@@ -232,9 +224,7 @@ def test_notes_add_json_mode() -> None:
 def test_notes_add_error() -> None:
     """notes add exits 1 when the API call raises PretorianClientError."""
     client = _base_client()
-    client.add_control_note = AsyncMock(
-        side_effect=PretorianClientError("Control not found")
-    )
+    client.add_control_note = AsyncMock(side_effect=PretorianClientError("Control not found"))
 
     result = _run_with_mock_client(
         [
@@ -360,9 +350,7 @@ def test_notes_resolve_reopen() -> None:
 def test_notes_resolve_with_content_update() -> None:
     """notes resolve can update content alongside resolving."""
     client = _base_client()
-    client.resolve_control_note = AsyncMock(
-        return_value={"id": "note-1", "content": "Updated", "is_resolved": True}
-    )
+    client.resolve_control_note = AsyncMock(return_value={"id": "note-1", "content": "Updated", "is_resolved": True})
 
     result = _run_with_mock_client(
         [
@@ -395,9 +383,7 @@ def test_notes_resolve_with_content_update() -> None:
 def test_notes_resolve_error() -> None:
     """notes resolve exits 1 when the API call raises PretorianClientError."""
     client = _base_client()
-    client.resolve_control_note = AsyncMock(
-        side_effect=PretorianClientError("Note not found")
-    )
+    client.resolve_control_note = AsyncMock(side_effect=PretorianClientError("Note not found"))
 
     result = _run_with_mock_client(
         [
@@ -420,9 +406,7 @@ def test_notes_resolve_error() -> None:
 def test_notes_resolve_normalises_control_id() -> None:
     """notes resolve normalises the control ID before sending to the API."""
     client = _base_client()
-    client.resolve_control_note = AsyncMock(
-        return_value={"id": "note-1", "is_resolved": True}
-    )
+    client.resolve_control_note = AsyncMock(return_value={"id": "note-1", "is_resolved": True})
 
     _run_with_mock_client(
         [

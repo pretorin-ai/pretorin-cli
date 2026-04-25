@@ -5,11 +5,11 @@ from __future__ import annotations
 import json
 from unittest.mock import patch
 
+from pytest import fixture
 from typer.testing import CliRunner
 
 from pretorin.cli.main import app as main_app
 from pretorin.cli.output import set_json_mode
-from pytest import fixture
 
 runner = CliRunner()
 

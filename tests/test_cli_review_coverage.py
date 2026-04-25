@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -40,9 +39,7 @@ def _make_client():
     client = AsyncMock()
     client.is_configured = True
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary System"}])
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]})
     client.get_control = AsyncMock(return_value=ControlDetail(id="ac-02", title="Access Management"))
     client.get_control_references = AsyncMock(
         return_value=ControlReferences(
@@ -139,12 +136,18 @@ def test_review_run_local_creates_markdown_file(tmp_path, monkeypatch):
         result = runner.invoke(
             app,
             [
-                "--json", "review", "run",
-                "--control-id", "ac-02",
-                "--framework-id", "fedramp-moderate",
+                "--json",
+                "review",
+                "run",
+                "--control-id",
+                "ac-02",
+                "--framework-id",
+                "fedramp-moderate",
                 "--local",
-                "--path", str(tmp_path),
-                "--output-dir", str(output_dir),
+                "--path",
+                str(tmp_path),
+                "--output-dir",
+                str(output_dir),
             ],
         )
 
@@ -176,12 +179,17 @@ def test_review_run_local_normal_mode_shows_saved_panel(tmp_path, monkeypatch):
         result = runner.invoke(
             app,
             [
-                "review", "run",
-                "--control-id", "ac-02",
-                "--framework-id", "fedramp-moderate",
+                "review",
+                "run",
+                "--control-id",
+                "ac-02",
+                "--framework-id",
+                "fedramp-moderate",
                 "--local",
-                "--path", str(tmp_path),
-                "--output-dir", str(output_dir),
+                "--path",
+                str(tmp_path),
+                "--output-dir",
+                str(output_dir),
             ],
         )
 
@@ -216,10 +224,13 @@ def test_review_run_platform_context_error_exits_one(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     client = _make_client()
 
-    with _patch_client(client), patch(
-        "pretorin.cli.review.resolve_execution_context",
-        new_callable=AsyncMock,
-        side_effect=PretorianClientError("No system/framework context set."),
+    with (
+        _patch_client(client),
+        patch(
+            "pretorin.cli.review.resolve_execution_context",
+            new_callable=AsyncMock,
+            side_effect=PretorianClientError("No system/framework context set."),
+        ),
     ):
         result = runner.invoke(app, ["review", "run", "--control-id", "ac-02"])
 
@@ -244,9 +255,7 @@ def test_review_run_platform_normal_mode_shows_control_panel(tmp_path, monkeypat
     client = _make_client()
 
     with _patch_client(client), _patch_resolve():
-        result = runner.invoke(
-            app, ["review", "run", "--control-id", "ac-02", "--path", str(tmp_path)]
-        )
+        result = runner.invoke(app, ["review", "run", "--control-id", "ac-02", "--path", str(tmp_path)])
 
     assert result.exit_code == 0
     assert "AC-02" in result.stdout
@@ -262,9 +271,7 @@ def test_review_status_json_mode():
     client = _make_client()
 
     with _patch_client(client), _patch_resolve():
-        result = runner.invoke(
-            app, ["--json", "review", "status", "--control-id", "ac-02"]
-        )
+        result = runner.invoke(app, ["--json", "review", "status", "--control-id", "ac-02"])
 
     assert result.exit_code == 0
     payload = json.loads(result.stdout)
@@ -289,14 +296,15 @@ def test_review_status_normal_mode_displays_panel():
 def test_review_status_context_error_json():
     client = _make_client()
 
-    with _patch_client(client), patch(
-        "pretorin.cli.review.resolve_execution_context",
-        new_callable=AsyncMock,
-        side_effect=PretorianClientError("No context set."),
+    with (
+        _patch_client(client),
+        patch(
+            "pretorin.cli.review.resolve_execution_context",
+            new_callable=AsyncMock,
+            side_effect=PretorianClientError("No context set."),
+        ),
     ):
-        result = runner.invoke(
-            app, ["--json", "review", "status", "--control-id", "ac-02"]
-        )
+        result = runner.invoke(app, ["--json", "review", "status", "--control-id", "ac-02"])
 
     assert result.exit_code == 1
     payload = json.loads(result.stdout)
@@ -306,14 +314,10 @@ def test_review_status_context_error_json():
 
 def test_review_status_implementation_fetch_error_exits_one_json():
     client = _make_client()
-    client.get_control_implementation = AsyncMock(
-        side_effect=PretorianClientError("not found", status_code=404)
-    )
+    client.get_control_implementation = AsyncMock(side_effect=PretorianClientError("not found", status_code=404))
 
     with _patch_client(client), _patch_resolve():
-        result = runner.invoke(
-            app, ["--json", "review", "status", "--control-id", "ac-02"]
-        )
+        result = runner.invoke(app, ["--json", "review", "status", "--control-id", "ac-02"])
 
     assert result.exit_code == 1
     payload = json.loads(result.stdout)
@@ -323,10 +327,13 @@ def test_review_status_implementation_fetch_error_exits_one_json():
 def test_review_status_context_error_normal_mode():
     client = _make_client()
 
-    with _patch_client(client), patch(
-        "pretorin.cli.review.resolve_execution_context",
-        new_callable=AsyncMock,
-        side_effect=PretorianClientError("No context set."),
+    with (
+        _patch_client(client),
+        patch(
+            "pretorin.cli.review.resolve_execution_context",
+            new_callable=AsyncMock,
+            side_effect=PretorianClientError("No context set."),
+        ),
     ):
         result = runner.invoke(app, ["review", "status", "--control-id", "ac-02"])
 

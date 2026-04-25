@@ -174,9 +174,7 @@ class TestAgentRunCodexPath:
             patch.dict("sys.modules", {"openai_codex_sdk": self._codex_sdk_mock()}),
             patch("pretorin.agent.codex_agent.CodexAgent", return_value=mock_agent),
         ):
-            result = runner.invoke(
-                app, ["agent", "run", "Analyze gaps", "--skill", "gap-analysis", "--no-stream"]
-            )
+            result = runner.invoke(app, ["agent", "run", "Analyze gaps", "--skill", "gap-analysis", "--no-stream"])
 
         assert result.exit_code == 0
         mock_agent.run.assert_called_once()
@@ -269,9 +267,9 @@ class TestAgentRunLegacyPath:
             patch("pretorin.cli.agent.Config", return_value=mock_config),
             patch("pretorin.client.api.PretorianClient", return_value=client),
             patch("pretorin.agent.runner.ComplianceAgent", return_value=mock_compliance_agent),
-            patch("pretorin.agent.mcp_config.MCPConfigManager") as MockMCPMgr,
+            patch("pretorin.agent.mcp_config.MCPConfigManager") as mock_mcp_mgr,
         ):
-            MockMCPMgr.return_value.servers = []
+            mock_mcp_mgr.return_value.servers = []
             result = runner.invoke(app, ["agent", "run", "test", "--legacy", "--no-stream"])
 
         assert result.exit_code == 0
@@ -287,9 +285,7 @@ class TestAgentRunLegacyPath:
         mock_config.get = MagicMock(return_value=None)
 
         mock_compliance_agent = MagicMock()
-        mock_compliance_agent.run = AsyncMock(
-            side_effect=PretorianClientError("Service unavailable", status_code=503)
-        )
+        mock_compliance_agent.run = AsyncMock(side_effect=PretorianClientError("Service unavailable", status_code=503))
 
         client = self._make_client(is_configured=True)
 
@@ -298,9 +294,9 @@ class TestAgentRunLegacyPath:
             patch("pretorin.cli.agent.Config", return_value=mock_config),
             patch("pretorin.client.api.PretorianClient", return_value=client),
             patch("pretorin.agent.runner.ComplianceAgent", return_value=mock_compliance_agent),
-            patch("pretorin.agent.mcp_config.MCPConfigManager") as MockMCPMgr,
+            patch("pretorin.agent.mcp_config.MCPConfigManager") as mock_mcp_mgr,
         ):
-            MockMCPMgr.return_value.servers = []
+            mock_mcp_mgr.return_value.servers = []
             result = runner.invoke(app, ["agent", "run", "test", "--legacy", "--no-stream"])
 
         assert result.exit_code == 1
@@ -323,9 +319,9 @@ class TestAgentRunLegacyPath:
             patch("pretorin.cli.agent.Config", return_value=mock_config),
             patch("pretorin.client.api.PretorianClient", return_value=client),
             patch("pretorin.agent.runner.ComplianceAgent", return_value=mock_compliance_agent),
-            patch("pretorin.agent.mcp_config.MCPConfigManager") as MockMCPMgr,
+            patch("pretorin.agent.mcp_config.MCPConfigManager") as mock_mcp_mgr,
         ):
-            MockMCPMgr.return_value.servers = []
+            mock_mcp_mgr.return_value.servers = []
             result = runner.invoke(app, ["agent", "run", "test", "--legacy", "--no-stream"])
 
         assert result.exit_code == 1
@@ -394,9 +390,7 @@ class TestAgentRunLegacyPath:
 class TestAgentDoctor:
     """Tests for 'pretorin agent doctor'."""
 
-    def test_doctor_installed_with_config_and_api_key(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_doctor_installed_with_config_and_api_key(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """All green: binary installed, config.toml exists, API key set."""
         codex_home = tmp_path / "codex"
         codex_home.mkdir()
@@ -420,9 +414,7 @@ class TestAgentDoctor:
 
         assert result.exit_code == 1
 
-    def test_doctor_missing_config_toml_shows_warning(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_doctor_missing_config_toml_shows_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Missing config.toml emits a warning but does not fail if binary is installed."""
         codex_home = tmp_path / "codex"
         codex_home.mkdir()
@@ -437,9 +429,7 @@ class TestAgentDoctor:
         assert result.exit_code == 0
         assert "config.toml" in result.output
 
-    def test_doctor_missing_api_key_shows_warning(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_doctor_missing_api_key_shows_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Missing API key emits a warning but does not cause exit 1."""
         codex_home = tmp_path / "codex"
         codex_home.mkdir()
@@ -673,7 +663,9 @@ class TestMcpList:
         """Servers are displayed in a table with name and transport."""
         import json as _json
 
-        config_data = {"servers": [{"name": "gh", "transport": "stdio", "command": "uvx", "args": ["mcp-server-github"]}]}
+        config_data = {
+            "servers": [{"name": "gh", "transport": "stdio", "command": "uvx", "args": ["mcp-server-github"]}]
+        }
         (tmp_path / ".pretorin-mcp.json").write_text(_json.dumps(config_data))
         monkeypatch.chdir(tmp_path)
         monkeypatch.setattr("pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json")
@@ -740,9 +732,7 @@ class TestMcpAdd:
         assert result.exit_code == 0
         assert "myhttp" in result.output
 
-    def test_mcp_add_invalid_stdio_no_command_exits_1(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_mcp_add_invalid_stdio_no_command_exits_1(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """stdio transport without command_or_url being a real command fails validation.
 
         Note: the command_or_url arg is required by typer so will always be present.
@@ -766,9 +756,7 @@ class TestMcpAdd:
         monkeypatch.chdir(tmp_path)
         monkeypatch.setattr("pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", global_file)
 
-        result = runner.invoke(
-            app, ["agent", "mcp-add", "gserver", "stdio", "node", "--scope", "global"]
-        )
+        result = runner.invoke(app, ["agent", "mcp-add", "gserver", "stdio", "node", "--scope", "global"])
 
         assert result.exit_code == 0
         assert global_file.exists()

@@ -690,13 +690,15 @@ class TestRequirementFromDict:
         assert req.level == SourceLevel.REQUIRED
 
     def test_with_all_fields(self):
-        req = _requirement_from_dict({
-            "source_type": "aws_identity",
-            "level": "recommended",
-            "identity_pattern": "arn:aws:iam::123",
-            "account_id": "123",
-            "description": "AWS prod",
-        })
+        req = _requirement_from_dict(
+            {
+                "source_type": "aws_identity",
+                "level": "recommended",
+                "identity_pattern": "arn:aws:iam::123",
+                "account_id": "123",
+                "description": "AWS prod",
+            }
+        )
         assert req is not None
         assert req.identity_pattern == "arn:aws:iam::123"
         assert req.account_id == "123"
@@ -782,10 +784,12 @@ class TestLoadManifest:
         _MANIFEST_LOAD_CACHE.clear()
 
     def _make_manifest_json(self):
-        return json.dumps({
-            "version": "1",
-            "system_sources": [{"source_type": "git_repo", "level": "required"}],
-        })
+        return json.dumps(
+            {
+                "version": "1",
+                "system_sources": [{"source_type": "git_repo", "level": "required"}],
+            }
+        )
 
     def test_env_var_json_string(self, monkeypatch):
         monkeypatch.setenv("PRETORIN_SOURCE_MANIFEST", self._make_manifest_json())
@@ -844,18 +848,22 @@ class TestLoadManifest:
         # Env var has git_repo, repo-local has aws_identity
         monkeypatch.setenv(
             "PRETORIN_SOURCE_MANIFEST",
-            json.dumps({
-                "version": "1",
-                "system_sources": [{"source_type": "git_repo", "level": "required"}],
-            }),
+            json.dumps(
+                {
+                    "version": "1",
+                    "system_sources": [{"source_type": "git_repo", "level": "required"}],
+                }
+            ),
         )
         pretorin_dir = tmp_path / ".pretorin"
         pretorin_dir.mkdir()
         (pretorin_dir / "source-manifest.json").write_text(
-            json.dumps({
-                "version": "1",
-                "system_sources": [{"source_type": "aws_identity", "level": "required"}],
-            })
+            json.dumps(
+                {
+                    "version": "1",
+                    "system_sources": [{"source_type": "aws_identity", "level": "required"}],
+                }
+            )
         )
         manifest = load_manifest("sys-1")
         assert manifest is not None
@@ -909,35 +917,23 @@ class TestMatchesRequirement:
 
     def test_identity_pattern_segment_match(self):
         src = SourceIdentity(provider_type="git_repo", identity="github.com/org/repo")
-        req = SourceRequirement(
-            source_type="git_repo", level=SourceLevel.REQUIRED, identity_pattern="github.com/org"
-        )
+        req = SourceRequirement(source_type="git_repo", level=SourceLevel.REQUIRED, identity_pattern="github.com/org")
         assert _matches_requirement(src, req) is True
 
     def test_identity_pattern_no_match_org_malicious(self):
         """Anchored matching prevents org-malicious from matching org."""
         src = SourceIdentity(provider_type="git_repo", identity="github.com/org-malicious/repo")
-        req = SourceRequirement(
-            source_type="git_repo", level=SourceLevel.REQUIRED, identity_pattern="github.com/org"
-        )
+        req = SourceRequirement(source_type="git_repo", level=SourceLevel.REQUIRED, identity_pattern="github.com/org")
         assert _matches_requirement(src, req) is False
 
     def test_account_id_match(self):
-        src = SourceIdentity(
-            provider_type="aws_identity", identity="arn:123", account_id="123456789012"
-        )
-        req = SourceRequirement(
-            source_type="aws_identity", level=SourceLevel.REQUIRED, account_id="123456789012"
-        )
+        src = SourceIdentity(provider_type="aws_identity", identity="arn:123", account_id="123456789012")
+        req = SourceRequirement(source_type="aws_identity", level=SourceLevel.REQUIRED, account_id="123456789012")
         assert _matches_requirement(src, req) is True
 
     def test_account_id_mismatch(self):
-        src = SourceIdentity(
-            provider_type="aws_identity", identity="arn:123", account_id="999999999999"
-        )
-        req = SourceRequirement(
-            source_type="aws_identity", level=SourceLevel.REQUIRED, account_id="123456789012"
-        )
+        src = SourceIdentity(provider_type="aws_identity", identity="arn:123", account_id="999999999999")
+        req = SourceRequirement(source_type="aws_identity", level=SourceLevel.REQUIRED, account_id="123456789012")
         assert _matches_requirement(src, req) is False
 
     def test_combined_identity_and_account_id(self):
@@ -980,9 +976,7 @@ class TestCollectRequirements:
     def test_system_only(self):
         manifest = SourceManifest(
             version="1",
-            system_sources=(
-                SourceRequirement(source_type="git_repo", level=SourceLevel.REQUIRED),
-            ),
+            system_sources=(SourceRequirement(source_type="git_repo", level=SourceLevel.REQUIRED),),
         )
         reqs = _collect_requirements(manifest)
         assert len(reqs) == 1
@@ -991,9 +985,7 @@ class TestCollectRequirements:
     def test_system_plus_family(self):
         manifest = SourceManifest(
             version="1",
-            system_sources=(
-                SourceRequirement(source_type="git_repo", level=SourceLevel.REQUIRED),
-            ),
+            system_sources=(SourceRequirement(source_type="git_repo", level=SourceLevel.REQUIRED),),
             family_sources={
                 "ac": (SourceRequirement(source_type="aws_identity", level=SourceLevel.REQUIRED),),
             },
@@ -1005,9 +997,7 @@ class TestCollectRequirements:
     def test_stricter_level_wins(self):
         manifest = SourceManifest(
             version="1",
-            system_sources=(
-                SourceRequirement(source_type="aws_identity", level=SourceLevel.RECOMMENDED),
-            ),
+            system_sources=(SourceRequirement(source_type="aws_identity", level=SourceLevel.RECOMMENDED),),
             family_sources={
                 "ac": (SourceRequirement(source_type="aws_identity", level=SourceLevel.REQUIRED),),
             },
@@ -1019,9 +1009,7 @@ class TestCollectRequirements:
     def test_unknown_family_returns_system_only(self):
         manifest = SourceManifest(
             version="1",
-            system_sources=(
-                SourceRequirement(source_type="git_repo", level=SourceLevel.REQUIRED),
-            ),
+            system_sources=(SourceRequirement(source_type="git_repo", level=SourceLevel.REQUIRED),),
             family_sources={
                 "ac": (SourceRequirement(source_type="aws_identity", level=SourceLevel.REQUIRED),),
             },
@@ -1046,9 +1034,7 @@ class TestEvaluateManifest:
     def test_all_required_present_returns_satisfied(self):
         manifest = SourceManifest(
             version="1",
-            system_sources=(
-                SourceRequirement(source_type="git_repo", level=SourceLevel.REQUIRED),
-            ),
+            system_sources=(SourceRequirement(source_type="git_repo", level=SourceLevel.REQUIRED),),
         )
         result = evaluate_manifest(manifest, (self._git_source(),))
         assert result.status == ManifestStatus.SATISFIED
@@ -1058,9 +1044,7 @@ class TestEvaluateManifest:
     def test_missing_required_returns_unsatisfied(self):
         manifest = SourceManifest(
             version="1",
-            system_sources=(
-                SourceRequirement(source_type="hris", level=SourceLevel.REQUIRED),
-            ),
+            system_sources=(SourceRequirement(source_type="hris", level=SourceLevel.REQUIRED),),
         )
         result = evaluate_manifest(manifest, (self._git_source(),))
         assert result.status == ManifestStatus.UNSATISFIED
@@ -1128,9 +1112,7 @@ class TestEvaluateManifest:
     def test_manual_attestation_satisfies_requirement(self):
         manifest = SourceManifest(
             version="1",
-            system_sources=(
-                SourceRequirement(source_type="hris", level=SourceLevel.REQUIRED),
-            ),
+            system_sources=(SourceRequirement(source_type="hris", level=SourceLevel.REQUIRED),),
         )
         manual = SourceIdentity(
             provider_type="hris",
@@ -1227,9 +1209,7 @@ class TestProvenanceWithManifest:
             system_id="sys-1",
             framework_id="fw",
             api_base_url="https://platform.pretorin.com/api/v1/public",
-            sources=(
-                SourceIdentity(provider_type="git_repo", identity="github.com/org/repo"),
-            ),
+            sources=(SourceIdentity(provider_type="git_repo", identity="github.com/org/repo"),),
             verified_at=datetime.now(timezone.utc).isoformat(),
             status=VerificationStatus.VERIFIED,
         )

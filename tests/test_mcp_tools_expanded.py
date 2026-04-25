@@ -229,8 +229,10 @@ class TestSystemTools:
             "prompt": "A newer version of Pretorin CLI is available (0.15.0). Run: pip install --upgrade pretorin",
         }
 
-        with patch("pretorin.mcp.server.PretorianClient") as mock_client, \
-             patch("pretorin.mcp.handlers.systems.get_update_status", return_value=status_data):
+        with (
+            patch("pretorin.mcp.server.PretorianClient") as mock_client,
+            patch("pretorin.mcp.handlers.systems.get_update_status", return_value=status_data),
+        ):
             result = asyncio.run(call_tool("pretorin_get_cli_status", {}))
 
         mock_client.assert_not_called()
@@ -862,12 +864,15 @@ class TestCampaignTools:
             def to_dict(self) -> dict[str, Any]:
                 return {"checkpoint_path": "/tmp/campaign.json", "pending": 2, "status_snapshot": "snapshot"}
 
-        with patch(
-            "pretorin.mcp.handlers.workflow.prepare_campaign",
-            new=AsyncMock(return_value=AsyncMock(workflow_snapshot={"subject": "Primary / fedramp-moderate"})),
-        ), patch(
-            "pretorin.mcp.handlers.workflow.get_campaign_status",
-            return_value=_Summary(),
+        with (
+            patch(
+                "pretorin.mcp.handlers.workflow.prepare_campaign",
+                new=AsyncMock(return_value=AsyncMock(workflow_snapshot={"subject": "Primary / fedramp-moderate"})),
+            ),
+            patch(
+                "pretorin.mcp.handlers.workflow.get_campaign_status",
+                return_value=_Summary(),
+            ),
         ):
             result = _run_tool(
                 "pretorin_prepare_campaign",

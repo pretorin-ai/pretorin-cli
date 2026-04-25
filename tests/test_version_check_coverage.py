@@ -81,8 +81,10 @@ class TestSaveCache:
     def test_save_cache_success(self, tmp_path):
         cache_dir = tmp_path / "cache_dir"
         cache_file = cache_dir / "cache.json"
-        with patch("pretorin.cli.version_check.CACHE_DIR", cache_dir), \
-             patch("pretorin.cli.version_check.VERSION_CACHE_FILE", cache_file):
+        with (
+            patch("pretorin.cli.version_check.CACHE_DIR", cache_dir),
+            patch("pretorin.cli.version_check.VERSION_CACHE_FILE", cache_file),
+        ):
             _save_cache({"latest_version": "2.0.0"})
         assert cache_file.exists()
         assert json.loads(cache_file.read_text())["latest_version"] == "2.0.0"
@@ -101,9 +103,7 @@ class TestFetchLatestVersion:
     def test_fetch_latest_version_success(self):
         """Lines 67-78: successful PyPI fetch."""
         mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps(
-            {"info": {"version": "2.0.0"}}
-        ).encode()
+        mock_response.read.return_value = json.dumps({"info": {"version": "2.0.0"}}).encode()
         mock_response.__enter__ = MagicMock(return_value=mock_response)
         mock_response.__exit__ = MagicMock(return_value=False)
 
@@ -157,9 +157,11 @@ class TestCheckForUpdates:
             "next_check_at": now - 100000,
             "latest_version": None,
         }
-        with patch("pretorin.cli.version_check._load_cache", return_value=cache_data), \
-             patch("pretorin.cli.version_check._fetch_latest_version", return_value=None), \
-             patch("pretorin.cli.version_check._save_cache"):
+        with (
+            patch("pretorin.cli.version_check._load_cache", return_value=cache_data),
+            patch("pretorin.cli.version_check._fetch_latest_version", return_value=None),
+            patch("pretorin.cli.version_check._save_cache"),
+        ):
             result = check_for_updates()
         assert result.checked is False
         assert result.latest_version is None
@@ -179,9 +181,11 @@ class TestCheckForUpdates:
 
     def test_fetch_returns_version_saves_success(self):
         """check_for_updates with forced fetch that returns a version."""
-        with patch("pretorin.cli.version_check._load_cache", return_value={}), \
-             patch("pretorin.cli.version_check._fetch_latest_version", return_value="99.0.0"), \
-             patch("pretorin.cli.version_check._save_cache") as mock_save:
+        with (
+            patch("pretorin.cli.version_check._load_cache", return_value={}),
+            patch("pretorin.cli.version_check._fetch_latest_version", return_value="99.0.0"),
+            patch("pretorin.cli.version_check._save_cache") as mock_save,
+        ):
             result = check_for_updates(force=True)
         assert result.latest_version == "99.0.0"
         assert result.update_available is True
@@ -202,11 +206,13 @@ class TestGetUpdateMessage:
         """Line 164: returns None when no update is available."""
         from pretorin.cli.version_check import VersionCheckResult
 
-        with patch("pretorin.cli.version_check.update_notifications_enabled", return_value=True), \
-             patch(
-                 "pretorin.cli.version_check.check_for_updates",
-                 return_value=VersionCheckResult(latest_version="0.0.1", update_available=False, checked=True),
-             ):
+        with (
+            patch("pretorin.cli.version_check.update_notifications_enabled", return_value=True),
+            patch(
+                "pretorin.cli.version_check.check_for_updates",
+                return_value=VersionCheckResult(latest_version="0.0.1", update_available=False, checked=True),
+            ),
+        ):
             result = get_update_message()
         assert result is None
 
@@ -214,11 +220,13 @@ class TestGetUpdateMessage:
         """Returns formatted message when update is available."""
         from pretorin.cli.version_check import VersionCheckResult
 
-        with patch("pretorin.cli.version_check.update_notifications_enabled", return_value=True), \
-             patch(
-                 "pretorin.cli.version_check.check_for_updates",
-                 return_value=VersionCheckResult(latest_version="99.0.0", update_available=True, checked=True),
-             ):
+        with (
+            patch("pretorin.cli.version_check.update_notifications_enabled", return_value=True),
+            patch(
+                "pretorin.cli.version_check.check_for_updates",
+                return_value=VersionCheckResult(latest_version="99.0.0", update_available=True, checked=True),
+            ),
+        ):
             result = get_update_message()
         assert result is not None
         assert "99.0.0" in result
@@ -237,11 +245,13 @@ class TestGetUpdateStatus:
     def test_get_update_status_up_to_date(self):
         from pretorin.cli.version_check import VersionCheckResult
 
-        with patch("pretorin.cli.version_check.update_notifications_enabled", return_value=True), \
-             patch(
-                 "pretorin.cli.version_check.check_for_updates",
-                 return_value=VersionCheckResult(latest_version="0.14.0", update_available=False, checked=True),
-             ):
+        with (
+            patch("pretorin.cli.version_check.update_notifications_enabled", return_value=True),
+            patch(
+                "pretorin.cli.version_check.check_for_updates",
+                return_value=VersionCheckResult(latest_version="0.14.0", update_available=False, checked=True),
+            ),
+        ):
             result = get_update_status()
         assert result["checked"] is True
         assert result["message"] == "Pretorin CLI is up to date."

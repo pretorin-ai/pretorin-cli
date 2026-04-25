@@ -22,7 +22,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-import typer
 from typer.testing import CliRunner
 
 from pretorin.cli.context import (
@@ -151,8 +150,14 @@ async def test_resolve_execution_context_no_frameworks_on_system():
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary"}])
     client.get_system_compliance_status = AsyncMock(return_value={"frameworks": []})
 
-    with patch("pretorin.client.config.Config", return_value=mock_config), \
-         patch("pretorin.workflows.compliance_updates.resolve_system", new_callable=AsyncMock, return_value=("sys-1", "Primary")):
+    with (
+        patch("pretorin.client.config.Config", return_value=mock_config),
+        patch(
+            "pretorin.workflows.compliance_updates.resolve_system",
+            new_callable=AsyncMock,
+            return_value=("sys-1", "Primary"),
+        ),
+    ):
         with pytest.raises(PretorianClientError, match="no configured frameworks"):
             await resolve_execution_context(client, system="sys-1", framework="fedramp-moderate")
 
@@ -167,12 +172,16 @@ async def test_resolve_execution_context_framework_not_available():
     }.get(key)
     client = AsyncMock()
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary"}])
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]})
 
-    with patch("pretorin.client.config.Config", return_value=mock_config), \
-         patch("pretorin.workflows.compliance_updates.resolve_system", new_callable=AsyncMock, return_value=("sys-1", "Primary")):
+    with (
+        patch("pretorin.client.config.Config", return_value=mock_config),
+        patch(
+            "pretorin.workflows.compliance_updates.resolve_system",
+            new_callable=AsyncMock,
+            return_value=("sys-1", "Primary"),
+        ),
+    ):
         with pytest.raises(PretorianClientError, match="not associated with system"):
             await resolve_execution_context(client, system="sys-1", framework="fedramp-high")
 
@@ -187,15 +196,17 @@ async def test_resolve_execution_context_success():
     }.get(key)
     client = AsyncMock()
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary"}])
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]})
 
-    with patch("pretorin.client.config.Config", return_value=mock_config), \
-         patch("pretorin.workflows.compliance_updates.resolve_system", new_callable=AsyncMock, return_value=("sys-1", "Primary")):
-        system_id, framework_id = await resolve_execution_context(
-            client, system="sys-1", framework="fedramp-moderate"
-        )
+    with (
+        patch("pretorin.client.config.Config", return_value=mock_config),
+        patch(
+            "pretorin.workflows.compliance_updates.resolve_system",
+            new_callable=AsyncMock,
+            return_value=("sys-1", "Primary"),
+        ),
+    ):
+        system_id, framework_id = await resolve_execution_context(client, system="sys-1", framework="fedramp-moderate")
     assert system_id == "sys-1"
     assert framework_id == "fedramp-moderate"
 
@@ -247,9 +258,7 @@ def test_context_list_rich_table_multiple_statuses():
         "sys-3": {"frameworks": []},  # "no frameworks" row
     }
     client = _make_client(systems=systems)
-    client.get_system_compliance_status = AsyncMock(
-        side_effect=lambda sid: status_responses[sid]
-    )
+    client.get_system_compliance_status = AsyncMock(side_effect=lambda sid: status_responses[sid])
     result = _run_with_mock_client(["context", "list"], client)
     assert result.exit_code == 0
     # Should show table output with multiple rows
@@ -259,9 +268,7 @@ def test_context_list_rich_table_multiple_statuses():
 def test_context_list_rich_table_with_error_status():
     """Lines 171-180, 203, 208: exercises the error status color path."""
     client = _make_client(systems=[{"id": "sys-err", "name": "Error System"}])
-    client.get_system_compliance_status = AsyncMock(
-        side_effect=PretorianClientError("server error", status_code=500)
-    )
+    client.get_system_compliance_status = AsyncMock(side_effect=PretorianClientError("server error", status_code=500))
     result = _run_with_mock_client(["context", "list"], client)
     assert result.exit_code == 0
     assert "Error System" in result.output
@@ -359,9 +366,7 @@ def test_context_set_framework_validation_compliance_error():
     client = _make_client(
         systems=[{"id": "sys-1", "name": "Primary"}],
     )
-    client.get_system_compliance_status = AsyncMock(
-        side_effect=PretorianClientError("compliance API error")
-    )
+    client.get_system_compliance_status = AsyncMock(side_effect=PretorianClientError("compliance API error"))
     mock_config = MagicMock()
     with patch("pretorin.client.config.Config", return_value=mock_config):
         result = _run_with_mock_client(
@@ -394,9 +399,7 @@ def test_context_set_interactive_no_frameworks_compliance_error(monkeypatch):
     client = _make_client(
         systems=[{"id": "sys-1", "name": "Primary"}],
     )
-    client.get_system_compliance_status = AsyncMock(
-        side_effect=PretorianClientError("compliance error")
-    )
+    client.get_system_compliance_status = AsyncMock(side_effect=PretorianClientError("compliance error"))
     monkeypatch.setattr("builtins.input", lambda _prompt: "1")
     result = _run_with_mock_client(["context", "set"], client)
     assert result.exit_code == 1
@@ -531,9 +534,9 @@ def test_context_show_marks_missing_system_as_invalid():
     """Stored context should be marked invalid when the system no longer exists."""
     client = _make_client(
         systems=[{"id": "sys-1", "name": "Primary"}],
-        compliance_status={"frameworks": [
-            {"framework_id": "fedramp-moderate", "progress": 80, "status": "implemented"}
-        ]}
+        compliance_status={
+            "frameworks": [{"framework_id": "fedramp-moderate", "progress": 80, "status": "implemented"}]
+        },
     )
     mock_config = MagicMock()
     mock_config.check_context_environment.return_value = None
@@ -560,9 +563,7 @@ def test_context_show_marks_missing_system_as_invalid():
 def test_context_show_compliance_status_error_keeps_defaults():
     """Progress defaults remain and validation becomes unverified when compliance lookup fails."""
     client = _make_client(systems=[{"id": "sys-1", "name": "Primary"}])
-    client.get_system_compliance_status = AsyncMock(
-        side_effect=PretorianClientError("compliance error")
-    )
+    client.get_system_compliance_status = AsyncMock(side_effect=PretorianClientError("compliance error"))
     mock_config = MagicMock()
     mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
@@ -610,9 +611,9 @@ def test_context_show_non_json_with_live_data():
     """Lines 447-448: renders a Panel in non-JSON mode with live system data."""
     client = _make_client(
         systems=[{"id": "sys-1", "name": "Primary"}],
-        compliance_status={"frameworks": [
-            {"framework_id": "fedramp-moderate", "progress": 80, "status": "implemented"}
-        ]}
+        compliance_status={
+            "frameworks": [{"framework_id": "fedramp-moderate", "progress": 80, "status": "implemented"}]
+        },
     )
     mock_config = MagicMock()
     mock_config.check_context_environment.return_value = None
@@ -629,9 +630,7 @@ def test_context_show_non_json_with_live_data():
 def test_context_show_non_json_system_error_and_compliance_error():
     """Non-JSON path surfaces framework validation problems instead of silently falling back."""
     client = _make_client(systems=[{"id": "sys-1", "name": "Primary"}])
-    client.get_system_compliance_status = AsyncMock(
-        side_effect=PretorianClientError("compliance error")
-    )
+    client.get_system_compliance_status = AsyncMock(side_effect=PretorianClientError("compliance error"))
     mock_config = MagicMock()
     mock_config.check_context_environment.return_value = None
     mock_config.get.side_effect = lambda key, *a: {
@@ -649,7 +648,9 @@ def test_context_show_quiet_outputs_single_line():
     """Quiet mode should emit a compact one-line summary."""
     client = _make_client(
         systems=[{"id": "sys-1", "name": "Primary"}],
-        compliance_status={"frameworks": [{"framework_id": "fedramp-moderate", "progress": 80, "status": "implemented"}]},
+        compliance_status={
+            "frameworks": [{"framework_id": "fedramp-moderate", "progress": 80, "status": "implemented"}]
+        },
     )
     mock_config = MagicMock()
     mock_config.check_context_environment.return_value = None

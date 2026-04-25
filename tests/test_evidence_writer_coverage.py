@@ -108,9 +108,7 @@ class TestEvidenceWriterWrite:
             evidence_type="policy_document",
         )
         # Patch file_path.resolve() to return something outside base_dir
-        from unittest.mock import patch, PropertyMock
-
-        original_write = writer.write
+        from unittest.mock import patch
 
         # We need to test the actual path traversal check. We can create a symlink scenario.
         # Instead, let's mock the is_relative_to check

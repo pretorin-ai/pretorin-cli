@@ -43,9 +43,7 @@ class TestHandleListSystems:
     @pytest.mark.asyncio
     async def test_with_systems_no_note(self):
         """When systems exist, no note is added."""
-        client = _make_client(
-            list_systems=[{"id": "sys-1", "name": "My System", "description": "Test"}]
-        )
+        client = _make_client(list_systems=[{"id": "sys-1", "name": "My System", "description": "Test"}])
         result = await handle_list_systems(client, {})
         text = result[0].text
         assert "sys-1" in text

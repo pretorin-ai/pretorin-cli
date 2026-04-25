@@ -15,9 +15,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from types import SimpleNamespace
-from typing import Any
 
+import pytest
 from pytest import MonkeyPatch
 from typer.testing import CliRunner
 
@@ -48,9 +47,6 @@ def _valid_pretorin_config(base_url: str = "https://models.example/v1") -> str:
         'command = "pretorin"\n'
         'args = ["mcp-serve"]\n'
     )
-
-
-import pytest
 
 
 @pytest.fixture(autouse=True)
@@ -117,7 +113,7 @@ def test_get_table_value_no_section():
 
 def test_get_table_value_no_key():
     """Line 113: returns None when key is not found in section."""
-    content = "[model_providers.pretorin]\nname = \"Pretorin\"\n"
+    content = '[model_providers.pretorin]\nname = "Pretorin"\n'
     result = harness_cli._get_table_value(content, "model_providers.pretorin", "base_url")
     assert result is None
 
@@ -131,7 +127,7 @@ def test_get_table_array_no_section():
 
 def test_get_table_array_no_key():
     """Line 126: returns None when key not found in section."""
-    content = "[mcp_servers.pretorin]\ncommand = \"pretorin\"\n"
+    content = '[mcp_servers.pretorin]\ncommand = "pretorin"\n'
     result = harness_cli._get_table_array(content, "mcp_servers.pretorin", "args")
     assert result is None
 
@@ -160,7 +156,7 @@ def test_evaluate_setup_missing_backend_command(monkeypatch: MonkeyPatch):
 def test_evaluate_setup_missing_provider(monkeypatch: MonkeyPatch):
     """Line 147: reports error when model_provider not set."""
     monkeypatch.setattr(harness_cli.shutil, "which", lambda _: "/usr/bin/codex")
-    content = "[mcp_servers.pretorin]\ncommand = \"pretorin\"\nargs = [\"mcp-serve\"]\n"
+    content = '[mcp_servers.pretorin]\ncommand = "pretorin"\nargs = ["mcp-serve"]\n'
     report = harness_cli._evaluate_setup(content, allow_openai_api=False, backend_command="codex")
     assert not report.ok
     assert any("model_provider" in e and "not set" in e for e in report.errors)
@@ -298,11 +294,11 @@ def test_harness_init_no_provider_url_exits_1(monkeypatch: MonkeyPatch, tmp_path
 
 def test_harness_init_json_mode(monkeypatch: MonkeyPatch, tmp_path: Path):
     """Lines 280-288: harness init in JSON mode outputs structured result."""
-    config_path = _set_harness_config_path(monkeypatch, tmp_path)
+    _set_harness_config_path(monkeypatch, tmp_path)
     monkeypatch.setattr(harness_cli.shutil, "which", lambda _: "/usr/bin/codex")
     set_json_mode(True)
 
-    result = runner.invoke(
+    runner.invoke(
         harness_cli.app,
         ["init", "--provider-url", "https://models.example/v1", "--backend-command", "codex"],
     )
@@ -331,7 +327,7 @@ def test_harness_init_json_mode(monkeypatch: MonkeyPatch, tmp_path: Path):
 
 def test_harness_init_json_mode_pretorin_provider(monkeypatch: MonkeyPatch, tmp_path: Path):
     """Lines 280-288: JSON mode with pretorin provider mode."""
-    config_path = _set_harness_config_path(monkeypatch, tmp_path)
+    _set_harness_config_path(monkeypatch, tmp_path)
     monkeypatch.setattr(harness_cli.shutil, "which", lambda _: "/usr/bin/codex")
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
@@ -351,7 +347,7 @@ def test_harness_init_json_mode_pretorin_provider(monkeypatch: MonkeyPatch, tmp_
 
 def test_harness_init_json_mode_openai_mode(monkeypatch: MonkeyPatch, tmp_path: Path):
     """Lines 280-288: JSON mode with openai-api-test mode."""
-    config_path = _set_harness_config_path(monkeypatch, tmp_path)
+    _set_harness_config_path(monkeypatch, tmp_path)
     monkeypatch.setattr(harness_cli.shutil, "which", lambda _: "/usr/bin/codex")
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
@@ -373,7 +369,7 @@ def test_harness_init_json_mode_openai_mode(monkeypatch: MonkeyPatch, tmp_path: 
 
 def test_harness_init_non_json_with_errors(monkeypatch: MonkeyPatch, tmp_path: Path):
     """Lines 294-296: harness init errors raise typer.Exit(1) in non-JSON mode."""
-    config_path = _set_harness_config_path(monkeypatch, tmp_path)
+    _set_harness_config_path(monkeypatch, tmp_path)
     # Don't put backend command in PATH to trigger error
     monkeypatch.setattr(harness_cli.shutil, "which", lambda _: None)
 
@@ -387,7 +383,7 @@ def test_harness_init_non_json_with_errors(monkeypatch: MonkeyPatch, tmp_path: P
 
 def test_harness_init_non_json_with_warnings_only(monkeypatch: MonkeyPatch, tmp_path: Path):
     """Lines 297-298: harness init warnings are shown but don't cause exit 1."""
-    config_path = _set_harness_config_path(monkeypatch, tmp_path)
+    _set_harness_config_path(monkeypatch, tmp_path)
     monkeypatch.setattr(harness_cli.shutil, "which", lambda _: "/usr/bin/codex")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 

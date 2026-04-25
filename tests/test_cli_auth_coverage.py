@@ -49,14 +49,16 @@ class TestLoginWithApiKey:
 
     def test_login_success_stores_credentials(self) -> None:
         """Successful validation causes store_credentials to be called."""
-        with patch("pretorin.cli.auth.PretorianClient") as MockClient, \
-             patch("pretorin.cli.auth.store_credentials") as mock_store, \
-             patch("pretorin.cli.auth.animated_status") as mock_anim:
+        with (
+            patch("pretorin.cli.auth.PretorianClient") as mock_client_cls,
+            patch("pretorin.cli.auth.store_credentials") as mock_store,
+            patch("pretorin.cli.auth.animated_status") as mock_anim,
+        ):
             mock_anim.return_value.__enter__ = MagicMock(return_value=None)
             mock_anim.return_value.__exit__ = MagicMock(return_value=False)
 
             mock_client = AsyncMock()
-            MockClient.return_value = mock_client
+            mock_client_cls.return_value = mock_client
             mock_client.validate_api_key = AsyncMock(return_value=None)
             mock_client.close = AsyncMock()
             mock_client._api_base_url = "https://api.example.com"
@@ -68,14 +70,16 @@ class TestLoginWithApiKey:
 
     def test_login_authentication_error(self) -> None:
         """AuthenticationError from validate_api_key causes exit code 1."""
-        with patch("pretorin.cli.auth.PretorianClient") as MockClient, \
-             patch("pretorin.cli.auth.store_credentials") as mock_store, \
-             patch("pretorin.cli.auth.animated_status") as mock_anim:
+        with (
+            patch("pretorin.cli.auth.PretorianClient") as mock_client_cls,
+            patch("pretorin.cli.auth.store_credentials") as mock_store,
+            patch("pretorin.cli.auth.animated_status") as mock_anim,
+        ):
             mock_anim.return_value.__enter__ = MagicMock(return_value=None)
             mock_anim.return_value.__exit__ = MagicMock(return_value=False)
 
             mock_client = AsyncMock()
-            MockClient.return_value = mock_client
+            mock_client_cls.return_value = mock_client
             mock_client.validate_api_key = AsyncMock(
                 side_effect=AuthenticationError("Invalid API key", status_code=401)
             )
@@ -90,14 +94,16 @@ class TestLoginWithApiKey:
 
     def test_login_client_error(self) -> None:
         """PretorianClientError from validate_api_key causes exit code 1."""
-        with patch("pretorin.cli.auth.PretorianClient") as MockClient, \
-             patch("pretorin.cli.auth.store_credentials") as mock_store, \
-             patch("pretorin.cli.auth.animated_status") as mock_anim:
+        with (
+            patch("pretorin.cli.auth.PretorianClient") as mock_client_cls,
+            patch("pretorin.cli.auth.store_credentials") as mock_store,
+            patch("pretorin.cli.auth.animated_status") as mock_anim,
+        ):
             mock_anim.return_value.__enter__ = MagicMock(return_value=None)
             mock_anim.return_value.__exit__ = MagicMock(return_value=False)
 
             mock_client = AsyncMock()
-            MockClient.return_value = mock_client
+            mock_client_cls.return_value = mock_client
             mock_client.validate_api_key = AsyncMock(
                 side_effect=PretorianClientError("Service unavailable", status_code=503)
             )
@@ -111,14 +117,16 @@ class TestLoginWithApiKey:
 
     def test_login_with_custom_api_url(self) -> None:
         """--api-url is forwarded to PretorianClient and store_credentials."""
-        with patch("pretorin.cli.auth.PretorianClient") as MockClient, \
-             patch("pretorin.cli.auth.store_credentials") as mock_store, \
-             patch("pretorin.cli.auth.animated_status") as mock_anim:
+        with (
+            patch("pretorin.cli.auth.PretorianClient") as mock_client_cls,
+            patch("pretorin.cli.auth.store_credentials") as mock_store,
+            patch("pretorin.cli.auth.animated_status") as mock_anim,
+        ):
             mock_anim.return_value.__enter__ = MagicMock(return_value=None)
             mock_anim.return_value.__exit__ = MagicMock(return_value=False)
 
             mock_client = AsyncMock()
-            MockClient.return_value = mock_client
+            mock_client_cls.return_value = mock_client
             mock_client.validate_api_key = AsyncMock(return_value=None)
             mock_client.close = AsyncMock()
             mock_client._api_base_url = "https://self-hosted.example.com"
@@ -150,8 +158,10 @@ class TestLoginWithoutApiKey:
         mock_config = MagicMock()
         mock_config.is_configured = True
 
-        with patch("pretorin.cli.auth.Config", return_value=mock_config), \
-             patch("pretorin.cli.auth.PretorianClient", return_value=mock_ctx_client):
+        with (
+            patch("pretorin.cli.auth.Config", return_value=mock_config),
+            patch("pretorin.cli.auth.PretorianClient", return_value=mock_ctx_client),
+        ):
             result = runner.invoke(app, ["login"])
 
         assert result.exit_code == 0
@@ -179,9 +189,11 @@ class TestLoginWithoutApiKey:
         mock_config = MagicMock()
         mock_config.is_configured = True
 
-        with patch("pretorin.cli.auth.Config", return_value=mock_config), \
-             patch("pretorin.cli.auth.PretorianClient", return_value=mock_client), \
-             patch("pretorin.cli.auth.store_credentials"):
+        with (
+            patch("pretorin.cli.auth.Config", return_value=mock_config),
+            patch("pretorin.cli.auth.PretorianClient", return_value=mock_client),
+            patch("pretorin.cli.auth.store_credentials"),
+        ):
             result = runner.invoke(app, ["login"], input="new-key-12345\n")
 
         # First validation fails so it falls through to prompt;
@@ -203,8 +215,10 @@ class TestLogout:
         mock_config = MagicMock()
         mock_config.is_configured = True
 
-        with patch("pretorin.cli.auth.Config", return_value=mock_config), \
-             patch("pretorin.cli.auth.clear_credentials") as mock_clear:
+        with (
+            patch("pretorin.cli.auth.Config", return_value=mock_config),
+            patch("pretorin.cli.auth.clear_credentials") as mock_clear,
+        ):
             result = runner.invoke(app, ["logout"])
 
         assert result.exit_code == 0
@@ -216,8 +230,10 @@ class TestLogout:
         mock_config = MagicMock()
         mock_config.is_configured = False
 
-        with patch("pretorin.cli.auth.Config", return_value=mock_config), \
-             patch("pretorin.cli.auth.clear_credentials") as mock_clear:
+        with (
+            patch("pretorin.cli.auth.Config", return_value=mock_config),
+            patch("pretorin.cli.auth.clear_credentials") as mock_clear,
+        ):
             result = runner.invoke(app, ["logout"])
 
         assert result.exit_code == 0
@@ -252,9 +268,11 @@ class TestWhoami:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("pretorin.cli.auth.Config", return_value=mock_config), \
-             patch("pretorin.cli.auth.PretorianClient", return_value=mock_client), \
-             patch("pretorin.cli.auth.animated_status") as mock_anim:
+        with (
+            patch("pretorin.cli.auth.Config", return_value=mock_config),
+            patch("pretorin.cli.auth.PretorianClient", return_value=mock_client),
+            patch("pretorin.cli.auth.animated_status") as mock_anim,
+        ):
             mock_anim.return_value.__enter__ = MagicMock(return_value=None)
             mock_anim.return_value.__exit__ = MagicMock(return_value=False)
 
@@ -277,8 +295,10 @@ class TestWhoami:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("pretorin.cli.auth.Config", return_value=mock_config), \
-             patch("pretorin.cli.auth.PretorianClient", return_value=mock_client):
+        with (
+            patch("pretorin.cli.auth.Config", return_value=mock_config),
+            patch("pretorin.cli.auth.PretorianClient", return_value=mock_client),
+        ):
             result = runner.invoke(app, ["--json", "whoami"])
 
         assert result.exit_code == 0
@@ -318,16 +338,16 @@ class TestWhoami:
 
         mock_client = AsyncMock()
         mock_client.is_configured = True
-        mock_client.validate_api_key = AsyncMock(
-            side_effect=AuthenticationError("Token revoked", status_code=401)
-        )
+        mock_client.validate_api_key = AsyncMock(side_effect=AuthenticationError("Token revoked", status_code=401))
         mock_client._api_base_url = "https://api.example.com"
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("pretorin.cli.auth.Config", return_value=mock_config), \
-             patch("pretorin.cli.auth.PretorianClient", return_value=mock_client), \
-             patch("pretorin.cli.auth.animated_status") as mock_anim:
+        with (
+            patch("pretorin.cli.auth.Config", return_value=mock_config),
+            patch("pretorin.cli.auth.PretorianClient", return_value=mock_client),
+            patch("pretorin.cli.auth.animated_status") as mock_anim,
+        ):
             mock_anim.return_value.__enter__ = MagicMock(return_value=None)
             mock_anim.return_value.__exit__ = MagicMock(return_value=False)
 
@@ -351,8 +371,10 @@ class TestWhoami:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("pretorin.cli.auth.Config", return_value=mock_config), \
-             patch("pretorin.cli.auth.PretorianClient", return_value=mock_client):
+        with (
+            patch("pretorin.cli.auth.Config", return_value=mock_config),
+            patch("pretorin.cli.auth.PretorianClient", return_value=mock_client),
+        ):
             result = runner.invoke(app, ["--json", "whoami"])
 
         payload = json.loads(result.output)
@@ -374,8 +396,10 @@ class TestWhoami:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("pretorin.cli.auth.Config", return_value=mock_config), \
-             patch("pretorin.cli.auth.PretorianClient", return_value=mock_client):
+        with (
+            patch("pretorin.cli.auth.Config", return_value=mock_config),
+            patch("pretorin.cli.auth.PretorianClient", return_value=mock_client),
+        ):
             result = runner.invoke(app, ["--json", "whoami"])
 
         payload = json.loads(result.output)

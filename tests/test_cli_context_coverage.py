@@ -69,7 +69,9 @@ def _make_client(*, configured=True, systems=None, compliance_status=None):
 def test_context_list_json_mode_with_systems_and_frameworks():
     client = _make_client(
         systems=[{"id": "sys-1", "name": "Primary"}],
-        compliance_status={"frameworks": [{"framework_id": "fedramp-moderate", "progress": 55, "status": "in_progress"}]},
+        compliance_status={
+            "frameworks": [{"framework_id": "fedramp-moderate", "progress": 55, "status": "in_progress"}]
+        },
     )
     result = _run_with_mock_client(["--json", "context", "list"], client)
     assert result.exit_code == 0
@@ -93,9 +95,7 @@ def test_context_list_system_without_frameworks_shows_placeholder_row():
 
 def test_context_list_compliance_status_error_shows_error_row():
     client = _make_client(systems=[{"id": "sys-1", "name": "Primary"}])
-    client.get_system_compliance_status = AsyncMock(
-        side_effect=PretorianClientError("server error", status_code=500)
-    )
+    client.get_system_compliance_status = AsyncMock(side_effect=PretorianClientError("server error", status_code=500))
     result = _run_with_mock_client(["--json", "context", "list"], client)
     assert result.exit_code == 0
     payload = json.loads(result.stdout)
@@ -181,9 +181,9 @@ def test_context_set_interactive_mode_valid_selection(monkeypatch):
 def test_context_show_with_context_set_json_mode():
     client = _make_client(
         systems=[{"id": "sys-1", "name": "Primary"}],
-        compliance_status={"frameworks": [
-            {"framework_id": "fedramp-moderate", "progress": 80, "status": "implemented"}
-        ]}
+        compliance_status={
+            "frameworks": [{"framework_id": "fedramp-moderate", "progress": 80, "status": "implemented"}]
+        },
     )
     mock_config = MagicMock()
     mock_config.check_context_environment.return_value = None
@@ -275,13 +275,16 @@ def test_resolve_context_values_falls_back_to_stored_config():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("bad_input", [
-    "fedramp-low and fedramp-moderate",
-    "fw1,fw2",
-    "fw1/fw2",
-    "fw1\\fw2",
-    "fw1 & fw2",
-])
+@pytest.mark.parametrize(
+    "bad_input",
+    [
+        "fedramp-low and fedramp-moderate",
+        "fw1,fw2",
+        "fw1/fw2",
+        "fw1\\fw2",
+        "fw1 & fw2",
+    ],
+)
 def test_ensure_single_framework_scope_rejects_multi_framework(bad_input):
     with pytest.raises(ValueError, match="exactly one framework"):
         _ensure_single_framework_scope(bad_input)

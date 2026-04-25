@@ -553,11 +553,15 @@ class TestPatchCodexExecBufferLimit:
 
         mock_sdk = types.ModuleType("openai_codex_sdk")
 
-        with patch.dict(sys.modules, {
-            "openai_codex_sdk": mock_sdk,
-            "openai_codex_sdk.exec": mock_exec_module,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "openai_codex_sdk": mock_sdk,
+                "openai_codex_sdk.exec": mock_exec_module,
+            },
+        ):
             from pretorin.agent.codex_agent import _patch_codex_exec_buffer_limit
+
             _patch_codex_exec_buffer_limit()
 
         # The run method should have been replaced
@@ -588,13 +592,17 @@ class TestPatchCodexExecBufferLimit:
 
         mock_sdk = types.ModuleType("openai_codex_sdk")
 
-        with patch.dict(sys.modules, {
-            "openai_codex_sdk": mock_sdk,
-            "openai_codex_sdk.exec": mock_exec_module,
-            "openai_codex_sdk.abort": mock_abort_module,
-            "openai_codex_sdk.errors": mock_errors_module,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "openai_codex_sdk": mock_sdk,
+                "openai_codex_sdk.exec": mock_exec_module,
+                "openai_codex_sdk.abort": mock_abort_module,
+                "openai_codex_sdk.errors": mock_errors_module,
+            },
+        ):
             from pretorin.agent.codex_agent import _patch_codex_exec_buffer_limit
+
             _patch_codex_exec_buffer_limit()
 
             # Now call the patched run
@@ -668,13 +676,17 @@ class TestPatchCodexExecBufferLimit:
         mock_proc.wait = AsyncMock(return_value=0)
         mock_proc.kill = MagicMock()
 
-        with patch.dict(sys.modules, {
-            "openai_codex_sdk": mock_sdk,
-            "openai_codex_sdk.exec": mock_exec_module,
-            "openai_codex_sdk.abort": mock_abort_module,
-            "openai_codex_sdk.errors": mock_errors_module,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "openai_codex_sdk": mock_sdk,
+                "openai_codex_sdk.exec": mock_exec_module,
+                "openai_codex_sdk.abort": mock_abort_module,
+                "openai_codex_sdk.errors": mock_errors_module,
+            },
+        ):
             from pretorin.agent.codex_agent import _patch_codex_exec_buffer_limit
+
             _patch_codex_exec_buffer_limit()
 
             instance = mock_exec_cls()
@@ -747,13 +759,17 @@ class TestPatchCodexExecBufferLimit:
         mock_proc.wait = AsyncMock(return_value=1)
         mock_proc.kill = MagicMock()
 
-        with patch.dict(sys.modules, {
-            "openai_codex_sdk": mock_sdk,
-            "openai_codex_sdk.exec": mock_exec_module,
-            "openai_codex_sdk.abort": mock_abort_module,
-            "openai_codex_sdk.errors": mock_errors_module,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "openai_codex_sdk": mock_sdk,
+                "openai_codex_sdk.exec": mock_exec_module,
+                "openai_codex_sdk.abort": mock_abort_module,
+                "openai_codex_sdk.errors": mock_errors_module,
+            },
+        ):
             from pretorin.agent.codex_agent import _patch_codex_exec_buffer_limit
+
             _patch_codex_exec_buffer_limit()
 
             instance = mock_exec_cls()
@@ -803,13 +819,17 @@ class TestPatchCodexExecBufferLimit:
         mock_proc.kill = MagicMock()
         mock_proc.wait = AsyncMock(return_value=0)
 
-        with patch.dict(sys.modules, {
-            "openai_codex_sdk": mock_sdk,
-            "openai_codex_sdk.exec": mock_exec_module,
-            "openai_codex_sdk.abort": mock_abort_module,
-            "openai_codex_sdk.errors": mock_errors_module,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "openai_codex_sdk": mock_sdk,
+                "openai_codex_sdk.exec": mock_exec_module,
+                "openai_codex_sdk.abort": mock_abort_module,
+                "openai_codex_sdk.errors": mock_errors_module,
+            },
+        ):
             from pretorin.agent.codex_agent import _patch_codex_exec_buffer_limit
+
             _patch_codex_exec_buffer_limit()
 
             instance = mock_exec_cls()
@@ -892,13 +912,17 @@ class TestPatchCodexExecBufferLimit:
         args.signal.reason = "user requested abort"
         args.input = "test"
 
-        with patch.dict(sys.modules, {
-            "openai_codex_sdk": mock_sdk,
-            "openai_codex_sdk.exec": mock_exec_module,
-            "openai_codex_sdk.abort": mock_abort_module,
-            "openai_codex_sdk.errors": mock_errors_module,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "openai_codex_sdk": mock_sdk,
+                "openai_codex_sdk.exec": mock_exec_module,
+                "openai_codex_sdk.abort": mock_abort_module,
+                "openai_codex_sdk.errors": mock_errors_module,
+            },
+        ):
             from pretorin.agent.codex_agent import _patch_codex_exec_buffer_limit
+
             _patch_codex_exec_buffer_limit()
 
             instance = mock_exec_cls()
@@ -955,13 +979,17 @@ class TestPatchCodexExecBufferLimit:
         mock_proc.wait = AsyncMock(return_value=0)
         mock_proc.kill = MagicMock()
 
-        with patch.dict(sys.modules, {
-            "openai_codex_sdk": mock_sdk,
-            "openai_codex_sdk.exec": mock_exec_module,
-            "openai_codex_sdk.abort": mock_abort_module,
-            "openai_codex_sdk.errors": mock_errors_module,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "openai_codex_sdk": mock_sdk,
+                "openai_codex_sdk.exec": mock_exec_module,
+                "openai_codex_sdk.abort": mock_abort_module,
+                "openai_codex_sdk.errors": mock_errors_module,
+            },
+        ):
             from pretorin.agent.codex_agent import _patch_codex_exec_buffer_limit
+
             _patch_codex_exec_buffer_limit()
 
             instance = mock_exec_cls()
@@ -1032,13 +1060,17 @@ class TestPatchCodexExecBufferLimit:
         mock_proc.wait = AsyncMock(return_value=0)
         mock_proc.kill = MagicMock()
 
-        with patch.dict(sys.modules, {
-            "openai_codex_sdk": mock_sdk,
-            "openai_codex_sdk.exec": mock_exec_module,
-            "openai_codex_sdk.abort": mock_abort_module,
-            "openai_codex_sdk.errors": mock_errors_module,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "openai_codex_sdk": mock_sdk,
+                "openai_codex_sdk.exec": mock_exec_module,
+                "openai_codex_sdk.abort": mock_abort_module,
+                "openai_codex_sdk.errors": mock_errors_module,
+            },
+        ):
             from pretorin.agent.codex_agent import _patch_codex_exec_buffer_limit
+
             _patch_codex_exec_buffer_limit()
 
             instance = mock_exec_cls()
@@ -1109,13 +1141,17 @@ class TestPatchCodexExecBufferLimit:
         mock_proc.wait = AsyncMock(return_value=0)
         mock_proc.kill = MagicMock(side_effect=ProcessLookupError())
 
-        with patch.dict(sys.modules, {
-            "openai_codex_sdk": mock_sdk,
-            "openai_codex_sdk.exec": mock_exec_module,
-            "openai_codex_sdk.abort": mock_abort_module,
-            "openai_codex_sdk.errors": mock_errors_module,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "openai_codex_sdk": mock_sdk,
+                "openai_codex_sdk.exec": mock_exec_module,
+                "openai_codex_sdk.abort": mock_abort_module,
+                "openai_codex_sdk.errors": mock_errors_module,
+            },
+        ):
             from pretorin.agent.codex_agent import _patch_codex_exec_buffer_limit
+
             _patch_codex_exec_buffer_limit()
 
             instance = mock_exec_cls()

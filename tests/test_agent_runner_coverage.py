@@ -6,7 +6,6 @@ Covers: ComplianceAgent.__init__, _coerce_output_text, and run method
 
 from __future__ import annotations
 
-import sys
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -15,7 +14,6 @@ import pytest
 import pretorin.agent.skills  # noqa: F401  — force into sys.modules before patch.dict
 import pretorin.agent.tools  # noqa: F401  — force into sys.modules before patch.dict
 from pretorin.agent.runner import ComplianceAgent
-
 
 # ---------------------------------------------------------------------------
 # _coerce_output_text – static method
@@ -316,6 +314,7 @@ class TestComplianceAgentRunStreaming:
     @pytest.mark.asyncio
     async def test_run_streaming_no_deltas_falls_back_to_final_output(self) -> None:
         """When no delta events are emitted, final_output is returned."""
+
         async def _stream_events():
             # Yield an event without delta attribute to exercise the hasattr check
             event = MagicMock(spec=[])  # no 'data' attribute
@@ -343,6 +342,7 @@ class TestComplianceAgentRunStreaming:
     @pytest.mark.asyncio
     async def test_run_streaming_calls_run_streamed(self) -> None:
         """Runner.run_streamed is called (not Runner.run) when stream=True."""
+
         async def _stream_events():
             return
             yield  # make it an async generator

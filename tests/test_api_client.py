@@ -228,9 +228,7 @@ SCOPE_RESPONSE = {
     "scope_review": {
         "readiness": "needs_work",
         "gaps": [{"area": "boundary", "severity": "medium", "description": "Clarify scope."}],
-        "recommended_changes": [
-            {"section": "System Description", "change": "Add user counts.", "priority": "high"}
-        ],
+        "recommended_changes": [{"section": "System Description", "change": "Add user counts.", "priority": "high"}],
     },
     "scope_reviewed_at": "2026-03-02T00:00:00+00:00",
 }
@@ -294,9 +292,7 @@ ORG_POLICY_QUESTIONNAIRE_RESPONSE = {
     "policy_review": {
         "readiness": "needs_work",
         "gaps": [{"area": "scope", "severity": "medium", "description": "Clarify exclusions."}],
-        "recommended_changes": [
-            {"section": "Scope", "change": "Add service accounts.", "priority": "high"}
-        ],
+        "recommended_changes": [{"section": "Scope", "change": "Add service accounts.", "priority": "high"}],
     },
     "policy_reviewed_at": "2026-03-02T00:00:00+00:00",
 }
@@ -1049,15 +1045,14 @@ class TestNarrativeEndpoints:
 
     async def test_update_narrative_calls_ensure_audit_markdown(self):
         """update_narrative should call ensure_audit_markdown before sending the request."""
+
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(200, json={"status": "updated"})
 
         client = _make_client(handler)
         # A narrative without enough rich elements should fail validation
         with pytest.raises(ValueError, match="markdown requirements failed"):
-            await client.update_narrative(
-                "sys-001", "ac-02", "Plain text without any markdown", "nist-800-53-r5"
-            )
+            await client.update_narrative("sys-001", "ac-02", "Plain text without any markdown", "nist-800-53-r5")
 
     async def test_update_narrative_success(self):
         captured_body: dict[str, Any] = {}
@@ -1218,9 +1213,7 @@ class TestControlNotesEndpoints:
             return httpx.Response(200, json={"id": "note-001", "content": "Test note"})
 
         client = _make_client(handler)
-        result = await client.add_control_note(
-            "sys-001", "ac-2", "Test note", "nist-800-53-r5", source="mcp"
-        )
+        result = await client.add_control_note("sys-001", "ac-2", "Test note", "nist-800-53-r5", source="mcp")
         assert result["id"] == "note-001"
         assert captured_body["content"] == "Test note"
         assert captured_body["source"] == "mcp"
@@ -1271,9 +1264,7 @@ class TestUpdateControlStatus:
             return httpx.Response(200, json={"status": "implemented"})
 
         client = _make_client(handler)
-        result = await client.update_control_status(
-            "sys-001", "ac-2", "implemented", "nist-800-53-r5"
-        )
+        result = await client.update_control_status("sys-001", "ac-2", "implemented", "nist-800-53-r5")
         assert result["status"] == "implemented"
         assert captured_body["status"] == "implemented"
         assert captured_params["framework_id"] == "nist-800-53-r5"

@@ -59,9 +59,11 @@ class TestWhoamiClientError:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("pretorin.cli.auth.Config", return_value=mock_config), \
-             patch("pretorin.cli.auth.PretorianClient", return_value=mock_client), \
-             patch("pretorin.cli.auth.animated_status") as mock_anim:
+        with (
+            patch("pretorin.cli.auth.Config", return_value=mock_config),
+            patch("pretorin.cli.auth.PretorianClient", return_value=mock_client),
+            patch("pretorin.cli.auth.animated_status") as mock_anim,
+        ):
             mock_anim.return_value.__enter__ = MagicMock(return_value=None)
             mock_anim.return_value.__exit__ = MagicMock(return_value=False)
 

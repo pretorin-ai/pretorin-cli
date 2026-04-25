@@ -103,9 +103,7 @@ class TestResolveSystem:
     async def test_system_hint_matches_by_id(self):
         """resolve_system with matching system ID."""
         client = AsyncMock()
-        client.list_systems = AsyncMock(
-            return_value=[{"id": "sys-1", "name": "My System"}]
-        )
+        client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "My System"}])
         sys_id, sys_name = await resolve_system(client, "sys-1")
         assert sys_id == "sys-1"
         assert sys_name == "My System"
@@ -114,9 +112,7 @@ class TestResolveSystem:
     async def test_system_hint_matches_by_name_prefix(self):
         """resolve_system with matching system name prefix."""
         client = AsyncMock()
-        client.list_systems = AsyncMock(
-            return_value=[{"id": "sys-1", "name": "Production System"}]
-        )
+        client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Production System"}])
         sys_id, sys_name = await resolve_system(client, "production")
         assert sys_id == "sys-1"
 
@@ -124,9 +120,7 @@ class TestResolveSystem:
     async def test_system_hint_not_found(self):
         """resolve_system with hint that matches nothing."""
         client = AsyncMock()
-        client.list_systems = AsyncMock(
-            return_value=[{"id": "sys-1", "name": "Prod"}]
-        )
+        client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Prod"}])
         with pytest.raises(PretorianClientError, match="System not found"):
             await resolve_system(client, "staging")
 
@@ -151,9 +145,7 @@ class TestResolveSystem:
     async def test_single_system_auto_resolves(self):
         """Lines 146-148: single system auto-resolves."""
         client = AsyncMock()
-        client.list_systems = AsyncMock(
-            return_value=[{"id": "sys-only", "name": "Only System"}]
-        )
+        client.list_systems = AsyncMock(return_value=[{"id": "sys-only", "name": "Only System"}])
         mock_config = MagicMock()
         mock_config.get.return_value = None
         with patch("pretorin.workflows.compliance_updates.Config", return_value=mock_config):
@@ -195,9 +187,7 @@ class TestUpsertEvidenceLinkError:
                 )
             ]
         )
-        client.link_evidence_to_control = AsyncMock(
-            side_effect=RuntimeError("Link API error")
-        )
+        client.link_evidence_to_control = AsyncMock(side_effect=RuntimeError("Link API error"))
 
         result = await upsert_evidence(
             client,

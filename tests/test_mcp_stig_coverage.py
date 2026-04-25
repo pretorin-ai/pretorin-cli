@@ -26,7 +26,6 @@ from pretorin.mcp.handlers.stig import (
     handle_submit_test_results,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -55,21 +54,30 @@ class TestHandleListStigs:
         client = _make_client(list_stigs={"stigs": []})
         result = await handle_list_stigs(client, {})
         client.list_stigs.assert_awaited_once_with(
-            technology_area=None, product=None, limit=100, offset=0,
+            technology_area=None,
+            product=None,
+            limit=100,
+            offset=0,
         )
         assert not _is_error(result)
 
     @pytest.mark.anyio
     async def test_with_filters(self):
         client = _make_client(list_stigs={"stigs": [{"id": "s1"}]})
-        result = await handle_list_stigs(client, {
-            "technology_area": "Network",
-            "product": "Cisco",
-            "limit": 10,
-            "offset": 5,
-        })
+        result = await handle_list_stigs(
+            client,
+            {
+                "technology_area": "Network",
+                "product": "Cisco",
+                "limit": 10,
+                "offset": 5,
+            },
+        )
         client.list_stigs.assert_awaited_once_with(
-            technology_area="Network", product="Cisco", limit=10, offset=5,
+            technology_area="Network",
+            product="Cisco",
+            limit=10,
+            offset=5,
         )
         assert not _is_error(result)
 
@@ -95,19 +103,33 @@ class TestHandleListStigRules:
         client = _make_client(list_stig_rules={"rules": []})
         result = await handle_list_stig_rules(client, {"stig_id": "s1"})
         client.list_stig_rules.assert_awaited_once_with(
-            stig_id="s1", severity=None, cci_id=None, limit=100, offset=0,
+            stig_id="s1",
+            severity=None,
+            cci_id=None,
+            limit=100,
+            offset=0,
         )
         assert not _is_error(result)
 
     @pytest.mark.anyio
     async def test_with_filters(self):
         client = _make_client(list_stig_rules={"rules": []})
-        result = await handle_list_stig_rules(client, {
-            "stig_id": "s1", "severity": "high", "cci_id": "CCI-001",
-            "limit": 50, "offset": 10,
-        })
+        result = await handle_list_stig_rules(
+            client,
+            {
+                "stig_id": "s1",
+                "severity": "high",
+                "cci_id": "CCI-001",
+                "limit": 50,
+                "offset": 10,
+            },
+        )
         client.list_stig_rules.assert_awaited_once_with(
-            stig_id="s1", severity="high", cci_id="CCI-001", limit=50, offset=10,
+            stig_id="s1",
+            severity="high",
+            cci_id="CCI-001",
+            limit=50,
+            offset=10,
         )
         assert not _is_error(result)
 
@@ -142,18 +164,30 @@ class TestHandleListCcis:
         client = _make_client(list_ccis={"ccis": []})
         result = await handle_list_ccis(client, {})
         client.list_ccis.assert_awaited_once_with(
-            nist_control_id=None, status=None, limit=100, offset=0,
+            nist_control_id=None,
+            status=None,
+            limit=100,
+            offset=0,
         )
         assert not _is_error(result)
 
     @pytest.mark.anyio
     async def test_with_filters(self):
         client = _make_client(list_ccis={"ccis": []})
-        result = await handle_list_ccis(client, {
-            "nist_control_id": "AC-2", "status": "active", "limit": 25, "offset": 3,
-        })
+        result = await handle_list_ccis(
+            client,
+            {
+                "nist_control_id": "AC-2",
+                "status": "active",
+                "limit": 25,
+                "offset": 3,
+            },
+        )
         client.list_ccis.assert_awaited_once_with(
-            nist_control_id="AC-2", status="active", limit=25, offset=3,
+            nist_control_id="AC-2",
+            status="active",
+            limit=25,
+            offset=3,
         )
         assert not _is_error(result)
 
@@ -239,11 +273,14 @@ class TestHandleSubmitTestResults:
                 "pretorin.mcp.handlers.stig.resolve_system_id",
                 AsyncMock(return_value="sys-1"),
             )
-            result = await handle_submit_test_results(client, {
-                "system_id": "sys-1",
-                "cli_run_id": "run-1",
-                "results": [{"rule_id": "r1", "status": "pass"}],
-            })
+            result = await handle_submit_test_results(
+                client,
+                {
+                    "system_id": "sys-1",
+                    "cli_run_id": "run-1",
+                    "results": [{"rule_id": "r1", "status": "pass"}],
+                },
+            )
         client.submit_test_results.assert_awaited_once()
         assert not _is_error(result)
 
@@ -261,11 +298,14 @@ class TestHandleSubmitTestResults:
                 "pretorin.mcp.handlers.stig.resolve_system_id",
                 AsyncMock(return_value=None),
             )
-            result = await handle_submit_test_results(client, {
-                "system_id": "sys-1",
-                "cli_run_id": "run-1",
-                "results": [],
-            })
+            result = await handle_submit_test_results(
+                client,
+                {
+                    "system_id": "sys-1",
+                    "cli_run_id": "run-1",
+                    "results": [],
+                },
+            )
         assert _is_error(result)
 
 
@@ -303,9 +343,13 @@ class TestHandleGetCciStatus:
                 "pretorin.mcp.handlers.stig.resolve_system_id",
                 AsyncMock(return_value="sys-1"),
             )
-            result = await handle_get_cci_status(client, {
-                "system_id": "sys-1", "nist_control_id": "AC-2",
-            })
+            result = await handle_get_cci_status(
+                client,
+                {
+                    "system_id": "sys-1",
+                    "nist_control_id": "AC-2",
+                },
+            )
         client.get_cci_status.assert_awaited_once_with(system_id="sys-1", nist_control_id="AC-2")
         assert not _is_error(result)
 

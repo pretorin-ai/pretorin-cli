@@ -402,9 +402,7 @@ async def test_prepare_campaign_controls_review_fix_filters_to_findings(tmp_path
     client.get_controls_batch = AsyncMock(return_value=ControlBatchResponse(controls=[], total=0))
     client.get_family_review_results = AsyncMock(
         return_value={
-            "findings": [
-                {"target_ref": "ac-02", "issue": "Missing evidence", "recommended_fix": "Add evidence"}
-            ]
+            "findings": [{"target_ref": "ac-02", "issue": "Missing evidence", "recommended_fix": "Add evidence"}]
         }
     )
 
@@ -950,7 +948,9 @@ async def test_apply_campaign_rejects_checkpoint_with_wrong_environment(tmp_path
 
 
 @pytest.mark.asyncio
-async def test_apply_campaign_warns_for_legacy_checkpoint_without_url(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+async def test_apply_campaign_warns_for_legacy_checkpoint_without_url(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Legacy checkpoints without platform_api_base_url should log a warning but not raise."""
     client = _mock_campaign_client()
     client.api_base_url = "https://platform.pretorin.com/api/v1/public"
