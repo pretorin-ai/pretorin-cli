@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from pretorin.client.api import PretorianClient
+from pretorin.local_file import update_file_frontmatter
 from pretorin.narrative.writer import LocalNarrative, NarrativeWriter, _format_frontmatter
 
 logger = logging.getLogger(__name__)
@@ -103,14 +104,6 @@ class NarrativeSync:
     @staticmethod
     def _update_frontmatter(narrative: LocalNarrative) -> None:
         """Rewrite a file's frontmatter with updated platform_synced."""
-        if not narrative.path or not narrative.path.exists():
+        if not narrative.path:
             return
-
-        content = narrative.path.read_text()
-
-        if content.startswith("---"):
-            parts = content.split("---", 2)
-            if len(parts) >= 3:
-                body = parts[2]
-                new_fm = _format_frontmatter(narrative)
-                narrative.path.write_text(f"{new_fm}\n{body}")
+        update_file_frontmatter(narrative.path, _format_frontmatter(narrative))

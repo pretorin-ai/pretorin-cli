@@ -8,6 +8,7 @@ from pathlib import Path
 
 from pretorin.client.api import PretorianClient
 from pretorin.evidence.writer import EvidenceWriter, LocalEvidence, _format_frontmatter
+from pretorin.local_file import update_file_frontmatter
 from pretorin.workflows.compliance_updates import upsert_evidence
 
 logger = logging.getLogger(__name__)
@@ -131,15 +132,6 @@ class EvidenceSync:
     @staticmethod
     def _update_frontmatter(evidence: LocalEvidence) -> None:
         """Rewrite a file's frontmatter with updated platform_id."""
-        if not evidence.path or not evidence.path.exists():
+        if not evidence.path:
             return
-
-        content = evidence.path.read_text()
-
-        # Split on frontmatter delimiters
-        if content.startswith("---"):
-            parts = content.split("---", 2)
-            if len(parts) >= 3:
-                body = parts[2]
-                new_fm = _format_frontmatter(evidence)
-                evidence.path.write_text(f"{new_fm}\n{body}")
+        update_file_frontmatter(evidence.path, _format_frontmatter(evidence))

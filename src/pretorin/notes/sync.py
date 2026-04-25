@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from pretorin.client.api import PretorianClient
+from pretorin.local_file import update_file_frontmatter
 from pretorin.notes.writer import LocalNote, NotesWriter, _format_frontmatter
 
 logger = logging.getLogger(__name__)
@@ -104,14 +105,6 @@ class NotesSync:
     @staticmethod
     def _update_frontmatter(note: LocalNote) -> None:
         """Rewrite a file's frontmatter with updated platform_synced."""
-        if not note.path or not note.path.exists():
+        if not note.path:
             return
-
-        content = note.path.read_text()
-
-        if content.startswith("---"):
-            parts = content.split("---", 2)
-            if len(parts) >= 3:
-                body = parts[2]
-                new_fm = _format_frontmatter(note)
-                note.path.write_text(f"{new_fm}\n{body}")
+        update_file_frontmatter(note.path, _format_frontmatter(note))
