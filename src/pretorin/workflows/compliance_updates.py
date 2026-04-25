@@ -28,49 +28,6 @@ def _normalize_text(value: str | None) -> str:
     return re.sub(r"\s+", " ", value).strip().lower()
 
 
-def _safe_value(value: str) -> str:
-    """Collapse line breaks in template values to keep them one-line."""
-    return re.sub(r"\s+", " ", value).strip()
-
-
-def build_narrative_todo_block(
-    missing_item: str,
-    required_manual_action: str,
-    suggested_evidence_type: str,
-) -> str:
-    """Create the canonical narrative TODO placeholder block.
-
-    Issue #79: `suggested_evidence_type` is required. The authoring call
-    site knows best what artifact the reviewer should produce, so there's
-    no safe default.
-    """
-    return (
-        "[[PRETORIN_TODO]]\n"
-        f"missing_item: {_safe_value(missing_item)}\n"
-        "reason: Not observable from current workspace and connected MCP systems\n"
-        f"required_manual_action: {_safe_value(required_manual_action)}\n"
-        f"suggested_evidence_type: {_safe_value(suggested_evidence_type)}\n"
-        "[[/PRETORIN_TODO]]"
-    )
-
-
-def build_gap_note(
-    gap: str,
-    observed: str,
-    missing: str,
-    why_missing: str,
-    manual_next_step: str,
-) -> str:
-    """Create the canonical control gap note format."""
-    return (
-        f"Gap: {_safe_value(gap)}\n"
-        f"Observed: {_safe_value(observed)}\n"
-        f"Missing: {_safe_value(missing)}\n"
-        f"Why missing: {_safe_value(why_missing)}\n"
-        f"Manual next step: {_safe_value(manual_next_step)}"
-    )
-
-
 def _evidence_key(
     name: str,
     description: str | None,

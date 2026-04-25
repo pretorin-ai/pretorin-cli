@@ -37,11 +37,6 @@ from pretorin.cli.vendor import app as vendor_app
 
 console = Console()
 
-# Rome-bot expressions (for inline use)
-ROMEBOT_HAPPY = "[#EAB536]\\[°◡°]/[/#EAB536]"
-ROMEBOT_THINKING = "[#EAB536]\\[°~°][/#EAB536]"
-ROMEBOT_SAD = "[#EAB536]\\[°︵°][/#EAB536]"
-
 BANNER = """
 [#FF9010]╔═══════════════════════════════════════════════════════════╗[/#FF9010]
 [#FF9010]║[/#FF9010]   [#EAB536] ∫[/#EAB536]                                                      [#FF9010]║[/#FF9010]

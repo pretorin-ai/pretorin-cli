@@ -871,12 +871,6 @@ def _existing_note_indices(item_state: CampaignItemState) -> set[int]:
     return _note_indices_from_receipts(item_state.receipts)
 
 
-def _is_valid_evidence_type(value: Any) -> bool:
-    from pretorin.evidence.types import VALID_EVIDENCE_TYPES
-
-    return isinstance(value, str) and value in VALID_EVIDENCE_TYPES
-
-
 async def _resolve_family_id(
     client: PretorianClient,
     framework_id: str,
