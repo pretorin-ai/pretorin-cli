@@ -127,6 +127,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `pretorin_get_cli_status` and the `status://cli` MCP resource expose local CLI version, update availability, and upgrade guidance to MCP hosts and agents
 
+## [0.13.1] - 2026-04-07
+
+### Added
+- `pretorin_get_stig` MCP tool for STIG benchmark detail
+- `pretorin_get_cci_chain` MCP tool for full Control → CCI → SRG → STIG rule traceability
+
+## [0.13.0] - 2026-04-07
+
+### Added
+- Complete STIG/CCI MCP tools: `list_stigs`, `get_stig`, `list_stig_rules`, `get_stig_rule`, `list_ccis`, `get_cci`, `get_cci_chain`, `get_cci_status`, `get_stig_applicability`, `infer_stigs`, `get_test_manifest`, `submit_test_results`
+- STIG/CCI agent tools for OpenAI Agents SDK
+- `pretorin stig` CLI group: `list`, `show`, `rules`, `applicable`, `infer`
+- `pretorin cci` CLI group: `list`, `show`, `chain`
+- `pretorin scan` CLI group: `doctor`, `manifest`, `run`, `results`
+- Scanner orchestration module with support for OpenSCAP, InSpec, AWS/Azure Cloud Scanners, and Manual review
+
+## [0.12.0] - 2026-04-04
+
+### Added
+- Vendor management CLI: `pretorin vendor list/create/get/update/delete/upload-doc/list-docs`
+- MCP vendor tools: `list_vendors`, `create_vendor`, `get_vendor`, `update_vendor`, `delete_vendor`, `upload_vendor_document`, `list_vendor_documents`, `link_evidence_to_vendor`
+- Inheritance/responsibility MCP tools: `set_control_responsibility`, `get_control_responsibility`, `remove_control_responsibility`, `generate_inheritance_narrative`, `get_stale_edges`, `sync_stale_edges`
+
 ## [0.11.0] - 2026-04-02
 
 ### Added
@@ -139,6 +162,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pretorin campaign` now prepares runs for external execution by default when the optional builtin backend is unavailable, instead of failing item-by-item
 - CLI and MCP campaign adapters now share one request-normalization and validation path to reduce drift
 - Optional built-in executor dependencies are now exposed as `pretorin[builtin-agent]`, with `pretorin[agent]` preserved as a compatibility alias
+
+## [0.10.0] - 2026-03-28
+
+### Added
+- Workflow state and analytics MCP tools: `get_workflow_state`, `get_analytics_summary`, `get_family_analytics`, `get_policy_analytics`
+- Family operations MCP tools: `get_pending_families`, `get_family_bundle`, `trigger_family_review`, `get_family_review_results`
+- Policy workflow MCP tools: `get_pending_policy_questions`, `get_policy_question_detail`, `answer_policy_question`, `get_policy_workflow_state`, `trigger_policy_generation`, `trigger_policy_review`, `get_policy_review_results`
+- Scope workflow MCP tools: `get_pending_scope_questions`, `get_scope_question_detail`, `answer_scope_question`, `trigger_scope_generation`, `trigger_scope_review`, `get_scope_review_results`
+- ExecutionScope for thread-safe parallel agent execution
 
 ## [0.9.7] - 2026-03-25
 
@@ -374,6 +406,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [0.16.2]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.1...v0.16.2
 [0.16.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.0...v0.16.1
+[0.16.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.5...v0.16.0
+[0.15.5]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.4...v0.15.5
+[0.15.4]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.3...v0.15.4
+[0.15.3]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.2...v0.15.3
+[0.15.2]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.1...v0.15.2
+[0.15.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.0...v0.15.1
+[0.15.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.14.0...v0.15.0
+[0.14.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0
+[0.13.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.0...v0.13.1
+[0.13.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.12.0...v0.13.0
+[0.12.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.11.0...v0.12.0
+[0.11.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.9.7...v0.10.0
+[0.9.7]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.7...v0.9.7
 [0.8.7]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.6...v0.8.7
 [0.8.6]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.0...v0.8.5
