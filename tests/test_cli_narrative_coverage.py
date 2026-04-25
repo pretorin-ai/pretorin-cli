@@ -344,3 +344,221 @@ def test_narrative_push_normalises_control_id(tmp_path: Path) -> None:
 
     client.update_narrative.assert_awaited_once()
     assert client.update_narrative.call_args.kwargs["control_id"] == "ac-02"
+
+
+# =============================================================================
+# narrative create (local file)
+# =============================================================================
+
+
+def test_narrative_create_normal_mode(tmp_path: Path) -> None:
+    """narrative create writes a local file and shows success output."""
+    result = runner.invoke(
+        app,
+        [
+            "narrative",
+            "create",
+            "ac-02",
+            "fedramp-moderate",
+            "--content",
+            VALID_NARRATIVE_CONTENT,
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Narrative Created" in result.output
+    assert "AC-02" in result.output
+    assert "fedramp-moderate" in result.output
+
+
+def test_narrative_create_json_mode(tmp_path: Path) -> None:
+    """narrative create --json emits structured JSON."""
+    result = runner.invoke(
+        app,
+        [
+            "--json",
+            "narrative",
+            "create",
+            "ac-02",
+            "fedramp-moderate",
+            "--content",
+            VALID_NARRATIVE_CONTENT,
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.stdout)
+    assert payload["control_id"] == "ac-02"
+    assert payload["framework_id"] == "fedramp-moderate"
+    assert "path" in payload
+
+
+def test_narrative_create_validation_failure() -> None:
+    """narrative create exits 1 when content has headings (invalid for narratives)."""
+    result = runner.invoke(
+        app,
+        [
+            "narrative",
+            "create",
+            "ac-02",
+            "fedramp-moderate",
+            "--content",
+            "# Heading\n\nPlain text.",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Validation failed" in result.output
+
+
+def test_narrative_create_normalises_control_id(tmp_path: Path) -> None:
+    """narrative create normalises abbreviated control IDs."""
+    result = runner.invoke(
+        app,
+        [
+            "--json",
+            "narrative",
+            "create",
+            "ac-2",
+            "fedramp-moderate",
+            "--content",
+            VALID_NARRATIVE_CONTENT,
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["control_id"] == "ac-02"
+
+
+def test_narrative_create_with_custom_name(tmp_path: Path) -> None:
+    """narrative create uses --name when provided."""
+    result = runner.invoke(
+        app,
+        [
+            "--json",
+            "narrative",
+            "create",
+            "ac-02",
+            "fedramp-moderate",
+            "--content",
+            VALID_NARRATIVE_CONTENT,
+            "--name",
+            "custom-name",
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["name"] == "custom-name"
+
+
+def test_narrative_create_ai_generated_flag(tmp_path: Path) -> None:
+    """narrative create --ai-generated sets the flag."""
+    result = runner.invoke(
+        app,
+        [
+            "--json",
+            "narrative",
+            "create",
+            "ac-02",
+            "fedramp-moderate",
+            "--content",
+            VALID_NARRATIVE_CONTENT,
+            "--ai-generated",
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["is_ai_generated"] is True
+
+
+# =============================================================================
+# narrative list (local)
+# =============================================================================
+
+
+def test_narrative_list_empty() -> None:
+    """narrative list shows empty message when no narratives exist."""
+    with patch("pretorin.narrative.writer.NarrativeWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = []
+        result = runner.invoke(app, ["narrative", "list"])
+
+    assert result.exit_code == 0
+    assert "No local narratives" in result.output
+
+
+def test_narrative_list_with_items() -> None:
+    """narrative list renders a table when narratives exist."""
+    mock_item = SimpleNamespace(
+        control_id="ac-02",
+        framework_id="fedramp-moderate",
+        name="ac-02-fedramp-moderate",
+        is_ai_generated=True,
+        platform_synced=False,
+    )
+    with patch("pretorin.narrative.writer.NarrativeWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = [mock_item]
+        result = runner.invoke(app, ["narrative", "list"])
+
+    assert result.exit_code == 0
+    assert "AC-02" in result.output
+    assert "fedramp-moderate" in result.output
+
+
+def test_narrative_list_json_mode() -> None:
+    """narrative list --json emits structured JSON list."""
+    mock_item = SimpleNamespace(
+        control_id="ac-02",
+        framework_id="fedramp-moderate",
+        name="ac-02-fedramp-moderate",
+        is_ai_generated=False,
+        platform_synced=True,
+        path=Path("/tmp/test.md"),
+    )
+    with patch("pretorin.narrative.writer.NarrativeWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = [mock_item]
+        result = runner.invoke(app, ["--json", "narrative", "list"])
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert len(payload) == 1
+    assert payload[0]["control_id"] == "ac-02"
+    assert payload[0]["platform_synced"] is True
+
+
+def test_narrative_list_with_framework_filter() -> None:
+    """narrative list --framework filters results."""
+    with patch("pretorin.narrative.writer.NarrativeWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = []
+        result = runner.invoke(
+            app, ["narrative", "list", "--framework", "fedramp-moderate"]
+        )
+
+    mock_writer_cls.return_value.list_local.assert_called_once_with("fedramp-moderate")
+    assert result.exit_code == 0
+
+
+def test_narrative_list_long_name_truncation() -> None:
+    """narrative list truncates names longer than 40 chars."""
+    long_name = "a" * 50
+    mock_item = SimpleNamespace(
+        control_id="ac-02",
+        framework_id="fedramp-moderate",
+        name=long_name,
+        is_ai_generated=False,
+        platform_synced=False,
+    )
+    with patch("pretorin.narrative.writer.NarrativeWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = [mock_item]
+        result = runner.invoke(app, ["narrative", "list"])
+
+    assert result.exit_code == 0
+    # Table renders with truncation — either "..." or Rich's ellipsis char "…"
+    assert "..." in result.output or "\u2026" in result.output

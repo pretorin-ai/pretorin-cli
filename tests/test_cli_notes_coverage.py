@@ -7,6 +7,7 @@ handling.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -466,3 +467,218 @@ def test_notes_add_normalises_control_id() -> None:
         content="Check",
         source="cli",
     )
+
+
+# =============================================================================
+# notes create (local file)
+# =============================================================================
+
+
+def test_notes_create_normal_mode() -> None:
+    """notes create writes a local file and shows success output."""
+    with patch("pretorin.notes.writer.NotesWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.write.return_value = Path("/tmp/notes/test.md")
+        result = runner.invoke(
+            app,
+            [
+                "notes",
+                "create",
+                "ac-02",
+                "fedramp-moderate",
+                "--content",
+                "Gap: missing SSO evidence",
+            ],
+        )
+
+    assert result.exit_code == 0, result.output
+    assert "Note Created" in result.output
+    assert "AC-02" in result.output
+    assert "fedramp-moderate" in result.output
+
+
+def test_notes_create_json_mode() -> None:
+    """notes create --json emits structured JSON."""
+    with patch("pretorin.notes.writer.NotesWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.write.return_value = Path("/tmp/notes/test.md")
+        result = runner.invoke(
+            app,
+            [
+                "--json",
+                "notes",
+                "create",
+                "ac-02",
+                "fedramp-moderate",
+                "--content",
+                "Gap: missing SSO evidence",
+            ],
+        )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.stdout)
+    assert payload["control_id"] == "ac-02"
+    assert payload["framework_id"] == "fedramp-moderate"
+    assert "path" in payload
+
+
+def test_notes_create_normalises_control_id() -> None:
+    """notes create normalises abbreviated control IDs."""
+    with patch("pretorin.notes.writer.NotesWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.write.return_value = Path("/tmp/notes/test.md")
+        result = runner.invoke(
+            app,
+            [
+                "--json",
+                "notes",
+                "create",
+                "ac-2",
+                "fedramp-moderate",
+                "--content",
+                "Test note",
+            ],
+        )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["control_id"] == "ac-02"
+
+
+def test_notes_create_with_custom_name() -> None:
+    """notes create uses --name when provided."""
+    with patch("pretorin.notes.writer.NotesWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.write.return_value = Path("/tmp/notes/test.md")
+        result = runner.invoke(
+            app,
+            [
+                "--json",
+                "notes",
+                "create",
+                "ac-02",
+                "fedramp-moderate",
+                "--content",
+                "Test note",
+                "--name",
+                "custom-name",
+            ],
+        )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["name"] == "custom-name"
+
+
+def test_notes_create_default_name_from_content() -> None:
+    """notes create uses first 60 chars of content as name when no --name given."""
+    long_content = "A" * 100
+    with patch("pretorin.notes.writer.NotesWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.write.return_value = Path("/tmp/notes/test.md")
+        result = runner.invoke(
+            app,
+            [
+                "--json",
+                "notes",
+                "create",
+                "ac-02",
+                "fedramp-moderate",
+                "--content",
+                long_content,
+            ],
+        )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert len(payload["name"]) == 60
+
+
+# =============================================================================
+# notes list --local
+# =============================================================================
+
+
+def test_notes_list_local_empty() -> None:
+    """notes list --local shows empty message when no local notes exist."""
+    with patch("pretorin.notes.writer.NotesWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = []
+        result = runner.invoke(app, ["notes", "list", "--local"])
+
+    assert result.exit_code == 0
+    assert "No local notes" in result.output
+
+
+def test_notes_list_local_with_items() -> None:
+    """notes list --local renders a table when notes exist."""
+    from types import SimpleNamespace
+
+    mock_item = SimpleNamespace(
+        control_id="ac-02",
+        framework_id="fedramp-moderate",
+        name="missing-sso",
+        platform_synced=False,
+    )
+    with patch("pretorin.notes.writer.NotesWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = [mock_item]
+        result = runner.invoke(app, ["notes", "list", "--local"])
+
+    assert result.exit_code == 0
+    assert "AC-02" in result.output
+    assert "fedramp-moderate" in result.output
+
+
+def test_notes_list_local_json_mode() -> None:
+    """notes list --local --json emits structured JSON list."""
+    from types import SimpleNamespace
+
+    mock_item = SimpleNamespace(
+        control_id="ac-02",
+        framework_id="fedramp-moderate",
+        name="missing-sso",
+        platform_synced=True,
+        path=Path("/tmp/test.md"),
+    )
+    with patch("pretorin.notes.writer.NotesWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = [mock_item]
+        result = runner.invoke(app, ["--json", "notes", "list", "--local"])
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert len(payload) == 1
+    assert payload[0]["control_id"] == "ac-02"
+    assert payload[0]["platform_synced"] is True
+
+
+def test_notes_list_local_with_framework_filter() -> None:
+    """notes list --local --framework filters results."""
+    with patch("pretorin.notes.writer.NotesWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = []
+        result = runner.invoke(
+            app, ["notes", "list", "--local", "--framework", "fedramp-moderate"]
+        )
+
+    mock_writer_cls.return_value.list_local.assert_called_once_with("fedramp-moderate")
+    assert result.exit_code == 0
+
+
+def test_notes_list_local_long_name_truncation() -> None:
+    """notes list --local truncates names longer than 40 chars."""
+    from types import SimpleNamespace
+
+    long_name = "a" * 50
+    mock_item = SimpleNamespace(
+        control_id="ac-02",
+        framework_id="fedramp-moderate",
+        name=long_name,
+        platform_synced=False,
+    )
+    with patch("pretorin.notes.writer.NotesWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = [mock_item]
+        result = runner.invoke(app, ["notes", "list", "--local"])
+
+    assert result.exit_code == 0
+    # Table renders with truncation — either "..." or Rich's ellipsis char "…"
+    assert "..." in result.output or "\u2026" in result.output
+
+
+def test_notes_list_missing_args_error() -> None:
+    """notes list (platform) requires control_id and framework_id."""
+    result = runner.invoke(app, ["notes", "list"])
+    assert result.exit_code == 1
+    assert "control_id and framework_id are required" in result.output
