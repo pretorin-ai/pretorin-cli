@@ -7,7 +7,6 @@ hitting the platform. We stub the PretorianClient's `update_narrative`,
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -87,7 +86,7 @@ def _ok_result(index: int) -> EvidenceBatchItemResult:
     )
 
 
-def test_recommended_notes_become_platform_notes() -> None:
+async def test_recommended_notes_become_platform_notes() -> None:
     proposal = {
         "narrative_draft": None,
         "recommended_notes": [
@@ -99,7 +98,7 @@ def test_recommended_notes_become_platform_notes() -> None:
     state = _state(proposal)
     client = _mock_client(batch_results=[])
 
-    changed = asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
+    changed = await _apply_control_item(client, _request(), _item(), state, _snapshot())
 
     # 2 gap notes + 1 completion note.
     assert client.add_control_note.await_count == 3
@@ -109,7 +108,7 @@ def test_recommended_notes_become_platform_notes() -> None:
     assert "completion_note" in state.receipts
 
 
-def test_missing_evidence_type_falls_back_to_other() -> None:
+async def test_missing_evidence_type_falls_back_to_other() -> None:
     """Issue #79: missing evidence_type normalizes to 'other' via the normalizer.
 
     Previously the safety net defaulted to 'policy_document'; that polluted the
@@ -124,7 +123,7 @@ def test_missing_evidence_type_falls_back_to_other() -> None:
     state = _state(proposal)
     client = _mock_client(batch_results=[_ok_result(0)])
 
-    asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
+    await _apply_control_item(client, _request(), _item(), state, _snapshot())
 
     batch_items = client.create_evidence_batch.await_args.args[2]
     assert [item.name for item in batch_items] == ["SSO config"]
@@ -133,7 +132,7 @@ def test_missing_evidence_type_falls_back_to_other() -> None:
     assert client.add_control_note.await_count == 1
 
 
-def test_whitespace_only_evidence_type_treated_as_missing() -> None:
+async def test_whitespace_only_evidence_type_treated_as_missing() -> None:
     """Issue #79: `"   "` should count as missing (not unknown-drift).
 
     The normalizer treats it as fallback; the campaign pipeline must
@@ -149,7 +148,7 @@ def test_whitespace_only_evidence_type_treated_as_missing() -> None:
     state = _state(proposal)
     client = _mock_client(batch_results=[_ok_result(0)])
 
-    asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
+    await _apply_control_item(client, _request(), _item(), state, _snapshot())
 
     batch_items = client.create_evidence_batch.await_args.args[2]
     assert batch_items[0].evidence_type == "other"
@@ -157,7 +156,7 @@ def test_whitespace_only_evidence_type_treated_as_missing() -> None:
     assert client.add_control_note.await_count == 1
 
 
-def test_unknown_evidence_type_normalizes_and_emits_gap_note() -> None:
+async def test_unknown_evidence_type_normalizes_and_emits_gap_note() -> None:
     """Issue #79: unknown non-empty strings normalize to 'other' AND emit a gap note.
 
     The evidence still lands (so reviewers see the artifact) but the gap note
@@ -171,7 +170,7 @@ def test_unknown_evidence_type_normalizes_and_emits_gap_note() -> None:
     state = _state(proposal)
     client = _mock_client(batch_results=[_ok_result(0)])
 
-    asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
+    await _apply_control_item(client, _request(), _item(), state, _snapshot())
 
     batch_items = client.create_evidence_batch.await_args.args[2]
     assert batch_items[0].evidence_type == "other"
@@ -180,7 +179,7 @@ def test_unknown_evidence_type_normalizes_and_emits_gap_note() -> None:
     assert "not-a-real-type" in synthesized_call.kwargs["content"]
 
 
-def test_alias_evidence_type_normalizes_to_canonical() -> None:
+async def test_alias_evidence_type_normalizes_to_canonical() -> None:
     """Issue #79: AI-drift aliases like 'audit_log' map to canonical 'log_file'."""
     proposal = {
         "evidence_recommendations": [
@@ -191,7 +190,7 @@ def test_alias_evidence_type_normalizes_to_canonical() -> None:
     state = _state(proposal)
     client = _mock_client(batch_results=[_ok_result(0), _ok_result(1)])
 
-    asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
+    await _apply_control_item(client, _request(), _item(), state, _snapshot())
 
     batch_items = client.create_evidence_batch.await_args.args[2]
     assert batch_items[0].evidence_type == "log_file"
@@ -200,7 +199,7 @@ def test_alias_evidence_type_normalizes_to_canonical() -> None:
     assert client.add_control_note.await_count == 1
 
 
-def test_mixed_accept_reject_preserves_original_indexes() -> None:
+async def test_mixed_accept_reject_preserves_original_indexes() -> None:
     """Issue #79: with the normalizer, formerly-rejected types now reach batch as 'other'.
 
     Five recs: 0/3/4 canonical, 1 missing (fallback -> other), 2 unknown (fallback -> other
@@ -219,7 +218,7 @@ def test_mixed_accept_reject_preserves_original_indexes() -> None:
     state = _state(proposal)
     client = _mock_client(batch_results=[_ok_result(i) for i in range(5)])
 
-    asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
+    await _apply_control_item(client, _request(), _item(), state, _snapshot())
 
     batch_call = client.create_evidence_batch.await_args
     batch_items = batch_call.args[2]
@@ -235,7 +234,7 @@ def test_mixed_accept_reject_preserves_original_indexes() -> None:
     assert client.add_control_note.await_count == 2
 
 
-def test_resume_skips_already_applied_notes() -> None:
+async def test_resume_skips_already_applied_notes() -> None:
     proposal = {
         "recommended_notes": ["one", "two"],
         "evidence_recommendations": [],
@@ -248,14 +247,14 @@ def test_resume_skips_already_applied_notes() -> None:
     state = _state(proposal, receipts)
     client = _mock_client(batch_results=[])
 
-    asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
+    await _apply_control_item(client, _request(), _item(), state, _snapshot())
 
     # Only index 1 (+ the completion note) should be written.
     assert client.add_control_note.await_count == 2
     assert {r["index"] for r in state.receipts["recommended_notes"]} == {0, 1}
 
 
-def test_evidence_batch_length_mismatch_raises() -> None:
+async def test_evidence_batch_length_mismatch_raises() -> None:
     proposal = {
         "evidence_recommendations": [
             {"name": "n0", "description": "d", "evidence_type": "configuration"},
@@ -267,14 +266,14 @@ def test_evidence_batch_length_mismatch_raises() -> None:
     client = _mock_client(batch_results=[_ok_result(0)])
 
     with pytest.raises(PretorianClientError, match="length mismatch"):
-        asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
+        await _apply_control_item(client, _request(), _item(), state, _snapshot())
 
 
-def test_empty_proposal_writes_nothing() -> None:
+async def test_empty_proposal_writes_nothing() -> None:
     state = _state({"evidence_recommendations": [], "recommended_notes": [], "narrative_draft": None})
     client = _mock_client(batch_results=[])
 
-    changed = asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
+    changed = await _apply_control_item(client, _request(), _item(), state, _snapshot())
 
     assert changed is False
     assert client.create_evidence_batch.await_count == 0
@@ -282,7 +281,7 @@ def test_empty_proposal_writes_nothing() -> None:
     assert "completion_note" not in state.receipts
 
 
-def test_malformed_recommendation_becomes_synthesized_note_not_crash() -> None:
+async def test_malformed_recommendation_becomes_synthesized_note_not_crash() -> None:
     # AI returned one good rec, one non-dict entry, one dict missing `name`, one missing
     # `description`. Only the good rec should reach the batch; the others become notes.
     proposal = {
@@ -296,7 +295,7 @@ def test_malformed_recommendation_becomes_synthesized_note_not_crash() -> None:
     state = _state(proposal)
     client = _mock_client(batch_results=[_ok_result(0)])
 
-    asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
+    await _apply_control_item(client, _request(), _item(), state, _snapshot())
 
     batch_items = client.create_evidence_batch.await_args.args[2]
     assert [item.name for item in batch_items] == ["good"]
@@ -305,7 +304,7 @@ def test_malformed_recommendation_becomes_synthesized_note_not_crash() -> None:
     assert "completion_note" in state.receipts
 
 
-def test_completion_note_fires_even_with_malformed_entries() -> None:
+async def test_completion_note_fires_even_with_malformed_entries() -> None:
     # Previously `evidence_done` relied on `total - rejected_typed` which undercounted
     # malformed entries and could keep `all_work_done` False forever.
     proposal = {
@@ -318,12 +317,12 @@ def test_completion_note_fires_even_with_malformed_entries() -> None:
     state = _state(proposal)
     client = _mock_client(batch_results=[_ok_result(0), _ok_result(1)])
 
-    asyncio.run(_apply_control_item(client, _request(), _item(), state, _snapshot()))
+    await _apply_control_item(client, _request(), _item(), state, _snapshot())
 
     assert "completion_note" in state.receipts
 
 
-def test_narrative_only_artifacts_skips_evidence_but_writes_notes() -> None:
+async def test_narrative_only_artifacts_skips_evidence_but_writes_notes() -> None:
     proposal = {
         "narrative_draft": "- narrative\n- more",
         "recommended_notes": ["a note"],
@@ -334,7 +333,7 @@ def test_narrative_only_artifacts_skips_evidence_but_writes_notes() -> None:
     state = _state(proposal)
     client = _mock_client(batch_results=[])
 
-    asyncio.run(_apply_control_item(client, _request("narratives"), _item(), state, _snapshot()))
+    await _apply_control_item(client, _request("narratives"), _item(), state, _snapshot())
 
     client.create_evidence_batch.assert_not_called()
     client.update_narrative.assert_awaited_once()
