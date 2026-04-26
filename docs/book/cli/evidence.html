@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-6c481a73.js";
+            window.path_to_searchindex_js = "../searchindex-209a4517.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -273,10 +273,21 @@ pretorin evidence delete ev-abc123
 pretorin evidence delete ev-abc123 --yes
 
 # Explicit system scope
-pretorin evidence delete ev-abc123 --system "My Application" --yes
+pretorin evidence delete ev-abc123 --system "My Application" --framework-id fedramp-moderate --yes
 </code></pre>
 <p>Permanently deletes an evidence item from the platform. This is system-scoped and requires <code>WRITE</code> access. Associated evidence embeddings are removed as part of the delete lifecycle.</p>
-<p>Use <code>--yes</code> to skip the confirmation prompt in non-interactive or automation workflows.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID (uses active context if omitted)</td></tr>
+<tr><td><code>--framework-id</code> / <code>-f</code></td><td>Framework ID (uses active context if omitted)</td></tr>
+<tr><td><code>--yes</code> / <code>-y</code></td><td>Skip confirmation prompt</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="evidence-types"><a class="header" href="#evidence-types">Evidence Types</a></h2>
 <p>Valid evidence types:</p>
 <div class="table-wrapper">

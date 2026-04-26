@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6c481a73.js";
+            window.path_to_searchindex_js = "searchindex-209a4517.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-9dfb40f5.js"></script>
@@ -745,10 +745,21 @@ pretorin evidence delete ev-abc123
 pretorin evidence delete ev-abc123 --yes
 
 # Explicit system scope
-pretorin evidence delete ev-abc123 --system "My Application" --yes
+pretorin evidence delete ev-abc123 --system "My Application" --framework-id fedramp-moderate --yes
 </code></pre>
 <p>Permanently deletes an evidence item from the platform. This is system-scoped and requires <code>WRITE</code> access. Associated evidence embeddings are removed as part of the delete lifecycle.</p>
-<p>Use <code>--yes</code> to skip the confirmation prompt in non-interactive or automation workflows.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID (uses active context if omitted)</td></tr>
+<tr><td><code>--framework-id</code> / <code>-f</code></td><td>Framework ID (uses active context if omitted)</td></tr>
+<tr><td><code>--yes</code> / <code>-y</code></td><td>Skip confirmation prompt</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="evidence-types"><a class="header" href="#evidence-types">Evidence Types</a></h2>
 <p>Valid evidence types:</p>
 <div class="table-wrapper">
@@ -873,7 +884,15 @@ pretorin notes list --local --framework fedramp-moderate
 <h2 id="add-a-note-direct-to-platform"><a class="header" href="#add-a-note-direct-to-platform">Add a Note (Direct to Platform)</a></h2>
 <pre><code class="language-bash">pretorin notes add ac-02 fedramp-moderate \
   --content "Gap: Missing SSO evidence. Manual next step: collect IdP configuration screenshots."
+
+pretorin notes add ac-02 fedramp-moderate \
+  --content "MFA verified" --system "My System"
 </code></pre>
+<p>Options:</p>
+<ul>
+<li><code>--content / -c</code> — Note content (required)</li>
+<li><code>--system / -s</code> — System name or ID (uses active context if omitted)</li>
+</ul>
 <h2 id="resolve-or-reopen-a-note"><a class="header" href="#resolve-or-reopen-a-note">Resolve or Reopen a Note</a></h2>
 <pre><code class="language-bash"># Resolve a note
 pretorin notes resolve ac-02 fedramp-moderate &lt;note_id&gt;
@@ -1017,11 +1036,48 @@ Manual next step: &lt;explicit user/platform action&gt;
 <h3 id="fix-policy-review-findings"><a class="header" href="#fix-policy-review-findings">Fix Policy Review Findings</a></h3>
 <pre><code class="language-bash">pretorin campaign policy --mode review-fix --policies &lt;policy-id&gt;
 </code></pre>
+<h3 id="options-1-1"><a class="header" href="#options-1-1">Options</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--policies</code></td><td>Specific policy IDs (comma-separated)</td></tr>
+<tr><td><code>--all-incomplete</code></td><td>Target all incomplete policies</td></tr>
+<tr><td><code>--mode</code></td><td>Campaign mode: <code>answer</code>, <code>review-fix</code></td></tr>
+<tr><td><code>--system</code></td><td>Optional system context passthrough</td></tr>
+<tr><td><code>--concurrency</code></td><td>Number of parallel workers (default: 4)</td></tr>
+<tr><td><code>--max-retries</code></td><td>Maximum retry attempts per item (default: 2)</td></tr>
+<tr><td><code>--checkpoint</code></td><td>Path to checkpoint file for resume</td></tr>
+<tr><td><code>--apply</code></td><td>Apply proposals to platform after completion</td></tr>
+<tr><td><code>--output</code></td><td>Output mode: <code>auto</code>, <code>live</code>, <code>compact</code>, <code>json</code></td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="scope-campaigns"><a class="header" href="#scope-campaigns">Scope Campaigns</a></h2>
 <h3 id="answer-scope-questions"><a class="header" href="#answer-scope-questions">Answer Scope Questions</a></h3>
 <pre><code class="language-bash">pretorin campaign scope --mode answer \
   --system "My System" --framework-id fedramp-moderate
 </code></pre>
+<h3 id="options-2"><a class="header" href="#options-2">Options</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--system</code></td><td>Target system ID or name (required)</td></tr>
+<tr><td><code>--framework-id</code></td><td>Target framework ID (required)</td></tr>
+<tr><td><code>--mode</code></td><td>Campaign mode: <code>answer</code>, <code>review-fix</code></td></tr>
+<tr><td><code>--concurrency</code></td><td>Number of parallel workers (default: 4)</td></tr>
+<tr><td><code>--max-retries</code></td><td>Maximum retry attempts per question (default: 2)</td></tr>
+<tr><td><code>--checkpoint</code></td><td>Path to checkpoint file for resume</td></tr>
+<tr><td><code>--apply</code></td><td>Apply proposals to platform after completion</td></tr>
+<tr><td><code>--output</code></td><td>Output mode: <code>auto</code>, <code>live</code>, <code>compact</code>, <code>json</code></td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="checking-campaign-status"><a class="header" href="#checking-campaign-status">Checking Campaign Status</a></h2>
 <pre><code class="language-bash">pretorin campaign status --checkpoint .pretorin/campaign-checkpoint.json
 </code></pre>
@@ -1188,7 +1244,7 @@ pretorin scan run --tool openscap
 pretorin scan run --dry-run
 </code></pre>
 <p>The scan orchestrator automatically detects available scanners, assigns rules to capable tools, and collects results.</p>
-<h3 id="options-2"><a class="header" href="#options-2">Options</a></h3>
+<h3 id="options-3"><a class="header" href="#options-3">Options</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -1227,18 +1283,47 @@ pretorin scan results --system "My System" --control ac-2
 pretorin review run --control-id ac-02 --path ./src
 
 # Explicit system/framework override
-pretorin review run --control-id ac-02 --framework-id nist-800-53-r5 --path ./src
+pretorin review run --control-id ac-02 --framework-id nist-800-53-r5 --system "My System" --path ./src
+
+# Local-only mode — saves control context as markdown, no system required
+pretorin review run --control-id ac-02 --framework-id fedramp-moderate --local
+
+# Custom output directory for local artifacts
+pretorin review run --control-id ac-02 --framework-id fedramp-moderate --local --output-dir ./compliance-notes
 </code></pre>
 <p><code>pretorin review run</code> does not push narratives or evidence to the platform. In normal mode, it fetches control requirements and current implementation details for comparison. In <code>--local</code> mode, it writes a markdown review artifact under <code>.pretorin/reviews/</code> or the path specified with <code>--output-dir</code>.</p>
+<h3 id="options-4"><a class="header" href="#options-4">Options</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--control-id</code> / <code>-c</code></td><td>Control ID to review against (required)</td></tr>
+<tr><td><code>--framework-id</code> / <code>-f</code></td><td>Framework ID (uses active context if omitted)</td></tr>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID (uses active context if omitted)</td></tr>
+<tr><td><code>--path</code> / <code>-p</code></td><td>Path to files to review (default: <code>.</code>)</td></tr>
+<tr><td><code>--local</code></td><td>Force local-only output (no API calls for implementation data)</td></tr>
+<tr><td><code>--output-dir</code> / <code>-o</code></td><td>Output directory for local review artifacts (default: <code>.pretorin/reviews</code>)</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="check-implementation-status"><a class="header" href="#check-implementation-status">Check Implementation Status</a></h2>
-<pre><code class="language-bash">$ pretorin review status --control-id ac-02 --framework-id fedramp-moderate
-╭─────────────────── Control AC-02 Status ───────────────────────╮
-│ Status: in_progress                                             │
-│ Evidence items: 3                                               │
-│ Narrative: This control is implemented through centralized     │
-│ account management using Azure AD...                           │
-╰─────────────────────────────────────────────────────────────────╯
+<pre><code class="language-bash">pretorin review status --control-id ac-02
+pretorin review status --control-id sc-07 --framework-id fedramp-moderate --system my-system
 </code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--control-id</code> / <code>-c</code></td><td>Control ID (required)</td></tr>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID (uses active context if omitted)</td></tr>
+<tr><td><code>--framework-id</code> / <code>-f</code></td><td>Framework ID (uses active context if omitted)</td></tr>
+</tbody>
+</table>
+</div>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
 <p>The <code>config</code> command group manages CLI configuration stored at <code>~/.pretorin/config.json</code>.</p>
@@ -1268,9 +1353,11 @@ Config file: /home/user/.pretorin/config.json
 <pre><code class="language-json">{
   "api_key": "pretorin_...",
   "api_base_url": "https://platform.pretorin.com/api/v1/public",
+  "platform_api_base_url": "https://platform.pretorin.com/api/v1/public",
   "model_api_base_url": "https://platform.pretorin.com/api/v1/public/model",
-  "active_system": "My Application",
-  "active_framework": "nist-800-53-r5",
+  "active_system_id": "sys-abc123",
+  "active_system_name": "My Application",
+  "active_framework_id": "nist-800-53-r5",
   "disable_update_check": false
 }
 </code></pre>
@@ -1283,10 +1370,12 @@ Config file: /home/user/.pretorin/config.json
 <tbody>
 <tr><td><code>api_key</code></td><td>Pretorin API key</td></tr>
 <tr><td><code>api_base_url</code></td><td>Platform REST API URL</td></tr>
+<tr><td><code>platform_api_base_url</code></td><td>Platform API base URL</td></tr>
 <tr><td><code>model_api_base_url</code></td><td>Model API URL for agent runtime</td></tr>
 <tr><td><code>openai_api_key</code></td><td>Optional model key for agent runtime</td></tr>
-<tr><td><code>active_system</code></td><td>Currently active system name</td></tr>
-<tr><td><code>active_framework</code></td><td>Currently active framework ID</td></tr>
+<tr><td><code>active_system_id</code></td><td>Currently active system ID</td></tr>
+<tr><td><code>active_system_name</code></td><td>Cached display name for the active system</td></tr>
+<tr><td><code>active_framework_id</code></td><td>Currently active framework ID</td></tr>
 <tr><td><code>disable_update_check</code></td><td>Disable passive update notifications</td></tr>
 </tbody>
 </table>
@@ -1482,7 +1571,7 @@ Config file: /home/user/.pretorin/config.json
 <tbody>
 <tr><td><code>pretorin skill install</code></td><td>Install the Pretorin skill for AI coding agents (<code>--agent/-a</code>, <code>--path/-p</code>, <code>--force/-f</code>)</td></tr>
 <tr><td><code>pretorin skill uninstall</code></td><td>Uninstall the Pretorin skill (<code>--agent/-a</code>, <code>--path/-p</code>)</td></tr>
-<tr><td><code>pretorin skill status</code></td><td>Show installation status of the Pretorin skill (<code>--agent/-a</code>, <code>--path/-p</code>)</td></tr>
+<tr><td><code>pretorin skill status</code></td><td>Show installation status of the Pretorin skill</td></tr>
 <tr><td><code>pretorin skill list-agents</code></td><td>List all known agents and their skill directories</td></tr>
 </tbody>
 </table>
@@ -2775,7 +2864,7 @@ pretorin agent run "Assess AC-02 implementation gaps for my system"
 # Use a predefined skill
 pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
 </code></pre>
-<h2 id="options-3"><a class="header" href="#options-3">Options</a></h2>
+<h2 id="options-5"><a class="header" href="#options-5">Options</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>

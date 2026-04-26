@@ -67,6 +67,20 @@ pretorin campaign policy --mode answer --all-incomplete
 pretorin campaign policy --mode review-fix --policies <policy-id>
 ```
 
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--policies` | Specific policy IDs (comma-separated) |
+| `--all-incomplete` | Target all incomplete policies |
+| `--mode` | Campaign mode: `answer`, `review-fix` |
+| `--system` | Optional system context passthrough |
+| `--concurrency` | Number of parallel workers (default: 4) |
+| `--max-retries` | Maximum retry attempts per item (default: 2) |
+| `--checkpoint` | Path to checkpoint file for resume |
+| `--apply` | Apply proposals to platform after completion |
+| `--output` | Output mode: `auto`, `live`, `compact`, `json` |
+
 ## Scope Campaigns
 
 ### Answer Scope Questions
@@ -75,6 +89,19 @@ pretorin campaign policy --mode review-fix --policies <policy-id>
 pretorin campaign scope --mode answer \
   --system "My System" --framework-id fedramp-moderate
 ```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--system` | Target system ID or name (required) |
+| `--framework-id` | Target framework ID (required) |
+| `--mode` | Campaign mode: `answer`, `review-fix` |
+| `--concurrency` | Number of parallel workers (default: 4) |
+| `--max-retries` | Maximum retry attempts per question (default: 2) |
+| `--checkpoint` | Path to checkpoint file for resume |
+| `--apply` | Apply proposals to platform after completion |
+| `--output` | Output mode: `auto`, `live`, `compact`, `json` |
 
 ## Checking Campaign Status
 

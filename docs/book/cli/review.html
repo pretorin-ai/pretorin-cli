@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-6c481a73.js";
+            window.path_to_searchindex_js = "../searchindex-209a4517.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -187,18 +187,47 @@
 pretorin review run --control-id ac-02 --path ./src
 
 # Explicit system/framework override
-pretorin review run --control-id ac-02 --framework-id nist-800-53-r5 --path ./src
+pretorin review run --control-id ac-02 --framework-id nist-800-53-r5 --system "My System" --path ./src
+
+# Local-only mode — saves control context as markdown, no system required
+pretorin review run --control-id ac-02 --framework-id fedramp-moderate --local
+
+# Custom output directory for local artifacts
+pretorin review run --control-id ac-02 --framework-id fedramp-moderate --local --output-dir ./compliance-notes
 </code></pre>
 <p><code>pretorin review run</code> does not push narratives or evidence to the platform. In normal mode, it fetches control requirements and current implementation details for comparison. In <code>--local</code> mode, it writes a markdown review artifact under <code>.pretorin/reviews/</code> or the path specified with <code>--output-dir</code>.</p>
+<h3 id="options"><a class="header" href="#options">Options</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--control-id</code> / <code>-c</code></td><td>Control ID to review against (required)</td></tr>
+<tr><td><code>--framework-id</code> / <code>-f</code></td><td>Framework ID (uses active context if omitted)</td></tr>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID (uses active context if omitted)</td></tr>
+<tr><td><code>--path</code> / <code>-p</code></td><td>Path to files to review (default: <code>.</code>)</td></tr>
+<tr><td><code>--local</code></td><td>Force local-only output (no API calls for implementation data)</td></tr>
+<tr><td><code>--output-dir</code> / <code>-o</code></td><td>Output directory for local review artifacts (default: <code>.pretorin/reviews</code>)</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="check-implementation-status"><a class="header" href="#check-implementation-status">Check Implementation Status</a></h2>
-<pre><code class="language-bash">$ pretorin review status --control-id ac-02 --framework-id fedramp-moderate
-╭─────────────────── Control AC-02 Status ───────────────────────╮
-│ Status: in_progress                                             │
-│ Evidence items: 3                                               │
-│ Narrative: This control is implemented through centralized     │
-│ account management using Azure AD...                           │
-╰─────────────────────────────────────────────────────────────────╯
+<pre><code class="language-bash">pretorin review status --control-id ac-02
+pretorin review status --control-id sc-07 --framework-id fedramp-moderate --system my-system
 </code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--control-id</code> / <code>-c</code></td><td>Control ID (required)</td></tr>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID (uses active context if omitted)</td></tr>
+<tr><td><code>--framework-id</code> / <code>-f</code></td><td>Framework ID (uses active context if omitted)</td></tr>
+</tbody>
+</table>
+</div>
 
                     </main>
 

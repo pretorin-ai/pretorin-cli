@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-6c481a73.js";
+            window.path_to_searchindex_js = "../searchindex-209a4517.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -240,11 +240,48 @@
 <h3 id="fix-policy-review-findings"><a class="header" href="#fix-policy-review-findings">Fix Policy Review Findings</a></h3>
 <pre><code class="language-bash">pretorin campaign policy --mode review-fix --policies &lt;policy-id&gt;
 </code></pre>
+<h3 id="options-1"><a class="header" href="#options-1">Options</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--policies</code></td><td>Specific policy IDs (comma-separated)</td></tr>
+<tr><td><code>--all-incomplete</code></td><td>Target all incomplete policies</td></tr>
+<tr><td><code>--mode</code></td><td>Campaign mode: <code>answer</code>, <code>review-fix</code></td></tr>
+<tr><td><code>--system</code></td><td>Optional system context passthrough</td></tr>
+<tr><td><code>--concurrency</code></td><td>Number of parallel workers (default: 4)</td></tr>
+<tr><td><code>--max-retries</code></td><td>Maximum retry attempts per item (default: 2)</td></tr>
+<tr><td><code>--checkpoint</code></td><td>Path to checkpoint file for resume</td></tr>
+<tr><td><code>--apply</code></td><td>Apply proposals to platform after completion</td></tr>
+<tr><td><code>--output</code></td><td>Output mode: <code>auto</code>, <code>live</code>, <code>compact</code>, <code>json</code></td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="scope-campaigns"><a class="header" href="#scope-campaigns">Scope Campaigns</a></h2>
 <h3 id="answer-scope-questions"><a class="header" href="#answer-scope-questions">Answer Scope Questions</a></h3>
 <pre><code class="language-bash">pretorin campaign scope --mode answer \
   --system "My System" --framework-id fedramp-moderate
 </code></pre>
+<h3 id="options-2"><a class="header" href="#options-2">Options</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--system</code></td><td>Target system ID or name (required)</td></tr>
+<tr><td><code>--framework-id</code></td><td>Target framework ID (required)</td></tr>
+<tr><td><code>--mode</code></td><td>Campaign mode: <code>answer</code>, <code>review-fix</code></td></tr>
+<tr><td><code>--concurrency</code></td><td>Number of parallel workers (default: 4)</td></tr>
+<tr><td><code>--max-retries</code></td><td>Maximum retry attempts per question (default: 2)</td></tr>
+<tr><td><code>--checkpoint</code></td><td>Path to checkpoint file for resume</td></tr>
+<tr><td><code>--apply</code></td><td>Apply proposals to platform after completion</td></tr>
+<tr><td><code>--output</code></td><td>Output mode: <code>auto</code>, <code>live</code>, <code>compact</code>, <code>json</code></td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="checking-campaign-status"><a class="header" href="#checking-campaign-status">Checking Campaign Status</a></h2>
 <pre><code class="language-bash">pretorin campaign status --checkpoint .pretorin/campaign-checkpoint.json
 </code></pre>
