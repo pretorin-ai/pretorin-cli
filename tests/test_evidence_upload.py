@@ -11,7 +11,6 @@ from typer.testing import CliRunner
 from pretorin.cli.evidence import app
 from pretorin.cli.output import set_json_mode
 
-
 runner = CliRunner()
 
 
@@ -49,7 +48,10 @@ class TestUploadCLI:
         client.get_system = AsyncMock(return_value=AsyncMock(name="Test System"))
         client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Test System"}])
 
-        with patch("pretorin.cli.context.resolve_execution_context", new=AsyncMock(return_value=("sys-1", "fedramp-moderate"))):
+        with patch(
+            "pretorin.cli.context.resolve_execution_context",
+            new=AsyncMock(return_value=("sys-1", "fedramp-moderate")),
+        ):
             result = _run_with_mock_client(
                 [
                     "upload",
@@ -105,9 +107,7 @@ class TestUploadMCPHandler:
 
         client = AsyncMock()
         client.is_configured = True
-        client.upload_evidence = AsyncMock(
-            return_value={"evidence_id": "ev-1", "checksum": "abc"}
-        )
+        client.upload_evidence = AsyncMock(return_value={"evidence_id": "ev-1", "checksum": "abc"})
 
         with patch(
             "pretorin.mcp.handlers.evidence.resolve_execution_scope",

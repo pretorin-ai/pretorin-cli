@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c3b532b7.js";
+            window.path_to_searchindex_js = "searchindex-a2343a59.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-9dfb40f5.js"></script>
@@ -288,7 +288,7 @@ docker compose up
 <pre><code class="language-bash">pretorin version
 </code></pre>
 <p>Expected output:</p>
-<pre><code>pretorin version 0.16.2
+<pre><code>pretorin version 0.16.3
 </code></pre>
 <h2 id="updating"><a class="header" href="#updating">Updating</a></h2>
 <p>Check for and install the latest version:</p>
@@ -363,7 +363,7 @@ uv pip install -e ".[dev]"
 <pre><code class="language-bash">pretorin frameworks list
 </code></pre>
 <p>Get details on a specific control:</p>
-<pre><code class="language-bash">pretorin frameworks control nist-800-53-r5 ac-02 --references
+<pre><code class="language-bash">pretorin frameworks control nist-800-53-r5 ac-02
 </code></pre>
 <h2 id="set-up-context"><a class="header" href="#set-up-context">Set Up Context</a></h2>
 <p>Set your active system and framework for platform operations:</p>
@@ -377,6 +377,7 @@ pretorin context set --system "My Application" --framework fedramp-moderate
 <p>Create a local evidence file:</p>
 <pre><code class="language-bash">pretorin evidence create ac-02 fedramp-moderate \
   --description "Role-based access control in Azure AD" \
+  --type configuration \
   --name "RBAC Configuration"
 </code></pre>
 <p>Push evidence to the platform:</p>
@@ -406,8 +407,8 @@ claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 <pre><code class="language-bash"># List available STIG benchmarks
 pretorin stig list
 
-# View a specific STIG rule
-pretorin stig rule &lt;rule-id&gt;
+# View STIG benchmark details
+pretorin stig show &lt;stig_id&gt;
 
 # Trace a CCI to its parent controls
 pretorin cci chain &lt;cci-id&gt;
@@ -571,8 +572,23 @@ pretorin context set
 
 # Explicit
 pretorin context set --system "My Application" --framework nist-800-53-r5
+
+# Skip automatic source verification after setting context
+pretorin context set --system "My Application" --framework nist-800-53-r5 --no-verify
 </code></pre>
-<p>Pretorin stores the canonical system ID for stability and also caches the last known system name for display. If you change API keys or platform endpoints with <code>pretorin login</code>, the stored active context is cleared automatically so old scope does not leak into the new environment.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID</td></tr>
+<tr><td><code>--framework</code> / <code>-f</code></td><td>Framework ID (e.g., <code>fedramp-moderate</code>)</td></tr>
+<tr><td><code>--no-verify</code></td><td>Skip source verification after setting context</td></tr>
+</tbody>
+</table>
+</div>
+<p>Pretorin stores the canonical system ID for stability and also caches the last known system name for display. After setting context, source verification runs automatically unless <code>--no-verify</code> is passed. If you change API keys or platform endpoints with <code>pretorin login</code>, the stored active context is cleared automatically so old scope does not leak into the new environment.</p>
 <h2 id="show-current-context"><a class="header" href="#show-current-context">Show Current Context</a></h2>
 <pre><code class="language-bash">$ pretorin context show
 ╭──────────────────────── Active Context ─────────────────────────╮
@@ -665,6 +681,28 @@ pretorin evidence search --control-id ac-02 --framework-id fedramp-moderate
 # Search by system
 pretorin evidence search --system "My Application" --framework-id fedramp-moderate --limit 100
 </code></pre>
+<h2 id="upload-evidence-file"><a class="header" href="#upload-evidence-file">Upload Evidence File</a></h2>
+<p>Upload a file directly as evidence:</p>
+<pre><code class="language-bash">pretorin evidence upload screenshot.png ac-02 fedramp-moderate \
+  --name "MFA Screenshot" --type screenshot
+
+pretorin evidence upload config.yaml ac-06 fedramp-moderate \
+  --name "Auth Config" --type configuration --description "IdP auth config"
+</code></pre>
+<p>Creates an evidence record with the uploaded file and links it to the specified control. The file’s SHA-256 checksum is computed locally and verified server-side for integrity.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--name</code> / <code>-n</code></td><td>Evidence name (required)</td></tr>
+<tr><td><code>--type</code> / <code>-t</code></td><td>Evidence type (default: <code>other</code>)</td></tr>
+<tr><td><code>--description</code> / <code>-d</code></td><td>Evidence description</td></tr>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID (uses active context if omitted)</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="upsert-evidence"><a class="header" href="#upsert-evidence">Upsert Evidence</a></h2>
 <p>Find-or-create evidence and link it to a control:</p>
 <pre><code class="language-bash">pretorin evidence upsert ac-02 fedramp-moderate \
@@ -673,6 +711,22 @@ pretorin evidence search --system "My Application" --framework-id fedramp-modera
   --type configuration
 </code></pre>
 <p>This searches for an exact match on (name + description + type + control + framework) within the active system scope. If found, it reuses the existing item; otherwise, it creates a new one. It then ensures the evidence is linked to the specified control.</p>
+<h3 id="code-context-options"><a class="header" href="#code-context-options">Code Context Options</a></h3>
+<p>When upserting evidence, you can attach source code context:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--code-file</code></td><td>Path to source file</td></tr>
+<tr><td><code>--code-lines</code></td><td>Line range (e.g., <code>10-25</code>)</td></tr>
+<tr><td><code>--code-repo</code></td><td>Git repository URL</td></tr>
+<tr><td><code>--code-commit</code></td><td>Git commit hash</td></tr>
+</tbody>
+</table>
+</div>
+<p>If <code>--code-repo</code> or <code>--code-commit</code> are not provided, the CLI auto-populates them from the attested source verification snapshot when available.</p>
 <h2 id="link-evidence-to-a-control"><a class="header" href="#link-evidence-to-a-control">Link Evidence to a Control</a></h2>
 <p>Link an existing platform evidence item to a control:</p>
 <pre><code class="language-bash">pretorin evidence link ev-abc123 ac-02
@@ -691,10 +745,21 @@ pretorin evidence delete ev-abc123
 pretorin evidence delete ev-abc123 --yes
 
 # Explicit system scope
-pretorin evidence delete ev-abc123 --system "My Application" --yes
+pretorin evidence delete ev-abc123 --system "My Application" --framework-id fedramp-moderate --yes
 </code></pre>
 <p>Permanently deletes an evidence item from the platform. This is system-scoped and requires <code>WRITE</code> access. Associated evidence embeddings are removed as part of the delete lifecycle.</p>
-<p>Use <code>--yes</code> to skip the confirmation prompt in non-interactive or automation workflows.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID (uses active context if omitted)</td></tr>
+<tr><td><code>--framework-id</code> / <code>-f</code></td><td>Framework ID (uses active context if omitted)</td></tr>
+<tr><td><code>--yes</code> / <code>-y</code></td><td>Skip confirmation prompt</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="evidence-types"><a class="header" href="#evidence-types">Evidence Types</a></h2>
 <p>Valid evidence types:</p>
 <div class="table-wrapper">
@@ -819,7 +884,15 @@ pretorin notes list --local --framework fedramp-moderate
 <h2 id="add-a-note-direct-to-platform"><a class="header" href="#add-a-note-direct-to-platform">Add a Note (Direct to Platform)</a></h2>
 <pre><code class="language-bash">pretorin notes add ac-02 fedramp-moderate \
   --content "Gap: Missing SSO evidence. Manual next step: collect IdP configuration screenshots."
+
+pretorin notes add ac-02 fedramp-moderate \
+  --content "MFA verified" --system "My System"
 </code></pre>
+<p>Options:</p>
+<ul>
+<li><code>--content / -c</code> — Note content (required)</li>
+<li><code>--system / -s</code> — System name or ID (uses active context if omitted)</li>
+</ul>
 <h2 id="resolve-or-reopen-a-note"><a class="header" href="#resolve-or-reopen-a-note">Resolve or Reopen a Note</a></h2>
 <pre><code class="language-bash"># Resolve a note
 pretorin notes resolve ac-02 fedramp-moderate &lt;note_id&gt;
@@ -963,11 +1036,48 @@ Manual next step: &lt;explicit user/platform action&gt;
 <h3 id="fix-policy-review-findings"><a class="header" href="#fix-policy-review-findings">Fix Policy Review Findings</a></h3>
 <pre><code class="language-bash">pretorin campaign policy --mode review-fix --policies &lt;policy-id&gt;
 </code></pre>
+<h3 id="options-1-1"><a class="header" href="#options-1-1">Options</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--policies</code></td><td>Specific policy IDs (comma-separated)</td></tr>
+<tr><td><code>--all-incomplete</code></td><td>Target all incomplete policies</td></tr>
+<tr><td><code>--mode</code></td><td>Campaign mode: <code>answer</code>, <code>review-fix</code></td></tr>
+<tr><td><code>--system</code></td><td>Optional system context passthrough</td></tr>
+<tr><td><code>--concurrency</code></td><td>Number of parallel workers (default: 4)</td></tr>
+<tr><td><code>--max-retries</code></td><td>Maximum retry attempts per item (default: 2)</td></tr>
+<tr><td><code>--checkpoint</code></td><td>Path to checkpoint file for resume</td></tr>
+<tr><td><code>--apply</code></td><td>Apply proposals to platform after completion</td></tr>
+<tr><td><code>--output</code></td><td>Output mode: <code>auto</code>, <code>live</code>, <code>compact</code>, <code>json</code></td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="scope-campaigns"><a class="header" href="#scope-campaigns">Scope Campaigns</a></h2>
 <h3 id="answer-scope-questions"><a class="header" href="#answer-scope-questions">Answer Scope Questions</a></h3>
 <pre><code class="language-bash">pretorin campaign scope --mode answer \
   --system "My System" --framework-id fedramp-moderate
 </code></pre>
+<h3 id="options-2"><a class="header" href="#options-2">Options</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--system</code></td><td>Target system ID or name (required)</td></tr>
+<tr><td><code>--framework-id</code></td><td>Target framework ID (required)</td></tr>
+<tr><td><code>--mode</code></td><td>Campaign mode: <code>answer</code>, <code>review-fix</code></td></tr>
+<tr><td><code>--concurrency</code></td><td>Number of parallel workers (default: 4)</td></tr>
+<tr><td><code>--max-retries</code></td><td>Maximum retry attempts per question (default: 2)</td></tr>
+<tr><td><code>--checkpoint</code></td><td>Path to checkpoint file for resume</td></tr>
+<tr><td><code>--apply</code></td><td>Apply proposals to platform after completion</td></tr>
+<tr><td><code>--output</code></td><td>Output mode: <code>auto</code>, <code>live</code>, <code>compact</code>, <code>json</code></td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="checking-campaign-status"><a class="header" href="#checking-campaign-status">Checking Campaign Status</a></h2>
 <pre><code class="language-bash">pretorin campaign status --checkpoint .pretorin/campaign-checkpoint.json
 </code></pre>
@@ -1134,7 +1244,7 @@ pretorin scan run --tool openscap
 pretorin scan run --dry-run
 </code></pre>
 <p>The scan orchestrator automatically detects available scanners, assigns rules to capable tools, and collects results.</p>
-<h3 id="options-2"><a class="header" href="#options-2">Options</a></h3>
+<h3 id="options-3"><a class="header" href="#options-3">Options</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -1173,18 +1283,47 @@ pretorin scan results --system "My System" --control ac-2
 pretorin review run --control-id ac-02 --path ./src
 
 # Explicit system/framework override
-pretorin review run --control-id ac-02 --framework-id nist-800-53-r5 --path ./src
+pretorin review run --control-id ac-02 --framework-id nist-800-53-r5 --system "My System" --path ./src
+
+# Local-only mode — saves control context as markdown, no system required
+pretorin review run --control-id ac-02 --framework-id fedramp-moderate --local
+
+# Custom output directory for local artifacts
+pretorin review run --control-id ac-02 --framework-id fedramp-moderate --local --output-dir ./compliance-notes
 </code></pre>
 <p><code>pretorin review run</code> does not push narratives or evidence to the platform. In normal mode, it fetches control requirements and current implementation details for comparison. In <code>--local</code> mode, it writes a markdown review artifact under <code>.pretorin/reviews/</code> or the path specified with <code>--output-dir</code>.</p>
+<h3 id="options-4"><a class="header" href="#options-4">Options</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--control-id</code> / <code>-c</code></td><td>Control ID to review against (required)</td></tr>
+<tr><td><code>--framework-id</code> / <code>-f</code></td><td>Framework ID (uses active context if omitted)</td></tr>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID (uses active context if omitted)</td></tr>
+<tr><td><code>--path</code> / <code>-p</code></td><td>Path to files to review (default: <code>.</code>)</td></tr>
+<tr><td><code>--local</code></td><td>Force local-only output (no API calls for implementation data)</td></tr>
+<tr><td><code>--output-dir</code> / <code>-o</code></td><td>Output directory for local review artifacts (default: <code>.pretorin/reviews</code>)</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="check-implementation-status"><a class="header" href="#check-implementation-status">Check Implementation Status</a></h2>
-<pre><code class="language-bash">$ pretorin review status --control-id ac-02 --framework-id fedramp-moderate
-╭─────────────────── Control AC-02 Status ───────────────────────╮
-│ Status: in_progress                                             │
-│ Evidence items: 3                                               │
-│ Narrative: This control is implemented through centralized     │
-│ account management using Azure AD...                           │
-╰─────────────────────────────────────────────────────────────────╯
+<pre><code class="language-bash">pretorin review status --control-id ac-02
+pretorin review status --control-id sc-07 --framework-id fedramp-moderate --system my-system
 </code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--control-id</code> / <code>-c</code></td><td>Control ID (required)</td></tr>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID (uses active context if omitted)</td></tr>
+<tr><td><code>--framework-id</code> / <code>-f</code></td><td>Framework ID (uses active context if omitted)</td></tr>
+</tbody>
+</table>
+</div>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
 <p>The <code>config</code> command group manages CLI configuration stored at <code>~/.pretorin/config.json</code>.</p>
@@ -1214,9 +1353,11 @@ Config file: /home/user/.pretorin/config.json
 <pre><code class="language-json">{
   "api_key": "pretorin_...",
   "api_base_url": "https://platform.pretorin.com/api/v1/public",
+  "platform_api_base_url": "https://platform.pretorin.com/api/v1/public",
   "model_api_base_url": "https://platform.pretorin.com/api/v1/public/model",
-  "active_system": "My Application",
-  "active_framework": "nist-800-53-r5",
+  "active_system_id": "sys-abc123",
+  "active_system_name": "My Application",
+  "active_framework_id": "nist-800-53-r5",
   "disable_update_check": false
 }
 </code></pre>
@@ -1229,10 +1370,12 @@ Config file: /home/user/.pretorin/config.json
 <tbody>
 <tr><td><code>api_key</code></td><td>Pretorin API key</td></tr>
 <tr><td><code>api_base_url</code></td><td>Platform REST API URL</td></tr>
+<tr><td><code>platform_api_base_url</code></td><td>Platform API base URL</td></tr>
 <tr><td><code>model_api_base_url</code></td><td>Model API URL for agent runtime</td></tr>
 <tr><td><code>openai_api_key</code></td><td>Optional model key for agent runtime</td></tr>
-<tr><td><code>active_system</code></td><td>Currently active system name</td></tr>
-<tr><td><code>active_framework</code></td><td>Currently active framework ID</td></tr>
+<tr><td><code>active_system_id</code></td><td>Currently active system ID</td></tr>
+<tr><td><code>active_system_name</code></td><td>Cached display name for the active system</td></tr>
+<tr><td><code>active_framework_id</code></td><td>Currently active framework ID</td></tr>
 <tr><td><code>disable_update_check</code></td><td>Disable passive update notifications</td></tr>
 </tbody>
 </table>
@@ -1249,6 +1392,7 @@ Config file: /home/user/.pretorin/config.json
 </thead>
 <tbody>
 <tr><td><code>--json</code></td><td>JSON output mode for scripting and AI agents</td></tr>
+<tr><td><code>--version</code>, <code>-V</code></td><td>Show version and exit</td></tr>
 <tr><td><code>--help</code></td><td>Show command help</td></tr>
 </tbody>
 </table>
@@ -1264,7 +1408,7 @@ Config file: /home/user/.pretorin/config.json
 <tr><td><code>pretorin logout</code></td><td>Clear stored credentials</td></tr>
 <tr><td><code>pretorin whoami</code></td><td>Display authentication status</td></tr>
 <tr><td><code>pretorin version</code></td><td>Show CLI version</td></tr>
-<tr><td><code>pretorin update</code></td><td>Update to latest version</td></tr>
+<tr><td><code>pretorin update [VERSION]</code></td><td>Update to latest version, or a specific version</td></tr>
 <tr><td><code>pretorin mcp-serve</code></td><td>Start the MCP server (stdio transport)</td></tr>
 </tbody>
 </table>
@@ -1280,7 +1424,7 @@ Config file: /home/user/.pretorin/config.json
 <tr><td><code>pretorin frameworks get &lt;id&gt;</code></td><td>Get framework details</td></tr>
 <tr><td><code>pretorin frameworks families &lt;id&gt;</code></td><td>List control families</td></tr>
 <tr><td><code>pretorin frameworks family &lt;fw&gt; &lt;family&gt;</code></td><td>Get control family details</td></tr>
-<tr><td><code>pretorin frameworks controls &lt;id&gt;</code></td><td>List controls (<code>--family/-f</code>, <code>--limit/-n</code>)</td></tr>
+<tr><td><code>pretorin frameworks controls &lt;id&gt; [FAMILY_ID]</code></td><td>List controls (<code>--family/-f</code>, <code>--limit/-n</code>)</td></tr>
 <tr><td><code>pretorin frameworks control &lt;fw&gt; &lt;ctrl&gt;</code></td><td>Get control details (<code>--brief/-b</code>)</td></tr>
 <tr><td><code>pretorin frameworks documents &lt;id&gt;</code></td><td>Get document requirements</td></tr>
 <tr><td><code>pretorin frameworks metadata &lt;id&gt;</code></td><td>Get per-control framework metadata</td></tr>
@@ -1327,7 +1471,8 @@ Config file: /home/user/.pretorin/config.json
 <tr><td><code>pretorin evidence list</code></td><td>List local evidence files (<code>--framework/-f</code>)</td></tr>
 <tr><td><code>pretorin evidence push</code></td><td>Push local evidence to the platform (<code>--dry-run</code>)</td></tr>
 <tr><td><code>pretorin evidence search</code></td><td>Search platform evidence (<code>--control-id/-c</code>, <code>--framework-id/-f</code>, <code>--system/-s</code>, <code>--limit/-n</code>)</td></tr>
-<tr><td><code>pretorin evidence upsert &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Find-or-create evidence and link it (<code>--name/-n</code>, <code>--description/-d</code>, <code>--type/-t</code>, <code>--system/-s</code>)</td></tr>
+<tr><td><code>pretorin evidence upsert &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Find-or-create evidence and link it (<code>--name/-n</code>, <code>--description/-d</code>, <code>--type/-t</code>, <code>--system/-s</code>, <code>--code-file</code>, <code>--code-lines</code>, <code>--code-repo</code>, <code>--code-commit</code>)</td></tr>
+<tr><td><code>pretorin evidence upload &lt;file&gt; &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Upload a file as evidence (<code>--name/-n</code>, <code>--type/-t</code>, <code>--description/-d</code>, <code>--system/-s</code>)</td></tr>
 <tr><td><code>pretorin evidence link &lt;evidence_id&gt; &lt;ctrl&gt;</code></td><td>Link evidence to a control (<code>--framework-id/-f</code>, <code>--system/-s</code>)</td></tr>
 <tr><td><code>pretorin evidence delete &lt;evidence_id&gt;</code></td><td>Delete an evidence item (<code>--system/-s</code>, <code>--framework-id/-f</code>, <code>--yes/-y</code>)</td></tr>
 </tbody>
@@ -1412,7 +1557,7 @@ Config file: /home/user/.pretorin/config.json
 <tr><td><code>pretorin agent version</code></td><td>Show pinned Codex version and install status</td></tr>
 <tr><td><code>pretorin agent skills</code></td><td>List available agent skills</td></tr>
 <tr><td><code>pretorin agent mcp-list</code></td><td>List configured MCP servers for the agent</td></tr>
-<tr><td><code>pretorin agent mcp-add &lt;name&gt; &lt;transport&gt; &lt;cmd&gt;</code></td><td>Add an MCP server configuration (<code>--arg</code>, <code>--scope</code>)</td></tr>
+<tr><td><code>pretorin agent mcp-add &lt;name&gt; &lt;transport&gt; &lt;cmd&gt;</code></td><td>Add an MCP server configuration (<code>--arg/-a</code>, <code>--scope</code>)</td></tr>
 <tr><td><code>pretorin agent mcp-remove &lt;name&gt;</code></td><td>Remove an MCP server configuration</td></tr>
 </tbody>
 </table>
@@ -1426,7 +1571,7 @@ Config file: /home/user/.pretorin/config.json
 <tbody>
 <tr><td><code>pretorin skill install</code></td><td>Install the Pretorin skill for AI coding agents (<code>--agent/-a</code>, <code>--path/-p</code>, <code>--force/-f</code>)</td></tr>
 <tr><td><code>pretorin skill uninstall</code></td><td>Uninstall the Pretorin skill (<code>--agent/-a</code>, <code>--path/-p</code>)</td></tr>
-<tr><td><code>pretorin skill status</code></td><td>Show installation status of the Pretorin skill (<code>--agent/-a</code>, <code>--path/-p</code>)</td></tr>
+<tr><td><code>pretorin skill status</code></td><td>Show installation status of the Pretorin skill</td></tr>
 <tr><td><code>pretorin skill list-agents</code></td><td>List all known agents and their skill directories</td></tr>
 </tbody>
 </table>
@@ -1439,7 +1584,7 @@ Config file: /home/user/.pretorin/config.json
 </thead>
 <tbody>
 <tr><td><code>pretorin review run</code></td><td>Review code against a control (<code>--control-id/-c</code>, <code>--framework-id/-f</code>, <code>--system/-s</code>, <code>--path/-p</code>, <code>--local</code>, <code>--output-dir/-o</code>)</td></tr>
-<tr><td><code>pretorin review status</code></td><td>Check implementation status for a control (<code>--control-id/-c</code>, <code>--system/-s</code>)</td></tr>
+<tr><td><code>pretorin review status</code></td><td>Check implementation status for a control (<code>--control-id/-c</code>, <code>--framework-id/-f</code>, <code>--system/-s</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -1499,8 +1644,8 @@ Config file: /home/user/.pretorin/config.json
 <tr><td><code>pretorin vendor create &lt;name&gt;</code></td><td>Create a vendor (<code>--type/-t</code>, <code>--description/-d</code>, <code>--authorization-level/-a</code>)</td></tr>
 <tr><td><code>pretorin vendor get &lt;vendor_id&gt;</code></td><td>Get vendor details</td></tr>
 <tr><td><code>pretorin vendor update &lt;vendor_id&gt;</code></td><td>Update vendor fields (<code>--name</code>, <code>--description/-d</code>, <code>--type/-t</code>, <code>--authorization-level/-a</code>)</td></tr>
-<tr><td><code>pretorin vendor delete &lt;vendor_id&gt;</code></td><td>Delete a vendor (<code>--yes/-y</code>)</td></tr>
-<tr><td><code>pretorin vendor upload-doc &lt;vendor_id&gt; &lt;file&gt;</code></td><td>Upload a vendor evidence document (<code>--name</code>, <code>--description</code>, <code>--attestation-type</code>)</td></tr>
+<tr><td><code>pretorin vendor delete &lt;vendor_id&gt;</code></td><td>Delete a vendor (<code>--force/-f</code>)</td></tr>
+<tr><td><code>pretorin vendor upload-doc &lt;vendor_id&gt; &lt;file&gt;</code></td><td>Upload a vendor evidence document (<code>--name/-n</code>, <code>--description/-d</code>, <code>--attestation-type</code>)</td></tr>
 <tr><td><code>pretorin vendor list-docs &lt;vendor_id&gt;</code></td><td>List documents linked to a vendor</td></tr>
 </tbody>
 </table>
@@ -1576,7 +1721,7 @@ Config file: /home/user/.pretorin/config.json
 <li><strong>Streamline workflows</strong> — No need to copy-paste control requirements or switch between tools</li>
 </ul>
 <h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
-<p>The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with <code>pretorin mcp-serve</code>, your AI tool connects and gains access to 86 compliance tools.</p>
+<p>The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with <code>pretorin mcp-serve</code>, your AI tool connects and gains access to 87 compliance tools.</p>
 <pre><code>┌──────────────┐     stdio      ┌──────────────┐     HTTPS     ┌──────────────┐
 │   AI Agent   │◄──────────────►│   Pretorin   │◄─────────────►│   Pretorin   │
 │ (Claude,     │   JSON-RPC    │   MCP Server  │              │   Platform   │
@@ -1590,7 +1735,7 @@ Config file: /home/user/.pretorin/config.json
 <pre><code class="language-bash">pretorin context show --quiet --check
 </code></pre>
 <h2 id="tool-categories"><a class="header" href="#tool-categories">Tool Categories</a></h2>
-<p>The 86 MCP tools are organized into categories:</p>
+<p>The 87 MCP tools are organized into categories:</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -1599,7 +1744,7 @@ Config file: /home/user/.pretorin/config.json
 <tbody>
 <tr><td>Framework &amp; Control Reference</td><td>8</td><td>Read-only, all users</td></tr>
 <tr><td>Systems</td><td>5</td><td>Read-only</td></tr>
-<tr><td>Evidence Management</td><td>5</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Evidence Management</td><td>6</td><td>Read/Write, requires beta</td></tr>
 <tr><td>Implementation Context</td><td>10</td><td>Read/Write, requires beta</td></tr>
 <tr><td>Monitoring</td><td>1</td><td>Write, requires beta</td></tr>
 <tr><td>Workflow State &amp; Analytics</td><td>4</td><td>Read-only</td></tr>
@@ -1748,7 +1893,7 @@ command -v pretorin
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="mcp-tool-reference"><a class="header" href="#mcp-tool-reference">MCP Tool Reference</a></h1>
-<p>The MCP server provides 86 tools organized by category.</p>
+<p>The MCP server provides 87 tools organized by category.</p>
 <h2 id="framework--control-reference"><a class="header" href="#framework--control-reference">Framework &amp; Control Reference</a></h2>
 <p>These tools are read-only and available to all authenticated users.</p>
 <h3 id="pretorin_list_frameworks"><a class="header" href="#pretorin_list_frameworks">pretorin_list_frameworks</a></h3>
@@ -1872,8 +2017,8 @@ command -v pretorin
 <ul>
 <li><code>name</code> (required)</li>
 <li><code>description</code> (required) — Must be auditor-ready markdown (no headings, at least one rich element, no images)</li>
+<li><code>evidence_type</code> (required) — Must be one of the canonical evidence types</li>
 <li><code>system_id</code> (optional) — Defaults to active scope</li>
-<li><code>evidence_type</code> (optional) — Default: <code>policy_document</code></li>
 <li><code>control_id</code> (optional)</li>
 <li><code>framework_id</code> (optional)</li>
 <li><code>dedupe</code> (optional) — Default: <code>true</code></li>
@@ -1906,6 +2051,20 @@ command -v pretorin
 <li><code>framework_id</code> (optional)</li>
 </ul>
 <p><strong>Returns:</strong> Link confirmation.</p>
+<hr>
+<h3 id="pretorin_upload_evidence"><a class="header" href="#pretorin_upload_evidence">pretorin_upload_evidence</a></h3>
+<p>Upload a file as evidence to the platform (system-scoped, requires WRITE access).</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>file_path</code> (required) — Absolute path to the file to upload</li>
+<li><code>name</code> (required) — Evidence name</li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
+<li><code>evidence_type</code> (optional) — Default: <code>other</code></li>
+<li><code>description</code> (optional) — Evidence description</li>
+<li><code>control_id</code> (optional)</li>
+<li><code>framework_id</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> Uploaded evidence record.</p>
 <hr>
 <h3 id="pretorin_delete_evidence"><a class="header" href="#pretorin_delete_evidence">pretorin_delete_evidence</a></h3>
 <p>Delete an evidence item from the platform (system-scoped, requires WRITE access).</p>
@@ -2301,7 +2460,7 @@ command -v pretorin
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>checkpoint_path</code> (required) — Local campaign checkpoint path</li>
-<li><code>lease_owner</code> (required) — Stable identifier for the claiming agent</li>
+<li><code>lease_owner</code> (optional) — Stable identifier for the claiming agent</li>
 <li><code>max_items</code> (optional) — Number of items to claim. Default: <code>1</code></li>
 <li><code>lease_ttl_seconds</code> (optional) — Lease time-to-live. Default: <code>300</code></li>
 </ul>
@@ -2427,7 +2586,7 @@ command -v pretorin
 <li><code>control_id</code> (required)</li>
 <li><code>framework_id</code> (required)</li>
 <li><code>responsibility_mode</code> (required) — <code>inherited</code> or <code>shared</code></li>
-<li><code>source_type</code> (required) — <code>provider</code>, <code>internal</code>, or <code>hybrid</code></li>
+<li><code>source_type</code> (optional) — <code>provider</code>, <code>internal</code>, or <code>hybrid</code></li>
 <li><code>vendor_id</code> (optional) — Vendor providing the inherited control</li>
 </ul>
 <p><strong>Returns:</strong> Created responsibility edge.</p>
@@ -2719,7 +2878,7 @@ pretorin agent run "Assess AC-02 implementation gaps for my system"
 # Use a predefined skill
 pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
 </code></pre>
-<h2 id="options-3"><a class="header" href="#options-3">Options</a></h2>
+<h2 id="options-5"><a class="header" href="#options-5">Options</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -3344,13 +3503,16 @@ pretorin campaign controls --mode initial --family AC \
   --system "My System" --framework-id fedramp-moderate
 
 # Fix controls flagged by notes
-pretorin campaign controls --mode notes-fix --family AC
+pretorin campaign controls --mode notes-fix --family AC \
+  --system "My System" --framework-id fedramp-moderate
 
 # Fix controls flagged by review
-pretorin campaign controls --mode review-fix --family AC --review-job &lt;job-id&gt;
+pretorin campaign controls --mode review-fix --family AC --review-job &lt;job-id&gt; \
+  --system "My System" --framework-id fedramp-moderate
 
 # Auto-apply after completion
-pretorin campaign controls --mode initial --family AC --apply
+pretorin campaign controls --mode initial --family AC --apply \
+  --system "My System" --framework-id fedramp-moderate
 </code></pre>
 <h3 id="policy-campaign"><a class="header" href="#policy-campaign">Policy Campaign</a></h3>
 <pre><code class="language-bash"># Answer all incomplete policy questions
@@ -4000,7 +4162,7 @@ pretorin cci list --control ac-2
 pretorin cci show CCI-000015
 
 # Browse STIG rules
-pretorin stig rules &lt;stig_id&gt; --severity high
+pretorin stig rules &lt;stig_id&gt; --severity cat_i
 </code></pre>
 <h2 id="scanning-workflow"><a class="header" href="#scanning-workflow">Scanning Workflow</a></h2>
 <h3 id="1-check-scanner-availability"><a class="header" href="#1-check-scanner-availability">1. Check Scanner Availability</a></h3>
@@ -4355,8 +4517,13 @@ ruff format src/pretorin
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>All notable changes to the Pretorin CLI are documented here. The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<h2 id="0162---2026-04-21"><a class="header" href="#0162---2026-04-21"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.1...v0.16.2">0.16.2</a> - 2026-04-21</a></h2>
+<h2 id="0163---2026-04-26"><a class="header" href="#0163---2026-04-26"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.2...v0.16.3">0.16.3</a> - 2026-04-26</a></h2>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
+<ul>
+<li><strong>CCI chain test fix</strong>: <code>test_cci_chain_with_system_status</code> now correctly mocks <code>resolve_execution_context</code> so CCI status rendering is exercised. No production code changes.</li>
+</ul>
+<h2 id="0162---2026-04-21"><a class="header" href="#0162---2026-04-21"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.1...v0.16.2">0.16.2</a> - 2026-04-21</a></h2>
+<h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
 <ul>
 <li><strong><code>pretorin campaign controls --family</code> case-insensitive resolution (#84)</strong>: <code>--family cc6</code> now resolves to canonical <code>CC6</code> before hitting the backend. Unknown families raise a structured error listing available families and pointing at <code>pretorin frameworks families &lt;framework-id&gt;</code>. Same fix applied to <code>pretorin_prepare_campaign</code> MCP handler.</li>
 </ul>
@@ -4386,13 +4553,13 @@ ruff format src/pretorin
 <li><code>upsert_evidence()</code> creates enriched evidence as new record when provenance fields are provided.</li>
 <li>AI generation prompt requests code file paths and line numbers in evidence recommendations.</li>
 </ul>
-<h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
+<h3 id="fixed-2"><a class="header" href="#fixed-2">Fixed</a></h3>
 <ul>
 <li>SOC2 campaign batches with non-canonical <code>evidence_type</code> strings now succeed end-to-end via the normalizer.</li>
 <li>Non-campaign write paths can no longer silently tag missing-type evidence as <code>policy_document</code>.</li>
 </ul>
 <h2 id="0155---2026-04-20"><a class="header" href="#0155---2026-04-20"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.4...v0.15.5">0.15.5</a> - 2026-04-20</a></h2>
-<h3 id="fixed-2"><a class="header" href="#fixed-2">Fixed</a></h3>
+<h3 id="fixed-3"><a class="header" href="#fixed-3">Fixed</a></h3>
 <ul>
 <li>Campaign <code>--apply</code> runs no longer flood the evidence locker with AI-authored summaries typed as <code>policy_document</code> (issue #77). The pipeline now wires <code>recommended_notes</code> through to the platform as real gap notes, rejects evidence recommendations with missing or invalid <code>evidence_type</code> (turning them into synthesized gap notes), and emits a structured <code>campaign.apply.control</code> telemetry line for post-ship measurement.</li>
 <li>Partial failures in the per-control notes write now raise <code>PretorianClientError</code> with the failing indexes, mirroring the existing evidence-batch behavior so checkpoint resumes are idempotent.</li>
@@ -4414,7 +4581,7 @@ ruff format src/pretorin
 </ul>
 <hr>
 <h2 id="0153---2026-04-18"><a class="header" href="#0153---2026-04-18"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.2...v0.15.3">0.15.3</a> - 2026-04-18</a></h2>
-<h3 id="fixed-3"><a class="header" href="#fixed-3">Fixed</a></h3>
+<h3 id="fixed-4"><a class="header" href="#fixed-4">Fixed</a></h3>
 <ul>
 <li><code>pretorin update</code> now checks PyPI before running pip, skipping reinstall when already current</li>
 <li><code>pretorin update</code> verifies the installed version after pip runs, detecting silent failures in pipx/uv-managed environments</li>
@@ -4461,7 +4628,7 @@ ruff format src/pretorin
 <li>Agent guidance now tells built-in workflows to resolve an exact user-supplied control in the active framework before doing broader discovery</li>
 <li><code>pretorin mcp-serve</code> now emits a non-blocking stderr update prompt when a newer CLI release is available, so MCP-only users can discover upgrades without interrupting active tool calls</li>
 </ul>
-<h3 id="fixed-4"><a class="header" href="#fixed-4">Fixed</a></h3>
+<h3 id="fixed-5"><a class="header" href="#fixed-5">Fixed</a></h3>
 <ul>
 <li><code>apply_campaign</code> now reports <code>apply: true</code> after a successful apply run and persists that state back to the checkpoint summary</li>
 <li>Stored active context and campaign checkpoints are now validated against the current API environment before campaign reads or writes proceed</li>
@@ -4518,7 +4685,7 @@ ruff format src/pretorin
 </ul>
 <hr>
 <h2 id="097---2026-03-25"><a class="header" href="#097---2026-03-25"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.7...v0.9.7">0.9.7</a> - 2026-03-25</a></h2>
-<h3 id="fixed-5"><a class="header" href="#fixed-5">Fixed</a></h3>
+<h3 id="fixed-6"><a class="header" href="#fixed-6">Fixed</a></h3>
 <ul>
 <li>Aligned CLI control status validation with the live platform status enum set, including <code>partially_implemented</code></li>
 <li>Aligned MCP control status validation with the live platform status enum set to match public API behavior</li>
@@ -4547,12 +4714,12 @@ ruff format src/pretorin
 <ul>
 <li><code>context show</code> caches the last known system name so offline and stale context output stays human-friendly</li>
 </ul>
-<h3 id="fixed-6"><a class="header" href="#fixed-6">Fixed</a></h3>
+<h3 id="fixed-7"><a class="header" href="#fixed-7">Fixed</a></h3>
 <ul>
 <li><code>context show</code> validates stored context against the platform instead of silently treating deleted systems as active</li>
 </ul>
 <h2 id="085---2026-03-23"><a class="header" href="#085---2026-03-23"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.0...v0.8.5">0.8.5</a> - 2026-03-23</a></h2>
-<h3 id="fixed-7"><a class="header" href="#fixed-7">Fixed</a></h3>
+<h3 id="fixed-8"><a class="header" href="#fixed-8">Fixed</a></h3>
 <ul>
 <li>Reset active system/framework context when logging into a different API endpoint or with a different API key</li>
 <li>Model API base URL now follows the configured platform public API endpoint during login</li>
@@ -4571,7 +4738,7 @@ ruff format src/pretorin
 <li>Codex Desktop MCP configuration can be pinned to the UV-managed Pretorin wrapper</li>
 </ul>
 <h2 id="070---2026-03-07"><a class="header" href="#070---2026-03-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.1...v0.7.0">0.7.0</a> - 2026-03-07</a></h2>
-<h3 id="fixed-8"><a class="header" href="#fixed-8">Fixed</a></h3>
+<h3 id="fixed-9"><a class="header" href="#fixed-9">Fixed</a></h3>
 <ul>
 <li>Control implementation parsing tolerant of <code>notes: null</code> deployments</li>
 <li>Compatibility fallback for control note reads when <code>/notes</code> endpoint returns <code>405</code></li>
@@ -4583,7 +4750,7 @@ ruff format src/pretorin
 <li>MCP and legacy agent evidence search tools accept optional <code>system_id</code> context</li>
 </ul>
 <h2 id="061---2026-03-05"><a class="header" href="#061---2026-03-05"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.6.0...v0.6.1">0.6.1</a> - 2026-03-05</a></h2>
-<h3 id="fixed-9"><a class="header" href="#fixed-9">Fixed</a></h3>
+<h3 id="fixed-10"><a class="header" href="#fixed-10">Fixed</a></h3>
 <ul>
 <li>Added required MCP registry ownership marker for PyPI validation</li>
 </ul>
@@ -4625,13 +4792,13 @@ ruff format src/pretorin
 <li>Automatic control status updates from CLI evidence push workflow</li>
 </ul>
 <h2 id="053---2026-03-02"><a class="header" href="#053---2026-03-02"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.2...v0.5.3">0.5.3</a> - 2026-03-02</a></h2>
-<h3 id="fixed-10"><a class="header" href="#fixed-10">Fixed</a></h3>
+<h3 id="fixed-11"><a class="header" href="#fixed-11">Fixed</a></h3>
 <ul>
 <li>CI lint failure formatting</li>
 <li>CLI model key precedence: <code>OPENAI_API_KEY</code> → <code>config.api_key</code> → <code>config.openai_api_key</code></li>
 </ul>
 <h2 id="052---2026-02-27"><a class="header" href="#052---2026-02-27"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.0...v0.5.2">0.5.2</a> - 2026-02-27</a></h2>
-<h3 id="fixed-11"><a class="header" href="#fixed-11">Fixed</a></h3>
+<h3 id="fixed-12"><a class="header" href="#fixed-12">Fixed</a></h3>
 <ul>
 <li>Rich markup <code>MarkupError</code> crash in login flow</li>
 <li>Evidence type mismatch (<code>documentation</code> → <code>policy_document</code>)</li>

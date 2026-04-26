@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 DEFAULT_PLATFORM_API_BASE_URL = "https://platform.pretorin.com/api/v1/public"
 DEFAULT_MODEL_API_BASE_URL = "https://platform.pretorin.com/api/v1/public/model"
@@ -135,7 +135,7 @@ class Config:
     @property
     def api_key(self) -> str | None:
         """Get the API key (env var takes precedence)."""
-        return self.get("api_key")
+        return cast(str | None, self.get("api_key"))
 
     @api_key.setter
     def api_key(self, value: str) -> None:
@@ -193,7 +193,7 @@ class Config:
     @property
     def context_api_base_url(self) -> str | None:
         """Get the API base URL that was active when the context was set."""
-        return self.get("context_api_base_url")
+        return cast(str | None, self.get("context_api_base_url"))
 
     @context_api_base_url.setter
     def context_api_base_url(self, value: str | None) -> None:
@@ -224,7 +224,7 @@ class Config:
     @property
     def active_system_id(self) -> str | None:
         """Get the active system ID for context commands."""
-        return self.get("active_system_id")
+        return cast(str | None, self.get("active_system_id"))
 
     @active_system_id.setter
     def active_system_id(self, value: str | None) -> None:
@@ -239,7 +239,7 @@ class Config:
     @property
     def active_system_name(self) -> str | None:
         """Get the cached active system name for friendlier context output."""
-        return self.get("active_system_name")
+        return cast(str | None, self.get("active_system_name"))
 
     @active_system_name.setter
     def active_system_name(self, value: str | None) -> None:
@@ -252,7 +252,7 @@ class Config:
     @property
     def active_framework_id(self) -> str | None:
         """Get the active framework ID for context commands."""
-        return self.get("active_framework_id")
+        return cast(str | None, self.get("active_framework_id"))
 
     @active_framework_id.setter
     def active_framework_id(self, value: str | None) -> None:
@@ -265,12 +265,12 @@ class Config:
     @property
     def source_providers(self) -> list[dict[str, Any]] | None:
         """Source provider config. None means use auto-detect defaults."""
-        return self.get("source_providers")
+        return cast(list[dict[str, Any]] | None, self.get("source_providers"))
 
     @property
     def source_manifest(self) -> dict[str, Any] | None:
         """Inline source manifest from config. None means check file-based manifests."""
-        return self.get("source_manifest")
+        return cast(dict[str, Any] | None, self.get("source_manifest"))
 
     @property
     def disable_update_check(self) -> bool:
@@ -286,13 +286,13 @@ class Config:
     def openai_api_key(self) -> str | None:
         """Get the OpenAI API key (env var takes precedence)."""
         env = os.environ.get(ENV_OPENAI_API_KEY)
-        return env if env else self.get("openai_api_key")
+        return env if env else cast(str | None, self.get("openai_api_key"))
 
     @property
     def openai_base_url(self) -> str | None:
         """Get the OpenAI base URL (env var takes precedence)."""
         env = os.environ.get(ENV_OPENAI_BASE_URL)
-        return env if env else self.get("openai_base_url")
+        return env if env else cast(str | None, self.get("openai_base_url"))
 
     @property
     def openai_model(self) -> str:
@@ -307,7 +307,7 @@ class Config:
         env = os.environ.get(ENV_OPENAI_MODEL)
         if env:
             return env
-        local = self.get("openai_model")
+        local: str | None = self.get("openai_model")
         if local:
             return local
         if self._org_cli_model is not None:

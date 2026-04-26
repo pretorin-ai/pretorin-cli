@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -51,8 +51,8 @@ def _mock_scoped_client(client: AsyncMock) -> None:
 def test_evidence_create_json_mode() -> None:
     """evidence create outputs JSON with path/control/framework/name fields."""
     fake_path = Path("evidence/fedramp-moderate/ac-02/test-evidence.md")
-    with patch("pretorin.evidence.writer.EvidenceWriter") as MockWriter:
-        mock_writer = MockWriter.return_value
+    with patch("pretorin.evidence.writer.EvidenceWriter") as mock_writer_cls:
+        mock_writer = mock_writer_cls.return_value
         mock_writer.write.return_value = fake_path
 
         result = runner.invoke(
@@ -81,8 +81,8 @@ def test_evidence_create_json_mode() -> None:
 def test_evidence_create_normal_mode() -> None:
     """evidence create renders a rich panel in normal mode."""
     fake_path = Path("evidence/fedramp-moderate/ac-02/test-evidence.md")
-    with patch("pretorin.evidence.writer.EvidenceWriter") as MockWriter:
-        mock_writer = MockWriter.return_value
+    with patch("pretorin.evidence.writer.EvidenceWriter") as mock_writer_cls:
+        mock_writer = mock_writer_cls.return_value
         mock_writer.write.return_value = fake_path
 
         result = runner.invoke(
@@ -108,8 +108,8 @@ def test_evidence_create_normal_mode() -> None:
 def test_evidence_create_name_defaults_to_description() -> None:
     """When --name is omitted the description (up to 60 chars) becomes the name."""
     fake_path = Path("evidence/fedramp-moderate/ac-02/rbac.md")
-    with patch("pretorin.evidence.writer.EvidenceWriter") as MockWriter:
-        mock_writer = MockWriter.return_value
+    with patch("pretorin.evidence.writer.EvidenceWriter") as mock_writer_cls:
+        mock_writer = mock_writer_cls.return_value
         mock_writer.write.return_value = fake_path
 
         result = runner.invoke(
@@ -152,8 +152,8 @@ def _make_local_evidence(control_id: str = "ac-02", platform_id: str | None = No
 def test_evidence_list_json_with_items() -> None:
     """evidence list --json returns a list of evidence dicts."""
     items = [_make_local_evidence("ac-02", platform_id="ev-999")]
-    with patch("pretorin.evidence.writer.EvidenceWriter") as MockWriter:
-        MockWriter.return_value.list_local.return_value = items
+    with patch("pretorin.evidence.writer.EvidenceWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = items
 
         result = runner.invoke(app, ["--json", "evidence", "list"])
 
@@ -167,8 +167,8 @@ def test_evidence_list_json_with_items() -> None:
 
 def test_evidence_list_json_empty() -> None:
     """evidence list --json returns empty list when nothing exists."""
-    with patch("pretorin.evidence.writer.EvidenceWriter") as MockWriter:
-        MockWriter.return_value.list_local.return_value = []
+    with patch("pretorin.evidence.writer.EvidenceWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = []
 
         result = runner.invoke(app, ["--json", "evidence", "list"])
 
@@ -179,8 +179,8 @@ def test_evidence_list_json_empty() -> None:
 def test_evidence_list_normal_with_items() -> None:
     """evidence list renders a table in normal mode when items are present."""
     items = [_make_local_evidence("ac-02"), _make_local_evidence("sc-07")]
-    with patch("pretorin.evidence.writer.EvidenceWriter") as MockWriter:
-        MockWriter.return_value.list_local.return_value = items
+    with patch("pretorin.evidence.writer.EvidenceWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = items
 
         result = runner.invoke(app, ["evidence", "list"])
 
@@ -190,8 +190,8 @@ def test_evidence_list_normal_with_items() -> None:
 
 def test_evidence_list_normal_empty() -> None:
     """evidence list shows the 'no evidence' help message when list is empty."""
-    with patch("pretorin.evidence.writer.EvidenceWriter") as MockWriter:
-        MockWriter.return_value.list_local.return_value = []
+    with patch("pretorin.evidence.writer.EvidenceWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = []
 
         result = runner.invoke(app, ["evidence", "list"])
 
@@ -201,12 +201,12 @@ def test_evidence_list_normal_empty() -> None:
 
 def test_evidence_list_framework_filter() -> None:
     """evidence list --framework passes the filter to the writer."""
-    with patch("pretorin.evidence.writer.EvidenceWriter") as MockWriter:
-        MockWriter.return_value.list_local.return_value = []
+    with patch("pretorin.evidence.writer.EvidenceWriter") as mock_writer_cls:
+        mock_writer_cls.return_value.list_local.return_value = []
 
         runner.invoke(app, ["evidence", "list", "--framework", "fedramp-moderate"])
 
-        MockWriter.return_value.list_local.assert_called_once_with("fedramp-moderate")
+        mock_writer_cls.return_value.list_local.assert_called_once_with("fedramp-moderate")
 
 
 # =============================================================================
@@ -234,8 +234,8 @@ def test_evidence_push_success_normal_mode() -> None:
         reused=["fedramp-moderate/sc-07/Firewall Config"],
     )
 
-    with patch("pretorin.evidence.sync.EvidenceSync") as MockSync:
-        MockSync.return_value.push = AsyncMock(return_value=sync_result)
+    with patch("pretorin.evidence.sync.EvidenceSync") as mock_sync_cls:
+        mock_sync_cls.return_value.push = AsyncMock(return_value=sync_result)
         result = _run_with_mock_client(["evidence", "push"], client)
 
     assert result.exit_code == 0
@@ -249,8 +249,8 @@ def test_evidence_push_dry_run() -> None:
 
     sync_result = _make_sync_result(created=["[dry-run] fedramp-moderate/ac-02/RBAC Config"])
 
-    with patch("pretorin.evidence.sync.EvidenceSync") as MockSync:
-        MockSync.return_value.push = AsyncMock(return_value=sync_result)
+    with patch("pretorin.evidence.sync.EvidenceSync") as mock_sync_cls:
+        mock_sync_cls.return_value.push = AsyncMock(return_value=sync_result)
         result = _run_with_mock_client(["evidence", "push", "--dry-run"], client)
 
     assert result.exit_code == 0
@@ -267,8 +267,8 @@ def test_evidence_push_json_mode() -> None:
         skipped=["fedramp-moderate/sc-07/Firewall Config"],
     )
 
-    with patch("pretorin.evidence.sync.EvidenceSync") as MockSync:
-        MockSync.return_value.push = AsyncMock(return_value=sync_result)
+    with patch("pretorin.evidence.sync.EvidenceSync") as mock_sync_cls:
+        mock_sync_cls.return_value.push = AsyncMock(return_value=sync_result)
         result = _run_with_mock_client(["--json", "evidence", "push"], client)
 
     assert result.exit_code == 0
@@ -284,8 +284,8 @@ def test_evidence_push_with_errors() -> None:
 
     sync_result = _make_sync_result(errors=["fedramp-moderate/ac-02/RBAC Config: timeout"])
 
-    with patch("pretorin.evidence.sync.EvidenceSync") as MockSync:
-        MockSync.return_value.push = AsyncMock(return_value=sync_result)
+    with patch("pretorin.evidence.sync.EvidenceSync") as mock_sync_cls:
+        mock_sync_cls.return_value.push = AsyncMock(return_value=sync_result)
         result = _run_with_mock_client(["evidence", "push"], client)
 
     assert result.exit_code == 0
@@ -299,8 +299,8 @@ def test_evidence_push_nothing_to_push() -> None:
 
     sync_result = _make_sync_result()
 
-    with patch("pretorin.evidence.sync.EvidenceSync") as MockSync:
-        MockSync.return_value.push = AsyncMock(return_value=sync_result)
+    with patch("pretorin.evidence.sync.EvidenceSync") as mock_sync_cls:
+        mock_sync_cls.return_value.push = AsyncMock(return_value=sync_result)
         result = _run_with_mock_client(["evidence", "push"], client)
 
     assert result.exit_code == 0
@@ -312,8 +312,8 @@ def test_evidence_push_client_error() -> None:
     client = AsyncMock()
     client.is_configured = True
 
-    with patch("pretorin.evidence.sync.EvidenceSync") as MockSync:
-        MockSync.return_value.push = AsyncMock(side_effect=PretorianClientError("API unavailable"))
+    with patch("pretorin.evidence.sync.EvidenceSync") as mock_sync_cls:
+        mock_sync_cls.return_value.push = AsyncMock(side_effect=PretorianClientError("API unavailable"))
         result = _run_with_mock_client(["evidence", "push"], client)
 
     assert result.exit_code == 1

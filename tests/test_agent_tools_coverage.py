@@ -57,9 +57,7 @@ def mock_client() -> AsyncMock:
     client.create_evidence = AsyncMock(return_value={"id": "ev-1"})
     client.create_evidence_batch = AsyncMock(return_value=_ModelStub({"results": [], "total": 0}))
     client.link_evidence_to_control = AsyncMock(return_value={"linked": True})
-    client.get_narrative = AsyncMock(
-        return_value=_ModelStub({"control_id": "ac-02", "narrative": "text"})
-    )
+    client.get_narrative = AsyncMock(return_value=_ModelStub({"control_id": "ac-02", "narrative": "text"}))
     client.add_control_note = AsyncMock(return_value={"id": "note-1"})
     client.list_control_notes = AsyncMock(return_value=[])
     client.create_monitoring_event = AsyncMock(return_value={"id": "event-1"})
@@ -67,12 +65,8 @@ def mock_client() -> AsyncMock:
     client.get_control_implementation = AsyncMock(
         return_value=_ModelStub({"control_id": "ac-02", "status": "implemented"})
     )
-    client.get_control_context = AsyncMock(
-        return_value=_ModelStub({"control_id": "ac-02", "title": "Account Mgmt"})
-    )
-    client.get_scope = AsyncMock(
-        return_value=_ModelStub({"scope_status": "completed", "excluded_controls": []})
-    )
+    client.get_control_context = AsyncMock(return_value=_ModelStub({"control_id": "ac-02", "title": "Account Mgmt"}))
+    client.get_scope = AsyncMock(return_value=_ModelStub({"scope_status": "completed", "excluded_controls": []}))
     client.update_narrative = AsyncMock(return_value={"ok": True})
     return client
 
@@ -364,9 +358,7 @@ class TestCreateEvidence:
             mock_upsert.side_effect = ValueError("bad input")
             tools = create_platform_tools(mock_client)
             tool = _find_tool(tools, "create_evidence")
-            result = await tool.handler(
-                name="Bad", description="Nope", evidence_type="policy_document"
-            )
+            result = await tool.handler(name="Bad", description="Nope", evidence_type="policy_document")
 
         parsed = json.loads(result)
         assert parsed["error"] == "bad input"
@@ -523,9 +515,7 @@ class TestGetControlImplementation:
             mock_ctx.return_value = ("sys-1", "fw-1")
             tools = create_platform_tools(mock_client)
         tool = _find_tool(tools, "get_control_implementation")
-        result = await tool.handler(
-            system_id="sys-1", control_id="ac-2", framework_id="fw-1"
-        )
+        result = await tool.handler(system_id="sys-1", control_id="ac-2", framework_id="fw-1")
         parsed = json.loads(result)
         assert parsed["control_id"] == "ac-02"
         mock_client.get_control_implementation.assert_awaited_once()
@@ -604,7 +594,8 @@ class TestNormalizeBranch:
     """Cover the None-return branch in _normalize (line 66)."""
 
     async def test_normalize_none_via_get_controls_batch(
-        self, mock_client: AsyncMock,
+        self,
+        mock_client: AsyncMock,
     ) -> None:
         """get_controls_batch with control_ids=None exercises _normalize(None) -> None path."""
         with patch(_RESOLVE_CTX, new_callable=AsyncMock) as mock_ctx:

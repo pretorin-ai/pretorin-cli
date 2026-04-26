@@ -18,9 +18,7 @@ Pattern
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -122,9 +120,7 @@ _FAMILY_SUMMARY = ControlFamilySummary(
     **{"id": "access-control", "title": "Access Control", "class": "SP800-53", "controls_count": 25}
 )
 
-_CONTROL_IN_FAMILY = ControlInFamily(
-    **{"id": "ac-02", "title": "Account Management", "class": "SP800-53"}
-)
+_CONTROL_IN_FAMILY = ControlInFamily(**{"id": "ac-02", "title": "Account Management", "class": "SP800-53"})
 
 _FAMILY_DETAIL = ControlFamilyDetail(
     **{
@@ -166,9 +162,7 @@ _CONTROL_REFS = ControlReferences(
     statement="The organization manages information system accounts.",
     guidance="Types of information system accounts include...",
     objectives=["Identify account types", "Assign account managers", "Review access"],
-    related_controls=[
-        RelatedControl(id="ac-03", title="Access Enforcement", family_id="access-control")
-    ],
+    related_controls=[RelatedControl(id="ac-03", title="Access Enforcement", family_id="access-control")],
 )
 
 _DOC_REQUIREMENTS = DocumentRequirementList(
@@ -235,17 +229,13 @@ class TestFrameworksList:
         assert "No frameworks" in result.output
 
     def test_list_authentication_error(self):
-        client = _authed_client(
-            list_frameworks=AsyncMock(side_effect=AuthenticationError("Token expired"))
-        )
+        client = _authed_client(list_frameworks=AsyncMock(side_effect=AuthenticationError("Token expired")))
         result = _run_with_mock_client(["frameworks", "list"], client)
         assert result.exit_code == 1
         assert "Authentication issue" in result.output
 
     def test_list_client_error(self):
-        client = _authed_client(
-            list_frameworks=AsyncMock(side_effect=PretorianClientError("Server error"))
-        )
+        client = _authed_client(list_frameworks=AsyncMock(side_effect=PretorianClientError("Server error")))
         result = _run_with_mock_client(["frameworks", "list"], client)
         assert result.exit_code == 1
         assert "Server error" in result.output
@@ -291,25 +281,19 @@ class TestFrameworkGet:
         assert result.exit_code == 1
 
     def test_get_not_found(self):
-        client = _authed_client(
-            get_framework=AsyncMock(side_effect=NotFoundError("not found"))
-        )
+        client = _authed_client(get_framework=AsyncMock(side_effect=NotFoundError("not found")))
         result = _run_with_mock_client(["frameworks", "get", "nonexistent"], client)
         assert result.exit_code == 1
         assert "Couldn't find framework" in result.output
 
     def test_get_authentication_error(self):
-        client = _authed_client(
-            get_framework=AsyncMock(side_effect=AuthenticationError("Bad token"))
-        )
+        client = _authed_client(get_framework=AsyncMock(side_effect=AuthenticationError("Bad token")))
         result = _run_with_mock_client(["frameworks", "get", "fedramp-moderate"], client)
         assert result.exit_code == 1
         assert "Authentication issue" in result.output
 
     def test_get_client_error(self):
-        client = _authed_client(
-            get_framework=AsyncMock(side_effect=PretorianClientError("Upstream error"))
-        )
+        client = _authed_client(get_framework=AsyncMock(side_effect=PretorianClientError("Upstream error")))
         result = _run_with_mock_client(["frameworks", "get", "fedramp-moderate"], client)
         assert result.exit_code == 1
         assert "Upstream error" in result.output
@@ -322,20 +306,14 @@ class TestFrameworkGet:
 
 class TestFrameworkFamilies:
     def test_families_rich_output(self):
-        client = _authed_client(
-            list_control_families=AsyncMock(return_value=[_FAMILY_SUMMARY])
-        )
+        client = _authed_client(list_control_families=AsyncMock(return_value=[_FAMILY_SUMMARY]))
         result = _run_with_mock_client(["frameworks", "families", "fedramp-moderate"], client)
         assert result.exit_code == 0
         assert "Access Control" in result.output
 
     def test_families_json_output(self):
-        client = _authed_client(
-            list_control_families=AsyncMock(return_value=[_FAMILY_SUMMARY])
-        )
-        result = _run_with_mock_client(
-            ["--json", "frameworks", "families", "fedramp-moderate"], client
-        )
+        client = _authed_client(list_control_families=AsyncMock(return_value=[_FAMILY_SUMMARY]))
+        result = _run_with_mock_client(["--json", "frameworks", "families", "fedramp-moderate"], client)
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert isinstance(data, list)
@@ -353,25 +331,19 @@ class TestFrameworkFamilies:
         assert "No control families" in result.output
 
     def test_families_not_found(self):
-        client = _authed_client(
-            list_control_families=AsyncMock(side_effect=NotFoundError("not found"))
-        )
+        client = _authed_client(list_control_families=AsyncMock(side_effect=NotFoundError("not found")))
         result = _run_with_mock_client(["frameworks", "families", "bad-id"], client)
         assert result.exit_code == 1
         assert "Couldn't find framework" in result.output
 
     def test_families_authentication_error(self):
-        client = _authed_client(
-            list_control_families=AsyncMock(side_effect=AuthenticationError("Expired"))
-        )
+        client = _authed_client(list_control_families=AsyncMock(side_effect=AuthenticationError("Expired")))
         result = _run_with_mock_client(["frameworks", "families", "fedramp-moderate"], client)
         assert result.exit_code == 1
         assert "Authentication issue" in result.output
 
     def test_families_client_error(self):
-        client = _authed_client(
-            list_control_families=AsyncMock(side_effect=PretorianClientError("Oops"))
-        )
+        client = _authed_client(list_control_families=AsyncMock(side_effect=PretorianClientError("Oops")))
         result = _run_with_mock_client(["frameworks", "families", "fedramp-moderate"], client)
         assert result.exit_code == 1
 
@@ -383,20 +355,14 @@ class TestFrameworkFamilies:
 
 class TestFrameworkControls:
     def test_controls_rich_output(self):
-        client = _authed_client(
-            list_controls=AsyncMock(return_value=[_CONTROL_SUMMARY])
-        )
+        client = _authed_client(list_controls=AsyncMock(return_value=[_CONTROL_SUMMARY]))
         result = _run_with_mock_client(["frameworks", "controls", "fedramp-moderate"], client)
         assert result.exit_code == 0
         assert "Account Management" in result.output
 
     def test_controls_json_output(self):
-        client = _authed_client(
-            list_controls=AsyncMock(return_value=[_CONTROL_SUMMARY])
-        )
-        result = _run_with_mock_client(
-            ["--json", "frameworks", "controls", "fedramp-moderate"], client
-        )
+        client = _authed_client(list_controls=AsyncMock(return_value=[_CONTROL_SUMMARY]))
+        result = _run_with_mock_client(["--json", "frameworks", "controls", "fedramp-moderate"], client)
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert isinstance(data, list)
@@ -414,19 +380,13 @@ class TestFrameworkControls:
         assert "No controls found" in result.output
 
     def test_controls_with_family_positional(self):
-        client = _authed_client(
-            list_controls=AsyncMock(return_value=[_CONTROL_SUMMARY])
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "controls", "fedramp-moderate", "access-control"], client
-        )
+        client = _authed_client(list_controls=AsyncMock(return_value=[_CONTROL_SUMMARY]))
+        result = _run_with_mock_client(["frameworks", "controls", "fedramp-moderate", "access-control"], client)
         assert result.exit_code == 0
         client.list_controls.assert_awaited_once_with("fedramp-moderate", "access-control")
 
     def test_controls_with_family_option(self):
-        client = _authed_client(
-            list_controls=AsyncMock(return_value=[_CONTROL_SUMMARY])
-        )
+        client = _authed_client(list_controls=AsyncMock(return_value=[_CONTROL_SUMMARY]))
         result = _run_with_mock_client(
             ["frameworks", "controls", "fedramp-moderate", "--family", "access-control"], client
         )
@@ -435,56 +395,42 @@ class TestFrameworkControls:
 
     def test_controls_with_limit(self):
         controls = [
-            ControlSummary(id=f"ac-0{i}", title=f"Control {i}", family_id="access-control")
-            for i in range(1, 6)
+            ControlSummary(id=f"ac-0{i}", title=f"Control {i}", family_id="access-control") for i in range(1, 6)
         ]
         client = _authed_client(list_controls=AsyncMock(return_value=controls))
-        result = _run_with_mock_client(
-            ["frameworks", "controls", "fedramp-moderate", "--limit", "3"], client
-        )
+        result = _run_with_mock_client(["frameworks", "controls", "fedramp-moderate", "--limit", "3"], client)
         assert result.exit_code == 0
         assert "Showing 3 of 5" in result.output
 
     def test_controls_with_limit_json(self):
         controls = [
-            ControlSummary(id=f"ac-0{i}", title=f"Control {i}", family_id="access-control")
-            for i in range(1, 6)
+            ControlSummary(id=f"ac-0{i}", title=f"Control {i}", family_id="access-control") for i in range(1, 6)
         ]
         client = _authed_client(list_controls=AsyncMock(return_value=controls))
-        result = _run_with_mock_client(
-            ["--json", "frameworks", "controls", "fedramp-moderate", "--limit", "2"], client
-        )
+        result = _run_with_mock_client(["--json", "frameworks", "controls", "fedramp-moderate", "--limit", "2"], client)
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert len(data) == 2
 
     def test_controls_not_found(self):
-        client = _authed_client(
-            list_controls=AsyncMock(side_effect=NotFoundError("not found"))
-        )
+        client = _authed_client(list_controls=AsyncMock(side_effect=NotFoundError("not found")))
         result = _run_with_mock_client(["frameworks", "controls", "bad-fw"], client)
         assert result.exit_code == 1
         assert "Couldn't find framework" in result.output
 
     def test_controls_authentication_error(self):
-        client = _authed_client(
-            list_controls=AsyncMock(side_effect=AuthenticationError("Expired"))
-        )
+        client = _authed_client(list_controls=AsyncMock(side_effect=AuthenticationError("Expired")))
         result = _run_with_mock_client(["frameworks", "controls", "fedramp-moderate"], client)
         assert result.exit_code == 1
 
     def test_controls_client_error(self):
-        client = _authed_client(
-            list_controls=AsyncMock(side_effect=PretorianClientError("Service unavailable"))
-        )
+        client = _authed_client(list_controls=AsyncMock(side_effect=PretorianClientError("Service unavailable")))
         result = _run_with_mock_client(["frameworks", "controls", "fedramp-moderate"], client)
         assert result.exit_code == 1
         assert "Service unavailable" in result.output
 
     def test_controls_long_title_truncated(self):
-        long_ctrl = ControlSummary(
-            id="ac-02", title="A" * 65, family_id="access-control"
-        )
+        long_ctrl = ControlSummary(id="ac-02", title="A" * 65, family_id="access-control")
         client = _authed_client(list_controls=AsyncMock(return_value=[long_ctrl]))
         result = _run_with_mock_client(["frameworks", "controls", "fedramp-moderate"], client)
         assert result.exit_code == 0
@@ -501,9 +447,7 @@ class TestControlGet:
             get_control=AsyncMock(return_value=_CONTROL_DETAIL),
             get_control_references=AsyncMock(return_value=_CONTROL_REFS),
         )
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "ac-02"], client
-        )
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "ac-02"], client)
         assert result.exit_code == 0
         assert "AC-02" in result.output or "ac-02" in result.output.lower()
 
@@ -512,9 +456,7 @@ class TestControlGet:
             get_control=AsyncMock(return_value=_CONTROL_DETAIL),
             get_control_references=AsyncMock(return_value=_CONTROL_REFS),
         )
-        result = _run_with_mock_client(
-            ["--json", "frameworks", "control", "fedramp-moderate", "ac-02"], client
-        )
+        result = _run_with_mock_client(["--json", "frameworks", "control", "fedramp-moderate", "ac-02"], client)
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert data["id"] == "ac-02"
@@ -525,9 +467,7 @@ class TestControlGet:
             get_control=AsyncMock(return_value=_CONTROL_DETAIL),
             get_control_references=AsyncMock(return_value=_CONTROL_REFS),
         )
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "ac-02", "--brief"], client
-        )
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "ac-02", "--brief"], client)
         assert result.exit_code == 0
         # references should not have been fetched
         client.get_control_references.assert_not_awaited()
@@ -547,38 +487,24 @@ class TestControlGet:
 
     def test_get_not_authenticated(self):
         client = _unauthed_client()
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "ac-02"], client
-        )
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "ac-02"], client)
         assert result.exit_code == 1
 
     def test_get_not_found(self):
-        client = _authed_client(
-            get_control=AsyncMock(side_effect=NotFoundError("not found"))
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "bad-ctrl"], client
-        )
+        client = _authed_client(get_control=AsyncMock(side_effect=NotFoundError("not found")))
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "bad-ctrl"], client)
         assert result.exit_code == 1
         assert "Couldn't find control" in result.output
 
     def test_get_authentication_error(self):
-        client = _authed_client(
-            get_control=AsyncMock(side_effect=AuthenticationError("Auth failed"))
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "ac-02"], client
-        )
+        client = _authed_client(get_control=AsyncMock(side_effect=AuthenticationError("Auth failed")))
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "ac-02"], client)
         assert result.exit_code == 1
         assert "Authentication issue" in result.output
 
     def test_get_client_error(self):
-        client = _authed_client(
-            get_control=AsyncMock(side_effect=PretorianClientError("Timeout"))
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "ac-02"], client
-        )
+        client = _authed_client(get_control=AsyncMock(side_effect=PretorianClientError("Timeout")))
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "ac-02"], client)
         assert result.exit_code == 1
         assert "Timeout" in result.output
 
@@ -587,9 +513,7 @@ class TestControlGet:
             get_control=AsyncMock(return_value=_CONTROL_DETAIL),
             get_control_references=AsyncMock(return_value=_CONTROL_REFS),
         )
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "ac-02"], client
-        )
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "ac-02"], client)
         assert result.exit_code == 0
         # ai_guidance present in _CONTROL_DETAIL
         assert "AI Guidance" in result.output or "Guidance" in result.output
@@ -603,9 +527,7 @@ class TestControlGet:
             get_control=AsyncMock(return_value=_CONTROL_DETAIL),
             get_control_references=AsyncMock(return_value=many_objectives),
         )
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "ac-02"], client
-        )
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "ac-02"], client)
         assert result.exit_code == 0
         assert "more" in result.output
 
@@ -614,9 +536,7 @@ class TestControlGet:
             get_control=AsyncMock(return_value=_CONTROL_DETAIL),
             get_control_references=AsyncMock(return_value=_CONTROL_REFS),
         )
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "ac-02"], client
-        )
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "ac-02"], client)
         assert result.exit_code == 0
         # _CONTROL_DETAIL has controls=[...]
         assert "Enhancement" in result.output
@@ -629,22 +549,14 @@ class TestControlGet:
 
 class TestFrameworkDocuments:
     def test_documents_rich_output(self):
-        client = _authed_client(
-            get_document_requirements=AsyncMock(return_value=_DOC_REQUIREMENTS)
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "documents", "fedramp-moderate"], client
-        )
+        client = _authed_client(get_document_requirements=AsyncMock(return_value=_DOC_REQUIREMENTS))
+        result = _run_with_mock_client(["frameworks", "documents", "fedramp-moderate"], client)
         assert result.exit_code == 0
         assert "System Security Plan" in result.output
 
     def test_documents_json_output(self):
-        client = _authed_client(
-            get_document_requirements=AsyncMock(return_value=_DOC_REQUIREMENTS)
-        )
-        result = _run_with_mock_client(
-            ["--json", "frameworks", "documents", "fedramp-moderate"], client
-        )
+        client = _authed_client(get_document_requirements=AsyncMock(return_value=_DOC_REQUIREMENTS))
+        result = _run_with_mock_client(["--json", "frameworks", "documents", "fedramp-moderate"], client)
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert data["framework_id"] == "fedramp-moderate"
@@ -652,36 +564,24 @@ class TestFrameworkDocuments:
 
     def test_documents_not_authenticated(self):
         client = _unauthed_client()
-        result = _run_with_mock_client(
-            ["frameworks", "documents", "fedramp-moderate"], client
-        )
+        result = _run_with_mock_client(["frameworks", "documents", "fedramp-moderate"], client)
         assert result.exit_code == 1
 
     def test_documents_not_found(self):
-        client = _authed_client(
-            get_document_requirements=AsyncMock(side_effect=NotFoundError("not found"))
-        )
+        client = _authed_client(get_document_requirements=AsyncMock(side_effect=NotFoundError("not found")))
         result = _run_with_mock_client(["frameworks", "documents", "bad-fw"], client)
         assert result.exit_code == 1
         assert "Couldn't find document requirements" in result.output
 
     def test_documents_authentication_error(self):
-        client = _authed_client(
-            get_document_requirements=AsyncMock(side_effect=AuthenticationError("Expired"))
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "documents", "fedramp-moderate"], client
-        )
+        client = _authed_client(get_document_requirements=AsyncMock(side_effect=AuthenticationError("Expired")))
+        result = _run_with_mock_client(["frameworks", "documents", "fedramp-moderate"], client)
         assert result.exit_code == 1
         assert "Authentication issue" in result.output
 
     def test_documents_client_error(self):
-        client = _authed_client(
-            get_document_requirements=AsyncMock(side_effect=PretorianClientError("Bad gateway"))
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "documents", "fedramp-moderate"], client
-        )
+        client = _authed_client(get_document_requirements=AsyncMock(side_effect=PretorianClientError("Bad gateway")))
+        result = _run_with_mock_client(["frameworks", "documents", "fedramp-moderate"], client)
         assert result.exit_code == 1
 
     def test_documents_many_implicit_truncated(self):
@@ -702,9 +602,7 @@ class TestFrameworkDocuments:
             total=15,
         )
         client = _authed_client(get_document_requirements=AsyncMock(return_value=docs))
-        result = _run_with_mock_client(
-            ["frameworks", "documents", "fedramp-moderate"], client
-        )
+        result = _run_with_mock_client(["frameworks", "documents", "fedramp-moderate"], client)
         assert result.exit_code == 0
         assert "more" in result.output
 
@@ -716,77 +614,49 @@ class TestFrameworkDocuments:
 
 class TestFamilyGet:
     def test_family_rich_output(self):
-        client = _authed_client(
-            get_control_family=AsyncMock(return_value=_FAMILY_DETAIL)
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "family", "fedramp-moderate", "access-control"], client
-        )
+        client = _authed_client(get_control_family=AsyncMock(return_value=_FAMILY_DETAIL))
+        result = _run_with_mock_client(["frameworks", "family", "fedramp-moderate", "access-control"], client)
         assert result.exit_code == 0
         assert "Access Control" in result.output
 
     def test_family_json_output(self):
-        client = _authed_client(
-            get_control_family=AsyncMock(return_value=_FAMILY_DETAIL)
-        )
-        result = _run_with_mock_client(
-            ["--json", "frameworks", "family", "fedramp-moderate", "access-control"], client
-        )
+        client = _authed_client(get_control_family=AsyncMock(return_value=_FAMILY_DETAIL))
+        result = _run_with_mock_client(["--json", "frameworks", "family", "fedramp-moderate", "access-control"], client)
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert data["id"] == "access-control"
 
     def test_family_not_authenticated(self):
         client = _unauthed_client()
-        result = _run_with_mock_client(
-            ["frameworks", "family", "fedramp-moderate", "access-control"], client
-        )
+        result = _run_with_mock_client(["frameworks", "family", "fedramp-moderate", "access-control"], client)
         assert result.exit_code == 1
 
     def test_family_not_found(self):
-        client = _authed_client(
-            get_control_family=AsyncMock(side_effect=NotFoundError("not found"))
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "family", "fedramp-moderate", "nonexistent"], client
-        )
+        client = _authed_client(get_control_family=AsyncMock(side_effect=NotFoundError("not found")))
+        result = _run_with_mock_client(["frameworks", "family", "fedramp-moderate", "nonexistent"], client)
         assert result.exit_code == 1
         assert "Couldn't find family" in result.output
 
     def test_family_authentication_error(self):
-        client = _authed_client(
-            get_control_family=AsyncMock(side_effect=AuthenticationError("Expired"))
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "family", "fedramp-moderate", "access-control"], client
-        )
+        client = _authed_client(get_control_family=AsyncMock(side_effect=AuthenticationError("Expired")))
+        result = _run_with_mock_client(["frameworks", "family", "fedramp-moderate", "access-control"], client)
         assert result.exit_code == 1
 
     def test_family_client_error(self):
-        client = _authed_client(
-            get_control_family=AsyncMock(side_effect=PretorianClientError("Server error"))
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "family", "fedramp-moderate", "access-control"], client
-        )
+        client = _authed_client(get_control_family=AsyncMock(side_effect=PretorianClientError("Server error")))
+        result = _run_with_mock_client(["frameworks", "family", "fedramp-moderate", "access-control"], client)
         assert result.exit_code == 1
 
     def test_family_no_controls(self):
         empty_family = ControlFamilyDetail(
             **{"id": "empty-family", "title": "Empty Family", "class": "SP800-53", "controls": []}
         )
-        client = _authed_client(
-            get_control_family=AsyncMock(return_value=empty_family)
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "family", "fedramp-moderate", "empty-family"], client
-        )
+        client = _authed_client(get_control_family=AsyncMock(return_value=empty_family))
+        result = _run_with_mock_client(["frameworks", "family", "fedramp-moderate", "empty-family"], client)
         assert result.exit_code == 0
 
     def test_family_control_long_title_truncated(self):
-        long_ctrl = ControlInFamily(
-            **{"id": "ac-02", "title": "B" * 65, "class": "SP800-53"}
-        )
+        ControlInFamily(**{"id": "ac-02", "title": "B" * 65, "class": "SP800-53"})
         family = ControlFamilyDetail(
             **{
                 "id": "access-control",
@@ -796,9 +666,7 @@ class TestFamilyGet:
             }
         )
         client = _authed_client(get_control_family=AsyncMock(return_value=family))
-        result = _run_with_mock_client(
-            ["frameworks", "family", "fedramp-moderate", "access-control"], client
-        )
+        result = _run_with_mock_client(["frameworks", "family", "fedramp-moderate", "access-control"], client)
         assert result.exit_code == 0
 
 
@@ -809,75 +677,49 @@ class TestFamilyGet:
 
 class TestFrameworkMetadata:
     def test_metadata_rich_output(self):
-        client = _authed_client(
-            get_controls_metadata=AsyncMock(return_value=_CONTROL_METADATA)
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "metadata", "fedramp-moderate"], client
-        )
+        client = _authed_client(get_controls_metadata=AsyncMock(return_value=_CONTROL_METADATA))
+        result = _run_with_mock_client(["frameworks", "metadata", "fedramp-moderate"], client)
         assert result.exit_code == 0
         assert "ac-02" in result.output or "Account Management" in result.output
 
     def test_metadata_json_output(self):
-        client = _authed_client(
-            get_controls_metadata=AsyncMock(return_value=_CONTROL_METADATA)
-        )
-        result = _run_with_mock_client(
-            ["--json", "frameworks", "metadata", "fedramp-moderate"], client
-        )
+        client = _authed_client(get_controls_metadata=AsyncMock(return_value=_CONTROL_METADATA))
+        result = _run_with_mock_client(["--json", "frameworks", "metadata", "fedramp-moderate"], client)
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert "ac-02" in data
 
     def test_metadata_not_authenticated(self):
         client = _unauthed_client()
-        result = _run_with_mock_client(
-            ["frameworks", "metadata", "fedramp-moderate"], client
-        )
+        result = _run_with_mock_client(["frameworks", "metadata", "fedramp-moderate"], client)
         assert result.exit_code == 1
 
     def test_metadata_empty(self):
         client = _authed_client(get_controls_metadata=AsyncMock(return_value={}))
-        result = _run_with_mock_client(
-            ["frameworks", "metadata", "fedramp-moderate"], client
-        )
+        result = _run_with_mock_client(["frameworks", "metadata", "fedramp-moderate"], client)
         assert result.exit_code == 0
         assert "No control metadata" in result.output
 
     def test_metadata_not_found(self):
-        client = _authed_client(
-            get_controls_metadata=AsyncMock(side_effect=NotFoundError("not found"))
-        )
+        client = _authed_client(get_controls_metadata=AsyncMock(side_effect=NotFoundError("not found")))
         result = _run_with_mock_client(["frameworks", "metadata", "bad-fw"], client)
         assert result.exit_code == 1
         assert "Couldn't find framework" in result.output
 
     def test_metadata_authentication_error(self):
-        client = _authed_client(
-            get_controls_metadata=AsyncMock(side_effect=AuthenticationError("Bad key"))
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "metadata", "fedramp-moderate"], client
-        )
+        client = _authed_client(get_controls_metadata=AsyncMock(side_effect=AuthenticationError("Bad key")))
+        result = _run_with_mock_client(["frameworks", "metadata", "fedramp-moderate"], client)
         assert result.exit_code == 1
 
     def test_metadata_client_error(self):
-        client = _authed_client(
-            get_controls_metadata=AsyncMock(side_effect=PretorianClientError("Timeout"))
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "metadata", "fedramp-moderate"], client
-        )
+        client = _authed_client(get_controls_metadata=AsyncMock(side_effect=PretorianClientError("Timeout")))
+        result = _run_with_mock_client(["frameworks", "metadata", "fedramp-moderate"], client)
         assert result.exit_code == 1
 
     def test_metadata_long_title_truncated(self):
-        long_meta = {
-            "ac-02": ControlMetadata(title="C" * 65, family="access-control", type="system")
-        }
+        long_meta = {"ac-02": ControlMetadata(title="C" * 65, family="access-control", type="system")}
         client = _authed_client(get_controls_metadata=AsyncMock(return_value=long_meta))
-        result = _run_with_mock_client(
-            ["frameworks", "metadata", "fedramp-moderate"], client
-        )
+        result = _run_with_mock_client(["frameworks", "metadata", "fedramp-moderate"], client)
         assert result.exit_code == 0
 
 
@@ -913,13 +755,9 @@ class TestSubmitArtifact:
         artifact_file.write_text(json.dumps(_VALID_ARTIFACT_DATA))
 
         client = _authed_client(
-            submit_artifact=AsyncMock(
-                return_value={"artifact_id": "art-123", "url": "https://example.com/art-123"}
-            )
+            submit_artifact=AsyncMock(return_value={"artifact_id": "art-123", "url": "https://example.com/art-123"})
         )
-        result = _run_with_mock_client(
-            ["frameworks", "submit-artifact", str(artifact_file)], client
-        )
+        result = _run_with_mock_client(["frameworks", "submit-artifact", str(artifact_file)], client)
         assert result.exit_code == 0
         assert "art-123" in result.output
 
@@ -927,12 +765,8 @@ class TestSubmitArtifact:
         artifact_file = tmp_path / "artifact.json"
         artifact_file.write_text(json.dumps(_VALID_ARTIFACT_DATA))
 
-        client = _authed_client(
-            submit_artifact=AsyncMock(return_value={"artifact_id": "art-456"})
-        )
-        result = _run_with_mock_client(
-            ["--json", "frameworks", "submit-artifact", str(artifact_file)], client
-        )
+        client = _authed_client(submit_artifact=AsyncMock(return_value={"artifact_id": "art-456"}))
+        result = _run_with_mock_client(["--json", "frameworks", "submit-artifact", str(artifact_file)], client)
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert data["artifact_id"] == "art-456"
@@ -942,9 +776,7 @@ class TestSubmitArtifact:
         artifact_file.write_text(json.dumps(_VALID_ARTIFACT_DATA))
 
         client = _unauthed_client()
-        result = _run_with_mock_client(
-            ["frameworks", "submit-artifact", str(artifact_file)], client
-        )
+        result = _run_with_mock_client(["frameworks", "submit-artifact", str(artifact_file)], client)
         assert result.exit_code == 1
 
     def test_submit_invalid_json_file(self, tmp_path: Path):
@@ -952,9 +784,7 @@ class TestSubmitArtifact:
         bad_file.write_text("this is not json {{{")
 
         client = _authed_client()
-        result = _run_with_mock_client(
-            ["frameworks", "submit-artifact", str(bad_file)], client
-        )
+        result = _run_with_mock_client(["frameworks", "submit-artifact", str(bad_file)], client)
         assert result.exit_code == 1
         assert "Invalid JSON" in result.output
 
@@ -963,9 +793,7 @@ class TestSubmitArtifact:
         bad_schema.write_text(json.dumps({"framework_id": "fedramp-moderate"}))
 
         client = _authed_client()
-        result = _run_with_mock_client(
-            ["frameworks", "submit-artifact", str(bad_schema)], client
-        )
+        result = _run_with_mock_client(["frameworks", "submit-artifact", str(bad_schema)], client)
         assert result.exit_code == 1
         assert "Failed to parse artifact" in result.output
 
@@ -973,12 +801,8 @@ class TestSubmitArtifact:
         artifact_file = tmp_path / "artifact.json"
         artifact_file.write_text(json.dumps(_VALID_ARTIFACT_DATA))
 
-        client = _authed_client(
-            submit_artifact=AsyncMock(side_effect=AuthenticationError("Token expired"))
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "submit-artifact", str(artifact_file)], client
-        )
+        client = _authed_client(submit_artifact=AsyncMock(side_effect=AuthenticationError("Token expired")))
+        result = _run_with_mock_client(["frameworks", "submit-artifact", str(artifact_file)], client)
         assert result.exit_code == 1
         assert "Authentication issue" in result.output
 
@@ -986,12 +810,8 @@ class TestSubmitArtifact:
         artifact_file = tmp_path / "artifact.json"
         artifact_file.write_text(json.dumps(_VALID_ARTIFACT_DATA))
 
-        client = _authed_client(
-            submit_artifact=AsyncMock(side_effect=PretorianClientError("Validation failed"))
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "submit-artifact", str(artifact_file)], client
-        )
+        client = _authed_client(submit_artifact=AsyncMock(side_effect=PretorianClientError("Validation failed")))
+        result = _run_with_mock_client(["frameworks", "submit-artifact", str(artifact_file)], client)
         assert result.exit_code == 1
         assert "Validation failed" in result.output
 
@@ -999,12 +819,8 @@ class TestSubmitArtifact:
         artifact_file = tmp_path / "artifact.json"
         artifact_file.write_text(json.dumps(_VALID_ARTIFACT_DATA))
 
-        client = _authed_client(
-            submit_artifact=AsyncMock(return_value={"artifact_id": "art-789"})
-        )
-        result = _run_with_mock_client(
-            ["frameworks", "submit-artifact", str(artifact_file)], client
-        )
+        client = _authed_client(submit_artifact=AsyncMock(return_value={"artifact_id": "art-789"}))
+        result = _run_with_mock_client(["frameworks", "submit-artifact", str(artifact_file)], client)
         assert result.exit_code == 0
         assert "art-789" in result.output
 
@@ -1034,9 +850,7 @@ class TestRenderAiGuidance:
             get_control=AsyncMock(return_value=ctrl),
             get_control_references=AsyncMock(return_value=ControlReferences(control_id="ac-02")),
         )
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "ac-02"], client
-        )
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "ac-02"], client)
         assert result.exit_code == 0
         assert "Manage accounts" in result.output
 
@@ -1047,9 +861,7 @@ class TestRenderAiGuidance:
             get_control=AsyncMock(return_value=ctrl),
             get_control_references=AsyncMock(return_value=ControlReferences(control_id="ac-02")),
         )
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "ac-02"], client
-        )
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "ac-02"], client)
         assert result.exit_code == 0
         assert "Step 1" in result.output
 
@@ -1060,9 +872,7 @@ class TestRenderAiGuidance:
             get_control=AsyncMock(return_value=ctrl),
             get_control_references=AsyncMock(return_value=ControlReferences(control_id="ac-02")),
         )
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "ac-02"], client
-        )
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "ac-02"], client)
         assert result.exit_code == 0
         assert "key" in result.output or "value" in result.output
 
@@ -1073,9 +883,7 @@ class TestRenderAiGuidance:
             get_control=AsyncMock(return_value=ctrl),
             get_control_references=AsyncMock(return_value=ControlReferences(control_id="ac-02")),
         )
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "ac-02"], client
-        )
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "ac-02"], client)
         assert result.exit_code == 0
         assert "0.95" in result.output
 
@@ -1086,9 +894,7 @@ class TestRenderAiGuidance:
             get_control=AsyncMock(return_value=ctrl),
             get_control_references=AsyncMock(return_value=ControlReferences(control_id="ac-02")),
         )
-        result = _run_with_mock_client(
-            ["frameworks", "control", "fedramp-moderate", "ac-02"], client
-        )
+        result = _run_with_mock_client(["frameworks", "control", "fedramp-moderate", "ac-02"], client)
         assert result.exit_code == 0
         # "my_key_name" -> "My Key Name" appears as panel title or inline heading
         assert "My Key Name" in result.output

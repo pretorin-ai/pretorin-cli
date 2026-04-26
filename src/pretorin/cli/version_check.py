@@ -6,7 +6,7 @@ import json
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from pretorin import __version__
 from pretorin.client.config import Config
@@ -47,7 +47,8 @@ def _load_cache() -> dict[str, Any]:
     if VERSION_CACHE_FILE.exists():
         try:
             with open(VERSION_CACHE_FILE) as f:
-                return json.load(f)
+                result: dict[str, Any] = json.load(f)
+                return result
         except (json.JSONDecodeError, OSError):
             pass
     return {}
@@ -74,7 +75,7 @@ def _fetch_latest_version() -> str | None:
         )
         with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT_SECONDS) as response:
             data = json.loads(response.read().decode())
-            return data.get("info", {}).get("version")
+            return cast(str | None, data.get("info", {}).get("version"))
     except Exception:
         return None
 

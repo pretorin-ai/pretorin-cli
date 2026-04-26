@@ -26,9 +26,7 @@ def test_synthesize_fills_every_section() -> None:
 
 
 def test_synthesize_with_missing_name_uses_fallback() -> None:
-    note = synthesize_gap_note(
-        {"description": "orphan rec"}, reason="AI did not specify an evidence_type"
-    )
+    note = synthesize_gap_note({"description": "orphan rec"}, reason="AI did not specify an evidence_type")
     assert "Gap: AI-drafted evidence (rejected)" in note
     assert "AI did not specify an evidence_type" in note
 

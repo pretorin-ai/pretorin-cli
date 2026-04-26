@@ -48,13 +48,16 @@ pretorin campaign controls --mode initial --family AC \
   --system "My System" --framework-id fedramp-moderate
 
 # Fix controls flagged by notes
-pretorin campaign controls --mode notes-fix --family AC
+pretorin campaign controls --mode notes-fix --family AC \
+  --system "My System" --framework-id fedramp-moderate
 
 # Fix controls flagged by review
-pretorin campaign controls --mode review-fix --family AC --review-job <job-id>
+pretorin campaign controls --mode review-fix --family AC --review-job <job-id> \
+  --system "My System" --framework-id fedramp-moderate
 
 # Auto-apply after completion
-pretorin campaign controls --mode initial --family AC --apply
+pretorin campaign controls --mode initial --family AC --apply \
+  --system "My System" --framework-id fedramp-moderate
 ```
 
 ### Policy Campaign

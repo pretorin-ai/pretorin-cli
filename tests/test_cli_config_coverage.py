@@ -251,10 +251,13 @@ class TestConfigList:
             ENV_MODEL_API_BASE_URL,
             ENV_DISABLE_UPDATE_CHECK,
         ]
-        with patch("pretorin.cli.config.Config", return_value=mock_config), \
-             patch.dict("os.environ", {k: "" for k in env_keys}, clear=False):
+        with (
+            patch("pretorin.cli.config.Config", return_value=mock_config),
+            patch.dict("os.environ", {k: "" for k in env_keys}, clear=False),
+        ):
             # Remove the env keys entirely so os.environ.get returns None
             import os
+
             saved = {k: os.environ.pop(k, None) for k in env_keys}
             try:
                 result = runner.invoke(app, ["config", "list"])

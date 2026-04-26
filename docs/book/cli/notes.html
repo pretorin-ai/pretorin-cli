@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-c3b532b7.js";
+            window.path_to_searchindex_js = "../searchindex-a2343a59.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -208,7 +208,15 @@ pretorin notes list --local --framework fedramp-moderate
 <h2 id="add-a-note-direct-to-platform"><a class="header" href="#add-a-note-direct-to-platform">Add a Note (Direct to Platform)</a></h2>
 <pre><code class="language-bash">pretorin notes add ac-02 fedramp-moderate \
   --content "Gap: Missing SSO evidence. Manual next step: collect IdP configuration screenshots."
+
+pretorin notes add ac-02 fedramp-moderate \
+  --content "MFA verified" --system "My System"
 </code></pre>
+<p>Options:</p>
+<ul>
+<li><code>--content / -c</code> — Note content (required)</li>
+<li><code>--system / -s</code> — System name or ID (uses active context if omitted)</li>
+</ul>
 <h2 id="resolve-or-reopen-a-note"><a class="header" href="#resolve-or-reopen-a-note">Resolve or Reopen a Note</a></h2>
 <pre><code class="language-bash"># Resolve a note
 pretorin notes resolve ac-02 fedramp-moderate &lt;note_id&gt;

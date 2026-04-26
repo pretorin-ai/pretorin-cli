@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-c3b532b7.js";
+            window.path_to_searchindex_js = "../searchindex-a2343a59.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -187,7 +187,7 @@
 <pre><code class="language-bash">pretorin frameworks list
 </code></pre>
 <p>Get details on a specific control:</p>
-<pre><code class="language-bash">pretorin frameworks control nist-800-53-r5 ac-02 --references
+<pre><code class="language-bash">pretorin frameworks control nist-800-53-r5 ac-02
 </code></pre>
 <h2 id="set-up-context"><a class="header" href="#set-up-context">Set Up Context</a></h2>
 <p>Set your active system and framework for platform operations:</p>
@@ -201,6 +201,7 @@ pretorin context set --system "My Application" --framework fedramp-moderate
 <p>Create a local evidence file:</p>
 <pre><code class="language-bash">pretorin evidence create ac-02 fedramp-moderate \
   --description "Role-based access control in Azure AD" \
+  --type configuration \
   --name "RBAC Configuration"
 </code></pre>
 <p>Push evidence to the platform:</p>
@@ -230,8 +231,8 @@ claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 <pre><code class="language-bash"># List available STIG benchmarks
 pretorin stig list
 
-# View a specific STIG rule
-pretorin stig rule &lt;rule-id&gt;
+# View STIG benchmark details
+pretorin stig show &lt;stig_id&gt;
 
 # Trace a CCI to its parent controls
 pretorin cci chain &lt;cci-id&gt;

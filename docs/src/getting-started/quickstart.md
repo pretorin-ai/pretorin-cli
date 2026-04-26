@@ -13,7 +13,7 @@ pretorin frameworks list
 Get details on a specific control:
 
 ```bash
-pretorin frameworks control nist-800-53-r5 ac-02 --references
+pretorin frameworks control nist-800-53-r5 ac-02
 ```
 
 ## Set Up Context
@@ -35,6 +35,7 @@ Create a local evidence file:
 ```bash
 pretorin evidence create ac-02 fedramp-moderate \
   --description "Role-based access control in Azure AD" \
+  --type configuration \
   --name "RBAC Configuration"
 ```
 
@@ -83,8 +84,8 @@ Look up STIG benchmarks, rules, and CCI traceability:
 # List available STIG benchmarks
 pretorin stig list
 
-# View a specific STIG rule
-pretorin stig rule <rule-id>
+# View STIG benchmark details
+pretorin stig show <stig_id>
 
 # Trace a CCI to its parent controls
 pretorin cci chain <cci-id>

@@ -168,9 +168,7 @@ class TestHandlePushMonitoringEvent:
 
     @pytest.mark.asyncio
     async def test_success_creates_event(self):
-        client = _make_client(
-            create_monitoring_event={"id": "evt-1", "title": "Scan Complete", "severity": "high"}
-        )
+        client = _make_client(create_monitoring_event={"id": "evt-1", "title": "Scan Complete", "severity": "high"})
         with patch(
             "pretorin.mcp.handlers.compliance.resolve_execution_scope",
             new=AsyncMock(return_value=("sys-1", "fedramp-moderate", "ac-02")),

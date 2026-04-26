@@ -15,7 +15,6 @@ import pytest
 
 from pretorin.agent.mcp_config import MCPConfigManager, MCPServerConfig
 
-
 # ---------------------------------------------------------------------------
 # MCPServerConfig – validation
 # ---------------------------------------------------------------------------
@@ -52,7 +51,10 @@ class TestMCPServerConfigToSdkServer:
         mock_http = MagicMock()
         with patch.dict(
             "sys.modules",
-            {"agents": MagicMock(), "agents.mcp": MagicMock(MCPServerStdio=mock_stdio, MCPServerStreamableHttp=mock_http)},
+            {
+                "agents": MagicMock(),
+                "agents.mcp": MagicMock(MCPServerStdio=mock_stdio, MCPServerStreamableHttp=mock_http),
+            },
         ):
             cfg = MCPServerConfig(name="my-stdio", transport="stdio", command="npx", args=["server"])
             cfg.to_sdk_server()
@@ -66,7 +68,10 @@ class TestMCPServerConfigToSdkServer:
         mock_http = MagicMock()
         with patch.dict(
             "sys.modules",
-            {"agents": MagicMock(), "agents.mcp": MagicMock(MCPServerStdio=mock_stdio, MCPServerStreamableHttp=mock_http)},
+            {
+                "agents": MagicMock(),
+                "agents.mcp": MagicMock(MCPServerStdio=mock_stdio, MCPServerStreamableHttp=mock_http),
+            },
         ):
             cfg = MCPServerConfig(name="srv", transport="stdio", command="run", env={"TOKEN": "abc"})
             cfg.to_sdk_server()
@@ -78,7 +83,10 @@ class TestMCPServerConfigToSdkServer:
         mock_http = MagicMock()
         with patch.dict(
             "sys.modules",
-            {"agents": MagicMock(), "agents.mcp": MagicMock(MCPServerStdio=mock_stdio, MCPServerStreamableHttp=mock_http)},
+            {
+                "agents": MagicMock(),
+                "agents.mcp": MagicMock(MCPServerStdio=mock_stdio, MCPServerStreamableHttp=mock_http),
+            },
         ):
             cfg = MCPServerConfig(name="my-http", transport="http", url="http://localhost:9000")
             cfg.to_sdk_server()
@@ -92,7 +100,10 @@ class TestMCPServerConfigToSdkServer:
         mock_http = MagicMock()
         with patch.dict(
             "sys.modules",
-            {"agents": MagicMock(), "agents.mcp": MagicMock(MCPServerStdio=mock_stdio, MCPServerStreamableHttp=mock_http)},
+            {
+                "agents": MagicMock(),
+                "agents.mcp": MagicMock(MCPServerStdio=mock_stdio, MCPServerStreamableHttp=mock_http),
+            },
         ):
             cfg = MCPServerConfig(name="srv", transport="grpc", command="run")
             # validate() passes for non-stdio/http (no rule), but to_sdk_server must raise
@@ -123,11 +134,7 @@ class TestMCPServerConfigToSdkServer:
 
 class TestMCPConfigManagerLoading:
     def test_loads_project_config(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        config_data = {
-            "servers": [
-                {"name": "test", "transport": "stdio", "command": "echo", "args": ["hello"]}
-            ]
-        }
+        config_data = {"servers": [{"name": "test", "transport": "stdio", "command": "echo", "args": ["hello"]}]}
         config_file = tmp_path / ".pretorin-mcp.json"
         config_file.write_text(json.dumps(config_data))
         monkeypatch.chdir(tmp_path)
@@ -295,7 +302,10 @@ class TestMCPConfigManagerToSdkServers:
         mock_http = MagicMock()
         with patch.dict(
             "sys.modules",
-            {"agents": MagicMock(), "agents.mcp": MagicMock(MCPServerStdio=mock_stdio, MCPServerStreamableHttp=mock_http)},
+            {
+                "agents": MagicMock(),
+                "agents.mcp": MagicMock(MCPServerStdio=mock_stdio, MCPServerStreamableHttp=mock_http),
+            },
         ):
             sdk_servers = mgr.to_sdk_servers()
 

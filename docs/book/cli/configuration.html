@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-c3b532b7.js";
+            window.path_to_searchindex_js = "../searchindex-a2343a59.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -208,9 +208,11 @@ Config file: /home/user/.pretorin/config.json
 <pre><code class="language-json">{
   "api_key": "pretorin_...",
   "api_base_url": "https://platform.pretorin.com/api/v1/public",
+  "platform_api_base_url": "https://platform.pretorin.com/api/v1/public",
   "model_api_base_url": "https://platform.pretorin.com/api/v1/public/model",
-  "active_system": "My Application",
-  "active_framework": "nist-800-53-r5",
+  "active_system_id": "sys-abc123",
+  "active_system_name": "My Application",
+  "active_framework_id": "nist-800-53-r5",
   "disable_update_check": false
 }
 </code></pre>
@@ -223,10 +225,12 @@ Config file: /home/user/.pretorin/config.json
 <tbody>
 <tr><td><code>api_key</code></td><td>Pretorin API key</td></tr>
 <tr><td><code>api_base_url</code></td><td>Platform REST API URL</td></tr>
+<tr><td><code>platform_api_base_url</code></td><td>Platform API base URL</td></tr>
 <tr><td><code>model_api_base_url</code></td><td>Model API URL for agent runtime</td></tr>
 <tr><td><code>openai_api_key</code></td><td>Optional model key for agent runtime</td></tr>
-<tr><td><code>active_system</code></td><td>Currently active system name</td></tr>
-<tr><td><code>active_framework</code></td><td>Currently active framework ID</td></tr>
+<tr><td><code>active_system_id</code></td><td>Currently active system ID</td></tr>
+<tr><td><code>active_system_name</code></td><td>Cached display name for the active system</td></tr>
+<tr><td><code>active_framework_id</code></td><td>Currently active framework ID</td></tr>
 <tr><td><code>disable_update_check</code></td><td>Disable passive update notifications</td></tr>
 </tbody>
 </table>

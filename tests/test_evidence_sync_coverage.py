@@ -7,13 +7,12 @@ lines 100-104 (sync error handling), line 119 (_update_frontmatter no frontmatte
 
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from pretorin.evidence.sync import EvidenceSync, SyncResult
-from pretorin.evidence.writer import EvidenceWriter, LocalEvidence
+from pretorin.evidence.writer import LocalEvidence
 
 
 class _DummyConfigNoSystem:

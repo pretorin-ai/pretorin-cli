@@ -28,10 +28,13 @@ class TestCallToolErrorHandlers:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("pretorin.mcp.server.PretorianClient", return_value=mock_client), \
-             patch("pretorin.mcp.server.TOOL_HANDLERS", {"test_tool": AsyncMock(
-                 side_effect=AuthenticationError("Token expired", status_code=401)
-             )}):
+        with (
+            patch("pretorin.mcp.server.PretorianClient", return_value=mock_client),
+            patch(
+                "pretorin.mcp.server.TOOL_HANDLERS",
+                {"test_tool": AsyncMock(side_effect=AuthenticationError("Token expired", status_code=401))},
+            ),
+        ):
             result = await call_tool("test_tool", {})
 
         assert result.isError is True
@@ -47,10 +50,13 @@ class TestCallToolErrorHandlers:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("pretorin.mcp.server.PretorianClient", return_value=mock_client), \
-             patch("pretorin.mcp.server.TOOL_HANDLERS", {"test_tool": AsyncMock(
-                 side_effect=NotFoundError("Resource not found", status_code=404)
-             )}):
+        with (
+            patch("pretorin.mcp.server.PretorianClient", return_value=mock_client),
+            patch(
+                "pretorin.mcp.server.TOOL_HANDLERS",
+                {"test_tool": AsyncMock(side_effect=NotFoundError("Resource not found", status_code=404))},
+            ),
+        ):
             result = await call_tool("test_tool", {})
 
         assert result.isError is True
@@ -66,10 +72,13 @@ class TestCallToolErrorHandlers:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("pretorin.mcp.server.PretorianClient", return_value=mock_client), \
-             patch("pretorin.mcp.server.TOOL_HANDLERS", {"test_tool": AsyncMock(
-                 side_effect=PretorianClientError("Server error", status_code=500)
-             )}):
+        with (
+            patch("pretorin.mcp.server.PretorianClient", return_value=mock_client),
+            patch(
+                "pretorin.mcp.server.TOOL_HANDLERS",
+                {"test_tool": AsyncMock(side_effect=PretorianClientError("Server error", status_code=500))},
+            ),
+        ):
             result = await call_tool("test_tool", {})
 
         assert result.isError is True
@@ -85,10 +94,13 @@ class TestCallToolErrorHandlers:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("pretorin.mcp.server.PretorianClient", return_value=mock_client), \
-             patch("pretorin.mcp.server.TOOL_HANDLERS", {"test_tool": AsyncMock(
-                 side_effect=RuntimeError("Unexpected failure")
-             )}):
+        with (
+            patch("pretorin.mcp.server.PretorianClient", return_value=mock_client),
+            patch(
+                "pretorin.mcp.server.TOOL_HANDLERS",
+                {"test_tool": AsyncMock(side_effect=RuntimeError("Unexpected failure"))},
+            ),
+        ):
             result = await call_tool("test_tool", {})
 
         assert result.isError is True
@@ -106,8 +118,10 @@ class TestRunServer:
         mock_read = AsyncMock()
         mock_write = AsyncMock()
 
-        with patch("pretorin.mcp.server.stdio_server") as mock_stdio, \
-             patch("pretorin.mcp.server.server") as mock_server:
+        with (
+            patch("pretorin.mcp.server.stdio_server") as mock_stdio,
+            patch("pretorin.mcp.server.server") as mock_server,
+        ):
             # stdio_server is an async context manager
             mock_cm = AsyncMock()
             mock_cm.__aenter__ = AsyncMock(return_value=(mock_read, mock_write))
@@ -136,12 +150,14 @@ class TestRunServer:
         from pretorin.mcp.server import run_server
 
         stderr = StringIO()
-        with patch("pretorin.mcp.server.asyncio.run") as mock_run, \
-             patch(
-                 "pretorin.mcp.server.get_update_status",
-                 return_value={"prompt": "A newer version is available."},
-             ), \
-             patch("sys.stderr", stderr):
+        with (
+            patch("pretorin.mcp.server.asyncio.run") as mock_run,
+            patch(
+                "pretorin.mcp.server.get_update_status",
+                return_value={"prompt": "A newer version is available."},
+            ),
+            patch("sys.stderr", stderr),
+        ):
             run_server()
 
         assert "NOTICE: A newer version is available." in stderr.getvalue()
@@ -155,6 +171,7 @@ class TestMainGuard:
     def test_main_guard(self):
         """Line 105: __name__ == '__main__' calls run_server."""
         import pretorin.mcp.server as mod
+
         source_path = mod.__file__
 
         with open(source_path) as f:

@@ -235,17 +235,13 @@ class TestEnforceSourceAttestationWithManifest:
         _MANIFEST_LOAD_CACHE.clear()
 
     def test_no_manifest_allows_write(self):
-        snap = self._make_snapshot(sources=(
-            SourceIdentity(provider_type="git_repo", identity="github.com/org/repo"),
-        ))
+        snap = self._make_snapshot(sources=(SourceIdentity(provider_type="git_repo", identity="github.com/org/repo"),))
         p1, p2, p3 = self._patch_snapshot_and_config(snap)
         with p1, p2, p3, patch("pretorin.attestation.load_manifest", return_value=None):
             _enforce_source_attestation("sys-1", "fw-1", False)
 
     def test_satisfied_manifest_allows_write(self):
-        snap = self._make_snapshot(sources=(
-            SourceIdentity(provider_type="git_repo", identity="github.com/org/repo"),
-        ))
+        snap = self._make_snapshot(sources=(SourceIdentity(provider_type="git_repo", identity="github.com/org/repo"),))
         manifest = SourceManifest(
             version="1",
             system_sources=(SourceRequirement(source_type="git_repo", level=SourceLevel.REQUIRED),),
@@ -255,9 +251,7 @@ class TestEnforceSourceAttestationWithManifest:
             _enforce_source_attestation("sys-1", "fw-1", False)  # should not raise
 
     def test_unsatisfied_manifest_blocks_write(self):
-        snap = self._make_snapshot(sources=(
-            SourceIdentity(provider_type="git_repo", identity="github.com/org/repo"),
-        ))
+        snap = self._make_snapshot(sources=(SourceIdentity(provider_type="git_repo", identity="github.com/org/repo"),))
         manifest = SourceManifest(
             version="1",
             system_sources=(SourceRequirement(source_type="hris", level=SourceLevel.REQUIRED),),
@@ -270,9 +264,7 @@ class TestEnforceSourceAttestationWithManifest:
                 _enforce_source_attestation("sys-1", "fw-1", False)
 
     def test_partial_manifest_allows_write_with_warning(self):
-        snap = self._make_snapshot(sources=(
-            SourceIdentity(provider_type="git_repo", identity="github.com/org/repo"),
-        ))
+        snap = self._make_snapshot(sources=(SourceIdentity(provider_type="git_repo", identity="github.com/org/repo"),))
         manifest = SourceManifest(
             version="1",
             system_sources=(
@@ -309,9 +301,7 @@ class TestEnforceSourceAttestationWithManifest:
             _enforce_source_attestation("sys-1", "fw-1", False)
 
     def test_control_id_triggers_family_evaluation(self):
-        snap = self._make_snapshot(sources=(
-            SourceIdentity(provider_type="git_repo", identity="github.com/org/repo"),
-        ))
+        snap = self._make_snapshot(sources=(SourceIdentity(provider_type="git_repo", identity="github.com/org/repo"),))
         manifest = SourceManifest(
             version="1",
             family_sources={

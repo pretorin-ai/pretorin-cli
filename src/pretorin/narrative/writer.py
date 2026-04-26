@@ -2,10 +2,21 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+
+from pretorin.local_file import (
+    parse_frontmatter,
+    safe_path_component,
+    slugify,
+)
+
+# Backward-compatible aliases so existing callers/tests can still import
+# the underscore-prefixed names from this module.
+_safe_path_component = safe_path_component
+_slugify = slugify
+_parse_frontmatter = parse_frontmatter
 
 
 @dataclass
@@ -27,25 +38,6 @@ class LocalNarrative:
             self.created_at = datetime.now(timezone.utc).isoformat()
 
 
-def _safe_path_component(text: str) -> str:
-    """Sanitize a string for use as a path component (no traversal)."""
-    cleaned = text.replace("/", "").replace("\\", "").replace("\0", "")
-    cleaned = re.sub(r"\.{2,}", ".", cleaned)
-    cleaned = cleaned.strip(". ")
-    if not cleaned:
-        raise ValueError(f"Invalid path component: {text!r}")
-    return cleaned
-
-
-def _slugify(text: str) -> str:
-    """Convert text to a filesystem-safe slug."""
-    slug = text.lower().strip()
-    slug = re.sub(r"[^\w\s-]", "", slug)
-    slug = re.sub(r"[\s_]+", "-", slug)
-    slug = re.sub(r"-+", "-", slug)
-    return slug[:80].rstrip("-")
-
-
 def _format_frontmatter(narrative: LocalNarrative) -> str:
     """Format YAML frontmatter for a narrative file."""
     lines = [
@@ -59,27 +51,6 @@ def _format_frontmatter(narrative: LocalNarrative) -> str:
     ]
     lines.append("---")
     return "\n".join(lines)
-
-
-def _parse_frontmatter(content: str) -> tuple[dict[str, str], str]:
-    """Parse YAML frontmatter from a markdown file."""
-    if not content.startswith("---"):
-        return {}, content
-
-    parts = content.split("---", 2)
-    if len(parts) < 3:
-        return {}, content
-
-    fm_text = parts[1].strip()
-    body = parts[2].strip()
-
-    fm: dict[str, str] = {}
-    for line in fm_text.split("\n"):
-        if ":" in line:
-            key, _, value = line.partition(":")
-            fm[key.strip()] = value.strip()
-
-    return fm, body
 
 
 class NarrativeWriter:

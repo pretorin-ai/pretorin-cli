@@ -22,7 +22,6 @@ from pretorin.mcp.handlers.frameworks import (
     handle_list_frameworks,
 )
 
-
 # ---------------------------------------------------------------------------
 # handle_list_frameworks
 # ---------------------------------------------------------------------------
@@ -61,9 +60,7 @@ async def test_handle_list_frameworks() -> None:
 @pytest.mark.asyncio
 async def test_handle_list_frameworks_empty() -> None:
     client = AsyncMock()
-    client.list_frameworks = AsyncMock(
-        return_value=SimpleNamespace(total=0, frameworks=[])
-    )
+    client.list_frameworks = AsyncMock(return_value=SimpleNamespace(total=0, frameworks=[]))
 
     result = await handle_list_frameworks(client, {})
     data = json.loads(result[0].text)
@@ -293,9 +290,7 @@ async def test_handle_get_control_references() -> None:
         )
     )
 
-    result = await handle_get_control_references(
-        client, {"framework_id": "fedramp-moderate", "control_id": "ac-2"}
-    )
+    result = await handle_get_control_references(client, {"framework_id": "fedramp-moderate", "control_id": "ac-2"})
 
     data = json.loads(result[0].text)
     assert data["control_id"] == "ac-02"
@@ -371,5 +366,3 @@ async def test_handle_get_document_requirements_empty() -> None:
     assert data["total"] == 0
     assert data["explicit_documents"] == []
     assert data["implicit_documents"] == []
-
-

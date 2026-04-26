@@ -7,7 +7,7 @@ _build_generation_task, and draft_control_artifacts (success + error paths).
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -18,7 +18,6 @@ from pretorin.workflows.ai_generation import (
     _string_list,
     _strip_json_fence,
 )
-
 
 # ---------------------------------------------------------------------------
 # _strip_json_fence
@@ -174,7 +173,11 @@ class TestBuildGenerationTask:
 @pytest.mark.asyncio
 async def test_draft_control_artifacts_success() -> None:
     """Successful run: agent returns valid JSON, parse_status is 'json'."""
-    raw_response = '{"narrative_draft": "test narrative", "evidence_gap_assessment": "gap text", "recommended_notes": ["note1"], "evidence_recommendations": [{"name": "doc", "evidence_type": "policy_document", "description": "desc"}]}'
+    raw_response = (
+        '{"narrative_draft": "test narrative", "evidence_gap_assessment": "gap text",'
+        ' "recommended_notes": ["note1"], "evidence_recommendations":'
+        ' [{"name": "doc", "evidence_type": "policy_document", "description": "desc"}]}'
+    )
 
     with (
         patch(
@@ -182,12 +185,10 @@ async def test_draft_control_artifacts_success() -> None:
             new_callable=AsyncMock,
             return_value=("sys-1", "fedramp-moderate"),
         ),
-        patch("pretorin.agent.codex_agent.CodexAgent") as MockAgent,
+        patch("pretorin.agent.codex_agent.CodexAgent") as mock_agent,
     ):
-        mock_agent_instance = MockAgent.return_value
-        mock_agent_instance.run = AsyncMock(
-            return_value=SimpleNamespace(response=raw_response)
-        )
+        mock_agent_instance = mock_agent.return_value
+        mock_agent_instance.run = AsyncMock(return_value=SimpleNamespace(response=raw_response))
 
         client = AsyncMock()
         client.get_system = AsyncMock(return_value=SimpleNamespace(name="Primary System"))
@@ -221,9 +222,9 @@ async def test_draft_control_artifacts_raw_fallback_on_non_json_response() -> No
             new_callable=AsyncMock,
             return_value=("sys-2", "nist-800-53-r5"),
         ),
-        patch("pretorin.agent.codex_agent.CodexAgent") as MockAgent,
+        patch("pretorin.agent.codex_agent.CodexAgent") as mock_agent,
     ):
-        mock_agent_instance = MockAgent.return_value
+        mock_agent_instance = mock_agent.return_value
         mock_agent_instance.run = AsyncMock(
             return_value=SimpleNamespace(response="Sorry, I cannot complete this task.")
         )
@@ -256,9 +257,9 @@ async def test_draft_control_artifacts_runtime_error_raises_client_error() -> No
             new_callable=AsyncMock,
             return_value=("sys-3", "fedramp-moderate"),
         ),
-        patch("pretorin.agent.codex_agent.CodexAgent") as MockAgent,
+        patch("pretorin.agent.codex_agent.CodexAgent") as mock_agent,
     ):
-        mock_agent_instance = MockAgent.return_value
+        mock_agent_instance = mock_agent.return_value
         mock_agent_instance.run = AsyncMock(side_effect=RuntimeError("agent crashed"))
 
         client = AsyncMock()
@@ -286,9 +287,9 @@ async def test_draft_control_artifacts_normalizes_control_id() -> None:
             new_callable=AsyncMock,
             return_value=("sys-4", "fedramp-moderate"),
         ),
-        patch("pretorin.agent.codex_agent.CodexAgent") as MockAgent,
+        patch("pretorin.agent.codex_agent.CodexAgent") as mock_agent,
     ):
-        mock_agent_instance = MockAgent.return_value
+        mock_agent_instance = mock_agent.return_value
 
         async def capture_run(task: str, **kwargs: object) -> SimpleNamespace:
             captured_tasks.append(task)

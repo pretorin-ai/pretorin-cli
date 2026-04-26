@@ -6,7 +6,6 @@ retry with unparseable Retry-After).
 
 from __future__ import annotations
 
-import json
 from unittest.mock import patch
 
 import httpx
@@ -14,7 +13,6 @@ import pytest
 
 from pretorin.client.api import (
     PretorianClient,
-    PretorianClientError,
     RateLimitError,
 )
 
@@ -105,8 +103,7 @@ class TestRequestRetry429:
             return httpx.Response(200, json={"ok": True})
 
         client = _make_client(handler)
-        with patch("pretorin.client.api._BACKOFF_BASE", 0.01), \
-             patch("pretorin.client.api.asyncio.sleep"):
+        with patch("pretorin.client.api._BACKOFF_BASE", 0.01), patch("pretorin.client.api.asyncio.sleep"):
             result = await client._request("GET", "/test")
 
         assert result == {"ok": True}
@@ -115,6 +112,7 @@ class TestRequestRetry429:
     @pytest.mark.asyncio
     async def test_request_429_exhausts_retries(self):
         """429 exhausts retries and raises RateLimitError."""
+
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(
                 429,

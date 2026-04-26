@@ -151,6 +151,7 @@ Platform-backed review and update workflows are single-scope: set one active `sy
 | `pretorin evidence search` | Search platform evidence |
 | `pretorin evidence link` | Link evidence to a control |
 | `pretorin evidence upsert <ctrl> <fw>` | Find-or-create evidence and link it |
+| `pretorin evidence upload` | Upload a file as evidence to the platform |
 | `pretorin evidence delete` | Delete an evidence record |
 | `pretorin narrative create` | Create local narrative file |
 | `pretorin narrative list` | List local narrative files |

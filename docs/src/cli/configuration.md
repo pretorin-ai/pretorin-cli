@@ -43,9 +43,11 @@ The config file is JSON:
 {
   "api_key": "pretorin_...",
   "api_base_url": "https://platform.pretorin.com/api/v1/public",
+  "platform_api_base_url": "https://platform.pretorin.com/api/v1/public",
   "model_api_base_url": "https://platform.pretorin.com/api/v1/public/model",
-  "active_system": "My Application",
-  "active_framework": "nist-800-53-r5",
+  "active_system_id": "sys-abc123",
+  "active_system_name": "My Application",
+  "active_framework_id": "nist-800-53-r5",
   "disable_update_check": false
 }
 ```
@@ -56,10 +58,12 @@ The config file is JSON:
 |-----|-------------|
 | `api_key` | Pretorin API key |
 | `api_base_url` | Platform REST API URL |
+| `platform_api_base_url` | Platform API base URL |
 | `model_api_base_url` | Model API URL for agent runtime |
 | `openai_api_key` | Optional model key for agent runtime |
-| `active_system` | Currently active system name |
-| `active_framework` | Currently active framework ID |
+| `active_system_id` | Currently active system ID |
+| `active_system_name` | Cached display name for the active system |
+| `active_framework_id` | Currently active framework ID |
 | `disable_update_check` | Disable passive update notifications |
 
 ## Environment Variable Overrides

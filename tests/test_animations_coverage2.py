@@ -6,7 +6,6 @@ Covers lines 196-201 (_advance_frame), 211-224 (__enter__ with animation),
 
 from __future__ import annotations
 
-import threading
 from unittest.mock import MagicMock, patch
 
 from pretorin.cli.animations import AnimationTheme, RomebotSpinner
@@ -21,10 +20,12 @@ class TestRomebotSpinnerAnimationMode:
         mock_console = MagicMock()
         spinner = RomebotSpinner("Working...", AnimationTheme.MARCHING, console=mock_console)
 
-        with patch("pretorin.cli.animations.supports_animation", return_value=True), \
-             patch("pretorin.cli.animations.Live") as MockLive:
+        with (
+            patch("pretorin.cli.animations.supports_animation", return_value=True),
+            patch("pretorin.cli.animations.Live") as mock_live,
+        ):
             mock_live_instance = MagicMock()
-            MockLive.return_value = mock_live_instance
+            mock_live.return_value = mock_live_instance
 
             with spinner:
                 # Live.__enter__ should have been called
@@ -43,14 +44,17 @@ class TestRomebotSpinnerAnimationMode:
         mock_console = MagicMock()
         spinner = RomebotSpinner("Searching...", AnimationTheme.SEARCHING, console=mock_console)
 
-        with patch("pretorin.cli.animations.supports_animation", return_value=True), \
-             patch("pretorin.cli.animations.Live") as MockLive:
+        with (
+            patch("pretorin.cli.animations.supports_animation", return_value=True),
+            patch("pretorin.cli.animations.Live") as mock_live,
+        ):
             mock_live_instance = MagicMock()
-            MockLive.return_value = mock_live_instance
+            mock_live.return_value = mock_live_instance
 
             with spinner:
                 # Let the background thread run at least one frame
                 import time
+
                 time.sleep(spinner.frame_rate * 2 + 0.05)
                 # _live.update should have been called at least once
                 assert mock_live_instance.update.call_count >= 1
@@ -60,10 +64,12 @@ class TestRomebotSpinnerAnimationMode:
         mock_console = MagicMock()
         spinner = RomebotSpinner("Loading...", AnimationTheme.THINKING, console=mock_console)
 
-        with patch("pretorin.cli.animations.supports_animation", return_value=True), \
-             patch("pretorin.cli.animations.Live") as MockLive:
+        with (
+            patch("pretorin.cli.animations.supports_animation", return_value=True),
+            patch("pretorin.cli.animations.Live") as mock_live,
+        ):
             mock_live_instance = MagicMock()
-            MockLive.return_value = mock_live_instance
+            mock_live.return_value = mock_live_instance
 
             spinner.__enter__()
             thread = spinner._thread
@@ -89,13 +95,16 @@ class TestRomebotSpinnerAnimationMode:
         spinner = RomebotSpinner("Cycling...", AnimationTheme.MARCHING, console=mock_console)
         spinner.frame_rate = 0.01  # Speed up for testing
 
-        with patch("pretorin.cli.animations.supports_animation", return_value=True), \
-             patch("pretorin.cli.animations.Live") as MockLive:
+        with (
+            patch("pretorin.cli.animations.supports_animation", return_value=True),
+            patch("pretorin.cli.animations.Live") as mock_live,
+        ):
             mock_live_instance = MagicMock()
-            MockLive.return_value = mock_live_instance
+            mock_live.return_value = mock_live_instance
 
             with spinner:
                 import time
+
                 # Wait enough for several frame cycles
                 time.sleep(0.1)
 

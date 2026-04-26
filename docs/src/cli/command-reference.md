@@ -5,6 +5,7 @@
 | Option | Description |
 |--------|-------------|
 | `--json` | JSON output mode for scripting and AI agents |
+| `--version`, `-V` | Show version and exit |
 | `--help` | Show command help |
 
 ## Root Commands
@@ -15,7 +16,7 @@
 | `pretorin logout` | Clear stored credentials |
 | `pretorin whoami` | Display authentication status |
 | `pretorin version` | Show CLI version |
-| `pretorin update` | Update to latest version |
+| `pretorin update [VERSION]` | Update to latest version, or a specific version |
 | `pretorin mcp-serve` | Start the MCP server (stdio transport) |
 
 ## Framework Commands
@@ -26,7 +27,7 @@
 | `pretorin frameworks get <id>` | Get framework details |
 | `pretorin frameworks families <id>` | List control families |
 | `pretorin frameworks family <fw> <family>` | Get control family details |
-| `pretorin frameworks controls <id>` | List controls (`--family/-f`, `--limit/-n`) |
+| `pretorin frameworks controls <id> [FAMILY_ID]` | List controls (`--family/-f`, `--limit/-n`) |
 | `pretorin frameworks control <fw> <ctrl>` | Get control details (`--brief/-b`) |
 | `pretorin frameworks documents <id>` | Get document requirements |
 | `pretorin frameworks metadata <id>` | Get per-control framework metadata |
@@ -58,7 +59,8 @@
 | `pretorin evidence list` | List local evidence files (`--framework/-f`) |
 | `pretorin evidence push` | Push local evidence to the platform (`--dry-run`) |
 | `pretorin evidence search` | Search platform evidence (`--control-id/-c`, `--framework-id/-f`, `--system/-s`, `--limit/-n`) |
-| `pretorin evidence upsert <ctrl> <fw>` | Find-or-create evidence and link it (`--name/-n`, `--description/-d`, `--type/-t`, `--system/-s`) |
+| `pretorin evidence upsert <ctrl> <fw>` | Find-or-create evidence and link it (`--name/-n`, `--description/-d`, `--type/-t`, `--system/-s`, `--code-file`, `--code-lines`, `--code-repo`, `--code-commit`) |
+| `pretorin evidence upload <file> <ctrl> <fw>` | Upload a file as evidence (`--name/-n`, `--type/-t`, `--description/-d`, `--system/-s`) |
 | `pretorin evidence link <evidence_id> <ctrl>` | Link evidence to a control (`--framework-id/-f`, `--system/-s`) |
 | `pretorin evidence delete <evidence_id>` | Delete an evidence item (`--system/-s`, `--framework-id/-f`, `--yes/-y`) |
 
@@ -113,7 +115,7 @@
 | `pretorin agent version` | Show pinned Codex version and install status |
 | `pretorin agent skills` | List available agent skills |
 | `pretorin agent mcp-list` | List configured MCP servers for the agent |
-| `pretorin agent mcp-add <name> <transport> <cmd>` | Add an MCP server configuration (`--arg`, `--scope`) |
+| `pretorin agent mcp-add <name> <transport> <cmd>` | Add an MCP server configuration (`--arg/-a`, `--scope`) |
 | `pretorin agent mcp-remove <name>` | Remove an MCP server configuration |
 
 ## Skill Commands
@@ -122,7 +124,7 @@
 |---------|-------------|
 | `pretorin skill install` | Install the Pretorin skill for AI coding agents (`--agent/-a`, `--path/-p`, `--force/-f`) |
 | `pretorin skill uninstall` | Uninstall the Pretorin skill (`--agent/-a`, `--path/-p`) |
-| `pretorin skill status` | Show installation status of the Pretorin skill (`--agent/-a`, `--path/-p`) |
+| `pretorin skill status` | Show installation status of the Pretorin skill |
 | `pretorin skill list-agents` | List all known agents and their skill directories |
 
 ## Review Commands
@@ -130,7 +132,7 @@
 | Command | Description |
 |---------|-------------|
 | `pretorin review run` | Review code against a control (`--control-id/-c`, `--framework-id/-f`, `--system/-s`, `--path/-p`, `--local`, `--output-dir/-o`) |
-| `pretorin review status` | Check implementation status for a control (`--control-id/-c`, `--system/-s`) |
+| `pretorin review status` | Check implementation status for a control (`--control-id/-c`, `--framework-id/-f`, `--system/-s`) |
 
 ## Config Commands
 
@@ -170,8 +172,8 @@
 | `pretorin vendor create <name>` | Create a vendor (`--type/-t`, `--description/-d`, `--authorization-level/-a`) |
 | `pretorin vendor get <vendor_id>` | Get vendor details |
 | `pretorin vendor update <vendor_id>` | Update vendor fields (`--name`, `--description/-d`, `--type/-t`, `--authorization-level/-a`) |
-| `pretorin vendor delete <vendor_id>` | Delete a vendor (`--yes/-y`) |
-| `pretorin vendor upload-doc <vendor_id> <file>` | Upload a vendor evidence document (`--name`, `--description`, `--attestation-type`) |
+| `pretorin vendor delete <vendor_id>` | Delete a vendor (`--force/-f`) |
+| `pretorin vendor upload-doc <vendor_id> <file>` | Upload a vendor evidence document (`--name/-n`, `--description/-d`, `--attestation-type`) |
 | `pretorin vendor list-docs <vendor_id>` | List documents linked to a vendor |
 
 ### Vendor Types

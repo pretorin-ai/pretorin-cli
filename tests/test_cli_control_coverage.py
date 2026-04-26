@@ -127,9 +127,7 @@ def test_control_status_json_mode() -> None:
 def test_control_status_client_error() -> None:
     """control status exits 1 on PretorianClientError."""
     client = _base_client()
-    client.update_control_status = AsyncMock(
-        side_effect=PretorianClientError("Control not found")
-    )
+    client.update_control_status = AsyncMock(side_effect=PretorianClientError("Control not found"))
 
     result = _run_with_mock_client(
         ["control", "status", "ac-02", "planned", "--system", "Primary"],
@@ -227,9 +225,7 @@ def test_control_context_json_mode() -> None:
 def test_control_context_client_error() -> None:
     """control context exits 1 on PretorianClientError."""
     client = _base_client()
-    client.get_control_context = AsyncMock(
-        side_effect=PretorianClientError("Not authorized")
-    )
+    client.get_control_context = AsyncMock(side_effect=PretorianClientError("Not authorized"))
 
     result = _run_with_mock_client(
         ["control", "context", "ac-02", "--system", "Primary"],

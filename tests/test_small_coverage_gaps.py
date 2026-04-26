@@ -13,7 +13,6 @@ Covers:
 from __future__ import annotations
 
 import json
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -256,9 +255,7 @@ class TestResolveExecutionScopeControlRequired:
         from pretorin.mcp.helpers import resolve_execution_scope
 
         mock_client = AsyncMock()
-        mock_client.list_systems = AsyncMock(
-            return_value=[{"id": "sys-1", "name": "Test System"}]
-        )
+        mock_client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Test System"}])
         mock_client.get_system_compliance_status = AsyncMock(
             return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
         )

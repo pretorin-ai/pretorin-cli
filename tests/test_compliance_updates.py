@@ -10,35 +10,8 @@ from pretorin.client.models import EvidenceItemResponse
 from pretorin.workflows.compliance_updates import (
     MATCH_BASIS_EXACT,
     MATCH_BASIS_NONE,
-    build_gap_note,
-    build_narrative_todo_block,
     upsert_evidence,
 )
-
-
-def test_build_narrative_todo_block_format() -> None:
-    block = build_narrative_todo_block(
-        missing_item="SSO provider metadata",
-        required_manual_action="Upload IdP configuration screenshots",
-        suggested_evidence_type="configuration",
-    )
-    assert "[[PRETORIN_TODO]]" in block
-    assert "missing_item: SSO provider metadata" in block
-    assert "suggested_evidence_type: configuration" in block
-    assert "[[/PRETORIN_TODO]]" in block
-
-
-def test_build_gap_note_format() -> None:
-    note = build_gap_note(
-        gap="Missing SSO integration evidence",
-        observed="App references SAML middleware",
-        missing="IdP policy exports",
-        why_missing="IdP not connected to MCP",
-        manual_next_step="Upload policy export and map to AC-02",
-    )
-    assert "Gap: Missing SSO integration evidence" in note
-    assert "Observed: App references SAML middleware" in note
-    assert "Manual next step: Upload policy export and map to AC-02" in note
 
 
 @pytest.mark.asyncio

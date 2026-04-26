@@ -14,9 +14,7 @@ from pretorin.client.api import PretorianClientError
 async def test_resolve_execution_context_validates_framework_membership() -> None:
     client = AsyncMock()
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Test System"}])
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]})
 
     system_id, framework_id = await resolve_execution_context(
         client,
@@ -44,9 +42,7 @@ async def test_resolve_execution_context_rejects_multi_framework_requests() -> N
 async def test_resolve_execution_context_rejects_wrong_framework_for_system() -> None:
     client = AsyncMock()
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Test System"}])
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]})
 
     with pytest.raises(PretorianClientError, match="not associated with system"):
         await resolve_execution_context(
@@ -82,9 +78,7 @@ async def test_resolve_execution_context_skips_env_check_with_explicit_args() ->
     """When explicit system/framework are passed, environment check should not fire."""
     client = AsyncMock()
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Test System"}])
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]})
 
     # Even if stored context URL is stale, explicit args should bypass the check.
     system_id, framework_id = await resolve_execution_context(

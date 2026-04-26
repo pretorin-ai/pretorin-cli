@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -350,11 +350,30 @@ class PretorianClient:
             if response.status_code == 204:
                 return {}
 
-            return response.json()
+            result: dict[str, Any] | list[Any] = response.json()
+            return result
 
         # Should be unreachable, but satisfy the type checker.
         assert last_exc is not None  # noqa: S101
         raise last_exc
+
+    async def _request_dict(
+        self,
+        method: str,
+        path: str,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Like _request but asserts the response is a JSON object."""
+        return cast(dict[str, Any], await self._request(method, path, **kwargs))
+
+    async def _request_list(
+        self,
+        method: str,
+        path: str,
+        **kwargs: Any,
+    ) -> list[Any]:
+        """Like _request but asserts the response is a JSON array."""
+        return cast(list[Any], await self._request(method, path, **kwargs))
 
     @staticmethod
     def _normalize_control_id(control_id: str | None) -> str | None:
@@ -380,7 +399,7 @@ class PretorianClient:
             raise AuthenticationError("No API key configured")
 
         # Use frameworks endpoint as a lightweight validation check
-        await self._request("GET", "/frameworks")
+        await self._request_dict("GET", "/frameworks")
         return True
 
     # =========================================================================
@@ -393,7 +412,7 @@ class PretorianClient:
         Returns:
             FrameworkList containing all frameworks with summary info.
         """
-        data = await self._request("GET", "/frameworks")
+        data = await self._request_dict("GET", "/frameworks")
         return FrameworkList(**data)
 
     async def get_framework(self, framework_id: str) -> FrameworkMetadata:
@@ -405,7 +424,7 @@ class PretorianClient:
         Returns:
             FrameworkMetadata with full framework details.
         """
-        data = await self._request("GET", f"/frameworks/{framework_id}")
+        data = await self._request_dict("GET", f"/frameworks/{framework_id}")
         return FrameworkMetadata(**data)
 
     # =========================================================================
@@ -421,7 +440,7 @@ class PretorianClient:
         Returns:
             List of control family summaries.
         """
-        data = await self._request("GET", f"/frameworks/{framework_id}/families")
+        data = await self._request_list("GET", f"/frameworks/{framework_id}/families")
         return [ControlFamilySummary(**item) for item in data]
 
     async def get_control_family(self, framework_id: str, family_id: str) -> ControlFamilyDetail:
@@ -434,7 +453,7 @@ class PretorianClient:
         Returns:
             ControlFamilyDetail with family info and controls list.
         """
-        data = await self._request("GET", f"/frameworks/{framework_id}/families/{family_id}")
+        data = await self._request_dict("GET", f"/frameworks/{framework_id}/families/{family_id}")
         return ControlFamilyDetail(**data)
 
     # =========================================================================
@@ -459,7 +478,7 @@ class PretorianClient:
         if family_id:
             params["family_id"] = family_id
 
-        data = await self._request("GET", f"/frameworks/{framework_id}/controls", params=params)
+        data = await self._request_list("GET", f"/frameworks/{framework_id}/controls", params=params)
         return [ControlSummary(**item) for item in data]
 
     async def get_control(self, framework_id: str, control_id: str) -> ControlDetail:
@@ -473,7 +492,7 @@ class PretorianClient:
             ControlDetail with full control information.
         """
         normalized_control_id = self._normalize_control_id(control_id)
-        data = await self._request("GET", f"/frameworks/{framework_id}/controls/{normalized_control_id}")
+        data = await self._request_dict("GET", f"/frameworks/{framework_id}/controls/{normalized_control_id}")
         return ControlDetail(**data)
 
     async def get_controls_batch(
@@ -487,7 +506,7 @@ class PretorianClient:
         payload: dict[str, Any] = {"include_references": include_references}
         if control_ids:
             payload["control_ids"] = [normalize_control_id(control_id) for control_id in control_ids]
-        data = await self._request("POST", f"/frameworks/{framework_id}/controls/batch", json=payload)
+        data = await self._request_dict("POST", f"/frameworks/{framework_id}/controls/batch", json=payload)
         return ControlBatchResponse(**data)
 
     async def get_control_references(self, framework_id: str, control_id: str) -> ControlReferences:
@@ -501,7 +520,7 @@ class PretorianClient:
             ControlReferences with statement, guidance, objectives, etc.
         """
         normalized_control_id = self._normalize_control_id(control_id)
-        data = await self._request(
+        data = await self._request_dict(
             "GET",
             f"/frameworks/{framework_id}/controls/{normalized_control_id}/references",
         )
@@ -523,7 +542,7 @@ class PretorianClient:
         else:
             path = "/frameworks/controls/metadata"
 
-        data = await self._request("GET", path)
+        data = await self._request_dict("GET", path)
         return {k: ControlMetadata(**v) for k, v in data.items()}
 
     # =========================================================================
@@ -539,7 +558,7 @@ class PretorianClient:
         Returns:
             DocumentRequirementList with explicit and implicit requirements.
         """
-        data = await self._request("GET", f"/frameworks/{framework_id}/documents")
+        data = await self._request_dict("GET", f"/frameworks/{framework_id}/documents")
         return DocumentRequirementList(**data)
 
     # =========================================================================
@@ -569,7 +588,7 @@ class PretorianClient:
                     if isinstance(implementation, dict) and implementation.get("control_id"):
                         implementation["control_id"] = normalize_control_id(implementation["control_id"])
 
-        data = await self._request(
+        data = await self._request_dict(
             "POST",
             "/artifacts",
             json=payload,
@@ -588,9 +607,8 @@ class PretorianClient:
         """
         data = await self._request("GET", "/systems")
         if isinstance(data, list):
-            return data
-        # Handle paginated response
-        return data.get("systems", data.get("items", []))
+            return cast(list[dict[str, Any]], data)
+        return cast(list[dict[str, Any]], data.get("systems", data.get("items", [])))
 
     async def get_system(self, system_id: str) -> SystemDetail:
         """Get detailed information about a system.
@@ -601,7 +619,7 @@ class PretorianClient:
         Returns:
             SystemDetail with full system information.
         """
-        data = await self._request("GET", f"/systems/{system_id}")
+        data = await self._request_dict("GET", f"/systems/{system_id}")
         return SystemDetail(**data)
 
     async def get_system_compliance_status(self, system_id: str) -> dict[str, Any]:
@@ -613,7 +631,7 @@ class PretorianClient:
         Returns:
             Dictionary with compliance status per framework.
         """
-        data = await self._request("GET", f"/systems/{system_id}/compliance-status")
+        data = await self._request_dict("GET", f"/systems/{system_id}/compliance-status")
         return data
 
     # =========================================================================
@@ -643,7 +661,7 @@ class PretorianClient:
         if control_id:
             params["control_id"] = normalize_control_id(control_id)
         data = await self._request("GET", f"/systems/{system_id}/evidence", params=params)
-        items = data if isinstance(data, list) else data.get("items", data.get("evidence", []))
+        items: list[Any] = data if isinstance(data, list) else data.get("items", data.get("evidence", []))
         return [EvidenceItemResponse(**item) for item in items]
 
     async def get_evidence(self, evidence_id: str) -> EvidenceItemResponse:
@@ -655,7 +673,7 @@ class PretorianClient:
         Returns:
             Evidence item details.
         """
-        data = await self._request("GET", f"/evidence/{evidence_id}")
+        data = await self._request_dict("GET", f"/evidence/{evidence_id}")
         return EvidenceItemResponse(**data)
 
     async def create_evidence(
@@ -679,7 +697,7 @@ class PretorianClient:
         sv = _build_source_verification(system_id, evidence.framework_id)
         if sv is not None:
             payload["source_verification"] = sv
-        data = await self._request(
+        data = await self._request_dict(
             "POST",
             f"/systems/{system_id}/evidence",
             json=payload,
@@ -707,7 +725,7 @@ class PretorianClient:
         sv = _build_source_verification(system_id, framework_id)
         if sv is not None:
             payload["source_verification"] = sv
-        data = await self._request("POST", f"/systems/{system_id}/evidence/batch", json=payload)
+        data = await self._request_dict("POST", f"/systems/{system_id}/evidence/batch", json=payload)
         return EvidenceBatchResponse(**data)
 
     async def upload_evidence(
@@ -784,7 +802,8 @@ class PretorianClient:
             )
         if not response.is_success:
             self._handle_error(response)
-        return response.json()
+        result: dict[str, Any] = response.json()
+        return result
 
     async def link_evidence_to_control(
         self,
@@ -810,7 +829,7 @@ class PretorianClient:
             "framework_id": framework_id,
             "_provenance": _build_provenance(system_id, framework_id, control_id=normalized_cid),
         }
-        data = await self._request("POST", f"/systems/{system_id}/evidence/{evidence_id}/link", json=payload)
+        data = await self._request_dict("POST", f"/systems/{system_id}/evidence/{evidence_id}/link", json=payload)
         return data
 
     async def delete_evidence(self, system_id: str, evidence_id: str) -> None:
@@ -820,7 +839,7 @@ class PretorianClient:
             system_id: System ID the evidence belongs to.
             evidence_id: ID of the evidence item to delete.
         """
-        await self._request("DELETE", f"/systems/{system_id}/evidence/{evidence_id}")
+        await self._request_dict("DELETE", f"/systems/{system_id}/evidence/{evidence_id}")
 
     # =========================================================================
     # Narrative Endpoints
@@ -844,7 +863,7 @@ class PretorianClient:
         """
         params: dict[str, Any] = {"framework_id": framework_id}
         normalized_control_id = self._normalize_control_id(control_id)
-        data = await self._request(
+        data = await self._request_dict(
             "GET",
             f"/systems/{system_id}/controls/{normalized_control_id}/narrative",
             params=params,
@@ -873,7 +892,7 @@ class PretorianClient:
         """
         params: dict[str, Any] = {"framework_id": framework_id}
         normalized_control_id = self._normalize_control_id(control_id)
-        data = await self._request(
+        data = await self._request_dict(
             "GET",
             f"/systems/{system_id}/controls/{normalized_control_id}",
             params=params,
@@ -897,7 +916,7 @@ class PretorianClient:
             ControlContext with combined OSCAL + implementation data.
         """
         normalized_control_id = self._normalize_control_id(control_id)
-        data = await self._request(
+        data = await self._request_dict(
             "GET",
             f"/systems/{system_id}/controls/{normalized_control_id}/context",
             params={"framework_id": framework_id},
@@ -931,7 +950,7 @@ class PretorianClient:
             "is_ai_generated": is_ai_generated,
             "_provenance": _build_provenance(system_id, framework_id, control_id=normalized_control_id),
         }
-        data = await self._request(
+        data = await self._request_dict(
             "POST",
             f"/systems/{system_id}/controls/{normalized_control_id}/narrative",
             params={"framework_id": framework_id},
@@ -949,7 +968,7 @@ class PretorianClient:
         Returns:
             ScopeResponse with scope details.
         """
-        data = await self._request(
+        data = await self._request_dict(
             "GET",
             f"/systems/{system_id}/scope",
             params={"framework_id": framework_id},
@@ -963,7 +982,7 @@ class PretorianClient:
         updates: list[dict[str, Any]],
     ) -> ScopeResponse:
         """Apply partial scope questionnaire updates keyed by question ID."""
-        data = await self._request(
+        data = await self._request_dict(
             "PATCH",
             f"/systems/{system_id}/scope/qa",
             params={"framework_id": framework_id},
@@ -973,12 +992,12 @@ class PretorianClient:
 
     async def list_org_policies(self) -> OrgPolicyListResponse:
         """List org policies for the current token's organization."""
-        data = await self._request("GET", "/org-policies")
+        data = await self._request_dict("GET", "/org-policies")
         return OrgPolicyListResponse(**data)
 
     async def get_org_policy_questionnaire(self, policy_id: str) -> OrgPolicyQuestionnaireResponse:
         """Get canonical questionnaire state for one org policy."""
-        data = await self._request("GET", f"/org-policies/{policy_id}/qa")
+        data = await self._request_dict("GET", f"/org-policies/{policy_id}/qa")
         return OrgPolicyQuestionnaireResponse(**data)
 
     async def patch_org_policy_qa(
@@ -987,7 +1006,7 @@ class PretorianClient:
         updates: list[dict[str, Any]],
     ) -> OrgPolicyQuestionnaireResponse:
         """Apply partial org-policy questionnaire updates keyed by question ID."""
-        data = await self._request(
+        data = await self._request_dict(
             "PATCH",
             f"/org-policies/{policy_id}/qa",
             json={"updates": updates},
@@ -1020,7 +1039,7 @@ class PretorianClient:
             "source": source,
             "_provenance": _build_provenance(system_id, framework_id, control_id=normalized_control_id),
         }
-        data = await self._request(
+        data = await self._request_dict(
             "POST",
             f"/systems/{system_id}/controls/{normalized_control_id}/notes",
             params={"framework_id": framework_id},
@@ -1043,8 +1062,8 @@ class PretorianClient:
             params=params,
         )
         if isinstance(data, list):
-            return data
-        return data.get("notes", data.get("items", []))
+            return cast(list[dict[str, Any]], data)
+        return cast(list[dict[str, Any]], data.get("notes", data.get("items", [])))
 
     async def resolve_control_note(
         self,
@@ -1079,7 +1098,7 @@ class PretorianClient:
             payload["content"] = content
         if is_pinned is not None:
             payload["is_pinned"] = is_pinned
-        data = await self._request(
+        data = await self._request_dict(
             "PATCH",
             f"/systems/{system_id}/controls/{normalized_control_id}/notes/{note_id}",
             params={"framework_id": framework_id},
@@ -1111,7 +1130,7 @@ class PretorianClient:
             "status": status,
             "_provenance": _build_provenance(system_id, framework_id, control_id=normalized_control_id),
         }
-        data = await self._request(
+        data = await self._request_dict(
             "POST",
             f"/systems/{system_id}/controls/{normalized_control_id}/status",
             params=params,
@@ -1144,7 +1163,7 @@ class PretorianClient:
         event_data["_provenance"] = _build_provenance(system_id, event.framework_id)
         payload["event_data"] = event_data
 
-        data = await self._request(
+        data = await self._request_dict(
             "POST",
             f"/systems/{system_id}/monitoring/events",
             json=payload,
@@ -1159,7 +1178,7 @@ class PretorianClient:
         Returns:
             Dict with ``cli_model`` and ``default_model`` keys.
         """
-        return await self._request("GET", "/ai-settings")
+        return await self._request_dict("GET", "/ai-settings")
 
     # =========================================================================
     # Agentic Workflow Endpoints
@@ -1169,7 +1188,7 @@ class PretorianClient:
 
     async def get_workflow_state(self, system_id: str, framework_id: str) -> dict[str, Any]:
         """Get lifecycle state for a system+framework."""
-        return await self._request(
+        return await self._request_dict(
             "GET",
             f"/systems/{system_id}/workflow/state",
             params={"framework_id": framework_id},
@@ -1179,7 +1198,7 @@ class PretorianClient:
 
     async def get_pending_scope_questions(self, system_id: str, framework_id: str) -> dict[str, Any]:
         """Get pending scope questions for a system+framework."""
-        return await self._request(
+        return await self._request_dict(
             "GET",
             f"/systems/{system_id}/scope/questions/pending",
             params={"framework_id": framework_id},
@@ -1187,7 +1206,7 @@ class PretorianClient:
 
     async def get_scope_question_detail(self, system_id: str, question_id: str, framework_id: str) -> dict[str, Any]:
         """Get detail for a single scope question."""
-        return await self._request(
+        return await self._request_dict(
             "GET",
             f"/systems/{system_id}/scope/questions/{question_id}",
             params={"framework_id": framework_id},
@@ -1197,7 +1216,7 @@ class PretorianClient:
         self, system_id: str, question_id: str, answer: str | None, framework_id: str
     ) -> dict[str, Any]:
         """Submit an answer to a scope question."""
-        return await self._request(
+        return await self._request_dict(
             "PATCH",
             f"/systems/{system_id}/scope/questions/{question_id}",
             params={"framework_id": framework_id},
@@ -1206,7 +1225,7 @@ class PretorianClient:
 
     async def trigger_scope_generation(self, system_id: str, framework_id: str) -> dict[str, Any]:
         """Trigger AI scope generation for a system+framework."""
-        return await self._request(
+        return await self._request_dict(
             "POST",
             f"/systems/{system_id}/scope/generate",
             params={"framework_id": framework_id},
@@ -1214,7 +1233,7 @@ class PretorianClient:
 
     async def trigger_scope_review(self, system_id: str, framework_id: str) -> dict[str, Any]:
         """Trigger a scope review job for a system+framework."""
-        return await self._request(
+        return await self._request_dict(
             "POST",
             f"/systems/{system_id}/scope/reviews",
             params={"framework_id": framework_id},
@@ -1222,21 +1241,21 @@ class PretorianClient:
 
     async def get_scope_review_results(self, system_id: str, job_id: str) -> dict[str, Any]:
         """Get results of a scope review job."""
-        return await self._request("GET", f"/systems/{system_id}/scope/reviews/{job_id}")
+        return await self._request_dict("GET", f"/systems/{system_id}/scope/reviews/{job_id}")
 
     # --- Policy Workflow ---
 
     async def get_pending_policy_questions(self, policy_id: str) -> dict[str, Any]:
         """Get pending questions for an org policy."""
-        return await self._request("GET", f"/org-policies/{policy_id}/questions/pending")
+        return await self._request_dict("GET", f"/org-policies/{policy_id}/questions/pending")
 
     async def get_policy_question_detail(self, policy_id: str, question_id: str) -> dict[str, Any]:
         """Get detail for a single policy question."""
-        return await self._request("GET", f"/org-policies/{policy_id}/questions/{question_id}")
+        return await self._request_dict("GET", f"/org-policies/{policy_id}/questions/{question_id}")
 
     async def answer_policy_question(self, policy_id: str, question_id: str, answer: str | None) -> dict[str, Any]:
         """Submit an answer to a policy question."""
-        return await self._request(
+        return await self._request_dict(
             "PATCH",
             f"/org-policies/{policy_id}/questions/{question_id}",
             json={"answer": answer},
@@ -1247,7 +1266,7 @@ class PretorianClient:
         params: dict[str, str] = {}
         if system_id:
             params["system_id"] = system_id
-        return await self._request(
+        return await self._request_dict(
             "POST",
             f"/org-policies/{policy_id}/generate",
             params=params or None,
@@ -1255,25 +1274,25 @@ class PretorianClient:
 
     async def trigger_policy_review(self, policy_id: str) -> dict[str, Any]:
         """Trigger a policy review job."""
-        return await self._request("POST", f"/org-policies/{policy_id}/reviews")
+        return await self._request_dict("POST", f"/org-policies/{policy_id}/reviews")
 
     async def get_policy_review_results(self, policy_id: str, job_id: str) -> dict[str, Any]:
         """Get results of a policy review job."""
-        return await self._request("GET", f"/org-policies/{policy_id}/reviews/{job_id}")
+        return await self._request_dict("GET", f"/org-policies/{policy_id}/reviews/{job_id}")
 
     async def get_policy_workflow_state(self, policy_id: str) -> dict[str, Any]:
         """Get workflow state for an org policy."""
-        return await self._request("GET", f"/org-policies/{policy_id}/workflow-state")
+        return await self._request_dict("GET", f"/org-policies/{policy_id}/workflow-state")
 
     async def get_policy_analytics(self, policy_id: str) -> dict[str, Any]:
         """Get analytics for an org policy."""
-        return await self._request("GET", f"/org-policies/{policy_id}/analytics")
+        return await self._request_dict("GET", f"/org-policies/{policy_id}/analytics")
 
     # --- Control Family Workflow ---
 
     async def get_pending_families(self, system_id: str, framework_id: str) -> dict[str, Any]:
         """Get pending control families for a system+framework."""
-        return await self._request(
+        return await self._request_dict(
             "GET",
             f"/systems/{system_id}/controls/families/pending",
             params={"framework_id": framework_id},
@@ -1281,7 +1300,7 @@ class PretorianClient:
 
     async def get_family_bundle(self, system_id: str, family_id: str, framework_id: str) -> dict[str, Any]:
         """Get a control family bundle with all controls and context."""
-        return await self._request(
+        return await self._request_dict(
             "GET",
             f"/systems/{system_id}/controls/families/{family_id}",
             params={"framework_id": framework_id},
@@ -1289,7 +1308,7 @@ class PretorianClient:
 
     async def trigger_family_review(self, system_id: str, family_id: str, framework_id: str) -> dict[str, Any]:
         """Trigger a review job for a control family."""
-        return await self._request(
+        return await self._request_dict(
             "POST",
             f"/systems/{system_id}/controls/families/{family_id}/review",
             params={"framework_id": framework_id},
@@ -1297,13 +1316,13 @@ class PretorianClient:
 
     async def get_family_review_results(self, system_id: str, job_id: str) -> dict[str, Any]:
         """Get results of a control family review job."""
-        return await self._request("GET", f"/systems/{system_id}/controls/reviews/{job_id}")
+        return await self._request_dict("GET", f"/systems/{system_id}/controls/reviews/{job_id}")
 
     # --- Analytics ---
 
     async def get_analytics_summary(self, system_id: str, framework_id: str) -> dict[str, Any]:
         """Get analytics summary for a system+framework."""
-        return await self._request(
+        return await self._request_dict(
             "GET",
             f"/systems/{system_id}/analytics/summary",
             params={"framework_id": framework_id},
@@ -1311,7 +1330,7 @@ class PretorianClient:
 
     async def get_family_analytics(self, system_id: str, framework_id: str) -> dict[str, Any]:
         """Get per-family analytics for a system+framework."""
-        return await self._request(
+        return await self._request_dict(
             "GET",
             f"/systems/{system_id}/analytics/controls/families",
             params={"framework_id": framework_id},
@@ -1324,7 +1343,9 @@ class PretorianClient:
     async def list_vendors(self) -> list[dict[str, Any]]:
         """List all vendors for the current organization."""
         data = await self._request("GET", "/vendors")
-        return data if isinstance(data, list) else data.get("vendors", [])
+        if isinstance(data, list):
+            return cast(list[dict[str, Any]], data)
+        return cast(list[dict[str, Any]], data.get("vendors", []))
 
     async def create_vendor(
         self,
@@ -1339,19 +1360,19 @@ class PretorianClient:
             payload["description"] = description
         if authorization_level:
             payload["authorization_level"] = authorization_level
-        return await self._request("POST", "/vendors", json=payload)
+        return await self._request_dict("POST", "/vendors", json=payload)
 
     async def get_vendor(self, vendor_id: str) -> dict[str, Any]:
         """Get details for a specific vendor."""
-        return await self._request("GET", f"/vendors/{vendor_id}")
+        return await self._request_dict("GET", f"/vendors/{vendor_id}")
 
     async def update_vendor(self, vendor_id: str, **fields: Any) -> dict[str, Any]:
         """Update vendor fields."""
-        return await self._request("PATCH", f"/vendors/{vendor_id}", json=fields)
+        return await self._request_dict("PATCH", f"/vendors/{vendor_id}", json=fields)
 
     async def delete_vendor(self, vendor_id: str) -> None:
         """Delete a vendor."""
-        await self._request("DELETE", f"/vendors/{vendor_id}")
+        await self._request_dict("DELETE", f"/vendors/{vendor_id}")
 
     async def upload_vendor_document(
         self,
@@ -1385,12 +1406,15 @@ class PretorianClient:
             )
         if not response.is_success:
             self._handle_error(response)
-        return response.json()
+        upload_result: dict[str, Any] = response.json()
+        return upload_result
 
     async def list_vendor_documents(self, vendor_id: str) -> list[dict[str, Any]]:
         """List documents for a vendor."""
         data = await self._request("GET", f"/vendors/{vendor_id}/documents")
-        return data if isinstance(data, list) else data.get("documents", [])
+        if isinstance(data, list):
+            return cast(list[dict[str, Any]], data)
+        return cast(list[dict[str, Any]], data.get("documents", []))
 
     async def link_evidence_to_vendor(
         self,
@@ -1402,14 +1426,14 @@ class PretorianClient:
         payload: dict[str, Any] = {"vendor_provider_id": vendor_id}
         if attestation_type:
             payload["attestation_type"] = attestation_type
-        return await self._request("PATCH", f"/vendors/evidence/{evidence_id}/vendor", json=payload)
+        return await self._request_dict("PATCH", f"/vendors/evidence/{evidence_id}/vendor", json=payload)
 
     # --- Responsibility / Inheritance ---
 
     async def get_control_responsibility(self, system_id: str, control_id: str, framework_id: str) -> dict[str, Any]:
         """Get responsibility assignment for a control."""
         normalized = self._normalize_control_id(control_id)
-        return await self._request(
+        return await self._request_dict(
             "GET",
             f"/systems/{system_id}/controls/{normalized}/responsibility",
             params={"framework_id": framework_id},
@@ -1431,7 +1455,7 @@ class PretorianClient:
             payload["source_type"] = source_type
         if vendor_id:
             payload["vendor_provider_id"] = vendor_id
-        return await self._request(
+        return await self._request_dict(
             "POST",
             f"/systems/{system_id}/controls/{normalized}/responsibility",
             params={"framework_id": framework_id},
@@ -1441,7 +1465,7 @@ class PretorianClient:
     async def remove_control_responsibility(self, system_id: str, control_id: str, framework_id: str) -> None:
         """Remove responsibility assignment for a control."""
         normalized = self._normalize_control_id(control_id)
-        await self._request(
+        await self._request_dict(
             "DELETE",
             f"/systems/{system_id}/controls/{normalized}/responsibility",
             params={"framework_id": framework_id},
@@ -1450,18 +1474,20 @@ class PretorianClient:
     async def get_stale_edges(self, system_id: str) -> list[dict[str, Any]]:
         """Get stale responsibility edges for a system."""
         data = await self._request("GET", f"/systems/{system_id}/responsibility/stale")
-        return data if isinstance(data, list) else data.get("stale_edges", [])
+        if isinstance(data, list):
+            return cast(list[dict[str, Any]], data)
+        return cast(list[dict[str, Any]], data.get("stale_edges", []))
 
     async def sync_stale_edges(self, system_id: str) -> dict[str, Any]:
         """Sync stale responsibility edges for a system."""
-        return await self._request("POST", f"/systems/{system_id}/responsibility/sync")
+        return await self._request_dict("POST", f"/systems/{system_id}/responsibility/sync")
 
     async def generate_inheritance_narrative(
         self, system_id: str, control_id: str, framework_id: str
     ) -> dict[str, Any]:
         """Generate an inheritance narrative for a control."""
         normalized = self._normalize_control_id(control_id)
-        return await self._request(
+        return await self._request_dict(
             "POST",
             f"/systems/{system_id}/controls/{normalized}/responsibility/generate-narrative",
             params={"framework_id": framework_id},
@@ -1484,15 +1510,15 @@ class PretorianClient:
             params["nist_control_id"] = nist_control_id
         if status:
             params["status"] = status
-        return await self._request("GET", "/cci", params=params)
+        return await self._request_dict("GET", "/cci", params=params)
 
     async def get_cci(self, cci_id: str) -> dict[str, Any]:
         """Get CCI detail with linked SRGs and STIG rules."""
-        return await self._request("GET", f"/cci/{cci_id}")
+        return await self._request_dict("GET", f"/cci/{cci_id}")
 
     async def get_cci_chain(self, nist_control_id: str) -> dict[str, Any]:
         """Get full traceability chain: Control -> CCIs -> SRGs -> STIG rules."""
-        return await self._request("GET", f"/cci/chain/{nist_control_id}")
+        return await self._request_dict("GET", f"/cci/chain/{nist_control_id}")
 
     async def list_stigs(
         self,
@@ -1507,11 +1533,11 @@ class PretorianClient:
             params["technology_area"] = technology_area
         if product:
             params["product"] = product
-        return await self._request("GET", "/stigs", params=params)
+        return await self._request_dict("GET", "/stigs", params=params)
 
     async def get_stig(self, stig_id: str) -> dict[str, Any]:
         """Get single STIG benchmark detail by ID."""
-        return await self._request("GET", f"/stigs/{stig_id}")
+        return await self._request_dict("GET", f"/stigs/{stig_id}")
 
     async def list_stig_rules(
         self,
@@ -1527,20 +1553,20 @@ class PretorianClient:
             params["severity"] = severity
         if cci_id:
             params["cci_id"] = cci_id
-        return await self._request("GET", f"/stigs/{stig_id}/rules", params=params)
+        return await self._request_dict("GET", f"/stigs/{stig_id}/rules", params=params)
 
     async def get_stig_rule(self, stig_id: str, rule_id: str) -> dict[str, Any]:
         """Get full detail for a single STIG rule."""
-        return await self._request("GET", f"/stigs/{stig_id}/rules/{rule_id}")
+        return await self._request_dict("GET", f"/stigs/{stig_id}/rules/{rule_id}")
 
     async def get_test_manifest(self, system_id: str, stig_id: str | None = None) -> dict[str, Any]:
         """Get test manifest for CLI scan execution."""
         params = {"stig_id": stig_id} if stig_id else {}
-        return await self._request("GET", f"/systems/{system_id}/test-manifest", params=params)
+        return await self._request_dict("GET", f"/systems/{system_id}/test-manifest", params=params)
 
     async def get_stig_applicability(self, system_id: str) -> dict[str, Any]:
         """Get STIG applicability for a system."""
-        return await self._request("GET", f"/systems/{system_id}/stig-applicability")
+        return await self._request_dict("GET", f"/systems/{system_id}/stig-applicability")
 
     async def submit_test_results(
         self,
@@ -1550,7 +1576,7 @@ class PretorianClient:
         cli_version: str | None = None,
     ) -> dict[str, Any]:
         """Submit STIG test results from a scan."""
-        return await self._request(
+        return await self._request_dict(
             "POST",
             f"/systems/{system_id}/test-results",
             json={
@@ -1563,8 +1589,8 @@ class PretorianClient:
     async def get_cci_status(self, system_id: str, nist_control_id: str | None = None) -> dict[str, Any]:
         """Get CCI-level compliance status rollup for a system."""
         params = {"nist_control_id": nist_control_id} if nist_control_id else {}
-        return await self._request("GET", f"/systems/{system_id}/cci-status", params=params)
+        return await self._request_dict("GET", f"/systems/{system_id}/cci-status", params=params)
 
     async def infer_stigs(self, system_id: str) -> dict[str, Any]:
         """AI-infer applicable STIGs based on system profile."""
-        return await self._request("POST", f"/systems/{system_id}/infer-stigs")
+        return await self._request_dict("POST", f"/systems/{system_id}/infer-stigs")

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from pretorin.workflows.evidence_validation import (
     MAX_SNIPPET_BYTES,
     enrich_evidence_recommendations,

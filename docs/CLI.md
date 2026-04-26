@@ -231,47 +231,13 @@ Parameters:
   - ac-02_odp.05: personnel or roles
 ```
 
-### Get Full Control Details with References
-
-Add `--references` to include the statement text, guidance, and related controls:
+By default, the full control is shown including statement, guidance, AI guidance, and references. Use `--brief` to show only the basic info panel:
 
 ```bash
-$ pretorin frameworks control nist-800-53-r5 ac-02 --references
-[°~°] Looking up control details...
-╭─────────────────────────────── Control: AC-02 ───────────────────────────────╮
-│ ID: ac-02                                                                    │
-│ Title: Account Management                                                    │
-│ Class: SP800-53                                                              │
-│ Type: organizational                                                         │
-│                                                                              │
-│ AI Guidance: Available                                                       │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-Statement:
-╭──────────────────────────────────────────────────────────────────────────────╮
-│ a.. Define and document the types of accounts allowed and specifically       │
-│ prohibited for use within the system;                                        │
-│ b.. Assign account managers;                                                 │
-│ c.. Require {{ insert: param, ac-02_odp.01 }} for group and role membership; │
-│ ...                                                                          │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-Guidance:
-╭──────────────────────────────────────────────────────────────────────────────╮
-│ Examples of system account types include individual, shared, group, system,  │
-│ guest, anonymous, emergency, developer, temporary, and service. ...          │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-Related Controls:
-  AC-01, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-11
-
-Parameters:
-  - ac-02_odp.01: prerequisites and criteria
-  - ac-02_odp.02: attributes (as required)
-  - ac-02_odp.03: personnel or roles
-  - ac-02_odp.04: policy, procedures, prerequisites, and criteria
-  - ac-02_odp.05: personnel or roles
+pretorin frameworks control nist-800-53-r5 ac-02 --brief
 ```
+
+> **Note:** The `--references` flag is deprecated. References are now shown by default.
 
 ### Common Mistakes
 
@@ -406,10 +372,10 @@ The `evidence` command group manages local evidence files and syncs them to the 
 
 ```bash
 pretorin evidence create ac-02 fedramp-moderate \
-  --name "RBAC Configuration" --description "Role-based access control in Azure AD"
+  --name "RBAC Configuration" --description "Role-based access control in Azure AD" --type configuration
 ```
 
-Creates a markdown file under `evidence/<framework>/<control>/` with YAML frontmatter.
+Creates a markdown file under `evidence/<framework>/<control>/` with YAML frontmatter. The `--type` flag is required.
 
 ### List Local Evidence
 
@@ -464,6 +430,15 @@ pretorin evidence delete ev-abc123 --yes   # skip confirmation
 ```
 
 Permanently removes an evidence item and its associated embeddings. System-scoped, requires WRITE access.
+
+### Upload Evidence File
+
+```bash
+pretorin evidence upload screenshot.png ac-02 fedramp-moderate --name "MFA Screenshot" --type screenshot
+pretorin evidence upload config.yaml ac-06 fedramp-moderate --name "Auth Config" --type configuration
+```
+
+Uploads a file as evidence to the platform. Creates an evidence record with the uploaded file and links it to the specified control. The file's SHA-256 checksum is computed locally and verified server-side for integrity.
 
 ## Narrative Commands
 
@@ -684,6 +659,15 @@ pretorin policy show --policy "access-control-policy"
 
 Shows persisted policy questionnaire state and saved review findings. The `--policy` option accepts an ID, exact template ID, or unique exact name.
 
+### Populate Policy from Workspace
+
+```bash
+pretorin policy populate --policy "access-control-policy" --path ./src
+pretorin policy populate --policy "access-control-policy" --apply
+```
+
+Drafts stateful org-policy questionnaire updates from the current workspace. Use `--apply` to persist changed answers back to the platform.
+
 ## Scope Commands
 
 The `scope` command group manages scope questionnaire workflows.
@@ -708,7 +692,7 @@ Drafts stateful scope questionnaire updates from the current workspace. Use `--a
 
 ## Skill Commands
 
-The `skill` command group installs the Pretorin skill for AI coding agents.
+The `skill` command group installs and manages the Pretorin skill for AI coding agents.
 
 ### Install Skill
 
@@ -719,6 +703,29 @@ pretorin skill install --path ./custom-skills --force
 ```
 
 Installs the Pretorin compliance skill for AI agents (Claude Code, Codex). Omit `--agent` to install for all supported agents.
+
+### Uninstall Skill
+
+```bash
+pretorin skill uninstall
+pretorin skill uninstall --agent claude
+```
+
+### Skill Status
+
+```bash
+pretorin skill status
+```
+
+Shows which agents have the Pretorin skill installed.
+
+### List Known Agents
+
+```bash
+pretorin skill list-agents
+```
+
+Lists all known agents and their skill directories.
 
 ## Configuration
 
@@ -758,6 +765,7 @@ $ pretorin config path
 | `PRETORIN_PLATFORM_API_BASE_URL` | Platform REST API URL (default: `https://platform.pretorin.com/api/v1/public`) |
 | `PRETORIN_API_BASE_URL` | Backward-compatible alias for `PRETORIN_PLATFORM_API_BASE_URL` |
 | `PRETORIN_MODEL_API_BASE_URL` | Model API URL for agent/harness flows (default: `https://platform.pretorin.com/api/v1/public/model`) |
+| `PRETORIN_DISABLE_UPDATE_CHECK` | Disable passive update notifications |
 | `OPENAI_API_KEY` | Optional model key override for the agent runtime |
 
 ## Utilities
@@ -766,7 +774,7 @@ $ pretorin config path
 
 ```bash
 $ pretorin version
-pretorin version 0.8.1
+pretorin version 0.16.3
 ```
 
 ### Update
@@ -939,7 +947,7 @@ Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Ma
 | `pretorin frameworks get <id>` | Get framework details |
 | `pretorin frameworks families <id>` | List control families |
 | `pretorin frameworks controls <id>` | List controls (`--family`, `--limit`) |
-| `pretorin frameworks control <fw> <ctrl>` | Get control details (`--references`) |
+| `pretorin frameworks control <fw> <ctrl>` | Get control details (`--brief`) |
 | `pretorin frameworks documents <id>` | Get document requirements |
 | `pretorin frameworks family <fw> <family>` | Get control family details |
 | `pretorin frameworks metadata <id>` | Get per-control framework metadata |
@@ -959,6 +967,7 @@ Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Ma
 | `pretorin evidence search` | Search platform evidence |
 | `pretorin evidence upsert <ctrl> <fw>` | Find-or-create evidence and link it |
 | `pretorin evidence delete <eid>` | Delete an evidence item (`--yes`) |
+| `pretorin evidence upload <file> <ctrl> <fw>` | Upload a file as evidence (`--name`, `--type`) |
 | `pretorin narrative create` | Create a local narrative file |
 | `pretorin narrative list` | List local narrative files |
 | `pretorin narrative get <ctrl> <fw>` | Get current control narrative |
@@ -972,6 +981,7 @@ Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Ma
 | `pretorin monitoring push` | Push a monitoring event to a system |
 | `pretorin policy list` | List org policies for questionnaire work |
 | `pretorin policy show` | Show policy questionnaire state (`--policy`) |
+| `pretorin policy populate` | Draft policy updates from workspace (`--policy`, `--apply`) |
 | `pretorin scope show` | Show scope questionnaire state |
 | `pretorin scope populate` | Draft scope updates from workspace (`--apply`) |
 | `pretorin campaign controls` | Run bulk control campaign (`--mode`, `--family`, `--apply`) |
@@ -1009,6 +1019,9 @@ Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Ma
 | `pretorin review run` | Review code against a control |
 | `pretorin review status` | Check implementation status for a control |
 | `pretorin skill install` | Install Pretorin skill for AI agents (`--agent`) |
+| `pretorin skill uninstall` | Remove Pretorin skill from AI agents (`--agent`) |
+| `pretorin skill status` | Show which agents have the skill installed |
+| `pretorin skill list-agents` | List known agents and their skill directories |
 | `pretorin config list` | List all configuration |
 | `pretorin config get <key>` | Get a config value |
 | `pretorin config set <key> <value>` | Set a config value |

@@ -20,14 +20,10 @@ from pretorin.agent.mcp_config import MCPConfigManager, MCPServerConfig
 class TestSaveToFileJsonDecodeError:
     """Cover _save_to_file when file exists but contains invalid JSON."""
 
-    def test_save_to_file_with_corrupted_existing_file(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_save_to_file_with_corrupted_existing_file(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """When the existing file has a JSON decode error, it should reset to empty."""
         monkeypatch.chdir(tmp_path)
-        monkeypatch.setattr(
-            "pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json"
-        )
+        monkeypatch.setattr("pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json")
 
         # Write invalid JSON to the project config file
         config_file = tmp_path / ".pretorin-mcp.json"
@@ -42,14 +38,10 @@ class TestSaveToFileJsonDecodeError:
         names = [s["name"] for s in saved["servers"]]
         assert "new-srv" in names
 
-    def test_save_to_file_with_empty_existing_file(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_save_to_file_with_empty_existing_file(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """An empty file also triggers JSONDecodeError and should be handled."""
         monkeypatch.chdir(tmp_path)
-        monkeypatch.setattr(
-            "pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json"
-        )
+        monkeypatch.setattr("pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json")
 
         config_file = tmp_path / ".pretorin-mcp.json"
         config_file.write_text("")
@@ -66,14 +58,10 @@ class TestSaveToFileJsonDecodeError:
 class TestSaveToFileWithArgsAndEnv:
     """Cover _save_to_file when config has args (line 194) and env (line 196)."""
 
-    def test_save_includes_args(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_save_includes_args(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Config with args persists args field to JSON."""
         monkeypatch.chdir(tmp_path)
-        monkeypatch.setattr(
-            "pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json"
-        )
+        monkeypatch.setattr("pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json")
 
         mgr = MCPConfigManager()
         cfg = MCPServerConfig(
@@ -88,14 +76,10 @@ class TestSaveToFileWithArgsAndEnv:
         server_entry = saved["servers"][0]
         assert server_entry["args"] == ["mcp-server-github", "--verbose"]
 
-    def test_save_includes_env(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_save_includes_env(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Config with env persists env field to JSON."""
         monkeypatch.chdir(tmp_path)
-        monkeypatch.setattr(
-            "pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json"
-        )
+        monkeypatch.setattr("pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json")
 
         mgr = MCPConfigManager()
         cfg = MCPServerConfig(
@@ -110,14 +94,10 @@ class TestSaveToFileWithArgsAndEnv:
         server_entry = saved["servers"][0]
         assert server_entry["env"] == {"GITHUB_TOKEN": "ghp_test123", "DEBUG": "true"}
 
-    def test_save_includes_both_args_and_env(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_save_includes_both_args_and_env(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Config with both args and env persists both fields."""
         monkeypatch.chdir(tmp_path)
-        monkeypatch.setattr(
-            "pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json"
-        )
+        monkeypatch.setattr("pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json")
 
         mgr = MCPConfigManager()
         cfg = MCPServerConfig(
@@ -136,14 +116,10 @@ class TestSaveToFileWithArgsAndEnv:
         assert server_entry["command"] == "npx"
         assert server_entry["transport"] == "stdio"
 
-    def test_save_omits_empty_args_and_env(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_save_omits_empty_args_and_env(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Config without args/env should not include those keys in the JSON."""
         monkeypatch.chdir(tmp_path)
-        monkeypatch.setattr(
-            "pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json"
-        )
+        monkeypatch.setattr("pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json")
 
         mgr = MCPConfigManager()
         cfg = MCPServerConfig(
@@ -167,16 +143,12 @@ class TestRemoveFromFileJsonDecodeError:
     ) -> None:
         """When the config file has invalid JSON, _remove_from_file should return without error."""
         monkeypatch.chdir(tmp_path)
-        monkeypatch.setattr(
-            "pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json"
-        )
+        monkeypatch.setattr("pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json")
 
         # First create a valid config with a server
         config_file = tmp_path / ".pretorin-mcp.json"
         config_file.write_text(
-            json.dumps(
-                {"servers": [{"name": "srv-to-remove", "transport": "stdio", "command": "echo"}]}
-            )
+            json.dumps({"servers": [{"name": "srv-to-remove", "transport": "stdio", "command": "echo"}]})
         )
 
         mgr = MCPConfigManager()
@@ -193,22 +165,14 @@ class TestRemoveFromFileJsonDecodeError:
         # The corrupted file should remain unchanged (not overwritten)
         assert config_file.read_text() == "NOT VALID JSON {{{"
 
-    def test_remove_from_empty_file_returns_gracefully(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_remove_from_empty_file_returns_gracefully(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """When the config file is empty, _remove_from_file returns without error."""
         monkeypatch.chdir(tmp_path)
-        monkeypatch.setattr(
-            "pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json"
-        )
+        monkeypatch.setattr("pretorin.agent.mcp_config.GLOBAL_CONFIG_FILE", tmp_path / "global.json")
 
         # Create valid config first for in-memory loading
         config_file = tmp_path / ".pretorin-mcp.json"
-        config_file.write_text(
-            json.dumps(
-                {"servers": [{"name": "test-srv", "transport": "stdio", "command": "run"}]}
-            )
-        )
+        config_file.write_text(json.dumps({"servers": [{"name": "test-srv", "transport": "stdio", "command": "run"}]}))
 
         mgr = MCPConfigManager()
 

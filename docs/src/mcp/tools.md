@@ -1,6 +1,6 @@
 # MCP Tool Reference
 
-The MCP server provides 86 tools organized by category.
+The MCP server provides 87 tools organized by category.
 
 ## Framework & Control Reference
 
@@ -176,8 +176,8 @@ Upsert evidence on the platform (find-or-create by default). If `dedupe` is true
 **Parameters:**
 - `name` (required)
 - `description` (required) — Must be auditor-ready markdown (no headings, at least one rich element, no images)
+- `evidence_type` (required) — Must be one of the canonical evidence types
 - `system_id` (optional) — Defaults to active scope
-- `evidence_type` (optional) — Default: `policy_document`
 - `control_id` (optional)
 - `framework_id` (optional)
 - `dedupe` (optional) — Default: `true`
@@ -214,6 +214,23 @@ Link an existing evidence item to a control.
 - `framework_id` (optional)
 
 **Returns:** Link confirmation.
+
+---
+
+### pretorin_upload_evidence
+
+Upload a file as evidence to the platform (system-scoped, requires WRITE access).
+
+**Parameters:**
+- `file_path` (required) — Absolute path to the file to upload
+- `name` (required) — Evidence name
+- `system_id` (optional) — Defaults to active scope
+- `evidence_type` (optional) — Default: `other`
+- `description` (optional) — Evidence description
+- `control_id` (optional)
+- `framework_id` (optional)
+
+**Returns:** Uploaded evidence record.
 
 ---
 
@@ -737,7 +754,7 @@ Claim items for drafting with TTL-based leases. Safe for fan-out to multiple age
 
 **Parameters:**
 - `checkpoint_path` (required) — Local campaign checkpoint path
-- `lease_owner` (required) — Stable identifier for the claiming agent
+- `lease_owner` (optional) — Stable identifier for the claiming agent
 - `max_items` (optional) — Number of items to claim. Default: `1`
 - `lease_ttl_seconds` (optional) — Lease time-to-live. Default: `300`
 
@@ -906,7 +923,7 @@ Create or update an inheritance edge for a control.
 - `control_id` (required)
 - `framework_id` (required)
 - `responsibility_mode` (required) — `inherited` or `shared`
-- `source_type` (required) — `provider`, `internal`, or `hybrid`
+- `source_type` (optional) — `provider`, `internal`, or `hybrid`
 - `vendor_id` (optional) — Vendor providing the inherited control
 
 **Returns:** Created responsibility edge.

@@ -27,9 +27,18 @@ pretorin context set
 
 # Explicit
 pretorin context set --system "My Application" --framework nist-800-53-r5
+
+# Skip automatic source verification after setting context
+pretorin context set --system "My Application" --framework nist-800-53-r5 --no-verify
 ```
 
-Pretorin stores the canonical system ID for stability and also caches the last known system name for display. If you change API keys or platform endpoints with `pretorin login`, the stored active context is cleared automatically so old scope does not leak into the new environment.
+| Option | Description |
+|--------|-------------|
+| `--system` / `-s` | System name or ID |
+| `--framework` / `-f` | Framework ID (e.g., `fedramp-moderate`) |
+| `--no-verify` | Skip source verification after setting context |
+
+Pretorin stores the canonical system ID for stability and also caches the last known system name for display. After setting context, source verification runs automatically unless `--no-verify` is passed. If you change API keys or platform endpoints with `pretorin login`, the stored active context is cleared automatically so old scope does not leak into the new environment.
 
 ## Show Current Context
 

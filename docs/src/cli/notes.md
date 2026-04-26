@@ -44,7 +44,14 @@ pretorin notes list ac-02 fedramp-moderate --system "My System"
 ```bash
 pretorin notes add ac-02 fedramp-moderate \
   --content "Gap: Missing SSO evidence. Manual next step: collect IdP configuration screenshots."
+
+pretorin notes add ac-02 fedramp-moderate \
+  --content "MFA verified" --system "My System"
 ```
+
+Options:
+- `--content / -c` — Note content (required)
+- `--system / -s` — System name or ID (uses active context if omitted)
 
 ## Resolve or Reopen a Note
 

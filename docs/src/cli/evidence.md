@@ -45,6 +45,27 @@ pretorin evidence search --control-id ac-02 --framework-id fedramp-moderate
 pretorin evidence search --system "My Application" --framework-id fedramp-moderate --limit 100
 ```
 
+## Upload Evidence File
+
+Upload a file directly as evidence:
+
+```bash
+pretorin evidence upload screenshot.png ac-02 fedramp-moderate \
+  --name "MFA Screenshot" --type screenshot
+
+pretorin evidence upload config.yaml ac-06 fedramp-moderate \
+  --name "Auth Config" --type configuration --description "IdP auth config"
+```
+
+Creates an evidence record with the uploaded file and links it to the specified control. The file's SHA-256 checksum is computed locally and verified server-side for integrity.
+
+| Option | Description |
+|--------|-------------|
+| `--name` / `-n` | Evidence name (required) |
+| `--type` / `-t` | Evidence type (default: `other`) |
+| `--description` / `-d` | Evidence description |
+| `--system` / `-s` | System name or ID (uses active context if omitted) |
+
 ## Upsert Evidence
 
 Find-or-create evidence and link it to a control:
@@ -57,6 +78,19 @@ pretorin evidence upsert ac-02 fedramp-moderate \
 ```
 
 This searches for an exact match on (name + description + type + control + framework) within the active system scope. If found, it reuses the existing item; otherwise, it creates a new one. It then ensures the evidence is linked to the specified control.
+
+### Code Context Options
+
+When upserting evidence, you can attach source code context:
+
+| Option | Description |
+|--------|-------------|
+| `--code-file` | Path to source file |
+| `--code-lines` | Line range (e.g., `10-25`) |
+| `--code-repo` | Git repository URL |
+| `--code-commit` | Git commit hash |
+
+If `--code-repo` or `--code-commit` are not provided, the CLI auto-populates them from the attested source verification snapshot when available.
 
 ## Link Evidence to a Control
 
@@ -81,12 +115,16 @@ pretorin evidence delete ev-abc123
 pretorin evidence delete ev-abc123 --yes
 
 # Explicit system scope
-pretorin evidence delete ev-abc123 --system "My Application" --yes
+pretorin evidence delete ev-abc123 --system "My Application" --framework-id fedramp-moderate --yes
 ```
 
 Permanently deletes an evidence item from the platform. This is system-scoped and requires `WRITE` access. Associated evidence embeddings are removed as part of the delete lifecycle.
 
-Use `--yes` to skip the confirmation prompt in non-interactive or automation workflows.
+| Option | Description |
+|--------|-------------|
+| `--system` / `-s` | System name or ID (uses active context if omitted) |
+| `--framework-id` / `-f` | Framework ID (uses active context if omitted) |
+| `--yes` / `-y` | Skip confirmation prompt |
 
 ## Evidence Types
 

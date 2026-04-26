@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -43,9 +43,7 @@ def _make_client(*, is_configured: bool = True) -> AsyncMock:
 def _mock_scoped_client(client: AsyncMock) -> None:
     """Configure list_systems / get_system_compliance_status / get_system on client."""
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary"}])
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]})
     client.get_system = AsyncMock(return_value=SimpleNamespace(name="Primary"))
 
 
@@ -60,12 +58,14 @@ def _run_push(
     ctx.__aenter__ = AsyncMock(return_value=client)
     ctx.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("pretorin.client.api.PretorianClient", return_value=ctx), \
-         patch(
-             "pretorin.cli.context.resolve_execution_context",
-             new_callable=AsyncMock,
-             return_value=resolved_context,
-         ):
+    with (
+        patch("pretorin.client.api.PretorianClient", return_value=ctx),
+        patch(
+            "pretorin.cli.context.resolve_execution_context",
+            new_callable=AsyncMock,
+            return_value=resolved_context,
+        ),
+    ):
         return runner.invoke(app, args)
 
 
@@ -85,10 +85,14 @@ class TestMonitoringPushHappyPath:
 
         result = _run_push(
             [
-                "monitoring", "push",
-                "--title", "Nightly scan complete",
-                "--severity", "high",
-                "--control", "sc-07",
+                "monitoring",
+                "push",
+                "--title",
+                "Nightly scan complete",
+                "--severity",
+                "high",
+                "--control",
+                "sc-07",
             ],
             client,
         )
@@ -104,9 +108,12 @@ class TestMonitoringPushHappyPath:
 
         result = _run_push(
             [
-                "monitoring", "push",
-                "--title", "Informational event",
-                "--severity", "info",
+                "monitoring",
+                "push",
+                "--title",
+                "Informational event",
+                "--severity",
+                "info",
             ],
             client,
         )
@@ -121,10 +128,14 @@ class TestMonitoringPushHappyPath:
 
         result = _run_push(
             [
-                "monitoring", "push",
-                "--title", "Config drift detected",
-                "--severity", "medium",
-                "--control", "cm-06",
+                "monitoring",
+                "push",
+                "--title",
+                "Config drift detected",
+                "--severity",
+                "medium",
+                "--control",
+                "cm-06",
             ],
             client,
         )
@@ -140,10 +151,14 @@ class TestMonitoringPushHappyPath:
 
         result = _run_push(
             [
-                "monitoring", "push",
-                "--title", "Access review",
-                "--severity", "low",
-                "--description", "Quarterly access review completed with no anomalies.",
+                "monitoring",
+                "push",
+                "--title",
+                "Access review",
+                "--severity",
+                "low",
+                "--description",
+                "Quarterly access review completed with no anomalies.",
             ],
             client,
         )
@@ -167,9 +182,12 @@ class TestMonitoringPushInvalidSeverity:
 
         result = _run_push(
             [
-                "monitoring", "push",
-                "--title", "Test event",
-                "--severity", "catastrophic",
+                "monitoring",
+                "push",
+                "--title",
+                "Test event",
+                "--severity",
+                "catastrophic",
             ],
             client,
         )
@@ -185,9 +203,12 @@ class TestMonitoringPushInvalidSeverity:
 
         result = _run_push(
             [
-                "monitoring", "push",
-                "--title", "Bad severity",
-                "--severity", "extreme",
+                "monitoring",
+                "push",
+                "--title",
+                "Bad severity",
+                "--severity",
+                "extreme",
             ],
             client,
         )
@@ -214,10 +235,14 @@ class TestMonitoringPushUpdateControlStatus:
 
         result = _run_push(
             [
-                "monitoring", "push",
-                "--title", "Patch applied",
-                "--severity", "high",
-                "--control", "si-02",
+                "monitoring",
+                "push",
+                "--title",
+                "Patch applied",
+                "--severity",
+                "high",
+                "--control",
+                "si-02",
                 "--update-control-status",
             ],
             client,
@@ -240,9 +265,12 @@ class TestMonitoringPushUpdateControlStatus:
 
         result = _run_push(
             [
-                "monitoring", "push",
-                "--title", "No control event",
-                "--severity", "low",
+                "monitoring",
+                "push",
+                "--title",
+                "No control event",
+                "--severity",
+                "low",
                 "--update-control-status",
             ],
             client,
@@ -262,10 +290,14 @@ class TestMonitoringPushUpdateControlStatus:
 
         result = _run_push(
             [
-                "monitoring", "push",
-                "--title", "Patch scan",
-                "--severity", "critical",
-                "--control", "si-02",
+                "monitoring",
+                "push",
+                "--title",
+                "Patch scan",
+                "--severity",
+                "critical",
+                "--control",
+                "si-02",
                 "--update-control-status",
             ],
             client,
@@ -293,10 +325,14 @@ class TestMonitoringPushJsonMode:
         result = _run_push(
             [
                 "--json",
-                "monitoring", "push",
-                "--title", "JSON mode test",
-                "--severity", "high",
-                "--control", "ac-02",
+                "monitoring",
+                "push",
+                "--title",
+                "JSON mode test",
+                "--severity",
+                "high",
+                "--control",
+                "ac-02",
             ],
             client,
         )
@@ -320,10 +356,14 @@ class TestMonitoringPushJsonMode:
         result = _run_push(
             [
                 "--json",
-                "monitoring", "push",
-                "--title", "Status update event",
-                "--severity", "medium",
-                "--control", "cm-06",
+                "monitoring",
+                "push",
+                "--title",
+                "Status update event",
+                "--severity",
+                "medium",
+                "--control",
+                "cm-06",
                 "--update-control-status",
             ],
             client,
@@ -342,9 +382,12 @@ class TestMonitoringPushJsonMode:
         result = _run_push(
             [
                 "--json",
-                "monitoring", "push",
-                "--title", "No control JSON",
-                "--severity", "info",
+                "monitoring",
+                "push",
+                "--title",
+                "No control JSON",
+                "--severity",
+                "info",
                 "--update-control-status",
             ],
             client,
@@ -373,9 +416,12 @@ class TestMonitoringPushErrors:
 
         result = _run_push(
             [
-                "monitoring", "push",
-                "--title", "Will fail",
-                "--severity", "high",
+                "monitoring",
+                "push",
+                "--title",
+                "Will fail",
+                "--severity",
+                "high",
             ],
             client,
         )
@@ -391,18 +437,23 @@ class TestMonitoringPushErrors:
         ctx.__aenter__ = AsyncMock(return_value=client)
         ctx.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("pretorin.client.api.PretorianClient", return_value=ctx), \
-             patch(
-                 "pretorin.cli.context.resolve_execution_context",
-                 new_callable=AsyncMock,
-                 side_effect=PretorianClientError("No active system configured", status_code=400),
-             ):
+        with (
+            patch("pretorin.client.api.PretorianClient", return_value=ctx),
+            patch(
+                "pretorin.cli.context.resolve_execution_context",
+                new_callable=AsyncMock,
+                side_effect=PretorianClientError("No active system configured", status_code=400),
+            ),
+        ):
             result = runner.invoke(
                 app,
                 [
-                    "monitoring", "push",
-                    "--title", "Scope error event",
-                    "--severity", "high",
+                    "monitoring",
+                    "push",
+                    "--title",
+                    "Scope error event",
+                    "--severity",
+                    "high",
                 ],
             )
 
@@ -417,9 +468,12 @@ class TestMonitoringPushErrors:
 
         result = _run_push(
             [
-                "monitoring", "push",
-                "--title", "Case test",
-                "--severity", "HIGH",
+                "monitoring",
+                "push",
+                "--title",
+                "Case test",
+                "--severity",
+                "HIGH",
             ],
             client,
         )
