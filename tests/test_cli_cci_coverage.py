@@ -355,9 +355,13 @@ def test_cci_chain_with_system_status() -> None:
         }
     )
 
-    result = _run_with_mock_client(
-        ["cci", "chain", "ac-2", "--system", "Primary"], client
-    )
+    with patch(
+        "pretorin.cli.context.resolve_execution_context",
+        new=AsyncMock(return_value=("sys-1", "fedramp-moderate")),
+    ):
+        result = _run_with_mock_client(
+            ["cci", "chain", "ac-2", "--system", "Primary"], client
+        )
 
     assert result.exit_code == 0, result.output
     assert "CCI-000015" in result.output
