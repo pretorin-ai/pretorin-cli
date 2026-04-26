@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f208bc4c.js";
+            window.path_to_searchindex_js = "../searchindex-6c481a73.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -201,8 +201,23 @@ pretorin context set
 
 # Explicit
 pretorin context set --system "My Application" --framework nist-800-53-r5
+
+# Skip automatic source verification after setting context
+pretorin context set --system "My Application" --framework nist-800-53-r5 --no-verify
 </code></pre>
-<p>Pretorin stores the canonical system ID for stability and also caches the last known system name for display. If you change API keys or platform endpoints with <code>pretorin login</code>, the stored active context is cleared automatically so old scope does not leak into the new environment.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID</td></tr>
+<tr><td><code>--framework</code> / <code>-f</code></td><td>Framework ID (e.g., <code>fedramp-moderate</code>)</td></tr>
+<tr><td><code>--no-verify</code></td><td>Skip source verification after setting context</td></tr>
+</tbody>
+</table>
+</div>
+<p>Pretorin stores the canonical system ID for stability and also caches the last known system name for display. After setting context, source verification runs automatically unless <code>--no-verify</code> is passed. If you change API keys or platform endpoints with <code>pretorin login</code>, the stored active context is cleared automatically so old scope does not leak into the new environment.</p>
 <h2 id="show-current-context"><a class="header" href="#show-current-context">Show Current Context</a></h2>
 <pre><code class="language-bash">$ pretorin context show
 ╭──────────────────────── Active Context ─────────────────────────╮

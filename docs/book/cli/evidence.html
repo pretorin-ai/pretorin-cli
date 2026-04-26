@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f208bc4c.js";
+            window.path_to_searchindex_js = "../searchindex-6c481a73.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -209,6 +209,28 @@ pretorin evidence search --control-id ac-02 --framework-id fedramp-moderate
 # Search by system
 pretorin evidence search --system "My Application" --framework-id fedramp-moderate --limit 100
 </code></pre>
+<h2 id="upload-evidence-file"><a class="header" href="#upload-evidence-file">Upload Evidence File</a></h2>
+<p>Upload a file directly as evidence:</p>
+<pre><code class="language-bash">pretorin evidence upload screenshot.png ac-02 fedramp-moderate \
+  --name "MFA Screenshot" --type screenshot
+
+pretorin evidence upload config.yaml ac-06 fedramp-moderate \
+  --name "Auth Config" --type configuration --description "IdP auth config"
+</code></pre>
+<p>Creates an evidence record with the uploaded file and links it to the specified control. The file’s SHA-256 checksum is computed locally and verified server-side for integrity.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--name</code> / <code>-n</code></td><td>Evidence name (required)</td></tr>
+<tr><td><code>--type</code> / <code>-t</code></td><td>Evidence type (default: <code>other</code>)</td></tr>
+<tr><td><code>--description</code> / <code>-d</code></td><td>Evidence description</td></tr>
+<tr><td><code>--system</code> / <code>-s</code></td><td>System name or ID (uses active context if omitted)</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="upsert-evidence"><a class="header" href="#upsert-evidence">Upsert Evidence</a></h2>
 <p>Find-or-create evidence and link it to a control:</p>
 <pre><code class="language-bash">pretorin evidence upsert ac-02 fedramp-moderate \
@@ -217,6 +239,22 @@ pretorin evidence search --system "My Application" --framework-id fedramp-modera
   --type configuration
 </code></pre>
 <p>This searches for an exact match on (name + description + type + control + framework) within the active system scope. If found, it reuses the existing item; otherwise, it creates a new one. It then ensures the evidence is linked to the specified control.</p>
+<h3 id="code-context-options"><a class="header" href="#code-context-options">Code Context Options</a></h3>
+<p>When upserting evidence, you can attach source code context:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--code-file</code></td><td>Path to source file</td></tr>
+<tr><td><code>--code-lines</code></td><td>Line range (e.g., <code>10-25</code>)</td></tr>
+<tr><td><code>--code-repo</code></td><td>Git repository URL</td></tr>
+<tr><td><code>--code-commit</code></td><td>Git commit hash</td></tr>
+</tbody>
+</table>
+</div>
+<p>If <code>--code-repo</code> or <code>--code-commit</code> are not provided, the CLI auto-populates them from the attested source verification snapshot when available.</p>
 <h2 id="link-evidence-to-a-control"><a class="header" href="#link-evidence-to-a-control">Link Evidence to a Control</a></h2>
 <p>Link an existing platform evidence item to a control:</p>
 <pre><code class="language-bash">pretorin evidence link ev-abc123 ac-02

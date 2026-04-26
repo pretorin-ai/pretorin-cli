@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f208bc4c.js";
+            window.path_to_searchindex_js = "../searchindex-6c481a73.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -189,6 +189,7 @@
 </thead>
 <tbody>
 <tr><td><code>--json</code></td><td>JSON output mode for scripting and AI agents</td></tr>
+<tr><td><code>--version</code>, <code>-V</code></td><td>Show version and exit</td></tr>
 <tr><td><code>--help</code></td><td>Show command help</td></tr>
 </tbody>
 </table>
@@ -204,7 +205,7 @@
 <tr><td><code>pretorin logout</code></td><td>Clear stored credentials</td></tr>
 <tr><td><code>pretorin whoami</code></td><td>Display authentication status</td></tr>
 <tr><td><code>pretorin version</code></td><td>Show CLI version</td></tr>
-<tr><td><code>pretorin update</code></td><td>Update to latest version</td></tr>
+<tr><td><code>pretorin update [VERSION]</code></td><td>Update to latest version, or a specific version</td></tr>
 <tr><td><code>pretorin mcp-serve</code></td><td>Start the MCP server (stdio transport)</td></tr>
 </tbody>
 </table>
@@ -220,7 +221,7 @@
 <tr><td><code>pretorin frameworks get &lt;id&gt;</code></td><td>Get framework details</td></tr>
 <tr><td><code>pretorin frameworks families &lt;id&gt;</code></td><td>List control families</td></tr>
 <tr><td><code>pretorin frameworks family &lt;fw&gt; &lt;family&gt;</code></td><td>Get control family details</td></tr>
-<tr><td><code>pretorin frameworks controls &lt;id&gt;</code></td><td>List controls (<code>--family/-f</code>, <code>--limit/-n</code>)</td></tr>
+<tr><td><code>pretorin frameworks controls &lt;id&gt; [FAMILY_ID]</code></td><td>List controls (<code>--family/-f</code>, <code>--limit/-n</code>)</td></tr>
 <tr><td><code>pretorin frameworks control &lt;fw&gt; &lt;ctrl&gt;</code></td><td>Get control details (<code>--brief/-b</code>)</td></tr>
 <tr><td><code>pretorin frameworks documents &lt;id&gt;</code></td><td>Get document requirements</td></tr>
 <tr><td><code>pretorin frameworks metadata &lt;id&gt;</code></td><td>Get per-control framework metadata</td></tr>
@@ -267,7 +268,8 @@
 <tr><td><code>pretorin evidence list</code></td><td>List local evidence files (<code>--framework/-f</code>)</td></tr>
 <tr><td><code>pretorin evidence push</code></td><td>Push local evidence to the platform (<code>--dry-run</code>)</td></tr>
 <tr><td><code>pretorin evidence search</code></td><td>Search platform evidence (<code>--control-id/-c</code>, <code>--framework-id/-f</code>, <code>--system/-s</code>, <code>--limit/-n</code>)</td></tr>
-<tr><td><code>pretorin evidence upsert &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Find-or-create evidence and link it (<code>--name/-n</code>, <code>--description/-d</code>, <code>--type/-t</code>, <code>--system/-s</code>)</td></tr>
+<tr><td><code>pretorin evidence upsert &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Find-or-create evidence and link it (<code>--name/-n</code>, <code>--description/-d</code>, <code>--type/-t</code>, <code>--system/-s</code>, <code>--code-file</code>, <code>--code-lines</code>, <code>--code-repo</code>, <code>--code-commit</code>)</td></tr>
+<tr><td><code>pretorin evidence upload &lt;file&gt; &lt;ctrl&gt; &lt;fw&gt;</code></td><td>Upload a file as evidence (<code>--name/-n</code>, <code>--type/-t</code>, <code>--description/-d</code>, <code>--system/-s</code>)</td></tr>
 <tr><td><code>pretorin evidence link &lt;evidence_id&gt; &lt;ctrl&gt;</code></td><td>Link evidence to a control (<code>--framework-id/-f</code>, <code>--system/-s</code>)</td></tr>
 <tr><td><code>pretorin evidence delete &lt;evidence_id&gt;</code></td><td>Delete an evidence item (<code>--system/-s</code>, <code>--framework-id/-f</code>, <code>--yes/-y</code>)</td></tr>
 </tbody>
@@ -352,7 +354,7 @@
 <tr><td><code>pretorin agent version</code></td><td>Show pinned Codex version and install status</td></tr>
 <tr><td><code>pretorin agent skills</code></td><td>List available agent skills</td></tr>
 <tr><td><code>pretorin agent mcp-list</code></td><td>List configured MCP servers for the agent</td></tr>
-<tr><td><code>pretorin agent mcp-add &lt;name&gt; &lt;transport&gt; &lt;cmd&gt;</code></td><td>Add an MCP server configuration (<code>--arg</code>, <code>--scope</code>)</td></tr>
+<tr><td><code>pretorin agent mcp-add &lt;name&gt; &lt;transport&gt; &lt;cmd&gt;</code></td><td>Add an MCP server configuration (<code>--arg/-a</code>, <code>--scope</code>)</td></tr>
 <tr><td><code>pretorin agent mcp-remove &lt;name&gt;</code></td><td>Remove an MCP server configuration</td></tr>
 </tbody>
 </table>
@@ -379,7 +381,7 @@
 </thead>
 <tbody>
 <tr><td><code>pretorin review run</code></td><td>Review code against a control (<code>--control-id/-c</code>, <code>--framework-id/-f</code>, <code>--system/-s</code>, <code>--path/-p</code>, <code>--local</code>, <code>--output-dir/-o</code>)</td></tr>
-<tr><td><code>pretorin review status</code></td><td>Check implementation status for a control (<code>--control-id/-c</code>, <code>--system/-s</code>)</td></tr>
+<tr><td><code>pretorin review status</code></td><td>Check implementation status for a control (<code>--control-id/-c</code>, <code>--framework-id/-f</code>, <code>--system/-s</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -439,8 +441,8 @@
 <tr><td><code>pretorin vendor create &lt;name&gt;</code></td><td>Create a vendor (<code>--type/-t</code>, <code>--description/-d</code>, <code>--authorization-level/-a</code>)</td></tr>
 <tr><td><code>pretorin vendor get &lt;vendor_id&gt;</code></td><td>Get vendor details</td></tr>
 <tr><td><code>pretorin vendor update &lt;vendor_id&gt;</code></td><td>Update vendor fields (<code>--name</code>, <code>--description/-d</code>, <code>--type/-t</code>, <code>--authorization-level/-a</code>)</td></tr>
-<tr><td><code>pretorin vendor delete &lt;vendor_id&gt;</code></td><td>Delete a vendor (<code>--yes/-y</code>)</td></tr>
-<tr><td><code>pretorin vendor upload-doc &lt;vendor_id&gt; &lt;file&gt;</code></td><td>Upload a vendor evidence document (<code>--name</code>, <code>--description</code>, <code>--attestation-type</code>)</td></tr>
+<tr><td><code>pretorin vendor delete &lt;vendor_id&gt;</code></td><td>Delete a vendor (<code>--force/-f</code>)</td></tr>
+<tr><td><code>pretorin vendor upload-doc &lt;vendor_id&gt; &lt;file&gt;</code></td><td>Upload a vendor evidence document (<code>--name/-n</code>, <code>--description/-d</code>, <code>--attestation-type</code>)</td></tr>
 <tr><td><code>pretorin vendor list-docs &lt;vendor_id&gt;</code></td><td>List documents linked to a vendor</td></tr>
 </tbody>
 </table>
