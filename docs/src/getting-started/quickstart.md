@@ -84,8 +84,8 @@ Look up STIG benchmarks, rules, and CCI traceability:
 # List available STIG benchmarks
 pretorin stig list
 
-# View a specific STIG rule
-pretorin stig rule <rule-id>
+# View STIG benchmark details
+pretorin stig show <stig_id>
 
 # Trace a CCI to its parent controls
 pretorin cci chain <cci-id>

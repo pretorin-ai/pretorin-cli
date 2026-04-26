@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b18112d0.js";
+            window.path_to_searchindex_js = "../searchindex-a2343a59.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -231,8 +231,8 @@ claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 <pre><code class="language-bash"># List available STIG benchmarks
 pretorin stig list
 
-# View a specific STIG rule
-pretorin stig rule &lt;rule-id&gt;
+# View STIG benchmark details
+pretorin stig show &lt;stig_id&gt;
 
 # Trace a CCI to its parent controls
 pretorin cci chain &lt;cci-id&gt;
