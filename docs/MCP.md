@@ -158,7 +158,7 @@ Restart the application to load the new MCP server.
 
 ## Available Tools
 
-The MCP server provides 86 tools organized by category.
+The MCP server provides 87 tools organized by category.
 
 ### Framework & Control Reference
 
@@ -190,6 +190,7 @@ The MCP server provides 86 tools organized by category.
 | `pretorin_search_evidence` | Search current evidence items |
 | `pretorin_create_evidence` | Upsert evidence (find-or-create by default) |
 | `pretorin_create_evidence_batch` | Create and link multiple evidence items in one scoped request |
+| `pretorin_upload_evidence` | Upload a file as evidence to the platform (system-scoped, requires WRITE access) |
 | `pretorin_link_evidence` | Link an existing evidence item to a control |
 | `pretorin_delete_evidence` | Delete an evidence item (system-scoped, requires WRITE access) |
 
@@ -710,6 +711,25 @@ Link an existing evidence item to a control.
 
 ---
 
+#### pretorin_upload_evidence
+
+Upload a file as evidence to the platform (system-scoped, requires WRITE access).
+
+**Parameters:**
+- `file_path` (required): Absolute path to the file to upload
+- `name` (required): Evidence name
+- `evidence_type` (optional): Type of evidence (default: `other`)
+- `description` (optional): Evidence description
+- `control_id` (optional): Associated control
+- `system_id` (optional): Defaults to active scope
+- `framework_id` (optional): Defaults to active scope
+
+**Returns:** Upload confirmation with evidence ID.
+
+**Example prompt:** "Upload the scan report at /tmp/scan.pdf as evidence for SC-07"
+
+---
+
 #### pretorin_get_control_notes
 
 Get notes for a control implementation in a system.
@@ -817,6 +837,8 @@ The MCP server also exposes resources for analysis guidance:
 | `analysis://schema` | JSON schema for compliance artifacts |
 | `analysis://guide/{framework_id}` | Analysis guide for a specific framework |
 | `analysis://control/{framework_id}/{control_id}` | Analysis guidance for a specific control within one framework scope |
+| `status://cli` | Current CLI version, update availability, and upgrade guidance |
+| `workflow://recipe/{recipe_id}` | Step-by-step workflow recipe for common compliance tasks |
 
 ## Example Conversations
 
