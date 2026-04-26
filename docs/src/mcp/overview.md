@@ -13,7 +13,7 @@ The Model Context Protocol allows AI assistants to:
 
 ## How It Works
 
-The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with `pretorin mcp-serve`, your AI tool connects and gains access to 86 compliance tools.
+The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with `pretorin mcp-serve`, your AI tool connects and gains access to 87 compliance tools.
 
 ```
 ┌──────────────┐     stdio      ┌──────────────┐     HTTPS     ┌──────────────┐
@@ -36,13 +36,13 @@ pretorin context show --quiet --check
 
 ## Tool Categories
 
-The 86 MCP tools are organized into categories:
+The 87 MCP tools are organized into categories:
 
 | Category | Tools | Access |
 |----------|-------|--------|
 | Framework & Control Reference | 8 | Read-only, all users |
 | Systems | 5 | Read-only |
-| Evidence Management | 5 | Read/Write, requires beta |
+| Evidence Management | 6 | Read/Write, requires beta |
 | Implementation Context | 10 | Read/Write, requires beta |
 | Monitoring | 1 | Write, requires beta |
 | Workflow State & Analytics | 4 | Read-only |

@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-209a4517.js";
+            window.path_to_searchindex_js = "searchindex-0040798b.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-9dfb40f5.js"></script>
@@ -1721,7 +1721,7 @@ Config file: /home/user/.pretorin/config.json
 <li><strong>Streamline workflows</strong> — No need to copy-paste control requirements or switch between tools</li>
 </ul>
 <h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
-<p>The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with <code>pretorin mcp-serve</code>, your AI tool connects and gains access to 86 compliance tools.</p>
+<p>The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with <code>pretorin mcp-serve</code>, your AI tool connects and gains access to 87 compliance tools.</p>
 <pre><code>┌──────────────┐     stdio      ┌──────────────┐     HTTPS     ┌──────────────┐
 │   AI Agent   │◄──────────────►│   Pretorin   │◄─────────────►│   Pretorin   │
 │ (Claude,     │   JSON-RPC    │   MCP Server  │              │   Platform   │
@@ -1735,7 +1735,7 @@ Config file: /home/user/.pretorin/config.json
 <pre><code class="language-bash">pretorin context show --quiet --check
 </code></pre>
 <h2 id="tool-categories"><a class="header" href="#tool-categories">Tool Categories</a></h2>
-<p>The 86 MCP tools are organized into categories:</p>
+<p>The 87 MCP tools are organized into categories:</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -1744,7 +1744,7 @@ Config file: /home/user/.pretorin/config.json
 <tbody>
 <tr><td>Framework &amp; Control Reference</td><td>8</td><td>Read-only, all users</td></tr>
 <tr><td>Systems</td><td>5</td><td>Read-only</td></tr>
-<tr><td>Evidence Management</td><td>5</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Evidence Management</td><td>6</td><td>Read/Write, requires beta</td></tr>
 <tr><td>Implementation Context</td><td>10</td><td>Read/Write, requires beta</td></tr>
 <tr><td>Monitoring</td><td>1</td><td>Write, requires beta</td></tr>
 <tr><td>Workflow State &amp; Analytics</td><td>4</td><td>Read-only</td></tr>
@@ -1893,7 +1893,7 @@ command -v pretorin
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="mcp-tool-reference"><a class="header" href="#mcp-tool-reference">MCP Tool Reference</a></h1>
-<p>The MCP server provides 86 tools organized by category.</p>
+<p>The MCP server provides 87 tools organized by category.</p>
 <h2 id="framework--control-reference"><a class="header" href="#framework--control-reference">Framework &amp; Control Reference</a></h2>
 <p>These tools are read-only and available to all authenticated users.</p>
 <h3 id="pretorin_list_frameworks"><a class="header" href="#pretorin_list_frameworks">pretorin_list_frameworks</a></h3>
@@ -2017,8 +2017,8 @@ command -v pretorin
 <ul>
 <li><code>name</code> (required)</li>
 <li><code>description</code> (required) — Must be auditor-ready markdown (no headings, at least one rich element, no images)</li>
+<li><code>evidence_type</code> (required) — Must be one of the canonical evidence types</li>
 <li><code>system_id</code> (optional) — Defaults to active scope</li>
-<li><code>evidence_type</code> (optional) — Default: <code>policy_document</code></li>
 <li><code>control_id</code> (optional)</li>
 <li><code>framework_id</code> (optional)</li>
 <li><code>dedupe</code> (optional) — Default: <code>true</code></li>
@@ -2051,6 +2051,20 @@ command -v pretorin
 <li><code>framework_id</code> (optional)</li>
 </ul>
 <p><strong>Returns:</strong> Link confirmation.</p>
+<hr>
+<h3 id="pretorin_upload_evidence"><a class="header" href="#pretorin_upload_evidence">pretorin_upload_evidence</a></h3>
+<p>Upload a file as evidence to the platform (system-scoped, requires WRITE access).</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>file_path</code> (required) — Absolute path to the file to upload</li>
+<li><code>name</code> (required) — Evidence name</li>
+<li><code>system_id</code> (optional) — Defaults to active scope</li>
+<li><code>evidence_type</code> (optional) — Default: <code>other</code></li>
+<li><code>description</code> (optional) — Evidence description</li>
+<li><code>control_id</code> (optional)</li>
+<li><code>framework_id</code> (optional)</li>
+</ul>
+<p><strong>Returns:</strong> Uploaded evidence record.</p>
 <hr>
 <h3 id="pretorin_delete_evidence"><a class="header" href="#pretorin_delete_evidence">pretorin_delete_evidence</a></h3>
 <p>Delete an evidence item from the platform (system-scoped, requires WRITE access).</p>
@@ -2446,7 +2460,7 @@ command -v pretorin
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>checkpoint_path</code> (required) — Local campaign checkpoint path</li>
-<li><code>lease_owner</code> (required) — Stable identifier for the claiming agent</li>
+<li><code>lease_owner</code> (optional) — Stable identifier for the claiming agent</li>
 <li><code>max_items</code> (optional) — Number of items to claim. Default: <code>1</code></li>
 <li><code>lease_ttl_seconds</code> (optional) — Lease time-to-live. Default: <code>300</code></li>
 </ul>
@@ -2572,7 +2586,7 @@ command -v pretorin
 <li><code>control_id</code> (required)</li>
 <li><code>framework_id</code> (required)</li>
 <li><code>responsibility_mode</code> (required) — <code>inherited</code> or <code>shared</code></li>
-<li><code>source_type</code> (required) — <code>provider</code>, <code>internal</code>, or <code>hybrid</code></li>
+<li><code>source_type</code> (optional) — <code>provider</code>, <code>internal</code>, or <code>hybrid</code></li>
 <li><code>vendor_id</code> (optional) — Vendor providing the inherited control</li>
 </ul>
 <p><strong>Returns:</strong> Created responsibility edge.</p>
