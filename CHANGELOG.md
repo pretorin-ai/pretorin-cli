@@ -5,6 +5,11 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.3] - 2026-04-26
+
+### Fixed
+- **CCI chain test fix**: `test_cci_chain_with_system_status` now correctly mocks `resolve_execution_context` so CCI status rendering is exercised. No production code changes.
+
 ## [0.16.2] - 2026-04-21
 
 ### Fixed
@@ -413,6 +418,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.15.2]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.14.0...v0.15.0
+[0.16.3]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.2...v0.16.3
 [0.14.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.12.0...v0.13.0
