@@ -37,7 +37,7 @@ pretorin cci list --control ac-2
 pretorin cci show CCI-000015
 
 # Browse STIG rules
-pretorin stig rules <stig_id> --severity high
+pretorin stig rules <stig_id> --severity cat_i
 ```
 
 ## Scanning Workflow
