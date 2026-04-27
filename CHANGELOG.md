@@ -328,7 +328,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ControlContext`, `ScopeResponse`, `MonitoringEventCreate`, `EvidenceCreate` client models
 - Control ID normalization (zero-padding NIST IDs like ac-3 → ac-03)
 - Codex agent runtime with isolated binary management under `~/.pretorin/bin/`
-- Interactive demo walkthrough script (`scripts/demo-walkthrough.sh`)
+- Interactive demo walkthrough script (`tools/demo-walkthrough.sh`)
 - Beta messaging across CLI banner, login flow, MCP server instructions, and README
 - MCP server `instructions` field guides AI agents on beta status and system creation requirements
 

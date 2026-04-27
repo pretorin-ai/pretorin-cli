@@ -5,7 +5,7 @@ set -uo pipefail
 # Guided tour of the full Pretorin CLI workflow for new beta users.
 # Runs live commands against prod with pauses between sections for narration.
 #
-# Usage:  bash scripts/demo-walkthrough.sh
+# Usage:  bash tools/demo-walkthrough.sh
 # ──────────────────────────────────────────────────────────────────────────────
 
 GOLD='\033[33m'

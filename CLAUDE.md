@@ -26,7 +26,7 @@ ruff format --check src/pretorin
 mypy src/pretorin
 
 # All-in-one
-./scripts/check.sh quick        # lint + typecheck + tests
+./tools/check.sh quick        # lint + typecheck + tests
 ```
 
 ## Version Bumps
@@ -41,7 +41,7 @@ Also update `docs/src/getting-started/installation.md` (expected output example)
 ## Docs Build
 
 ```bash
-./scripts/build-docs.sh
+./tools/build-docs.sh
 ```
 
 Rebuild and commit `docs/book/` whenever doc sources change — CI diffs the output. The Rust toolchain is pinned to 1.94.1 for deterministic search index hashes.

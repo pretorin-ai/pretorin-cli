@@ -25,7 +25,7 @@ jobs:
         run: cargo install mdbook --version 0.5.2 --locked
 
       - name: Build docs
-        run: ./scripts/build-docs.sh
+        run: ./tools/build-docs.sh
 
       - name: Verify generated docs are up to date
         run: git diff --exit-code -- docs/book

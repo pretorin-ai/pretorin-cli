@@ -1,11 +1,11 @@
 #!/bin/bash
 # Convenience script for running containerized tests
 # Usage:
-#   ./scripts/docker-test.sh           # Run all tests
-#   ./scripts/docker-test.sh lint      # Run linter only
-#   ./scripts/docker-test.sh typecheck # Run type checker only
-#   ./scripts/docker-test.sh coverage  # Run tests with coverage
-#   ./scripts/docker-test.sh all       # Run lint, typecheck, and tests
+#   ./tools/docker-test.sh           # Run all tests
+#   ./tools/docker-test.sh lint      # Run linter only
+#   ./tools/docker-test.sh typecheck # Run type checker only
+#   ./tools/docker-test.sh coverage  # Run tests with coverage
+#   ./tools/docker-test.sh all       # Run lint, typecheck, and tests
 
 set -e
 

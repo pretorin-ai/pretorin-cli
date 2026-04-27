@@ -41,7 +41,7 @@ pretorin skill install
 Run the walkthrough:
 
 ```bash
-bash scripts/demo-walkthrough.sh
+bash tools/demo-walkthrough.sh
 ```
 
 ## Hosted Model Workflow (Recommended)
@@ -277,7 +277,7 @@ This starts a local server at `http://localhost:3000` with live-reload.
 To build static HTML without serving:
 
 ```bash
-./scripts/build-docs.sh
+./tools/build-docs.sh
 # Output is in docs/book/ and includes llms.txt / llms-full.txt
 ```
 
