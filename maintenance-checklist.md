@@ -28,7 +28,7 @@ This checklist drives automated maintenance for pretorin-cli. Each task should I
 
 ## Phase 5: Wrap-up
 
-- [x] **13. Local Verification** - Run `./scripts/check.sh` locally (lint, typecheck, all tests). If it passes, mark complete. Do NOT push, create a PR, or run CI — the outer script handles that.
+- [x] **13. Local Verification** - Run `./tools/check.sh` locally (lint, typecheck, all tests). If it passes, mark complete. Do NOT push, create a PR, or run CI — the outer script handles that.
 
 ## Progress Log
 
@@ -44,7 +44,7 @@ This checklist drives automated maintenance for pretorin-cli. Each task should I
 - **2026-04-25 Task 9 — Dependency Updates** (1422b6a): Ran pip-audit: found 2 CVEs. Fixed CVE-2026-28684 by updating python-dotenv 1.2.1→1.2.2 (transitive via pydantic-settings). Also updated certifi 2026.1.4→2026.4.22 (CA bundle), click 8.3.1→8.3.3, typer 0.24.0→0.24.2 (patch-level, safe). Added pip CVE-2026-3219 to CI audit ignore (no fix available, same as existing pygments CVE-2026-4539 ignore). Risky updates deferred: rich 14→15 (major), starlette 0.52→1.0 (major), cryptography 46→47 (major), openai/openai-agents (significant minor bumps with breaking API changes likely). All 1650 tests pass, 0 regressions.
 - **2026-04-25 Task 11 — MCP Tool Registration Audit**: Audited all 87 MCP tools. Compared tool definitions in mcp/tools.py (87 Tool objects with name=) against handler dispatch table in mcp/handlers/__init__.py (87 TOOL_HANDLERS entries). Perfect 1:1 match — every tool has a handler and every handler has a tool. Also verified server.py wiring: list_tools() exposes tools.py definitions, call_tool() dispatches via TOOL_HANDLERS dict. PUBLIC_TOOL_NAMES set (pretorin_get_cli_status) references a valid tool. Zero orphans, no changes needed.
 - **2026-04-25 Task 12 — Agent Skill Tool Coverage** (baaec72): Audited all 6 agent skills (gap-analysis, narrative-generation, evidence-collection, security-review, stig-scan, cci-assessment) containing 28 unique tool references against the 33 tools defined in agent/tools.py. Perfect coverage — all 28 referenced tools exist. 5 tools not used by any skill (get_controls_batch, list_stig_rules, get_stig_rule, submit_test_results, infer_stigs) — these are available for direct agent use and don't need skill assignments. Added guard test `test_skill_tool_names_reference_existing_agent_tools` to prevent future drift. All 1651 tests pass, 0 regressions.
-- **2026-04-25 Task 13 — Local Verification**: Ran `./scripts/check.sh` (full suite). All 5 checks passed, 0 failed, 0 skipped. Results: ruff check clean, ruff format clean (90 files), pip-audit clean (no vulnerabilities), mypy strict clean (90 source files, 0 issues), pytest 1651 passed / 38 skipped in 38s with 80.36% coverage (above 60% threshold). No fixes needed — all maintenance changes from tasks 1–12 are clean.
+- **2026-04-25 Task 13 — Local Verification**: Ran `./tools/check.sh` (full suite). All 5 checks passed, 0 failed, 0 skipped. Results: ruff check clean, ruff format clean (90 files), pip-audit clean (no vulnerabilities), mypy strict clean (90 source files, 0 issues), pytest 1651 passed / 38 skipped in 38s with 80.36% coverage (above 60% threshold). No fixes needed — all maintenance changes from tasks 1–12 are clean.
 
 ALL_TASKS_DONE
 

@@ -96,5 +96,5 @@ pretorin cci chain <cci-id>
 An interactive demo script is included in the repository:
 
 ```bash
-bash scripts/demo-walkthrough.sh
+bash tools/demo-walkthrough.sh
 ```

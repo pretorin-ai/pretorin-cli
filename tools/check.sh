@@ -3,12 +3,12 @@
 # Not enforced at commit time; run manually before pushing.
 #
 # Usage:
-#   ./scripts/check.sh          # Run all checks
-#   ./scripts/check.sh lint     # Ruff lint + format check
-#   ./scripts/check.sh audit    # pip-audit dependency scan
-#   ./scripts/check.sh typecheck # mypy strict type check
-#   ./scripts/check.sh test     # pytest with coverage
-#   ./scripts/check.sh quick    # lint + typecheck (no install, fast)
+#   ./tools/check.sh          # Run all checks
+#   ./tools/check.sh lint     # Ruff lint + format check
+#   ./tools/check.sh audit    # pip-audit dependency scan
+#   ./tools/check.sh typecheck # mypy strict type check
+#   ./tools/check.sh test     # pytest with coverage
+#   ./tools/check.sh quick    # lint + typecheck (no install, fast)
 
 set -euo pipefail
 
