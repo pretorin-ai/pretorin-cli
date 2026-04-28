@@ -211,3 +211,76 @@ class TestEvidenceWriterListLocal:
         results = writer.list_local(framework_id="fedramp-moderate")
         assert len(results) == 1
         assert results[0].framework_id == "fedramp-moderate"
+
+
+class TestCodeSnippetRoundTrip:
+    """Issue #89: code_snippet must survive write → read round-trip.
+
+    The custom frontmatter parser is line-based (`key: value`), so a
+    multi-line snippet has to be encoded. The fix base64-encodes under
+    `code_snippet_b64`. These tests pin the round-trip behavior across
+    every byzantine input the parser could choke on.
+    """
+
+    def _make(self, snippet: str | None) -> LocalEvidence:
+        return LocalEvidence(
+            control_id="ac-02",
+            framework_id="fedramp-moderate",
+            name="Snippet test",
+            description="prose",
+            evidence_type="code_snippet",
+            code_snippet=snippet,
+        )
+
+    def test_multiline_snippet_roundtrips(self, tmp_path):
+        snippet = "def verify_mfa(user, code):\n    totp = pyotp.TOTP(user.mfa_secret)\n    return totp.verify(code)\n"
+        writer = EvidenceWriter(base_dir=tmp_path)
+        path = writer.write(self._make(snippet))
+        assert writer.read(path).code_snippet == snippet
+
+    def test_snippet_with_fences_roundtrips(self, tmp_path):
+        snippet = "Some prose with fences:\n```python\nprint('x')\n```\nafter"
+        writer = EvidenceWriter(base_dir=tmp_path)
+        path = writer.write(self._make(snippet))
+        assert writer.read(path).code_snippet == snippet
+
+    def test_snippet_with_unicode_roundtrips(self, tmp_path):
+        snippet = "héllo 🔐 Ωmega ✓"
+        writer = EvidenceWriter(base_dir=tmp_path)
+        path = writer.write(self._make(snippet))
+        assert writer.read(path).code_snippet == snippet
+
+    def test_snippet_with_frontmatter_delimiter_roundtrips(self, tmp_path):
+        """Critical: a `---` line inside the snippet must not be mistaken
+        for a frontmatter terminator after b64 encoding."""
+        snippet = "before\n---\nafter\n"
+        writer = EvidenceWriter(base_dir=tmp_path)
+        path = writer.write(self._make(snippet))
+        assert writer.read(path).code_snippet == snippet
+
+    def test_snippet_with_yaml_significant_chars_roundtrips(self, tmp_path):
+        snippet = "key: value\n- list item\n* another: thing\n# heading-looking"
+        writer = EvidenceWriter(base_dir=tmp_path)
+        path = writer.write(self._make(snippet))
+        assert writer.read(path).code_snippet == snippet
+
+    def test_empty_snippet_writes_no_key(self, tmp_path):
+        """None/empty snippet should not produce a `code_snippet_b64:` line."""
+        writer = EvidenceWriter(base_dir=tmp_path)
+        path = writer.write(self._make(None))
+        assert "code_snippet_b64" not in path.read_text()
+        assert writer.read(path).code_snippet is None
+
+    def test_corrupt_b64_returns_none_with_warning(self, tmp_path, caplog: pytest.LogCaptureFixture) -> None:
+        """A malformed b64 value must not crash read; log warning, return None."""
+        file_path = tmp_path / "corrupt.md"
+        file_path.write_text(
+            "---\ncontrol_id: ac-02\nframework_id: fm-1\nevidence_type: code_snippet\n"
+            "status: draft\ncollected_at: 2026-01-01T00:00:00\n"
+            "code_snippet_b64: !!!not-base64!!!\n---\n\n# Title\n\nbody"
+        )
+        writer = EvidenceWriter(base_dir=tmp_path)
+        with caplog.at_level(logging.WARNING, logger="pretorin.evidence.writer"):
+            ev = writer.read(file_path)
+        assert ev.code_snippet is None
+        assert any("code_snippet_b64" in r.message for r in caplog.records)

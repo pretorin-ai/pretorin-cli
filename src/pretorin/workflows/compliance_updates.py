@@ -20,6 +20,31 @@ logger = logging.getLogger(__name__)
 MATCH_BASIS_EXACT = "exact_name_desc_type_control_framework"
 MATCH_BASIS_NONE = "none"
 
+# Issue #88 hard rule (post-rework 2026-04-27): the universal enforcement
+# lives on the pydantic `EvidenceCreate` / `EvidenceBatchItemCreate`
+# models in `pretorin.client.models`. Every write path (CLI single, CLI
+# sync, campaign batch, agent batch, MCP batch) constructs one of those
+# models and trips the rule there. This shim runs the same check earlier
+# (before the dedupe lookup) so callers get a clean Python `ValueError`
+# instead of a pydantic `ValidationError` deep in the stack.
+
+
+def _enforce_capture_attached(description: str, code_context: dict[str, Any]) -> str:
+    """Pre-validate the capture rule and auto-prepend the Source prelude.
+
+    Delegates to the pydantic helper so the rule stays in lockstep with
+    the model-layer enforcement. Returns the (possibly prelude-augmented)
+    description; raises ``ValueError`` if the rule is violated.
+    """
+    from pretorin.client.models import _enforce_capture_in_description
+
+    return _enforce_capture_in_description(
+        description,
+        code_file_path=code_context.get("code_file_path"),
+        code_line_numbers=code_context.get("code_line_numbers"),
+        code_commit_hash=code_context.get("code_commit_hash"),
+    )
+
 
 def _normalize_text(value: str | None) -> str:
     """Normalize free-form text for stable matching."""
@@ -146,7 +171,17 @@ async def upsert_evidence(
     receive a possibly-AI-generated value should run
     `pretorin.evidence.types.normalize_evidence_type()` first; the CLI
     entry points hard-error when the user omits `-t/--type`.
+
+    Issue #88 hard rule: when ``code_context`` references a file via
+    ``code_file_path``, the description MUST contain an embedded fenced
+    code block. The rule is enforced at this single boundary so every
+    write path (CLI capture, MCP, agent tools, campaign apply) is gated
+    equally. A ``**Source:**`` prelude is auto-prepended when missing so
+    auditors always see file/commit/timestamp at the top.
     """
+    if code_context:
+        description = _enforce_capture_attached(description, code_context)
+
     ensure_audit_markdown(description, artifact_type="evidence_description")
 
     normalized_control_id = normalize_control_id(control_id) if control_id else None

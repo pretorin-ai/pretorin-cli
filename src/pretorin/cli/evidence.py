@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import logging
+import sys
 
 import typer
 from rich import print as rprint
@@ -13,6 +15,8 @@ from rich.table import Table
 from pretorin.cli.output import is_json_mode, print_json
 from pretorin.mcp.helpers import VALID_EVIDENCE_TYPES
 from pretorin.utils import normalize_control_id
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -41,6 +45,34 @@ def _require_valid_evidence_type(evidence_type: str) -> None:
         raise typer.Exit(1)
 
 
+def _confirm_no_redact(non_interactive: bool | None = None) -> None:
+    """Validate that --no-redact is being used safely.
+
+    Issue #88: --no-redact is the only path that can leak secrets into the
+    pushed description. Require an interactive confirm in TTY; reject
+    outright in non-TTY (CI) so a script can't silently disable redaction.
+    """
+    is_tty = sys.stdin.isatty() if non_interactive is None else not non_interactive
+    if not is_tty:
+        rprint(
+            "[red]--no-redact requires an interactive terminal so the operator "
+            "can confirm. Refusing in non-interactive mode.[/red]"
+        )
+        raise typer.Exit(1)
+    rprint(
+        "[red bold]WARNING:[/red bold] [red]--no-redact disables secret detection. "
+        "The captured snippet will be pushed to the platform exactly as read from disk. "
+        "Review the source file for credentials before continuing.[/red]"
+    )
+    if not typer.confirm("Continue without redaction?", default=False):
+        rprint("[dim]Aborted.[/dim]")
+        raise typer.Exit(1)
+    logger.warning(
+        "evidence.capture.redaction_disabled",
+        extra={"override": True},
+    )
+
+
 @app.command("create")
 def evidence_create(
     control_id: str = typer.Argument(..., help="Control ID (e.g., ac-02)"),
@@ -67,11 +99,38 @@ def evidence_create(
             "policy_document, scan_result, interview_notes, other"
         ),
     ),
+    code_file: str | None = typer.Option(None, "--code-file", help="Path to source file (auto-captures content)."),
+    code_lines: str | None = typer.Option(None, "--code-lines", help="Line range (e.g., '10-25')."),
+    code_repo: str | None = typer.Option(None, "--code-repo", help="Git repository URL."),
+    code_commit: str | None = typer.Option(None, "--code-commit", help="Git commit hash."),
+    log_file: str | None = typer.Option(None, "--log-file", help="Path to log file (auto-captures tail)."),
+    log_tail: int | None = typer.Option(None, "--log-tail", help="Capture last N lines of --log-file."),
+    log_since: str | None = typer.Option(
+        None,
+        "--log-since",
+        help="Capture --log-file lines on or after RFC3339 timestamp.",
+    ),
+    redact_pii: bool | None = typer.Option(
+        None,
+        "--redact-pii/--no-redact-pii",
+        help="Redact email/IP/phone-shaped strings. Default: off for code, on for logs.",
+    ),
+    no_redact: bool = typer.Option(
+        False,
+        "--no-redact",
+        help="Disable secret redaction entirely. Requires interactive confirmation.",
+    ),
 ) -> None:
     """Create a local evidence file.
 
     Creates a markdown file in evidence/<framework>/<control>/<slug>.md
     with YAML frontmatter for tracking.
+
+    When ``--code-file`` or ``--log-file`` is supplied, the CLI reads the
+    referenced content, redacts secrets, and embeds the snippet inline in
+    the evidence description. The hard rule (issue #88, post-rework
+    2026-04-27) is that any evidence referencing code/log/config has
+    captured content attached — there is no path-only opt-out.
 
     Examples:
         pretorin evidence create ac-02 fedramp-moderate -d "RBAC configuration in Kubernetes" -t configuration
@@ -82,6 +141,19 @@ def evidence_create(
 
     _require_valid_evidence_type(evidence_type)
     control_id = normalize_control_id(control_id)
+
+    description = _maybe_capture(
+        description=description,
+        code_file=code_file,
+        code_lines=code_lines,
+        code_commit=code_commit,
+        log_file=log_file,
+        log_tail=log_tail,
+        log_since=log_since,
+        redact_pii=redact_pii,
+        no_redact=no_redact,
+    )
+
     evidence_name = name or description[:60]
 
     result = validate_audit_markdown(description, "evidence_description")
@@ -95,6 +167,10 @@ def evidence_create(
         name=evidence_name,
         description=description,
         evidence_type=evidence_type,
+        code_file_path=code_file,
+        code_line_numbers=code_lines,
+        code_repository=code_repo,
+        code_commit_hash=code_commit,
     )
 
     writer = EvidenceWriter()
@@ -436,20 +512,57 @@ def evidence_upsert(
     ),
     evidence_type: str = typer.Option(..., "--type", "-t", help="Evidence type (required)."),
     system: str | None = typer.Option(None, "--system", "-s", help="System name or ID."),
-    code_file: str | None = typer.Option(None, "--code-file", help="Path to source file."),
+    code_file: str | None = typer.Option(None, "--code-file", help="Path to source file (auto-captures content)."),
     code_lines: str | None = typer.Option(None, "--code-lines", help="Line range (e.g., '10-25')."),
     code_repo: str | None = typer.Option(None, "--code-repo", help="Git repository URL."),
     code_commit: str | None = typer.Option(None, "--code-commit", help="Git commit hash."),
+    log_file: str | None = typer.Option(None, "--log-file", help="Path to log file (auto-captures tail)."),
+    log_tail: int | None = typer.Option(None, "--log-tail", help="Capture last N lines of --log-file."),
+    log_since: str | None = typer.Option(
+        None,
+        "--log-since",
+        help="Capture --log-file lines on or after RFC3339 timestamp (e.g., 2026-04-27T10:00:00Z).",
+    ),
+    redact_pii: bool | None = typer.Option(
+        None,
+        "--redact-pii/--no-redact-pii",
+        help="Redact email/IP/phone-shaped strings. Default: off for code, on for logs.",
+    ),
+    no_redact: bool = typer.Option(
+        False,
+        "--no-redact",
+        help="Disable secret redaction entirely. Requires interactive confirmation.",
+    ),
 ) -> None:
-    """Find-or-create evidence and ensure system/control link."""
+    """Find-or-create evidence and ensure system/control link.
+
+    When ``--code-file`` or ``--log-file`` is supplied, the CLI reads the
+    referenced content, redacts secrets, and embeds the snippet inline in
+    the evidence description. The hard rule (issue #88, post-rework
+    2026-04-27) is that any evidence referencing code/log/config has
+    captured content attached — there is no path-only opt-out.
+    """
     _require_valid_evidence_type(evidence_type)
+
+    # Resolve capture before any platform call (fail-fast on bad path).
+    captured_description = _maybe_capture(
+        description=description,
+        code_file=code_file,
+        code_lines=code_lines,
+        code_commit=code_commit,
+        log_file=log_file,
+        log_tail=log_tail,
+        log_since=log_since,
+        redact_pii=redact_pii,
+        no_redact=no_redact,
+    )
 
     asyncio.run(
         _upsert_evidence(
             control_id=normalize_control_id(control_id),
             framework_id=framework_id,
             name=name,
-            description=description,
+            description=captured_description,
             evidence_type=evidence_type,
             system=system,
             code_file=code_file,
@@ -458,6 +571,64 @@ def evidence_upsert(
             code_commit=code_commit,
         )
     )
+
+
+def _maybe_capture(
+    *,
+    description: str,
+    code_file: str | None,
+    code_lines: str | None,
+    code_commit: str | None,
+    log_file: str | None,
+    log_tail: int | None,
+    log_since: str | None,
+    redact_pii: bool | None,
+    no_redact: bool,
+) -> str:
+    """Return the capture-augmented description, or the input prose unchanged.
+
+    Issue #88, hard rule (post-rework 2026-04-27): when ``--code-file`` or
+    ``--log-file`` is supplied, capture is mandatory. There is no
+    ``--no-capture`` opt-out — every evidence record referencing
+    code/log/config carries the embedded content. The orchestration runs
+    before any platform call so a bad path / binary / oversize source
+    aborts cleanly with exit 1.
+
+    Decision Q2: the redacted snippet lives ONLY in the description
+    markdown. The structured ``code_snippet`` API field is unchanged.
+    """
+    from pretorin.evidence.capture import capture_code, capture_log
+    from pretorin.evidence.snapshot import SnapshotError
+
+    if not (code_file or log_file):
+        return description
+
+    if no_redact:
+        _confirm_no_redact()
+
+    try:
+        if log_file:
+            return capture_log(
+                user_description=description,
+                file_path=log_file,
+                tail=log_tail,
+                since=log_since,
+                redact_pii=True if redact_pii is None else redact_pii,
+                redact_secrets=not no_redact,
+            )
+        assert code_file is not None
+        return capture_code(
+            user_description=description,
+            file_path=code_file,
+            line_range=code_lines,
+            repository=None,
+            commit=code_commit,
+            redact_pii=False if redact_pii is None else redact_pii,
+            redact_secrets=not no_redact,
+        )
+    except SnapshotError as exc:
+        rprint(f"[red]Capture failed: {exc}[/red]")
+        raise typer.Exit(1)
 
 
 async def _upsert_evidence(
@@ -475,6 +646,7 @@ async def _upsert_evidence(
     from pretorin.cli.commands import require_auth
     from pretorin.cli.context import resolve_execution_context
     from pretorin.client.api import PretorianClient, PretorianClientError
+    from pretorin.evidence.code_context import build_code_context
     from pretorin.workflows.compliance_updates import upsert_evidence
 
     async with PretorianClient() as client:
@@ -487,16 +659,12 @@ async def _upsert_evidence(
             )
             system_name = (await client.get_system(system_id)).name
 
-            # Build code context from CLI options, auto-populate from snapshot if needed.
-            code_context = {}
-            if code_file:
-                code_context["code_file_path"] = code_file
-            if code_lines:
-                code_context["code_line_numbers"] = code_lines
-            if code_repo:
-                code_context["code_repository"] = code_repo
-            if code_commit:
-                code_context["code_commit_hash"] = code_commit
+            code_context = build_code_context(
+                code_file_path=code_file,
+                code_line_numbers=code_lines,
+                code_repository=code_repo,
+                code_commit_hash=code_commit,
+            )
 
             # Auto-populate repo/commit from attested snapshot if not provided.
             if not code_repo or not code_commit:

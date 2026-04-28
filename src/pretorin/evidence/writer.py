@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -52,7 +54,14 @@ class LocalEvidence:
 
 
 def _format_frontmatter(evidence: LocalEvidence) -> str:
-    """Format YAML frontmatter for an evidence file."""
+    """Format YAML frontmatter for an evidence file.
+
+    Issue #89: `code_snippet` is serialized as base64 under
+    `code_snippet_b64` because the custom frontmatter parser at
+    `pretorin.local_file.parse_frontmatter` is line-based and would
+    otherwise mishandle multi-line snippets, embedded `---` delimiters,
+    and YAML-significant characters.
+    """
     lines = [
         "---",
         f"control_id: {evidence.control_id}",
@@ -67,12 +76,32 @@ def _format_frontmatter(evidence: LocalEvidence) -> str:
         lines.append(f"code_file_path: {evidence.code_file_path}")
     if evidence.code_line_numbers:
         lines.append(f"code_line_numbers: {evidence.code_line_numbers}")
+    if evidence.code_snippet:
+        encoded = base64.b64encode(evidence.code_snippet.encode("utf-8")).decode("ascii")
+        lines.append(f"code_snippet_b64: {encoded}")
     if evidence.code_repository:
         lines.append(f"code_repository: {evidence.code_repository}")
     if evidence.code_commit_hash:
         lines.append(f"code_commit_hash: {evidence.code_commit_hash}")
     lines.append("---")
     return "\n".join(lines)
+
+
+def _decode_code_snippet(fm: dict[str, str]) -> str | None:
+    """Decode a base64-encoded code snippet from frontmatter.
+
+    Returns None if the field is absent or undecodable. A malformed value
+    is logged and dropped rather than raising — round-tripping a partially
+    corrupted file should not crash list/read flows.
+    """
+    encoded = fm.get("code_snippet_b64")
+    if not encoded:
+        return None
+    try:
+        return base64.b64decode(encoded.encode("ascii"), validate=True).decode("utf-8")
+    except (binascii.Error, UnicodeDecodeError) as exc:
+        logger.warning("Could not decode code_snippet_b64 frontmatter value: %s", exc)
+        return None
 
 
 class EvidenceWriter:
@@ -163,6 +192,7 @@ class EvidenceWriter:
             path=path,
             code_file_path=fm.get("code_file_path"),
             code_line_numbers=fm.get("code_line_numbers"),
+            code_snippet=_decode_code_snippet(fm),
             code_repository=fm.get("code_repository"),
             code_commit_hash=fm.get("code_commit_hash"),
         )

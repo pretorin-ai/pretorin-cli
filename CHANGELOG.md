@@ -5,6 +5,22 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2026-04-27
+
+### Added
+- **`pretorin evidence` capture is now mandatory (#88)**: when `evidence upsert` or `evidence create` is invoked with `--code-file` or `--log-file`, the CLI reads the referenced content, redacts API keys and password assignments, and embeds the redacted snippet as a fenced code block in the pushed `description`. Each captured description ends with an italic provenance footer matching the issue body design — `*Captured from \`<path>\` [lines N-M] [· commit \`<short>\`] · <RFC3339 UTC> [· N secrets redacted]*` — so auditors see file path, line range, commit, and capture timestamp directly under the snippet. The hard rule applies at the workflow boundary, so MCP tools, agent tools, and campaign apply paths cannot create an evidence record with `code_file_path` set but no fenced code block in the description. New companion flags: `--log-tail`, `--log-since`, `--redact-pii / --no-redact-pii`, `--no-redact` (interactive confirm required, refused in non-TTY).
+- **`code_snippet` round-trips through `EvidenceWriter` (#89)**: previously `_format_frontmatter` silently dropped the field on disk. Snippets are now base64-encoded under `code_snippet_b64` so multi-line content, fenced markdown, unicode, and embedded `---` delimiters survive the write/read round-trip.
+
+### Changed (BREAKING)
+- `pretorin evidence upsert --code-file <p>` and `pretorin evidence create --code-file <p>` always capture the file content. The previous path-only behavior is no longer reachable; the `--no-capture` flag does not exist.
+- The capture rule is enforced by a Pydantic `model_validator` on **`EvidenceCreate`** and **`EvidenceBatchItemCreate`**. Every write path (CLI single, CLI sync, campaign apply, agent batch tool, MCP `pretorin_create_evidence_batch`) constructs one of these models. The validator raises `ValidationError` when `code_file_path` is set but the description has no fenced code block.
+- `pretorin.workflows.evidence_validation.enrich_evidence_recommendations` (used by campaign apply) runs the file content through the same redact + compose pipeline as CLI capture. The structured `code_snippet` API field stays populated, but with the *redacted* snippet rather than raw — closing a latent leak path where campaign apply was pushing unredacted file content to the platform.
+
+### Redactor scope
+- API keys (AWS / GitHub / Slack / Stripe / Google API / JWT / PEM private keys).
+- Password-shaped assignments: `password`, `passwd`, `pwd`, `secret`, `api[_-]?key`, `access[_-]?token`, `auth[_-]?token` followed by `:` or `=` and a quoted value of length ≥ 4.
+- That's it. Earlier prereleases of this work used `detect-secrets` (with its `Base64HighEntropyString` / `HexHighEntropyString` plugins) and a generic entropy fallback. Both produced false positives on every multi-character identifier in YAML / Python / Helm files (`resources`, `cpu`, `autoscaling`, …) and made captured snippets unreadable. Both have been removed.
+
 ## [0.16.3] - 2026-04-26
 
 ### Fixed
@@ -418,6 +434,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.15.2]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.14.0...v0.15.0
+[0.17.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.3...v0.17.0
 [0.16.3]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.2...v0.16.3
 [0.14.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.0...v0.13.1

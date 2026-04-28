@@ -39,9 +39,7 @@ def _base_client() -> AsyncMock:
     client = AsyncMock()
     client.is_configured = True
     client.list_systems = AsyncMock(return_value=[{"id": "sys-1", "name": "Primary"}])
-    client.get_system_compliance_status = AsyncMock(
-        return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]}
-    )
+    client.get_system_compliance_status = AsyncMock(return_value={"frameworks": [{"framework_id": "fedramp-moderate"}]})
     client.get_system = AsyncMock(return_value=SimpleNamespace(name="Primary"))
     return client
 
@@ -359,9 +357,7 @@ def test_cci_chain_with_system_status() -> None:
         "pretorin.cli.context.resolve_execution_context",
         new=AsyncMock(return_value=("sys-1", "fedramp-moderate")),
     ):
-        result = _run_with_mock_client(
-            ["cci", "chain", "ac-2", "--system", "Primary"], client
-        )
+        result = _run_with_mock_client(["cci", "chain", "ac-2", "--system", "Primary"], client)
 
     assert result.exit_code == 0, result.output
     assert "CCI-000015" in result.output
@@ -396,9 +392,7 @@ def test_cci_chain_system_status_error_ignored() -> None:
     )
     client.get_cci_status = AsyncMock(side_effect=PretorianClientError("No results"))
 
-    result = _run_with_mock_client(
-        ["cci", "chain", "ac-2", "--system", "Primary"], client
-    )
+    result = _run_with_mock_client(["cci", "chain", "ac-2", "--system", "Primary"], client)
 
     # Should still succeed — status errors are silently ignored
     assert result.exit_code == 0

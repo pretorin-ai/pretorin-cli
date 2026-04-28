@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from pretorin.client.api import PretorianClient
+from pretorin.evidence.code_context import build_code_context
 from pretorin.evidence.writer import EvidenceWriter, LocalEvidence, _format_frontmatter
 from pretorin.local_file import update_file_frontmatter
 from pretorin.workflows.compliance_updates import upsert_evidence
@@ -77,17 +78,13 @@ class EvidenceSync:
                 continue
 
             try:
-                code_context = {}
-                if ev.code_file_path:
-                    code_context["code_file_path"] = ev.code_file_path
-                if ev.code_line_numbers:
-                    code_context["code_line_numbers"] = ev.code_line_numbers
-                if ev.code_snippet:
-                    code_context["code_snippet"] = ev.code_snippet
-                if ev.code_repository:
-                    code_context["code_repository"] = ev.code_repository
-                if ev.code_commit_hash:
-                    code_context["code_commit_hash"] = ev.code_commit_hash
+                code_context = build_code_context(
+                    code_file_path=ev.code_file_path,
+                    code_line_numbers=ev.code_line_numbers,
+                    code_snippet=ev.code_snippet,
+                    code_repository=ev.code_repository,
+                    code_commit_hash=ev.code_commit_hash,
+                )
 
                 sync_result = await upsert_evidence(
                     client,

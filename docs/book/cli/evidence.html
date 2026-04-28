@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-62c2f507.js";
+            window.path_to_searchindex_js = "../searchindex-36696a2b.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -255,6 +255,59 @@ pretorin evidence upload config.yaml ac-06 fedramp-moderate \
 </table>
 </div>
 <p>If <code>--code-repo</code> or <code>--code-commit</code> are not provided, the CLI auto-populates them from the attested source verification snapshot when available.</p>
+<h3 id="capturing-source-and-log-content-mandatory-when---code-file----log-file-is-set"><a class="header" href="#capturing-source-and-log-content-mandatory-when---code-file----log-file-is-set">Capturing Source and Log Content (mandatory when <code>--code-file</code> / <code>--log-file</code> is set)</a></h3>
+<p>In 0.17.0+, passing <code>--code-file</code> or <code>--log-file</code> to <code>evidence upsert</code> or <code>evidence create</code> always reads the file, redacts API keys and password assignments, and embeds the result as a fenced code block in the pushed <code>description</code>. There is no path-only mode. Each captured description ends with an italic provenance footer (file path, line range, commit, capture timestamp) so auditors always see where the snippet came from.</p>
+<pre><code class="language-bash">pretorin evidence upsert ac-02 fedramp-moderate \
+  --name "MFA verification function" \
+  --type code_snippet \
+  --description "TOTP-based MFA verification used by the login flow." \
+  --code-file app/auth.py \
+  --code-lines 12-14 \
+  --code-commit a1b2c3d
+</code></pre>
+<p>Pushed description (rendered):</p>
+<pre><code class="language-markdown">TOTP-based MFA verification used by the login flow.
+
+```python
+def verify_mfa(user, code):
+    totp = pyotp.TOTP(user.mfa_secret)
+    return totp.verify(code)
+```
+
+---
+*Captured from `app/auth.py` lines 12-14 · commit `a1b2c3d` · 2026-04-27T18:32:11Z · 1 secret redacted*
+</code></pre>
+<p>Log capture is symmetric:</p>
+<pre><code class="language-bash">pretorin evidence upsert au-02 fedramp-moderate \
+  --name "Authentication audit trail sample" \
+  --type log_file \
+  --description "Excerpt from auth service production logs." \
+  --log-file /var/log/pretorin/auth.log \
+  --log-tail 50
+</code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--log-file</code></td><td>Path to a log file (companion to <code>--code-file</code>).</td></tr>
+<tr><td><code>--log-tail N</code></td><td>Capture the last N lines of <code>--log-file</code>.</td></tr>
+<tr><td><code>--log-since RFC3339</code></td><td>Capture <code>--log-file</code> lines on or after the given timestamp.</td></tr>
+<tr><td><code>--redact-pii / --no-redact-pii</code></td><td>Reserved flag; PII redaction is no longer part of the active scope. Pass-through for back-compat.</td></tr>
+<tr><td><code>--no-redact</code></td><td>Disable secret redaction. Requires interactive confirmation. Refused in non-TTY (CI) environments.</td></tr>
+</tbody>
+</table>
+</div>
+<p>The redactor scope is intentionally narrow:</p>
+<ul>
+<li><strong>API keys:</strong> AWS access / secret keys, GitHub tokens, Slack tokens, Stripe keys (live + test), Google API keys, JWTs, PEM private key blocks.</li>
+<li><strong>Passwords:</strong> assignments matching <code>password</code>, <code>passwd</code>, <code>pwd</code>, <code>secret</code>, <code>api[_-]?key</code>, <code>access[_-]?token</code>, or <code>auth[_-]?token</code> followed by <code>:</code> or <code>=</code> and a quoted value ≥ 4 chars.</li>
+</ul>
+<p>Vendor plugins (detect-secrets) and entropy heuristics were removed because they false-positived on every multi-character YAML / Python / Helm identifier and made captured snippets unreadable.</p>
+<blockquote>
+<p><strong>Hard rule:</strong> every evidence record that references a code/log/config file carries embedded captured content. The same rule is enforced at the workflow boundary, so MCP tools, agent tools, and campaign apply paths cannot create an evidence record with <code>code_file_path</code> set but no markdown snippet attached.</p>
+</blockquote>
 <h2 id="link-evidence-to-a-control"><a class="header" href="#link-evidence-to-a-control">Link Evidence to a Control</a></h2>
 <p>Link an existing platform evidence item to a control:</p>
 <pre><code class="language-bash">pretorin evidence link ev-abc123 ac-02

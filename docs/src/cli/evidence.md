@@ -92,6 +92,63 @@ When upserting evidence, you can attach source code context:
 
 If `--code-repo` or `--code-commit` are not provided, the CLI auto-populates them from the attested source verification snapshot when available.
 
+### Capturing Source and Log Content (mandatory when `--code-file` / `--log-file` is set)
+
+In 0.17.0+, passing `--code-file` or `--log-file` to `evidence upsert` or `evidence create` always reads the file, redacts API keys and password assignments, and embeds the result as a fenced code block in the pushed `description`. There is no path-only mode. Each captured description ends with an italic provenance footer (file path, line range, commit, capture timestamp) so auditors always see where the snippet came from.
+
+```bash
+pretorin evidence upsert ac-02 fedramp-moderate \
+  --name "MFA verification function" \
+  --type code_snippet \
+  --description "TOTP-based MFA verification used by the login flow." \
+  --code-file app/auth.py \
+  --code-lines 12-14 \
+  --code-commit a1b2c3d
+```
+
+Pushed description (rendered):
+
+````markdown
+TOTP-based MFA verification used by the login flow.
+
+```python
+def verify_mfa(user, code):
+    totp = pyotp.TOTP(user.mfa_secret)
+    return totp.verify(code)
+```
+
+---
+*Captured from `app/auth.py` lines 12-14 · commit `a1b2c3d` · 2026-04-27T18:32:11Z · 1 secret redacted*
+````
+
+Log capture is symmetric:
+
+```bash
+pretorin evidence upsert au-02 fedramp-moderate \
+  --name "Authentication audit trail sample" \
+  --type log_file \
+  --description "Excerpt from auth service production logs." \
+  --log-file /var/log/pretorin/auth.log \
+  --log-tail 50
+```
+
+| Option | Description |
+|--------|-------------|
+| `--log-file` | Path to a log file (companion to `--code-file`). |
+| `--log-tail N` | Capture the last N lines of `--log-file`. |
+| `--log-since RFC3339` | Capture `--log-file` lines on or after the given timestamp. |
+| `--redact-pii / --no-redact-pii` | Reserved flag; PII redaction is no longer part of the active scope. Pass-through for back-compat. |
+| `--no-redact` | Disable secret redaction. Requires interactive confirmation. Refused in non-TTY (CI) environments. |
+
+The redactor scope is intentionally narrow:
+
+- **API keys:** AWS access / secret keys, GitHub tokens, Slack tokens, Stripe keys (live + test), Google API keys, JWTs, PEM private key blocks.
+- **Passwords:** assignments matching `password`, `passwd`, `pwd`, `secret`, `api[_-]?key`, `access[_-]?token`, or `auth[_-]?token` followed by `:` or `=` and a quoted value ≥ 4 chars.
+
+Vendor plugins (detect-secrets) and entropy heuristics were removed because they false-positived on every multi-character YAML / Python / Helm identifier and made captured snippets unreadable.
+
+> **Hard rule:** every evidence record that references a code/log/config file carries embedded captured content. The same rule is enforced at the workflow boundary, so MCP tools, agent tools, and campaign apply paths cannot create an evidence record with `code_file_path` set but no markdown snippet attached.
+
 ## Link Evidence to a Control
 
 Link an existing platform evidence item to a control:

@@ -2,6 +2,17 @@
 
 All notable changes to the Pretorin CLI are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2026-04-27
+
+### Added
+- **`pretorin evidence` capture is mandatory (#88)**: `evidence upsert` and `evidence create` always read, redact, and embed `--code-file` / `--log-file` content into the pushed `description`. New companion flags: `--log-file`, `--log-tail`, `--log-since`, `--redact-pii / --no-redact-pii`, `--no-redact` (interactive confirm only).
+- **`code_snippet` round-trips through `EvidenceWriter` (#89)**: previously the field was silently dropped on disk. Now base64-encoded under `code_snippet_b64` so multi-line content survives the write/read cycle.
+
+### Changed (BREAKING)
+- `--code-file` / `--log-file` always capture; the `--no-capture` flag does not exist.
+- The capture rule is enforced by a Pydantic `model_validator` on `EvidenceCreate` and `EvidenceBatchItemCreate`, so every write path (CLI, MCP, agent batch, campaign apply) trips it equally. Setting `code_file_path` without an embedded fenced code block in the description raises `ValidationError`. Source provenance lives on the structured columns of the API record (path / lines / commit / `collected_at`); the description does not duplicate it.
+- The redactor scope is API keys (AWS / GitHub / Slack / Stripe / Google / JWT / PEM private keys) plus password-shaped assignments. Vendor plugin sets and entropy heuristics from earlier prereleases were removed because they false-positived on every multi-character identifier in YAML / Python / Helm files.
+
 ## [0.16.3] - 2026-04-26
 
 ### Fixed
@@ -364,6 +375,7 @@ All notable changes to the Pretorin CLI are documented here. The format is based
 [0.15.2]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.14.0...v0.15.0
+[0.17.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.3...v0.17.0
 [0.16.3]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.2...v0.16.3
 [0.14.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.0...v0.13.1

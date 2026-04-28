@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, cast
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import TypedDict
 
 # =============================================================================
@@ -305,6 +305,77 @@ class EvidenceCodeContext(TypedDict, total=False):
     code_commit_hash: str
 
 
+# Issue #88 hard rule: every evidence record that references a
+# code/log/config file MUST carry an embedded fenced code block AND a
+# provenance footer in the description. The regex is lenient on fence
+# shape so AI-drafted descriptions using ``` with optional language
+# tags all match.
+import re as _re  # noqa: E402  # local alias to avoid polluting module namespace
+
+_FENCED_CODE_BLOCK_RE = _re.compile(
+    r"`{3,}[a-zA-Z0-9_+\-.]*\s*\n[\s\S]+?\n[ \t]*`{3,}",
+    _re.MULTILINE,
+)
+_PROVENANCE_FOOTER_RE = _re.compile(r"^\*Captured from ", _re.MULTILINE)
+
+
+def _enforce_capture_in_description(
+    description: str,
+    *,
+    code_file_path: str | None,
+    code_line_numbers: str | None,
+    code_commit_hash: str | None,
+) -> str:
+    """Universal enforcement of the issue #88 capture rule.
+
+    Called from the `model_validator` on both `EvidenceCreate` and
+    `EvidenceBatchItemCreate` so every write path (CLI single, CLI sync,
+    campaign batch, agent batch, MCP batch) is gated equally.
+
+    Two responsibilities:
+
+    1. If ``code_file_path`` is set but the description has no fenced
+       code block, raise ``ValueError`` so the caller fails fast.
+    2. If a fenced block is present but no ``*Captured from ...*``
+       provenance footer, auto-append one using whatever metadata is
+       available (path always; line range / commit when present) plus a
+       now-UTC timestamp. AI-drafted descriptions that include a code
+       block but skip the footer get the footer added automatically.
+    """
+    if not code_file_path:
+        return description
+
+    if not _FENCED_CODE_BLOCK_RE.search(description):
+        raise ValueError(
+            "Evidence references "
+            f"`{code_file_path}` but the description has no embedded fenced code "
+            "block. Capture is mandatory: include the redacted source/log content "
+            "in the description (CLI: `pretorin evidence upsert --code-file ...` "
+            "auto-captures; campaign / agent / MCP paths must include a fenced "
+            "code block in the AI-drafted description) or remove the file reference."
+        )
+
+    if _PROVENANCE_FOOTER_RE.search(description):
+        return description
+
+    # Build the same footer compose() would produce, using whatever
+    # metadata is on the model.
+    from datetime import datetime, timezone
+
+    parts: list[str] = []
+    if code_line_numbers:
+        parts.append(f"Captured from `{code_file_path}` lines {code_line_numbers}")
+    else:
+        parts.append(f"Captured from `{code_file_path}`")
+    if code_commit_hash:
+        parts.append(f"commit `{code_commit_hash[:7]}`")
+    parts.append(datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+    footer = "*" + " · ".join(parts) + "*"
+
+    body = description.rstrip()
+    return f"{body}\n\n---\n{footer}\n"
+
+
 class EvidenceCreate(BaseModel):
     """Data for creating evidence on the platform.
 
@@ -337,6 +408,17 @@ class EvidenceCreate(BaseModel):
             )
         return value
 
+    @model_validator(mode="after")
+    def _enforce_capture_rule(self) -> EvidenceCreate:
+        # Issue #88 hard rule: see _enforce_capture_in_description docstring.
+        self.description = _enforce_capture_in_description(
+            self.description,
+            code_file_path=self.code_file_path,
+            code_line_numbers=self.code_line_numbers,
+            code_commit_hash=self.code_commit_hash,
+        )
+        return self
+
 
 class EvidenceBatchItemCreate(BaseModel):
     """One scoped evidence item in a batch create request."""
@@ -362,6 +444,17 @@ class EvidenceBatchItemCreate(BaseModel):
                 f"evidence_type {value!r} is not one of the canonical values: {sorted(VALID_EVIDENCE_TYPES)}"
             )
         return value
+
+    @model_validator(mode="after")
+    def _enforce_capture_rule(self) -> EvidenceBatchItemCreate:
+        # Issue #88 hard rule: see _enforce_capture_in_description docstring.
+        self.description = _enforce_capture_in_description(
+            self.description,
+            code_file_path=self.code_file_path,
+            code_line_numbers=self.code_line_numbers,
+            code_commit_hash=self.code_commit_hash,
+        )
+        return self
 
 
 class EvidenceBatchItemResult(BaseModel):
