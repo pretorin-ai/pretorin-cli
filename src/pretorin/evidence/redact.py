@@ -45,6 +45,12 @@ _PEM_RE = re.compile(
     r"[\s\S]+?"
     r"-----END (?:RSA |EC |DSA |OPENSSH |ENCRYPTED |PGP )?PRIVATE KEY-----"
 )
+# Credential-bearing URLs: ``proto://user:pass@host`` (postgres, redis,
+# mongodb, http(s), amqp, ldap, ssh, etc.). Empty username is allowed
+# (``redis://:pass@host``); password must be at least one char. The
+# userinfo segment cannot contain ``/`` or whitespace, which prevents
+# false positives on paths/queries that happen to contain ``@``.
+_CRED_URL_RE = re.compile(r"\b[a-zA-Z][a-zA-Z0-9+.-]*://[^/\s:@]*:[^/\s@]+@")
 # password / secret / api_key style assignments. Triggers on any of those
 # keyword names followed by `:` or `=` and a quoted value of length 4+.
 # Captures the QUOTED VALUE only so the keyword stays readable in the
@@ -67,6 +73,7 @@ _SECRET_PATTERNS: Final[list[tuple[str, re.Pattern[str]]]] = [
     ("google_api_key", re.compile(r"\b(AIza[0-9A-Za-z\-_]{35})\b")),
     ("jwt", re.compile(r"\b(eyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,})\b")),
     ("pem_private_key", _PEM_RE),
+    ("cred_url", _CRED_URL_RE),
 ]
 
 

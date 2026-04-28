@@ -209,6 +209,96 @@ class TestEnrichEvidenceRecommendations:
         assert "code_file_path" not in recs[1]
 
 
+class TestCampaignPathExcludesEnvResolution:
+    """Regression guard for the architectural decision (locked in /plan-eng-review):
+    env-var resolution is a CLI-only feature. The campaign-apply path runs
+    in the agent runtime where ``os.environ`` is the AGENT's process env,
+    not the user's local env. Resolving against it could leak agent
+    internals (model API keys, tooling tokens, dev URLs) into evidence
+    pushed to the platform.
+
+    These tests assert that ``enrich_evidence_recommendations`` does NOT
+    render a "Resolved values at capture time" block, even when the agent's
+    env has matching variables set. The asymmetry is intentional.
+    """
+
+    def test_campaign_apply_does_not_render_resolved_block(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        # Simulate a campaign-apply happening in an agent process that has
+        # env vars referenced by the snippet. They MUST NOT appear in the
+        # rewritten description.
+        monkeypatch.setenv("DELETION_GRACE_PERIOD", "999")
+        monkeypatch.setenv("INTERNAL_AGENT_API_KEY", "agent-secret-do-not-leak")
+
+        f = tmp_path / "config.py"
+        f.write_text(
+            'import os\nGRACE = os.getenv("DELETION_GRACE_PERIOD")\nAPI = os.environ["INTERNAL_AGENT_API_KEY"]\n'
+        )
+        recs = [
+            {
+                "name": "Config sample",
+                "description": "Grace period config.",
+                "evidence_type": "configuration",
+                "control_id": "ac-02",
+                "code_file_path": "config.py",
+            }
+        ]
+        enrich_evidence_recommendations(recs, tmp_path)
+
+        rewritten = recs[0]["description"]
+        # No env-resolution block.
+        assert "**Resolved values at capture time:**" not in rewritten
+        # Agent's env values do NOT leak into the output.
+        assert "agent-secret-do-not-leak" not in rewritten
+        assert "999" not in rewritten
+        # The snippet itself is still embedded (existing behavior).
+        assert "os.getenv" in rewritten
+
+    def test_campaign_apply_does_not_import_env_resolve(self):
+        """Belt-and-suspenders: the module's source must not reference env_resolve."""
+        from pretorin.workflows import evidence_validation
+
+        src = Path(evidence_validation.__file__).read_text()
+        assert "env_resolve" not in src
+        assert "resolve_from_text" not in src
+
+    def test_campaign_apply_does_not_import_symbol_resolve(self):
+        """Same asymmetry rationale: the agent runtime's filesystem
+        layout isn't representative of the user's local repo. Cross-file
+        symbol tracing is CLI-only."""
+        from pretorin.workflows import evidence_validation
+
+        src = Path(evidence_validation.__file__).read_text()
+        assert "symbol_resolve" not in src
+        assert "resolve_symbols" not in src
+
+    def test_campaign_apply_does_not_render_definition_block(self, tmp_path: Path):
+        """Even when the campaign-apply path captures a Python file with
+        constants imported from elsewhere, the cross-file definition
+        block must NOT appear. compose() is called WITHOUT a symbols
+        argument from this code path."""
+        # Build a tiny repo with a config + the captured file.
+        (tmp_path / "config.py").write_text("DELETION_GRACE_PERIOD_DAYS = 30\n")
+        (tmp_path / "main.py").write_text(
+            "from config import DELETION_GRACE_PERIOD_DAYS\nx = DELETION_GRACE_PERIOD_DAYS\n"
+        )
+        recs = [
+            {
+                "name": "Grace period",
+                "description": "Account deletion grace period",
+                "evidence_type": "code_snippet",
+                "control_id": "ac-02",
+                "code_file_path": "main.py",
+            }
+        ]
+        enrich_evidence_recommendations(recs, tmp_path)
+        rewritten = recs[0]["description"]
+        # The campaign path doesn't trace defs, so no second fenced block
+        # with a config.py source comment appears.
+        assert "config.py:" not in rewritten
+        # And no variable table.
+        assert "| Variable | Value | Source |" not in rewritten
+
+
 class TestCampaignBatchEndToEnd:
     """The original bypass site: build the same shape that
     `workflows/campaign.py:1511` constructs, and confirm the resulting

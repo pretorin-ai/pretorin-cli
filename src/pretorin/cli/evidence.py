@@ -120,6 +120,25 @@ def evidence_create(
         "--no-redact",
         help="Disable secret redaction entirely. Requires interactive confirmation.",
     ),
+    no_resolve_env: bool = typer.Option(
+        False,
+        "--no-resolve-env",
+        help=(
+            "Disable inline env-var value resolution. By default, "
+            "non-secret env vars referenced in --code-file are resolved "
+            "against the current process env and rendered under the snippet."
+        ),
+    ),
+    no_trace_defs: bool = typer.Option(
+        False,
+        "--no-trace-defs",
+        help=(
+            "Disable cross-file definition tracing for --code-file. "
+            "By default, Python constant references in the snippet are "
+            "traced to their definition files in the captured file's "
+            "git repo and embedded as a fenced block."
+        ),
+    ),
 ) -> None:
     """Create a local evidence file.
 
@@ -152,6 +171,8 @@ def evidence_create(
         log_since=log_since,
         redact_pii=redact_pii,
         no_redact=no_redact,
+        no_resolve_env=no_resolve_env,
+        no_trace_defs=no_trace_defs,
     )
 
     evidence_name = name or description[:60]
@@ -533,6 +554,25 @@ def evidence_upsert(
         "--no-redact",
         help="Disable secret redaction entirely. Requires interactive confirmation.",
     ),
+    no_resolve_env: bool = typer.Option(
+        False,
+        "--no-resolve-env",
+        help=(
+            "Disable inline env-var value resolution. By default, "
+            "non-secret env vars referenced in --code-file are resolved "
+            "against the current process env and rendered under the snippet."
+        ),
+    ),
+    no_trace_defs: bool = typer.Option(
+        False,
+        "--no-trace-defs",
+        help=(
+            "Disable cross-file definition tracing for --code-file. "
+            "By default, Python constant references in the snippet are "
+            "traced to their definition files in the captured file's "
+            "git repo and embedded as a fenced block."
+        ),
+    ),
 ) -> None:
     """Find-or-create evidence and ensure system/control link.
 
@@ -555,6 +595,8 @@ def evidence_upsert(
         log_since=log_since,
         redact_pii=redact_pii,
         no_redact=no_redact,
+        no_resolve_env=no_resolve_env,
+        no_trace_defs=no_trace_defs,
     )
 
     asyncio.run(
@@ -584,6 +626,8 @@ def _maybe_capture(
     log_since: str | None,
     redact_pii: bool | None,
     no_redact: bool,
+    no_resolve_env: bool = False,
+    no_trace_defs: bool = False,
 ) -> str:
     """Return the capture-augmented description, or the input prose unchanged.
 
@@ -596,6 +640,11 @@ def _maybe_capture(
 
     Decision Q2: the redacted snippet lives ONLY in the description
     markdown. The structured ``code_snippet`` API field is unchanged.
+
+    Env-var resolution (``no_resolve_env=False``, the default) only
+    applies to ``--code-file`` capture. Log capture leaves runtime
+    output as-is — log lines are values already, not symbolic
+    references to resolve.
     """
     from pretorin.evidence.capture import capture_code, capture_log
     from pretorin.evidence.snapshot import SnapshotError
@@ -625,6 +674,8 @@ def _maybe_capture(
             commit=code_commit,
             redact_pii=False if redact_pii is None else redact_pii,
             redact_secrets=not no_redact,
+            resolve_env=not no_resolve_env,
+            trace_defs=not no_trace_defs,
         )
     except SnapshotError as exc:
         rprint(f"[red]Capture failed: {exc}[/red]")

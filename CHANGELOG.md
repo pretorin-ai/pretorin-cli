@@ -5,21 +5,45 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.17.0] - 2026-04-27
+## [0.17.0] - 2026-04-28
 
 ### Added
 - **`pretorin evidence` capture is now mandatory (#88)**: when `evidence upsert` or `evidence create` is invoked with `--code-file` or `--log-file`, the CLI reads the referenced content, redacts API keys and password assignments, and embeds the redacted snippet as a fenced code block in the pushed `description`. Each captured description ends with an italic provenance footer matching the issue body design — `*Captured from \`<path>\` [lines N-M] [· commit \`<short>\`] · <RFC3339 UTC> [· N secrets redacted]*` — so auditors see file path, line range, commit, and capture timestamp directly under the snippet. The hard rule applies at the workflow boundary, so MCP tools, agent tools, and campaign apply paths cannot create an evidence record with `code_file_path` set but no fenced code block in the description. New companion flags: `--log-tail`, `--log-since`, `--redact-pii / --no-redact-pii`, `--no-redact` (interactive confirm required, refused in non-TTY).
 - **`code_snippet` round-trips through `EvidenceWriter` (#89)**: previously `_format_frontmatter` silently dropped the field on disk. Snippets are now base64-encoded under `code_snippet_b64` so multi-line content, fenced markdown, unicode, and embedded `---` delimiters survive the write/read round-trip.
+- **Inline env-var value resolution in evidence capture (#92)**: when `--code-file` capture detects environment-variable references in the snippet (e.g. `os.getenv("DELETION_GRACE_PERIOD")`, `process.env.LOG_LEVEL`, `${PORT:-8080}`, k8s `$(PORT)`), the CLI resolves them against the current process env and renders the result in a unified variable table at the end of the description. Auditors see what the code actually evaluates to, not just the symbolic reference. New `src/pretorin/evidence/env_resolve.py` module.
+- **Two-tier safety on resolved values (#92)**:
+  - **Tier 1 (name denylist):** any var name containing a secret-shaped substring (case-insensitive: `KEY`, `SECRET`, `TOKEN`, `PASSWORD`, `PASSWD`, `PWD`, `CREDENTIAL`, `PRIVATE`, `AUTH`, `SESSION`, `COOKIE`, `SALT`, `SIGNATURE`, `CERT`, `BEARER`) is rendered as `[REDACTED:secret-name]`. The name is still shown so the auditor knows what was referenced; only the value is hidden.
+  - **Tier 2 (value redact):** even when the name passes tier 1, the resolved value runs through the snippet redactor. AWS / GitHub / Stripe / JWT / PEM / password assignments / `proto://user:pass@host` URLs all hide the value. Tier 2 runs **independently** of `--no-redact` so a confirmed snippet override never leaks credentials out of resolved env values.
+- **Credential-bearing URL redaction (#92)**: new `cred_url` pattern in `pretorin.evidence.redact` catches `postgres://`, `redis://`, `mongodb://`, `mysql://`, `amqp://`, `ldap://`, `https://user:pass@host`, etc. Targeted enough to leave clean URLs (`https://api.example.com/v1`), host:port URLs (`postgres://host:5432/db`), and `@` in path/query strings (`?email=foo@bar.com`) untouched.
+- **Inline-definition resolution (#92)**: when a snippet defines a variable in-file (YAML `env:` mapping, k8s `- name: X / value: Y` pair, Dockerfile `ARG`/`ENV`, shell `export`), that value takes priority over the agent's `os.environ`. Resolution priority is: inline def → process env → source default → unset. Tier-1/tier-2 redaction runs on whichever value wins, so an inline `DATABASE_URL: postgres://user:pass@host` is still hidden.
+- **Cross-file definition tracing for Python (#92)**: when the captured Python snippet references a module-level constant defined elsewhere in the repo (`from app.config import DELETION_GRACE_PERIOD_DAYS`), the CLI finds the definition file, reads ±2 lines around the assignment, and embeds that slice as a second fenced code block under the original snippet. New `src/pretorin/evidence/symbol_resolve.py` module: AST-based detection so string-literal uppercase content (`os.getenv("X")`) doesn't false-match, hybrid AST-import / `git grep -nE` lookup, config-shaped path priority (`config.py`, `settings.py`, `constants.py`, etc.), self-reference guard, and bounded scan (5000 files / 1MB per file / 30s wall-time).
+- **Unified variable table (#92)** at the end of every captured description. Columns: `Variable` · `Value` · `Source`. Source distinguishes `inline` (same-file def), `env` (process env), `default` (Python `os.getenv` second-arg), `<file>:<line>` (cross-file definition traced), or `—` (unset / not found). Env-var resolutions and cross-file constants share one table — the auditor sees every resolved variable in one place. Replaces the earlier bullet-list rendering.
+- **Detection languages (#92)**: Python (`os.getenv`, `os.environ.get`, `os.environ["X"]`), JS/TS (`process.env.X`, `process.env["X"]`), and the shell family — bash / fish / **YAML** / **Dockerfile** — with `$VAR`, `${VAR}`, `${VAR:-default}`, `${VAR-default}`, plus Kubernetes `$(VAR)` interpolation in YAML. YAML coverage catches the common CI-workflow case (env refs inside `run:` / `command:` / `args:` blocks). Bare `$var` / `$(var)` forms require an uppercase first character so JSON-schema YAML keys (`$ref`, `$schema`) and shell command substitution (`$(date)`, `$(pwd)`) don't false-match; the brace form keeps lowercase support. GitHub Actions `${{ secrets.X }}` template syntax is correctly **not** matched.
+- **`--no-resolve-env` and `--no-trace-defs` flags (#92)** on `evidence create` and `evidence upsert` to disable env-var resolution and cross-file tracing per-capture. Both default on.
+- **Footer counts (#92)**: the italic provenance footer reports env activity and definition-tracing counts alongside redactions, e.g. `… · 1 secret redacted · 2 env vars resolved, 1 env redacted · 1 definition traced`.
 
 ### Changed (BREAKING)
 - `pretorin evidence upsert --code-file <p>` and `pretorin evidence create --code-file <p>` always capture the file content. The previous path-only behavior is no longer reachable; the `--no-capture` flag does not exist.
 - The capture rule is enforced by a Pydantic `model_validator` on **`EvidenceCreate`** and **`EvidenceBatchItemCreate`**. Every write path (CLI single, CLI sync, campaign apply, agent batch tool, MCP `pretorin_create_evidence_batch`) constructs one of these models. The validator raises `ValidationError` when `code_file_path` is set but the description has no fenced code block.
 - `pretorin.workflows.evidence_validation.enrich_evidence_recommendations` (used by campaign apply) runs the file content through the same redact + compose pipeline as CLI capture. The structured `code_snippet` API field stays populated, but with the *redacted* snippet rather than raw — closing a latent leak path where campaign apply was pushing unredacted file content to the platform.
+- Captured descriptions render a markdown variable table instead of a bullet list (#92). Existing evidence records are unaffected (the change is per-capture, not retroactive). Validation rules unchanged: no markdown headings, ≥1 rich element, no images.
+- `compose()` truncation order (#92): original snippet body truncates first; cross-file definition snippets truncate next (latest-first); the variable table is preserved as the densest compliance signal.
 
 ### Redactor scope
 - API keys (AWS / GitHub / Slack / Stripe / Google API / JWT / PEM private keys).
 - Password-shaped assignments: `password`, `passwd`, `pwd`, `secret`, `api[_-]?key`, `access[_-]?token`, `auth[_-]?token` followed by `:` or `=` and a quoted value of length ≥ 4.
+- Credential-bearing URLs (#92): `proto://[user]:pass@host` for any scheme.
 - That's it. Earlier prereleases of this work used `detect-secrets` (with its `Base64HighEntropyString` / `HexHighEntropyString` plugins) and a generic entropy fallback. Both produced false positives on every multi-character identifier in YAML / Python / Helm files (`resources`, `cpu`, `autoscaling`, …) and made captured snippets unreadable. Both have been removed.
+
+### Out of scope (#92, intentionally deferred)
+- `.env` / dotenv autoload at capture time. Resolution is against the live process env only.
+- Recursive resolution (`X = int(os.getenv("Y"))` → also resolve Y).
+- Class-attribute / pydantic-settings / dataclass field lookups.
+- Languages other than Python for cross-file tracing (env-var resolution still covers Python / JS-TS / shell-family / YAML / Dockerfile).
+- Cross-repo references.
+- Resolution into the structured `code_snippet` API field. Snippets remain verbatim source per the #88 Q2 decision; resolution is description-only.
+- Logs (`--log-file` capture) are unchanged. Log lines are runtime output already, not symbolic references to resolve.
+- The campaign-apply path (`pretorin.workflows.evidence_validation.enrich_evidence_recommendations`) is **deliberately untouched** for both env resolution and cross-file tracing. The agent runtime's env / filesystem layout isn't representative of the user's local repo. Regression tests in `tests/test_evidence_validation.py::TestCampaignPathExcludesEnvResolution` lock the asymmetry.
 
 ## [0.16.3] - 2026-04-26
 

@@ -209,6 +209,154 @@ class TestCliCaptureFlags:
         assert "Captured from " in content
 
 
+class TestEnvResolutionFlag:
+    """--no-resolve-env wiring through the CLI down to capture_code()."""
+
+    def test_default_resolves_safe_env_var(self, tmp_path: Path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("DELETION_GRACE_PERIOD", "3600")
+        src = tmp_path / "config.py"
+        src.write_text('import os\nGRACE = os.getenv("DELETION_GRACE_PERIOD")\n')
+        result = runner.invoke(
+            app,
+            [
+                "create",
+                "ac-02",
+                "fedramp-moderate",
+                "-d",
+                "Grace period config.",
+                "-t",
+                "configuration",
+                "--code-file",
+                str(src),
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        files = list((tmp_path / "evidence").rglob("*.md"))
+        content = files[0].read_text()
+        assert "| Variable | Value | Source |" in content
+        assert "`DELETION_GRACE_PERIOD`" in content
+        assert "`3600`" in content
+
+    def test_default_redacts_secret_named_env_var(self, tmp_path: Path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("OPENAI_API_KEY", "sk_live_xxxxxxxxxxxx")
+        src = tmp_path / "client.py"
+        src.write_text('import os\nclient = OpenAI(api_key=os.environ["OPENAI_API_KEY"])\n')
+        result = runner.invoke(
+            app,
+            [
+                "create",
+                "ac-02",
+                "fedramp-moderate",
+                "-d",
+                "Client init.",
+                "-t",
+                "code_snippet",
+                "--code-file",
+                str(src),
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        content = list((tmp_path / "evidence").rglob("*.md"))[0].read_text()
+        assert "sk_live_xxxxxxxxxxxx" not in content
+        assert "[REDACTED:secret-name]" in content
+
+    def test_no_resolve_env_omits_block(self, tmp_path: Path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("DELETION_GRACE_PERIOD", "3600")
+        src = tmp_path / "config.py"
+        src.write_text('import os\nGRACE = os.getenv("DELETION_GRACE_PERIOD")\n')
+        result = runner.invoke(
+            app,
+            [
+                "create",
+                "ac-02",
+                "fedramp-moderate",
+                "-d",
+                "Grace period config.",
+                "-t",
+                "configuration",
+                "--code-file",
+                str(src),
+                "--no-resolve-env",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        content = list((tmp_path / "evidence").rglob("*.md"))[0].read_text()
+        assert "**Resolved values at capture time:**" not in content
+        assert "env var" not in content
+
+    def test_log_capture_does_not_resolve_env(self, tmp_path: Path, monkeypatch):
+        """Resolution is for code captures only — log lines are runtime output."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("DELETION_GRACE_PERIOD", "3600")
+        log = tmp_path / "auth.log"
+        # Even if the log line happens to contain an env-var reference,
+        # we don't resolve it — logs are values already.
+        log.write_text('2026-04-27T10:00:00Z startup grace=os.getenv("DELETION_GRACE_PERIOD")\n')
+        result = runner.invoke(
+            app,
+            [
+                "create",
+                "au-02",
+                "fedramp-moderate",
+                "-d",
+                "Auth events.",
+                "-t",
+                "log_file",
+                "--log-file",
+                str(log),
+                "--log-tail",
+                "10",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        content = list((tmp_path / "evidence").rglob("*.md"))[0].read_text()
+        assert "**Resolved values at capture time:**" not in content
+
+
+class TestMaybeCaptureNoResolveEnvUnit:
+    """Direct unit test for the no_resolve_env arg threading."""
+
+    def test_no_resolve_env_threads_through(self, tmp_path: Path, monkeypatch):
+        monkeypatch.setenv("DELETION_GRACE_PERIOD", "3600")
+        src = tmp_path / "x.py"
+        src.write_text('import os\nGRACE = os.getenv("DELETION_GRACE_PERIOD")\n')
+        out = _maybe_capture(
+            description="prose",
+            code_file=str(src),
+            code_lines=None,
+            code_commit=None,
+            log_file=None,
+            log_tail=None,
+            log_since=None,
+            redact_pii=None,
+            no_redact=False,
+            no_resolve_env=True,
+        )
+        assert "Resolved values" not in out
+
+    def test_resolve_env_default_on(self, tmp_path: Path, monkeypatch):
+        monkeypatch.setenv("DELETION_GRACE_PERIOD", "3600")
+        src = tmp_path / "x.py"
+        src.write_text('import os\nGRACE = os.getenv("DELETION_GRACE_PERIOD")\n')
+        out = _maybe_capture(
+            description="prose",
+            code_file=str(src),
+            code_lines=None,
+            code_commit=None,
+            log_file=None,
+            log_tail=None,
+            log_since=None,
+            redact_pii=None,
+            no_redact=False,
+        )
+        assert "| Variable | Value | Source |" in out
+        assert "`DELETION_GRACE_PERIOD`" in out
+        assert "`3600`" in out
+
+
 class TestNoRedactConfirmation:
     """`--no-redact` requires interactive confirm in TTY, refused in CI."""
 

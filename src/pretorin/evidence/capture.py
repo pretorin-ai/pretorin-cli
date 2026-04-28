@@ -18,6 +18,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from pretorin.evidence.env_resolve import EnvSummary, resolve_from_text
 from pretorin.evidence.markdown import SourceMeta, compose, language_for_path
 from pretorin.evidence.redact import redact
 from pretorin.evidence.snapshot import (
@@ -26,6 +27,7 @@ from pretorin.evidence.snapshot import (
     read_code,
     read_log,
 )
+from pretorin.evidence.symbol_resolve import SymbolSummary, resolve_symbols
 
 logger = logging.getLogger(__name__)
 
@@ -62,13 +64,41 @@ def capture_code(
     commit: str | None,
     redact_pii: bool,
     redact_secrets: bool,
+    resolve_env: bool = True,
+    trace_defs: bool = True,
 ) -> str:
     """Read, redact, and compose a ``description`` for ``--code-file`` capture.
 
     Returns the composed markdown. Raises :class:`SnapshotError` (re-raised
     from :mod:`snapshot`) when the file can't be captured.
+
+    When ``resolve_env`` is True (the default), env-var references in
+    the snippet are resolved against the calling process's
+    ``os.environ`` and rendered into the unified variable table.
+    Tier-2 value redaction runs *independently* of ``redact_secrets``
+    so a confirmed ``--no-redact`` snippet never leaks credentials out
+    of resolved env values.
+
+    When ``trace_defs`` is True (the default), Python module-constant
+    references in the snippet are traced to their definition files in
+    the captured file's git repo. Each found definition gets its own
+    fenced code block embedded after the original snippet. Tier-1 / tier-2
+    redaction runs on each definition slice. Symbol tracing soft-fails
+    on any error so a malformed snippet or a slow filesystem never
+    aborts the user's evidence write.
     """
     snap: CodeSnapshot = read_code(file_path, line_range)
+    language = language_for_path(file_path)
+    env_summary: EnvSummary | None = None
+    if resolve_env:
+        env_summary = resolve_from_text(snap.text, language)
+    symbol_summary: SymbolSummary | None = None
+    if trace_defs:
+        try:
+            symbol_summary = resolve_symbols(snap.text, language, file_path)
+        except Exception as exc:  # pragma: no cover — defensive; module already soft-fails
+            logger.warning("evidence.capture.symbol_resolve_failed", extra={"error": str(exc)})
+            symbol_summary = None
     redacted, summary = redact(snap.text, pii=redact_pii, redact_secrets=redact_secrets)
     source = SourceMeta(
         path=file_path,
@@ -79,9 +109,11 @@ def capture_code(
     return compose(
         user_description,
         redacted,
-        language=language_for_path(file_path),
+        language=language,
         source=source,
         redaction=summary,
+        env_summary=env_summary,
+        symbols=symbol_summary,
     )
 
 

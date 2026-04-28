@@ -93,6 +93,58 @@ class TestSecretPatterns:
         assert summary.counts["aws_access_key"] == 0
 
 
+class TestCredentialUrls:
+    """proto://user:pass@host catches creds embedded in connection strings."""
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "postgres://user:hunter2@db.example.com:5432/app",
+            "postgresql://admin:s3cret@10.0.0.1/prod",
+            "mysql://root:rootpass@127.0.0.1:3306/foo",
+            "mongodb://app:password1@cluster0.example.net/db",
+            "amqp://user:pass@rabbit.local:5672/",
+            "redis://default:hunter2@redis.example.com:6379/0",
+            "ldap://cn-admin:adminpass@directory.example.com",
+            "https://user:pass@api.example.com/v1",
+        ],
+    )
+    def test_credentialed_urls_redacted(self, url: str):
+        out, summary = redact(url)
+        assert summary.counts["cred_url"] >= 1
+        assert "[REDACTED:cred_url]" in out
+
+    def test_redis_with_empty_username(self):
+        """redis://:pass@host — no user, just password."""
+        out, summary = redact("redis://:hunter2@redis.example.com:6379/0")
+        assert summary.counts["cred_url"] == 1
+        assert "hunter2" not in out
+
+    def test_clean_url_passes_through(self):
+        """No userinfo segment → no match."""
+        out, summary = redact("https://api.example.com/v1/users")
+        assert out == "https://api.example.com/v1/users"
+        assert summary.counts["cred_url"] == 0
+
+    def test_url_with_port_no_creds_passes_through(self):
+        """host:port shouldn't be confused with user:pass — no @ in this URL."""
+        out, summary = redact("postgres://db.example.com:5432/app")
+        assert out == "postgres://db.example.com:5432/app"
+        assert summary.counts["cred_url"] == 0
+
+    def test_email_in_query_string_not_matched(self):
+        """An @ inside a path/query is not userinfo — pattern requires no `/` between : and @."""
+        out, summary = redact("https://api.example.com/v1?email=foo@bar.com")
+        assert out == "https://api.example.com/v1?email=foo@bar.com"
+        assert summary.counts["cred_url"] == 0
+
+    def test_git_ssh_url_not_matched(self):
+        """git@github.com:user/repo.git has no `://` — pattern doesn't fire."""
+        out, summary = redact("git@github.com:user/repo.git")
+        assert out == "git@github.com:user/repo.git"
+        assert summary.counts["cred_url"] == 0
+
+
 class TestPasswordKeyword:
     def test_password_assignment_redacted(self):
         out, summary = redact('password = "hunter2sosecure"')

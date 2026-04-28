@@ -139,15 +139,135 @@ pretorin evidence upsert au-02 fedramp-moderate \
 | `--log-since RFC3339` | Capture `--log-file` lines on or after the given timestamp. |
 | `--redact-pii / --no-redact-pii` | Reserved flag; PII redaction is no longer part of the active scope. Pass-through for back-compat. |
 | `--no-redact` | Disable secret redaction. Requires interactive confirmation. Refused in non-TTY (CI) environments. |
+| `--no-resolve-env` | Disable inline env-var value resolution (see below). On by default. |
+| `--no-trace-defs` | Disable cross-file definition tracing (see below). On by default. |
 
 The redactor scope is intentionally narrow:
 
 - **API keys:** AWS access / secret keys, GitHub tokens, Slack tokens, Stripe keys (live + test), Google API keys, JWTs, PEM private key blocks.
+- **Credential URLs:** `postgres://user:pass@host`, `redis://:pass@host`, `https://user:pass@host`, and similar `proto://userinfo@authority` patterns.
 - **Passwords:** assignments matching `password`, `passwd`, `pwd`, `secret`, `api[_-]?key`, `access[_-]?token`, or `auth[_-]?token` followed by `:` or `=` and a quoted value ≥ 4 chars.
 
 Vendor plugins (detect-secrets) and entropy heuristics were removed because they false-positived on every multi-character YAML / Python / Helm identifier and made captured snippets unreadable.
 
 > **Hard rule:** every evidence record that references a code/log/config file carries embedded captured content. The same rule is enforced at the workflow boundary, so MCP tools, agent tools, and campaign apply paths cannot create an evidence record with `code_file_path` set but no markdown snippet attached.
+
+### Inline env-var value resolution (0.17.0+)
+
+When `--code-file` capture detects env-var references in the snippet, the CLI resolves them against the current process env and renders a **Resolved values at capture time** block under the snippet. Auditors see what the code actually evaluates to, not just the symbolic reference.
+
+```bash
+DELETION_GRACE_PERIOD=3600 OPENAI_API_KEY=sk_live_xxxx \
+pretorin evidence create ac-02 fedramp-moderate \
+  --type configuration \
+  --description "Deletion grace period and OpenAI client config." \
+  --code-file app/config.py
+```
+
+Pushed description (rendered):
+
+````markdown
+Deletion grace period and OpenAI client config.
+
+```python
+GRACE = os.getenv("DELETION_GRACE_PERIOD", "300")
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+LEVEL = os.getenv("LOG_LEVEL", "info")
+```
+
+**Resolved values at capture time:**
+- `DELETION_GRACE_PERIOD` = `3600`
+- `OPENAI_API_KEY` = `[REDACTED:secret-name]`
+- `LOG_LEVEL` = `info` (default; env unset)
+
+---
+*Captured from `app/config.py` · 2026-04-28T18:00:00Z · 1 env redacted · 2 env vars resolved*
+````
+
+**Two-tier safety:**
+
+1. **Name denylist (tier 1).** Names containing a secret-shaped substring — case-insensitive: `KEY`, `SECRET`, `TOKEN`, `PASSWORD`, `PASSWD`, `PWD`, `CREDENTIAL`, `PRIVATE`, `AUTH`, `SESSION`, `COOKIE`, `SALT`, `SIGNATURE`, `CERT`, `BEARER` — render as `[REDACTED:secret-name]`. The name itself stays visible so the auditor knows what was referenced; only the value is hidden.
+2. **Value redact (tier 2).** Even when the name passes tier 1, the resolved value is run through the same secret-redactor as the snippet. AWS / GitHub / Stripe / JWT / PEM / password assignments / `proto://user:pass@host` URLs all hide the value. Tier 2 runs **independently** of `--no-redact` so a confirmed snippet override never leaks credentials out of resolved env values.
+
+**Detection languages:**
+
+- **Python:** `os.getenv("X")`, `os.getenv("X", "default")`, `os.environ["X"]`, `os.environ.get("X")`, `os.environ.get("X", "default")`.
+- **JavaScript / TypeScript:** `process.env.X`, `process.env["X"]`.
+- **Shell-family** (bash, fish, **YAML**, **Dockerfile**): `$VAR`, `${VAR}`, `${VAR:-default}`, `${VAR-default}`. Kubernetes manifest interpolation `$(VAR)` is also detected in YAML. YAML detection covers the common case of CI workflows / docker-compose / k8s manifests embedding shell-style interpolation in `run:` / `command:` / `args:` blocks. Dockerfile covers `ARG` / `ENV` / `RUN` interpolation.
+- **GitHub Actions template syntax** `${{ ... }}` is **not** an env-var reference — it's resolved by the GitHub runner against its secrets vault, which the local CLI can't access. Correctly skipped.
+- **JSON-Schema YAML** (`$ref`, `$schema`) does **not** false-match: the bare `$var` form and `$(var)` form both require an uppercase first character, matching the conventional env-var naming rule. Use `${var}` (with braces) when you need a lowercase env var.
+
+Other languages produce no resolved-values block (silent no-op — no detection, no false positives).
+
+**Inline definitions take priority over the agent's process env.** When the snippet defines a variable in the same file (a YAML `env:` mapping, a Dockerfile `ARG`/`ENV`, a k8s `- name: X / value: Y` pair, or a shell `export X=Y`), that inline value is what the resolved block displays — not whatever happens to be set in the operator's shell. The snippet *itself* is the source of truth for what production evaluates to; the agent's env is incidental.
+
+Resolution priority (highest to lowest):
+1. **Inline definition** in the same snippet (e.g. `SHANNON_BUDGET_USD: "200"` in a YAML `env:` block).
+2. **Process env** at capture time.
+3. **Source default** literal (`os.getenv("X", "default")` second arg, Python only).
+4. `<unset>` if none of the above produced a value.
+
+Tier-1 (name denylist) and tier-2 (value redact) gates always run on whichever value wins, so an inline-defined credential URL in `DATABASE_URL: postgres://user:pass@host` is still `[REDACTED:cred_url]`.
+
+**Source defaults**: when an env var is unset and the source supplies a default literal (e.g. `os.getenv("LOG_LEVEL", "info")`), the resolved block shows the default with `(default; env unset)` so the auditor can distinguish a runtime value from a fallback.
+
+**`--no-resolve-env`** disables resolution entirely for the capture. Use this when the auditor only needs the symbolic source code, or when running on a machine whose env is not representative of production.
+
+### Cross-file definition tracing (0.17.0+)
+
+When the captured Python snippet references a module-level constant defined in another file (a typical compliance pattern: `from app.config import DELETION_GRACE_PERIOD_DAYS`), the CLI traces the symbol back to the definition file and embeds the relevant lines as a second fenced code block under the original snippet.
+
+```bash
+pretorin evidence create dch-10 soc2 \
+  --type code_snippet \
+  --description "Account deletion grace period." \
+  --code-file apps/auth/app/routers/privacy.py \
+  --code-lines 10-20
+```
+
+Pushed description (rendered):
+
+````markdown
+Account deletion grace period.
+
+```python
+user.deletion_scheduled_at = now + timedelta(days=DELETION_GRACE_PERIOD_DAYS)
+```
+
+```python
+# apps/auth/app/config.py:18
+DELETION_GRACE_PERIOD_DAYS = 30
+```
+
+| Variable | Value | Source |
+|---|---|---|
+| `DELETION_GRACE_PERIOD_DAYS` | `30` | `apps/auth/app/config.py:18` |
+
+---
+*Captured from `apps/auth/app/routers/privacy.py` lines 10-20 · ... · 1 definition traced*
+````
+
+**Detection** uses Python's AST so string literals (e.g. the env-var name inside `os.getenv("DELETION_GRACE_PERIOD")`) don't false-match as code references — only real `Name` and `Attribute` nodes count. Imports caught by `ast.ImportFrom` carry a precise import-path hint; bare UPPERCASE references (3+ chars) without an explicit import are also caught.
+
+**Lookup** prefers AST-resolved import paths (`from app.config import X` → `app/config.py`), falls back to `git grep -lE "^[ \t]*X[ \t]*[:=]"` across the repo, and ranks results so files named `config.py` / `settings.py` / `constants.py` win over generic matches. The search root is the git repo containing `--code-file` (or its parent dir if no git root is found). Tests are deprioritized.
+
+**Safety**: each definition slice runs through the same redactor as the original snippet, so a `STRIPE_KEY = "sk_live_..."` constant gets `[REDACTED:stripe_key]` even though the resolution found the right line.
+
+**Bounds**: 5000 files / 1MB per file / 30 seconds wall-time. Anything beyond that is reported as `<not found>` in the table.
+
+**Unified variable table**: every captured description ends with one markdown table merging all detected references — env vars and cross-file constants together. Source column distinguishes:
+
+- `inline` — defined in the captured file itself (YAML `env:` mapping, Dockerfile `ARG`, k8s `- name:/value:` pair, shell `export`)
+- `env` — read from the calling process's `os.environ`
+- `default` — Python `os.getenv("X", "default")` second-arg fallback
+- `<file>:<line>` — cross-file definition traced
+- `—` — value is unset and no fallback applies, OR symbol's definition wasn't found anywhere
+
+**`--no-trace-defs`** disables tracing per-capture. Use it when capturing files outside any git repo, or when scan time matters and you only need the original snippet.
+
+**Out of scope** (for both env resolution and cross-file tracing): recursive resolution (`X = int(os.getenv("Y"))` doesn't also resolve Y); class-attribute / pydantic-settings field lookups; the campaign-apply path (the agent runtime's filesystem isn't the user's local repo); cross-repo references.
+
+**Out of scope:** `.env` autoload (resolution reads the live process env only); resolution on the campaign-apply path (the agent runtime's env is not the user's local env, so it stays untouched); resolution in `--log-file` capture (logs are runtime output already, not symbolic references).
 
 ## Link Evidence to a Control
 

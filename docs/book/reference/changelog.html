@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-36696a2b.js";
+            window.path_to_searchindex_js = "../searchindex-ac12db2f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -182,13 +182,39 @@
                     <main>
                         <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>All notable changes to the Pretorin CLI are documented here. The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<h2 id="0170---2026-04-27"><a class="header" href="#0170---2026-04-27"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.3...v0.17.0">0.17.0</a> - 2026-04-27</a></h2>
+<h2 id="0170---2026-04-28"><a class="header" href="#0170---2026-04-28"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.3...v0.17.0">0.17.0</a> - 2026-04-28</a></h2>
 <h3 id="added"><a class="header" href="#added">Added</a></h3>
 <ul>
 <li><strong><code>pretorin evidence</code> capture is mandatory (#88)</strong>: <code>evidence upsert</code> and <code>evidence create</code> always read, redact, and embed <code>--code-file</code> / <code>--log-file</code> content into the pushed <code>description</code>. New companion flags: <code>--log-file</code>, <code>--log-tail</code>, <code>--log-since</code>, <code>--redact-pii / --no-redact-pii</code>, <code>--no-redact</code> (interactive confirm only).</li>
 <li><strong><code>code_snippet</code> round-trips through <code>EvidenceWriter</code> (#89)</strong>: previously the field was silently dropped on disk. Now base64-encoded under <code>code_snippet_b64</code> so multi-line content survives the write/read cycle.</li>
+<li><strong>Inline env-var value resolution (#92)</strong>: when <code>--code-file</code> capture detects env-var references (<code>os.getenv</code>, <code>process.env.X</code>, <code>${PORT:-8080}</code>, k8s <code>$(VAR)</code>), the CLI resolves them against the current process env and renders the result in a unified variable table at the end of the description. New <code>pretorin.evidence.env_resolve</code> module.</li>
+<li><strong>Two-tier safety on resolved values (#92)</strong>: tier 1 hides values for vars whose name contains a secret-shaped substring (<code>KEY</code> / <code>SECRET</code> / <code>TOKEN</code> / <code>PASSWORD</code> / <code>CRED</code> / <code>PRIVATE</code> / <code>AUTH</code> / <code>SESSION</code> / <code>COOKIE</code> / <code>SALT</code> / <code>SIGNATURE</code> / <code>CERT</code> / <code>BEARER</code>). Tier 2 runs the value through the snippet redactor — AWS / GitHub / Stripe / JWT / PEM / <code>proto://user:pass@host</code> URLs all hide the value. Tier 2 runs independently of <code>--no-redact</code>.</li>
+<li><strong><code>cred_url</code> redaction pattern (#92)</strong>: catches credential-bearing URLs (<code>postgres://user:pass@host</code>, <code>redis://:pass@host</code>, <code>https://user:pass@api.example.com</code>, etc.) without flagging clean URLs or <code>@</code> in path/query strings.</li>
+<li><strong>Languages detected (#92)</strong>: Python (<code>os.getenv</code>, <code>os.environ.get</code>, <code>os.environ["X"]</code> — AST-based so docstrings/string literals don’t false-match), JS/TS (<code>process.env.X</code>, <code>process.env["X"]</code>), shell-family — bash / fish / <strong>YAML</strong> / <strong>Dockerfile</strong> (<code>$VAR</code>, <code>${VAR}</code>, <code>${VAR:-default}</code>), plus Kubernetes <code>$(VAR)</code> in YAML. YAML coverage catches CI-workflow env refs in <code>run:</code> blocks. Bare <code>$var</code> / <code>$(var)</code> require uppercase first char so JSON-schema YAML (<code>$ref</code>, <code>$schema</code>) and shell substitution (<code>$(date)</code>) don’t false-match. GitHub Actions <code>${{ ... }}</code> is intentionally not matched.</li>
+<li><strong>Inline-definition resolution (#92)</strong>: when the snippet itself defines a variable (YAML <code>env:</code> mapping, k8s <code>- name: X / value: Y</code>, Dockerfile <code>ARG</code>/<code>ENV</code>, shell <code>export</code>), that takes priority over the agent’s process env. Resolution order: inline def → process env → source default → unset. Tier-1/tier-2 redaction still runs on whichever value wins.</li>
+<li><strong>Cross-file definition tracing for Python (#92)</strong>: when a captured Python snippet references a module-level constant imported from another file (<code>from app.config import DELETION_GRACE_PERIOD_DAYS</code>), the CLI traces it to the definition file and embeds the relevant lines as a second fenced code block. AST-based detection, hybrid AST-import / <code>git grep -nE</code> lookup with config-path priority, self-reference guard, bounded scan (5000 files / 30s).</li>
+<li><strong>Unified variable table (#92)</strong> at the end of every captured description. Columns: Variable · Value · Source. Source distinguishes <code>inline</code> / <code>env</code> / <code>default</code> / <code>&lt;file&gt;:&lt;line&gt;</code> / <code>—</code>. Env-var resolutions and cross-file constants share one table.</li>
+<li><strong><code>--no-resolve-env</code> and <code>--no-trace-defs</code> flags (#92)</strong> to disable env-var resolution and cross-file tracing per-capture. Both default on.</li>
+<li><strong>Footer counts (#92)</strong>: provenance footer now reports env-resolution and definition-tracing activity alongside redactions.</li>
 </ul>
 <h3 id="changed-breaking"><a class="header" href="#changed-breaking">Changed (BREAKING)</a></h3>
+<ul>
+<li><code>--code-file</code> / <code>--log-file</code> always capture; the <code>--no-capture</code> flag does not exist.</li>
+<li>The capture rule is enforced by a Pydantic <code>model_validator</code> on <code>EvidenceCreate</code> and <code>EvidenceBatchItemCreate</code>, so every write path (CLI, MCP, agent batch, campaign apply) trips it equally. Setting <code>code_file_path</code> without an embedded fenced code block in the description raises <code>ValidationError</code>. Source provenance lives on the structured columns of the API record (path / lines / commit / <code>collected_at</code>); the description does not duplicate it.</li>
+<li>The redactor scope is API keys (AWS / GitHub / Slack / Stripe / Google / JWT / PEM private keys) plus password-shaped assignments plus credential-bearing URLs. Vendor plugin sets and entropy heuristics from earlier prereleases were removed because they false-positived on every multi-character identifier in YAML / Python / Helm files.</li>
+<li>Captured descriptions render a markdown variable table instead of a bullet list (#92). Truncation preserves the table; the original snippet body truncates first, then cross-file definition snippets, then the table.</li>
+</ul>
+<h3 id="out-of-scope-92-intentionally-deferred"><a class="header" href="#out-of-scope-92-intentionally-deferred">Out of scope (#92, intentionally deferred)</a></h3>
+<ul>
+<li><code>.env</code> autoload (resolution is against the live process env only).</li>
+<li>Recursive resolution (<code>X = int(os.getenv("Y"))</code> doesn’t also resolve Y).</li>
+<li>Class-attribute / pydantic-settings / dataclass field lookups.</li>
+<li>Languages other than Python for cross-file tracing.</li>
+<li>Cross-repo references.</li>
+<li>Logs (<code>--log-file</code>) are unchanged. Log lines are runtime output already.</li>
+<li>The campaign-apply path (<code>enrich_evidence_recommendations</code>) is intentionally untouched — agent-runtime env / filesystem layout is not the user’s local repo.</li>
+</ul>
+<h3 id="changed-breaking-1"><a class="header" href="#changed-breaking-1">Changed (BREAKING)</a></h3>
 <ul>
 <li><code>--code-file</code> / <code>--log-file</code> always capture; the <code>--no-capture</code> flag does not exist.</li>
 <li>The capture rule is enforced by a Pydantic <code>model_validator</code> on <code>EvidenceCreate</code> and <code>EvidenceBatchItemCreate</code>, so every write path (CLI, MCP, agent batch, campaign apply) trips it equally. Setting <code>code_file_path</code> without an embedded fenced code block in the description raises <code>ValidationError</code>. Source provenance lives on the structured columns of the API record (path / lines / commit / <code>collected_at</code>); the description does not duplicate it.</li>
@@ -210,7 +236,7 @@
 <li><strong>Gap questions for policy and scope Q&amp;A</strong>: MCP tool descriptions guide agents through answer-first workflow with structured gap questions for organizational knowledge gaps.</li>
 </ul>
 <h2 id="0160---2026-04-21"><a class="header" href="#0160---2026-04-21"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.5...v0.16.0">0.16.0</a> - 2026-04-21</a></h2>
-<h3 id="changed-breaking-1"><a class="header" href="#changed-breaking-1">Changed (BREAKING)</a></h3>
+<h3 id="changed-breaking-2"><a class="header" href="#changed-breaking-2">Changed (BREAKING)</a></h3>
 <ul>
 <li><code>evidence_type</code> is now required on every CLI, MCP, agent, and workflow write path (#79). CLI paths hard-error when the user omits <code>-t/--type</code>; every other path runs a client-side normalizer before submission.</li>
 </ul>
