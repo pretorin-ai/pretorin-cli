@@ -9,6 +9,7 @@ from mcp.types import CallToolResult, TextContent
 
 from pretorin.client import PretorianClient
 from pretorin.client.models import EvidenceBatchItemCreate
+from pretorin.evidence.audit_metadata import build_agent_metadata, evidence_type_to_source_type
 from pretorin.evidence.types import normalize_evidence_type
 from pretorin.mcp.helpers import (
     format_error,
@@ -24,6 +25,12 @@ logger = logging.getLogger(__name__)
 
 # Alias for backward compatibility within this module.
 _safe_args = safe_args
+
+# Producer id for writes coming through the MCP server. The actual calling agent
+# (Claude Code, Codex CLI, custom client) is not directly observable from inside
+# the MCP handler today; "mcp-agent" identifies the channel rather than a specific
+# agent. v1.5+ may extend this once MCP exposes calling-agent metadata.
+_MCP_AGENT_ID = "mcp-agent"
 
 
 async def handle_search_evidence(
@@ -85,18 +92,40 @@ async def handle_create_evidence(
         if val:
             code_context[key] = val
 
+    description = arguments.get("description", "")
+    # WS1b: stamp agent-driven audit metadata. source_uri is a file:// when the
+    # caller supplied a code_file_path, else a pretorin:// sentinel for the
+    # platform context.
+    audit_source_uri = (
+        f"file://{code_context['code_file_path']}"
+        if "code_file_path" in code_context
+        else (
+            f"pretorin://systems/{system_id}/controls/{normalized_control_id}"
+            if normalized_control_id
+            else f"pretorin://systems/{system_id}/untargeted"
+        )
+    )
+    audit = build_agent_metadata(
+        body=description,
+        source_uri=audit_source_uri,
+        source_type=evidence_type_to_source_type(evidence_type),
+        agent_id=_MCP_AGENT_ID,
+        source_version=code_context.get("code_commit_hash"),
+    )
+
     try:
         result = await upsert_evidence(
             client,
             system_id=system_id,
             name=arguments.get("name", ""),
-            description=arguments.get("description", ""),
+            description=description,
             evidence_type=evidence_type,
             control_id=normalized_control_id,
             framework_id=framework_id,
             source="cli",
             dedupe=bool(dedupe),
             code_context=code_context or None,
+            audit_metadata=audit,
         )
     except ValueError as e:
         return format_error(str(e))
@@ -127,11 +156,25 @@ async def handle_create_evidence_batch(
         # and typos -> canonical; unknown or missing -> "other"). Pydantic
         # then enum-validates as the last-line defense.
         evidence_type = normalize_evidence_type(item.get("evidence_type")).value
+        item_control_id = normalize_control_id(item["control_id"])
+        # WS1b: per-item agent audit metadata.
+        item_audit_source_uri = (
+            f"file://{item['code_file_path']}"
+            if item.get("code_file_path")
+            else f"pretorin://systems/{system_id}/controls/{item_control_id}"
+        )
+        item_audit = build_agent_metadata(
+            body=item["description"],
+            source_uri=item_audit_source_uri,
+            source_type=evidence_type_to_source_type(evidence_type),
+            agent_id=_MCP_AGENT_ID,
+            source_version=item.get("code_commit_hash"),
+        )
         payload_items.append(
             EvidenceBatchItemCreate(
                 name=item["name"],
                 description=item["description"],
-                control_id=normalize_control_id(item["control_id"]),
+                control_id=item_control_id,
                 evidence_type=evidence_type,
                 relevance_notes=item.get("relevance_notes"),
                 code_file_path=item.get("code_file_path"),
@@ -139,6 +182,7 @@ async def handle_create_evidence_batch(
                 code_snippet=item.get("code_snippet"),
                 code_repository=item.get("code_repository"),
                 code_commit_hash=item.get("code_commit_hash"),
+                audit_metadata=item_audit,
             )
         )
 
