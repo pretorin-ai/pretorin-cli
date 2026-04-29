@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from mcp.types import Tool
 
 from pretorin.mcp.helpers import (
@@ -17,7 +19,20 @@ from pretorin.mcp.helpers import (
 
 
 async def list_tools() -> list[Tool]:
-    """List available MCP tools."""
+    """List available MCP tools.
+
+    Static tools are declared inline; per-recipe-script tools are appended
+    dynamically from the recipe registry (Phase C). Each script in each loaded
+    recipe contributes one MCP tool named ``pretorin_recipe_<safe_id>__<tool>``
+    with ``inputSchema`` derived from the script's ``ScriptDecl.params``.
+    """
+    static_tools = _static_tools()
+    dynamic_tools = _recipe_script_tools()
+    return static_tools + dynamic_tools
+
+
+def _static_tools() -> list[Tool]:
+    """Return the always-present built-in MCP tools."""
     return [
         # === Framework / Control Reference Tools ===
         Tool(
@@ -1912,4 +1927,110 @@ async def list_tools() -> list[Tool]:
                 "required": ["context_id"],
             },
         ),
+        Tool(
+            name="pretorin_list_recipes",
+            description=(
+                "List loaded recipes with their summary metadata (id, name, tier, "
+                "description, use_when, produces). Filter by tier and/or produces. "
+                "Use this to discover which recipes are available, then call "
+                "pretorin_get_recipe(id) to read the full body."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tier": {
+                        "type": "string",
+                        "enum": ["official", "partner", "community"],
+                        "description": "Filter to one tier",
+                    },
+                    "produces": {
+                        "type": "string",
+                        "enum": ["evidence", "narrative", "both"],
+                        "description": "Filter by what the recipe produces",
+                    },
+                },
+            },
+        ),
+        Tool(
+            name="pretorin_get_recipe",
+            description=(
+                "Return one recipe's full manifest and body. The body is the markdown "
+                "playbook the calling agent reads to understand the procedure."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "recipe_id": {
+                        "type": "string",
+                        "description": "Recipe id to fetch",
+                    },
+                },
+                "required": ["recipe_id"],
+            },
+        ),
     ]
+
+
+def _recipe_script_tools() -> list[Tool]:
+    """Generate one MCP Tool per script across every loaded recipe.
+
+    Per Phase C: each ``ScriptDecl`` in each recipe's manifest becomes a
+    callable MCP tool named ``pretorin_recipe_<safe_id>__<tool_name>`` with
+    ``inputSchema`` built from the script's declared params.
+
+    Tools are listed regardless of whether a recipe context is currently
+    active — calling one without an active matching context returns a clear
+    error from ``handle_run_recipe_script``.
+    """
+    # Local import: this module is imported at MCP startup but the recipe
+    # registry walks the filesystem, which we don't want at import time.
+    from pretorin.recipes.registry import RecipeRegistry, script_tool_name
+
+    tools: list[Tool] = []
+    registry = RecipeRegistry()
+    for entry in registry.entries():
+        manifest = entry.active.manifest
+        for script_name, script_decl in manifest.scripts.items():
+            tool_name = script_tool_name(manifest.id, script_name)
+            input_schema = _params_to_input_schema(script_decl.params)
+            tools.append(
+                Tool(
+                    name=tool_name,
+                    description=(
+                        f"[Recipe {manifest.id} ({manifest.tier})] {script_decl.description}\n\n"
+                        "Requires an active recipe execution context for this recipe "
+                        "(call pretorin_start_recipe first)."
+                    ),
+                    inputSchema=input_schema,
+                )
+            )
+    return tools
+
+
+def _params_to_input_schema(params: dict[str, Any]) -> dict[str, Any]:
+    """Convert a ``ScriptDecl.params`` mapping to a JSON Schema inputSchema.
+
+    Each ``RecipeParam`` declares ``type`` (string / array / boolean / integer
+    / number), an optional ``items`` for arrays, ``description``, ``default``,
+    and ``required``. The MCP ``inputSchema`` mirrors that.
+    """
+    properties: dict[str, dict[str, Any]] = {}
+    required: list[str] = []
+    for name, param in params.items():
+        # ``param`` is a RecipeParam pydantic model; serialise to dict for
+        # JSON Schema. Drop None-valued optional keys for cleanliness.
+        param_dict = param.model_dump() if hasattr(param, "model_dump") else dict(param)
+        prop: dict[str, Any] = {"type": param_dict["type"]}
+        if param_dict.get("items"):
+            prop["items"] = param_dict["items"]
+        if param_dict.get("description"):
+            prop["description"] = param_dict["description"]
+        if param_dict.get("default") is not None:
+            prop["default"] = param_dict["default"]
+        properties[name] = prop
+        if param_dict.get("required"):
+            required.append(name)
+    schema: dict[str, Any] = {"type": "object", "properties": properties}
+    if required:
+        schema["required"] = required
+    return schema

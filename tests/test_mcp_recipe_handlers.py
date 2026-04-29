@@ -26,7 +26,14 @@ from pretorin.mcp.handlers.evidence import (
     handle_create_evidence,
     handle_create_evidence_batch,
 )
-from pretorin.mcp.handlers.recipe import handle_end_recipe, handle_start_recipe
+from pretorin.mcp.handlers.recipe import (
+    handle_end_recipe,
+    handle_get_recipe,
+    handle_list_recipes,
+    handle_run_recipe_script,
+    handle_start_recipe,
+)
+from pretorin.recipes.registry import script_tool_name
 from pretorin.recipes import loader as loader_module
 from pretorin.recipes.context import get_default_store, reset_default_store
 from pretorin.recipes.loader import clear_cache
@@ -408,3 +415,192 @@ async def test_create_evidence_batch_with_recipe_context(
         assert item.audit_metadata is not None
         assert item.audit_metadata.producer_kind == "recipe"
         assert item.audit_metadata.producer_id == "example-recipe"
+
+
+# =============================================================================
+# Phase C: pretorin_list_recipes / pretorin_get_recipe
+# =============================================================================
+
+
+@pytest.mark.asyncio
+async def test_list_recipes_empty(fake_dirs: dict[str, Path]) -> None:
+    response = await handle_list_recipes(client=MagicMock(), arguments={})
+    payload = _extract_payload(response)
+    assert payload["total"] == 0
+    assert payload["recipes"] == []
+
+
+@pytest.mark.asyncio
+async def test_list_recipes_returns_summary(fake_dirs: dict[str, Path]) -> None:
+    _drop(fake_dirs["builtin"], "example-recipe")
+    _drop(fake_dirs["builtin"], "another-recipe")
+    response = await handle_list_recipes(client=MagicMock(), arguments={})
+    payload = _extract_payload(response)
+    assert payload["total"] == 2
+    ids = {r["id"] for r in payload["recipes"]}
+    assert ids == {"example-recipe", "another-recipe"}
+    # Body intentionally NOT included in list — that's get_recipe's job.
+    for recipe in payload["recipes"]:
+        assert "body" not in recipe
+        # Summary fields are present.
+        for field_name in ["id", "name", "tier", "description", "use_when", "produces"]:
+            assert field_name in recipe
+
+
+@pytest.mark.asyncio
+async def test_list_recipes_filter_by_tier(fake_dirs: dict[str, Path]) -> None:
+    _drop(fake_dirs["builtin"], "example-recipe")  # → official
+    response = await handle_list_recipes(
+        client=MagicMock(),
+        arguments={"tier": "community"},
+    )
+    payload = _extract_payload(response)
+    assert payload["total"] == 0  # builtin → official, filtered out
+
+
+@pytest.mark.asyncio
+async def test_list_recipes_filter_by_produces(fake_dirs: dict[str, Path]) -> None:
+    _drop(fake_dirs["builtin"], "example-recipe")  # produces evidence
+    _drop(fake_dirs["builtin"], "another-recipe")  # produces narrative
+    response = await handle_list_recipes(
+        client=MagicMock(),
+        arguments={"produces": "narrative"},
+    )
+    payload = _extract_payload(response)
+    assert payload["total"] == 1
+    assert payload["recipes"][0]["id"] == "another-recipe"
+
+
+@pytest.mark.asyncio
+async def test_get_recipe_unknown_id(fake_dirs: dict[str, Path]) -> None:
+    response = await handle_get_recipe(
+        client=MagicMock(), arguments={"recipe_id": "no-such-recipe"}
+    )
+    payload = _extract_payload(response)
+    assert "no recipe found" in str(payload).lower()
+
+
+@pytest.mark.asyncio
+async def test_get_recipe_returns_full_body_and_manifest(fake_dirs: dict[str, Path]) -> None:
+    _drop(fake_dirs["builtin"], "example-recipe")
+    response = await handle_get_recipe(
+        client=MagicMock(), arguments={"recipe_id": "example-recipe"}
+    )
+    payload = _extract_payload(response)
+    assert payload["id"] == "example-recipe"
+    assert "body" in payload
+    assert "Example Recipe Body" in payload["body"]
+    assert payload["manifest"]["name"] == "Example Recipe"
+    assert payload["source"] == "builtin"
+
+
+# =============================================================================
+# Phase C: handle_run_recipe_script (per-recipe-script dispatcher)
+# =============================================================================
+
+
+@pytest.mark.asyncio
+async def test_run_recipe_script_requires_active_context(fake_dirs: dict[str, Path]) -> None:
+    """Script-tool calls outside an active recipe context are rejected."""
+    _drop(fake_dirs["builtin"], "example-recipe")
+    # Drop a real script file so the manifest's reference resolves.
+    script_file = fake_dirs["builtin"] / "example-recipe" / "scripts" / "example.py"
+    script_file.parent.mkdir(exist_ok=True)
+    script_file.write_text(
+        '"""."""\nasync def run(ctx, **params):\n    return {"ok": True}\n'
+    )
+
+    tool_name = script_tool_name("example-recipe", "example_tool")
+    response = await handle_run_recipe_script(
+        client=MagicMock(),
+        arguments={},
+        tool_name=tool_name,
+    )
+    payload = _extract_payload(response)
+    assert "active recipe execution context" in str(payload).lower()
+
+
+@pytest.mark.asyncio
+async def test_run_recipe_script_unknown_tool_name(fake_dirs: dict[str, Path]) -> None:
+    response = await handle_run_recipe_script(
+        client=MagicMock(),
+        arguments={},
+        tool_name="pretorin_recipe_unknown__nope",
+    )
+    payload = _extract_payload(response)
+    assert "no recipe script tool" in str(payload).lower()
+
+
+@pytest.mark.asyncio
+async def test_run_recipe_script_wrong_recipe_context(fake_dirs: dict[str, Path]) -> None:
+    """Active context for recipe A; calling recipe B's script is rejected."""
+    _drop(fake_dirs["builtin"], "example-recipe")
+    _drop(fake_dirs["builtin"], "another-recipe")
+    script_file = fake_dirs["builtin"] / "example-recipe" / "scripts" / "example.py"
+    script_file.parent.mkdir(exist_ok=True)
+    script_file.write_text('"""."""\nasync def run(ctx, **params):\n    return {}\n')
+
+    # Start the another-recipe context (no scripts).
+    await handle_start_recipe(
+        client=MagicMock(),
+        arguments={"recipe_id": "another-recipe", "recipe_version": "1.2.3"},
+    )
+    # Now try to call example-recipe's script.
+    tool_name = script_tool_name("example-recipe", "example_tool")
+    response = await handle_run_recipe_script(
+        client=MagicMock(),
+        arguments={},
+        tool_name=tool_name,
+    )
+    payload = _extract_payload(response)
+    assert "active recipe context is for" in str(payload).lower()
+
+
+@pytest.mark.asyncio
+async def test_run_recipe_script_happy_path(fake_dirs: dict[str, Path]) -> None:
+    """With an active matching context, the script's run() executes and returns its dict."""
+    _drop(fake_dirs["builtin"], "example-recipe")
+    script_file = fake_dirs["builtin"] / "example-recipe" / "scripts" / "example.py"
+    script_file.parent.mkdir(exist_ok=True)
+    script_file.write_text(
+        '"""."""\n'
+        "async def run(ctx, **params):\n"
+        '    return {"ok": True, "input": params.get("input"), "ctx_recipe": ctx.recipe_id}\n'
+    )
+
+    await handle_start_recipe(
+        client=MagicMock(),
+        arguments={"recipe_id": "example-recipe", "recipe_version": "0.1.0"},
+    )
+    tool_name = script_tool_name("example-recipe", "example_tool")
+    response = await handle_run_recipe_script(
+        client=MagicMock(),
+        arguments={"input": "hello"},
+        tool_name=tool_name,
+    )
+    payload = _extract_payload(response)
+    assert payload["ok"] is True
+    assert payload["input"] == "hello"
+    assert payload["ctx_recipe"] == "example-recipe"
+
+
+# =============================================================================
+# Phase C: list_tools includes per-recipe-script tools dynamically
+# =============================================================================
+
+
+@pytest.mark.asyncio
+async def test_list_tools_includes_dynamic_script_tools(fake_dirs: dict[str, Path]) -> None:
+    """Loaded recipes' scripts show up in the MCP tool list."""
+    from pretorin.mcp.tools import list_tools
+
+    _drop(fake_dirs["builtin"], "example-recipe")
+    tools = await list_tools()
+    tool_names = {t.name for t in tools}
+    expected = script_tool_name("example-recipe", "example_tool")
+    assert expected in tool_names
+
+    # Schema is built from ScriptDecl.params — should include "input".
+    matching = next(t for t in tools if t.name == expected)
+    assert "input" in matching.inputSchema["properties"]
+

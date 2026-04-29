@@ -7,9 +7,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from pretorin.client.api import PretorianClient
+from pretorin.evidence.audit_metadata import build_cli_metadata, evidence_type_to_source_type
 from pretorin.evidence.writer import EvidenceWriter, LocalEvidence, _format_frontmatter
 from pretorin.local_file import update_file_frontmatter
-from pretorin.evidence.audit_metadata import build_cli_metadata, evidence_type_to_source_type
 from pretorin.workflows.compliance_updates import upsert_evidence
 
 logger = logging.getLogger(__name__)

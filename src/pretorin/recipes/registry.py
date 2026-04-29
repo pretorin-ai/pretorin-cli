@@ -103,6 +103,38 @@ class RecipeRegistry:
         """Subset of entries whose active recipe was loaded from a given source."""
         return [e for e in self.entries() if e.active.source == source]
 
+    def get_script_tool_map(self) -> dict[str, tuple[str, str]]:
+        """Return ``{mcp_tool_name -> (recipe_id, script_name)}`` for every script.
+
+        Used by the MCP layer to dynamically expose per-recipe-script tools and
+        dispatch calls to them. Tool names go through ``script_tool_name`` so the
+        MCP boundary uses pure-snake_case identifiers (recipe ids' hyphens get
+        replaced with underscores at the boundary).
+
+        The map keys the agent sees; the values are what pretorin uses to look
+        up the script for execution. Agents never parse the tool name — they
+        call by string and pretorin maps it back via this dict.
+        """
+        result: dict[str, tuple[str, str]] = {}
+        for entry in self.entries():
+            recipe_id = entry.active.manifest.id
+            for script_name in entry.active.manifest.scripts:
+                result[script_tool_name(recipe_id, script_name)] = (recipe_id, script_name)
+        return result
+
+
+def script_tool_name(recipe_id: str, script_name: str) -> str:
+    """Build the MCP tool name for one recipe-script pair.
+
+    Recipe ids are kebab-case; tool names use snake_case. Convert hyphens to
+    underscores at the MCP boundary so the resulting tool name is a valid
+    Python-identifier-like string. Round-tripping is via the registry's
+    ``get_script_tool_map`` (lossless because the map's value carries the
+    original recipe id with its hyphens intact).
+    """
+    safe_id = recipe_id.replace("-", "_")
+    return f"pretorin_recipe_{safe_id}__{script_name}"
+
 
 def load_explicit(recipe_dir: Path) -> LoadedRecipe:
     """Load a recipe from an explicit absolute path. Convenience re-export."""

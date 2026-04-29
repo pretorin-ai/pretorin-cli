@@ -45,6 +45,8 @@ from pretorin.mcp.handlers.frameworks import (
 )
 from pretorin.mcp.handlers.recipe import (
     handle_end_recipe,
+    handle_get_recipe,
+    handle_list_recipes,
     handle_start_recipe,
 )
 from pretorin.mcp.handlers.stig import (
@@ -210,4 +212,7 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     # Recipe execution context lifecycle (recipe-implementation WS2 Phase B)
     "pretorin_start_recipe": handle_start_recipe,
     "pretorin_end_recipe": handle_end_recipe,
+    # Recipe discovery (recipe-implementation WS2 Phase C)
+    "pretorin_list_recipes": handle_list_recipes,
+    "pretorin_get_recipe": handle_get_recipe,
 }

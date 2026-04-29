@@ -78,9 +78,16 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent] |
 
             if handler:
                 return await handler(client, arguments)
-            else:
-                logger.warning("Unknown tool requested: %s", name)
-                return format_error(f"Unknown tool: {name}")
+            # Phase C: per-recipe-script tools (pretorin_recipe_<id>__<tool>) are
+            # not in the static TOOL_HANDLERS table — they're registered dynamically
+            # from the recipe registry. Dispatch the catch-all here when the name
+            # matches the prefix.
+            if name.startswith("pretorin_recipe_") and "__" in name[len("pretorin_recipe_") :]:
+                from pretorin.mcp.handlers.recipe import handle_run_recipe_script
+
+                return await handle_run_recipe_script(client, arguments, tool_name=name)
+            logger.warning("Unknown tool requested: %s", name)
+            return format_error(f"Unknown tool: {name}")
 
     except AuthenticationError as e:
         logger.warning("Authentication error during tool %s: %s", name, e.message)
