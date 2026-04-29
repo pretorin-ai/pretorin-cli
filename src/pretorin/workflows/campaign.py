@@ -25,10 +25,18 @@ from pretorin.cli.output import is_json_mode
 from pretorin.client import PretorianClient
 from pretorin.client.api import PretorianClientError
 from pretorin.client.models import EvidenceBatchItemCreate, OrgPolicyQuestionnaireResponse, ScopeResponse
+from pretorin.evidence.audit_metadata import build_agent_metadata, evidence_type_to_source_type
 from pretorin.scope import ExecutionScope
 from pretorin.utils import normalize_control_id
 
 logger = logging.getLogger(__name__)
+
+# Producer id for campaign-apply's agent-fallback writes — the freelance prose
+# generation path at workflows/ai_generation.py:147. WS5d will swap this for
+# recipe-stamped metadata once the recipe-selection wiring lands; until then,
+# every campaign-generated evidence item is stamped producer_kind="agent" with
+# this id so the audit trail correctly attributes it to the campaign agent.
+_CAMPAIGN_AGENT_ID = "campaign-agent"
 
 ROMEBOT_COLOR = "#EAB536"
 OUTPUT_AUTO = "auto"
@@ -1507,21 +1515,39 @@ async def _apply_control_item(
 
     # 4. Evidence batch (accepted items only).
     if accepted and write_evidence:
-        batch_items = [
-            EvidenceBatchItemCreate(
+        # WS1b: each batch item gets agent-stamped audit metadata. Source URI
+        # prefers the recommendation's code_file_path when present; falls back
+        # to a pretorin:// sentinel for the platform context.
+        def _build_batch_item(rec: dict[str, Any]) -> EvidenceBatchItemCreate:
+            evidence_type = str(rec["evidence_type"])
+            description = str(rec["description"])
+            audit_source_uri = (
+                f"file://{rec['code_file_path']}"
+                if rec.get("code_file_path")
+                else f"pretorin://systems/{system_id}/controls/{item.item_id}"
+            )
+            audit = build_agent_metadata(
+                body=description,
+                source_uri=audit_source_uri,
+                source_type=evidence_type_to_source_type(evidence_type),
+                agent_id=_CAMPAIGN_AGENT_ID,
+                source_version=rec.get("code_commit_hash"),
+            )
+            return EvidenceBatchItemCreate(
                 name=str(rec["name"]),
-                description=str(rec["description"]),
+                description=description,
                 control_id=item.item_id,
-                evidence_type=str(rec["evidence_type"]),
+                evidence_type=evidence_type,
                 relevance_notes=rec.get("relevance_notes"),
                 code_file_path=rec.get("code_file_path"),
                 code_line_numbers=rec.get("code_line_numbers"),
                 code_snippet=rec.get("code_snippet"),
                 code_repository=rec.get("code_repository"),
                 code_commit_hash=rec.get("code_commit_hash"),
+                audit_metadata=audit,
             )
-            for _, rec in accepted
-        ]
+
+        batch_items = [_build_batch_item(rec) for _, rec in accepted]
         batch_result = await client.create_evidence_batch(system_id, framework_id, batch_items)
         if len(batch_result.results) != len(accepted):
             raise PretorianClientError(
