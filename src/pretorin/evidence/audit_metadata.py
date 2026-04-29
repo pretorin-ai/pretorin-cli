@@ -34,6 +34,47 @@ from pretorin.client.models import (
 )
 
 
+# Mapping from the platform's evidence_type enum (13 values, see evidence.types
+# VALID_EVIDENCE_TYPES) to the audit-metadata SourceType enum (7 values, see draft
+# RFC §3). The two enums describe related but distinct concepts: evidence_type is
+# what the auditor sees as the kind of evidence, source_type is what the auditor
+# needs to know about the source the body came from for traceability.
+#
+# The mapping is the default; callers with specific knowledge can override by
+# passing source_type explicitly to the build_*_metadata helpers. Keeps every
+# WS1b call site DRY rather than each one reimplementing a translation table.
+_EVIDENCE_TYPE_TO_SOURCE_TYPE: dict[str, SourceType] = {
+    "attestation": "attestation",
+    "certificate": "document",
+    "code_snippet": "code_snippet",
+    "configuration": "configuration",
+    "interview_notes": "attestation",  # written record of a verbal attestation
+    "log_file": "log_excerpt",
+    "other": "document",  # generic fallback
+    "policy_document": "document",
+    "repository_link": "code_snippet",  # reference to code
+    "scan_result": "scan_result",
+    "screen_recording": "screenshot",  # closest match in the 7-value enum
+    "screenshot": "screenshot",
+    "test_result": "scan_result",  # structured assertion of system state
+}
+
+
+def evidence_type_to_source_type(evidence_type: str) -> SourceType:
+    """Map a platform evidence_type to the audit-metadata SourceType default.
+
+    Callers with specific source-type knowledge should pass source_type explicitly
+    to the build_*_metadata helpers and skip this. This is the fallback for
+    callers that only know the evidence_type the user/agent supplied.
+
+    Unknown evidence_types default to ``"document"`` because the platform's
+    ``evidence_type`` validator already rejects values outside ``VALID_EVIDENCE_TYPES``;
+    if an unknown value reaches this mapping, the caller bypassed the validator
+    and we conservatively classify the source as a generic document.
+    """
+    return _EVIDENCE_TYPE_TO_SOURCE_TYPE.get(evidence_type, "document")
+
+
 def compute_content_hash(body: str | bytes) -> str:
     """Return the lowercase-hex sha256 digest of the canonical body.
 
@@ -161,4 +202,5 @@ __all__ = [
     "build_cli_metadata",
     "build_recipe_metadata",
     "compute_content_hash",
+    "evidence_type_to_source_type",
 ]

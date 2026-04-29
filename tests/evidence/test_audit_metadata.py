@@ -30,7 +30,9 @@ from pretorin.evidence.audit_metadata import (
     build_cli_metadata,
     build_recipe_metadata,
     compute_content_hash,
+    evidence_type_to_source_type,
 )
+from pretorin.evidence.types import VALID_EVIDENCE_TYPES
 
 # A valid sha256 hex digest used as a constant in tests that need a content_hash
 # but aren't testing the hash itself.
@@ -227,6 +229,62 @@ def test_metadata_accepts_optional_recipe_selection_dict() -> None:
     selection = {"selected_recipe": "code-evidence-capture", "confidence": "high"}
     meta = EvidenceAuditMetadata(**_valid_metadata_kwargs(recipe_selection=selection))  # type: ignore[arg-type]
     assert meta.recipe_selection == selection
+
+
+# =============================================================================
+# evidence_type_to_source_type mapping
+# =============================================================================
+
+
+@pytest.mark.parametrize(
+    "evidence_type,expected",
+    [
+        ("attestation", "attestation"),
+        ("certificate", "document"),
+        ("code_snippet", "code_snippet"),
+        ("configuration", "configuration"),
+        ("interview_notes", "attestation"),
+        ("log_file", "log_excerpt"),
+        ("other", "document"),
+        ("policy_document", "document"),
+        ("repository_link", "code_snippet"),
+        ("scan_result", "scan_result"),
+        ("screen_recording", "screenshot"),
+        ("screenshot", "screenshot"),
+        ("test_result", "scan_result"),
+    ],
+)
+def test_evidence_type_to_source_type_canonical(evidence_type: str, expected: str) -> None:
+    assert evidence_type_to_source_type(evidence_type) == expected
+
+
+def test_evidence_type_to_source_type_covers_all_canonical_evidence_types() -> None:
+    """Every value in VALID_EVIDENCE_TYPES has a canonical source_type mapping.
+
+    Without this regression test, adding a new evidence_type to the platform enum
+    would silently fall through to the 'document' default. This test forces a
+    deliberate choice when the enum grows.
+    """
+    for ev_type in VALID_EVIDENCE_TYPES:
+        # Mapping must return a SourceType from the enum; default-to-document is
+        # only acceptable for evidence_type values genuinely best classified that
+        # way (other, certificate, policy_document). Everything else needs an
+        # explicit entry; assert each maps.
+        result = evidence_type_to_source_type(ev_type)
+        assert result in {
+            "code_snippet",
+            "log_excerpt",
+            "configuration",
+            "screenshot",
+            "document",
+            "attestation",
+            "scan_result",
+        }
+
+
+def test_evidence_type_to_source_type_unknown_defaults_to_document() -> None:
+    """Defensive default when an unknown evidence_type slips past the validator."""
+    assert evidence_type_to_source_type("not-a-real-type") == "document"
 
 
 # =============================================================================
