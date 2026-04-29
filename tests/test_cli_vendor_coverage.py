@@ -7,7 +7,6 @@ list-docs — in both normal and JSON modes plus validation/error handling.
 from __future__ import annotations
 
 import json
-import os
 from unittest.mock import AsyncMock, patch
 
 import pytest

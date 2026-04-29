@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from pretorin.agent.skills import SKILLS, _WORKFLOW_GUARDRAILS
+from pretorin.agent.skills import _WORKFLOW_GUARDRAILS, SKILLS
 from pretorin.agent.tools import create_platform_tools
 from pretorin.mcp.helpers import VALID_EVIDENCE_TYPES
 from pretorin.workflows.ai_generation import _build_generation_task

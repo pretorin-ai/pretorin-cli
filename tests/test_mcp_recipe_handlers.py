@@ -33,10 +33,10 @@ from pretorin.mcp.handlers.recipe import (
     handle_run_recipe_script,
     handle_start_recipe,
 )
-from pretorin.recipes.registry import script_tool_name
 from pretorin.recipes import loader as loader_module
 from pretorin.recipes.context import get_default_store, reset_default_store
 from pretorin.recipes.loader import clear_cache
+from pretorin.recipes.registry import script_tool_name
 
 _FIXTURES = Path(__file__).parent / "recipes" / "fixtures" / "valid"
 
@@ -473,9 +473,7 @@ async def test_list_recipes_filter_by_produces(fake_dirs: dict[str, Path]) -> No
 
 @pytest.mark.asyncio
 async def test_get_recipe_unknown_id(fake_dirs: dict[str, Path]) -> None:
-    response = await handle_get_recipe(
-        client=MagicMock(), arguments={"recipe_id": "no-such-recipe"}
-    )
+    response = await handle_get_recipe(client=MagicMock(), arguments={"recipe_id": "no-such-recipe"})
     payload = _extract_payload(response)
     assert "no recipe found" in str(payload).lower()
 
@@ -483,9 +481,7 @@ async def test_get_recipe_unknown_id(fake_dirs: dict[str, Path]) -> None:
 @pytest.mark.asyncio
 async def test_get_recipe_returns_full_body_and_manifest(fake_dirs: dict[str, Path]) -> None:
     _drop(fake_dirs["builtin"], "example-recipe")
-    response = await handle_get_recipe(
-        client=MagicMock(), arguments={"recipe_id": "example-recipe"}
-    )
+    response = await handle_get_recipe(client=MagicMock(), arguments={"recipe_id": "example-recipe"})
     payload = _extract_payload(response)
     assert payload["id"] == "example-recipe"
     assert "body" in payload
@@ -506,9 +502,7 @@ async def test_run_recipe_script_requires_active_context(fake_dirs: dict[str, Pa
     # Drop a real script file so the manifest's reference resolves.
     script_file = fake_dirs["builtin"] / "example-recipe" / "scripts" / "example.py"
     script_file.parent.mkdir(exist_ok=True)
-    script_file.write_text(
-        '"""."""\nasync def run(ctx, **params):\n    return {"ok": True}\n'
-    )
+    script_file.write_text('"""."""\nasync def run(ctx, **params):\n    return {"ok": True}\n')
 
     tool_name = script_tool_name("example-recipe", "example_tool")
     response = await handle_run_recipe_script(
@@ -603,4 +597,3 @@ async def test_list_tools_includes_dynamic_script_tools(fake_dirs: dict[str, Pat
     # Schema is built from ScriptDecl.params — should include "input".
     matching = next(t for t in tools if t.name == expected)
     assert "input" in matching.inputSchema["properties"]
-

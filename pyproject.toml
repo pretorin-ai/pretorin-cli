@@ -114,6 +114,16 @@ disable_error_code = ["arg-type"]
 module = ["pretorin.agent.*", "pretorin.cli.agent"]
 disable_error_code = ["import-not-found"]
 
+[[tool.mypy.overrides]]
+# Recipe scripts under src/pretorin/recipes/_recipes/<id>/scripts/ are loaded
+# dynamically via importlib at runtime, not imported as part of the pretorin
+# package. They don't have a __init__.py and aren't on the package path. The
+# WS3 design's "recipe contract" treats them as opaque modules with one
+# documented `async run(ctx, **params) -> dict` entry point — full mypy
+# coverage on every author's scripts isn't tractable.
+module = ["pretorin.recipes._recipes.*"]
+ignore_errors = true
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]

@@ -68,9 +68,7 @@ async def test_run_script_happy_path(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_run_script_unknown_name(tmp_path: Path) -> None:
-    target = _build_recipe_with_script(
-        tmp_path, '"""."""\nasync def run(ctx, **params):\n    return {}\n'
-    )
+    target = _build_recipe_with_script(tmp_path, '"""."""\nasync def run(ctx, **params):\n    return {}\n')
     recipe = load_explicit_path(target)
     with pytest.raises(RecipeManifestError, match="no script named"):
         await run_script(
@@ -83,9 +81,7 @@ async def test_run_script_unknown_name(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_run_script_missing_file(tmp_path: Path) -> None:
-    target = _build_recipe_with_script(
-        tmp_path, '"""."""\nasync def run(ctx, **params):\n    return {}\n'
-    )
+    target = _build_recipe_with_script(tmp_path, '"""."""\nasync def run(ctx, **params):\n    return {}\n')
     # Now delete the script file the manifest references.
     (target / "scripts" / "example.py").unlink()
     recipe = load_explicit_path(target)
@@ -148,10 +144,12 @@ async def test_run_script_non_dict_return_rejected(tmp_path: Path) -> None:
 @pytest.mark.asyncio
 async def test_run_script_can_use_ctx_recipe_id(tmp_path: Path) -> None:
     """The ctx carries the active recipe id so scripts can stamp evidence correctly."""
-    target = _build_recipe_with_script(
-        tmp_path,
-        '"""."""\nasync def run(ctx, **params):\n    return {"recipe_id": ctx.recipe_id, "context_id": ctx.recipe_context_id}\n',
+    script_body = (
+        '"""."""\n'
+        "async def run(ctx, **params):\n"
+        '    return {"recipe_id": ctx.recipe_id, "context_id": ctx.recipe_context_id}\n'
     )
+    target = _build_recipe_with_script(tmp_path, script_body)
     recipe = load_explicit_path(target)
     result = await run_script(
         recipe=recipe,
