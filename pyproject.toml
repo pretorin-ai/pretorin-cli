@@ -101,6 +101,12 @@ select = ["E", "F", "I", "N", "W", "UP"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
+# Recipe scripts share filenames (every recipe ships a scripts/run_scan.py)
+# and aren't part of the importable package — they're loaded dynamically via
+# importlib by the recipe runner. Excluding them at discovery time avoids
+# "duplicate module named run_scan" errors that fire before the per-module
+# `ignore_errors` override below can take effect.
+exclude = ["src/pretorin/recipes/_recipes/.*/scripts/.*\\.py$"]
 
 [[tool.mypy.overrides]]
 # MCP library doesn't have complete type stubs
