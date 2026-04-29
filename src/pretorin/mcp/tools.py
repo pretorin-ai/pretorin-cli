@@ -294,6 +294,15 @@ async def list_tools() -> list[Tool]:
                         "description": "Whether to reuse exact-matching org evidence before creating",
                         "default": True,
                     },
+                    "recipe_context_id": {
+                        "type": "string",
+                        "description": (
+                            "Optional. When supplied (caller has an active recipe execution context "
+                            "from pretorin_start_recipe), the resulting evidence is stamped "
+                            "producer_kind='recipe' with the context's recipe id and version "
+                            "automatically. Without it, evidence is stamped producer_kind='agent'."
+                        ),
+                    },
                     "allow_scope_override": allow_scope_override_property(),
                     "allow_unverified_sources": allow_unverified_sources_property(),
                 },
@@ -339,6 +348,15 @@ async def list_tools() -> list[Tool]:
                             },
                             "required": ["name", "description", "control_id", "evidence_type"],
                         },
+                    },
+                    "recipe_context_id": {
+                        "type": "string",
+                        "description": (
+                            "Optional. When supplied (caller has an active recipe execution context "
+                            "from pretorin_start_recipe), every item in the batch is stamped "
+                            "producer_kind='recipe'. All items share the same context — per-item "
+                            "context variation is not supported in v1."
+                        ),
                     },
                     "allow_scope_override": allow_scope_override_property(),
                     "allow_unverified_sources": allow_unverified_sources_property(),
@@ -1826,6 +1844,72 @@ async def list_tools() -> list[Tool]:
                     "system_id": system_id_property(),
                 },
                 "required": ["system_id"],
+            },
+        ),
+        # Recipe execution context lifecycle (recipe-implementation WS2 Phase B)
+        Tool(
+            name="pretorin_start_recipe",
+            description=(
+                "Open a recipe execution context. Returns a context_id the caller passes "
+                "on subsequent platform-API write tool calls so audit metadata is stamped "
+                "with producer_kind='recipe' automatically. One recipe per session at a "
+                "time (nesting forbidden in v1). Contexts auto-expire after 1 hour of "
+                "inactivity."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "recipe_id": {
+                        "type": "string",
+                        "description": "Recipe id (must be loadable from the registry)",
+                    },
+                    "recipe_version": {
+                        "type": "string",
+                        "description": (
+                            "Recipe version the caller intends to run. Cross-checked "
+                            "against the loaded recipe; mismatch is an error."
+                        ),
+                    },
+                    "params": {
+                        "type": "object",
+                        "description": (
+                            "Inputs the calling agent supplies, validated against the recipe's params schema."
+                        ),
+                    },
+                    "selection": {
+                        "type": "object",
+                        "description": (
+                            "Structured RecipeSelection record from the engagement layer. "
+                            "Stored on the context for the eventual RecipeResult."
+                        ),
+                    },
+                },
+                "required": ["recipe_id", "recipe_version"],
+            },
+        ),
+        Tool(
+            name="pretorin_end_recipe",
+            description=(
+                "Close a recipe execution context and return the RecipeResult summary "
+                "(status, evidence and narrative counts, errors, elapsed time). "
+                "Must be called once the recipe's work is complete; failure to call "
+                "leaves the context in place until the 1-hour expiry sweep."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "context_id": {
+                        "type": "string",
+                        "description": "Context id returned by pretorin_start_recipe",
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": ["pass", "fail", "needs_input"],
+                        "description": "Caller-supplied disposition (defaults to 'pass')",
+                        "default": "pass",
+                    },
+                },
+                "required": ["context_id"],
             },
         ),
     ]

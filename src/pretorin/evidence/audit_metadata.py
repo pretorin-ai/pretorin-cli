@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import hashlib
 from datetime import datetime, timezone
+from typing import Any
 
 from pretorin import __version__ as _pretorin_version
 from pretorin.client.models import (
@@ -32,7 +33,6 @@ from pretorin.client.models import (
     RedactionSummary,
     SourceType,
 )
-
 
 # Mapping from the platform's evidence_type enum (13 values, see evidence.types
 # VALID_EVIDENCE_TYPES) to the audit-metadata SourceType enum (7 values, see draft
@@ -197,10 +197,43 @@ def build_recipe_metadata(
     )
 
 
+def build_recipe_metadata_from_context(
+    *,
+    context: Any,
+    body: str | bytes,
+    source_uri: str,
+    source_type: SourceType,
+    captured_at: datetime | None = None,
+    source_version: str | None = None,
+    redaction_summary: RedactionSummary | None = None,
+) -> EvidenceAuditMetadata:
+    """Convenience: stamp recipe metadata from an active ExecutionContext.
+
+    Used by the platform-API write tools when the caller supplies a
+    ``recipe_context_id``. The handler looks up the context (which validates
+    session + expiry), then calls this to construct the metadata. Bumps the
+    context's ``evidence_count`` tally as a side effect.
+
+    The ``Any`` type for ``context`` avoids a circular import; the caller
+    passes a ``pretorin.recipes.context.ExecutionContext`` instance.
+    """
+    return build_recipe_metadata(
+        body=body,
+        source_uri=source_uri,
+        source_type=source_type,
+        recipe_id=context.recipe_id,
+        recipe_version=context.recipe_version,
+        captured_at=captured_at,
+        source_version=source_version,
+        redaction_summary=redaction_summary,
+    )
+
+
 __all__ = [
     "build_agent_metadata",
     "build_cli_metadata",
     "build_recipe_metadata",
+    "build_recipe_metadata_from_context",
     "compute_content_hash",
     "evidence_type_to_source_type",
 ]

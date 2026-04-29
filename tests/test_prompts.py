@@ -49,6 +49,5 @@ def test_skill_tool_names_reference_existing_agent_tools() -> None:
     for skill_name, skill in SKILLS.items():
         for tool_name in skill.tool_names:
             assert tool_name in defined_names, (
-                f"Skill {skill_name!r} references tool {tool_name!r} "
-                f"which does not exist in agent/tools.py"
+                f"Skill {skill_name!r} references tool {tool_name!r} which does not exist in agent/tools.py"
             )

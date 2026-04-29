@@ -43,6 +43,10 @@ from pretorin.mcp.handlers.frameworks import (
     handle_list_controls,
     handle_list_frameworks,
 )
+from pretorin.mcp.handlers.recipe import (
+    handle_end_recipe,
+    handle_start_recipe,
+)
 from pretorin.mcp.handlers.stig import (
     handle_get_cci,
     handle_get_cci_chain,
@@ -203,4 +207,7 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pretorin_get_stig_applicability": handle_get_stig_applicability,
     "pretorin_get_cci_status": handle_get_cci_status,
     "pretorin_infer_stigs": handle_infer_stigs,
+    # Recipe execution context lifecycle (recipe-implementation WS2 Phase B)
+    "pretorin_start_recipe": handle_start_recipe,
+    "pretorin_end_recipe": handle_end_recipe,
 }

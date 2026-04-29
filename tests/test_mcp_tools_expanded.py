@@ -86,9 +86,12 @@ class TestToolListing:
             "pretorin_get_stig_applicability",
             "pretorin_get_cci_status",
             "pretorin_infer_stigs",
+            # Recipe execution context lifecycle (recipe-implementation WS2 Phase B)
+            "pretorin_start_recipe",
+            "pretorin_end_recipe",
         ]
 
-        assert len(tools) == 87
+        assert len(tools) == 89
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 
