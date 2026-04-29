@@ -1,80 +1,84 @@
 # STIG Scanning
 
-The `scan` command group runs STIG compliance scans using available scanner tools and manages test results.
+> **Note**: The legacy `pretorin scan` command was removed when the recipes
+> system landed. Scanning now happens through **recipes**: each scanner ships
+> as a built-in recipe that the calling AI agent (Claude Code, Codex CLI,
+> custom MCP client, or `pretorin agent`) invokes through MCP.
+>
+> If you have local automation that called `pretorin scan run`, switch it to
+> invoke the recipe directly via the agent or use `pretorin recipe list` to
+> discover the equivalent recipe.
 
-## Check Scanner Availability
+## Available Scanner Recipes
 
-```bash
-pretorin scan doctor
-```
+| Recipe ID | Wraps | CLI requirement |
+|-----------|-------|-----------------|
+| `inspec-baseline` | Chef InSpec | `inspec` |
+| `openscap-baseline` | OpenSCAP | `oscap` |
+| `cloud-aws-baseline` | AWS APIs (boto3) | `aws` |
+| `cloud-azure-baseline` | Azure APIs | `az` |
+| `manual-attestation` | Human attestation (no external tool) | — |
 
-Lists which scanner tools are installed and available on your system:
-
-| Scanner | Description |
-|---------|-------------|
-| OpenSCAP | Open-source SCAP scanner |
-| InSpec | Chef InSpec compliance profiles |
-| AWS Cloud Scanner | AWS-native compliance scanning |
-| Azure Cloud Scanner | Azure-native compliance scanning |
-| Manual | Manual review checklist |
-
-## View Test Manifest
-
-```bash
-# Uses active system context
-pretorin scan manifest
-
-# Filter by STIG
-pretorin scan manifest --system "My System" --stig <stig_id>
-```
-
-Shows which STIGs and rules are applicable to the system and which scanners can test them.
-
-## Run Scans
+List them locally:
 
 ```bash
-# Run all applicable scans
-pretorin scan run
-
-# Target a specific STIG
-pretorin scan run --stig <stig_id>
-
-# Use a specific scanner
-pretorin scan run --tool openscap
-
-# Dry run (show what would execute)
-pretorin scan run --dry-run
+pretorin recipe list
+pretorin recipe show inspec-baseline
 ```
 
-The scan orchestrator automatically detects available scanners, assigns rules to capable tools, and collects results.
+## How a Calling Agent Runs a Scan
 
-### Options
+The agent (running in your IDE or via `pretorin agent run`) opens a recipe
+context, calls the recipe's `run_scan` script with a STIG id, and submits the
+returned per-rule results to the platform via `pretorin_submit_test_results`.
 
-| Option | Description |
-|--------|-------------|
-| `--system` / `-s` | Target system (uses active context if omitted) |
-| `--stig` | Run only rules from this STIG benchmark |
-| `--tool` / `-t` | Force a specific scanner tool |
-| `--dry-run` | Show the test plan without executing |
+The recipe body (the markdown under the frontmatter in `recipe.md`) is the
+prompt the agent reads to know what to do. You don't run the recipe by hand;
+you ask the agent something like:
 
-## View Results
+> "Run an inspec-baseline scan against `RHEL_9_STIG` on this system."
+
+Behind the scenes the agent:
+
+1. Calls `pretorin_start_recipe(id="inspec-baseline", system_id=...)`.
+2. Calls the recipe's `run_scan` tool with `stig_id="RHEL_9_STIG"`.
+3. Reads the returned summary (per-rule pass/fail/error/not_applicable counts).
+4. Submits results via `pretorin_submit_test_results`.
+5. Calls `pretorin_end_recipe(...)`.
+
+## Test Manifest
+
+Browse what's testable for a system without running anything:
 
 ```bash
-# All results for active system
-pretorin scan results
-
-# Filter by control
-pretorin scan results --system "My System" --control ac-2
+pretorin stig applicable --system "My System"
+pretorin cci chain ac-2 --system "My System"
 ```
 
-Shows CCI-level test results including pass/fail status, scanner used, and timestamp.
+The MCP equivalent is `pretorin_get_test_manifest` — the calling agent uses
+this to figure out which rules apply before running a scan.
 
-## Workflow
+## Authoring Your Own Scanner Recipe
 
-1. `pretorin scan doctor` — Verify scanner tools are installed
-2. `pretorin scan manifest` — Review what will be tested
-3. `pretorin scan run --dry-run` — Preview the test plan
-4. `pretorin scan run` — Execute scans
-5. `pretorin scan results` — Review results
+Scanner recipes are just recipes. If you have an internal tool that produces
+STIG-style results, scaffold a recipe and drop it in
+`~/.pretorin/recipes/<id>/` (user) or `<repo>/.pretorin/recipes/<id>/` (team):
 
-Results are automatically submitted to the platform when a system context is active.
+```bash
+pretorin recipe new my-scanner --user
+```
+
+See the [Authoring recipes](../recipes/index.md) docs for the full contract.
+
+## Submitting Results Manually
+
+If you have raw scan output and want to push it without running the recipe
+flow, the platform endpoint is exposed directly:
+
+```
+pretorin_submit_test_results(system_id, results)
+```
+
+via MCP. Each result needs `rule_id`, `benchmark_id`, `status`, and tool
+metadata — see the [STIG / CCI workflow](../workflows/stig-scanning.md) for
+schema details.

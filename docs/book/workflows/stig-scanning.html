@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-cc3f605d.js";
+            window.path_to_searchindex_js = "../searchindex-df5dc37b.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9dfb40f5.js"></script>
@@ -212,33 +212,32 @@ pretorin cci show CCI-000015
 pretorin stig rules &lt;stig_id&gt; --severity cat_i
 </code></pre>
 <h2 id="scanning-workflow"><a class="header" href="#scanning-workflow">Scanning Workflow</a></h2>
-<h3 id="1-check-scanner-availability"><a class="header" href="#1-check-scanner-availability">1. Check Scanner Availability</a></h3>
-<pre><code class="language-bash">pretorin scan doctor
+<p>Scanning is driven by <strong>recipes</strong> that the calling AI agent invokes through MCP.
+Each scanner ships as a built-in recipe (<code>inspec-baseline</code>, <code>openscap-baseline</code>,
+<code>cloud-aws-baseline</code>, <code>cloud-azure-baseline</code>, <code>manual-attestation</code>).</p>
+<h3 id="1-discover-available-recipes"><a class="header" href="#1-discover-available-recipes">1. Discover Available Recipes</a></h3>
+<pre><code class="language-bash">pretorin recipe list
+pretorin recipe show inspec-baseline
 </code></pre>
-<p>Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Manual.</p>
 <h3 id="2-review-test-manifest"><a class="header" href="#2-review-test-manifest">2. Review Test Manifest</a></h3>
-<pre><code class="language-bash">pretorin scan manifest --system "My System"
+<p>The agent uses <code>pretorin_get_test_manifest</code> (MCP) to see which STIGs and rules
+apply to a system before running a scan. From the CLI you can browse the
+relationships directly:</p>
+<pre><code class="language-bash">pretorin stig applicable --system "My System"
+pretorin cci chain ac-2 --system "My System"
 </code></pre>
-<p>Shows which STIGs, rules, and scanners apply to the system.</p>
-<h3 id="3-run-scans"><a class="header" href="#3-run-scans">3. Run Scans</a></h3>
-<pre><code class="language-bash"># Run all applicable scans
-pretorin scan run --system "My System"
-
-# Dry run first
-pretorin scan run --system "My System" --dry-run
-
-# Target specific STIG or tool
-pretorin scan run --stig &lt;stig_id&gt; --tool openscap
-</code></pre>
-<h3 id="4-review-results"><a class="header" href="#4-review-results">4. Review Results</a></h3>
-<pre><code class="language-bash"># All results
-pretorin scan results --system "My System"
-
-# Filter by control
-pretorin scan results --system "My System" --control ac-2
-</code></pre>
-<h3 id="5-submit-results-to-platform"><a class="header" href="#5-submit-results-to-platform">5. Submit Results to Platform</a></h3>
-<p>Results are automatically submitted when scanning with an active system context. For manual submission via MCP:</p>
+<h3 id="3-ask-the-agent-to-run-the-scan"><a class="header" href="#3-ask-the-agent-to-run-the-scan">3. Ask the Agent to Run the Scan</a></h3>
+<p>Inside Claude Code, Codex CLI, or <code>pretorin agent run</code>, ask:</p>
+<blockquote>
+<p>“Run an inspec-baseline scan against <code>RHEL_9_STIG</code> on this system.”</p>
+</blockquote>
+<p>The agent will open a recipe context, call the recipe’s <code>run_scan</code> script,
+and submit results through <code>pretorin_submit_test_results</code>. There is no
+direct CLI command for executing a scan — the recipe layer is the
+contract surface.</p>
+<h3 id="4-submit-results-manually"><a class="header" href="#4-submit-results-manually">4. Submit Results Manually</a></h3>
+<p>If you have raw scanner output and want to upload it without running through
+a recipe, push it directly via MCP:</p>
 <pre><code>pretorin_submit_test_results(system_id, results)
 </code></pre>
 <h2 id="mcp-tools-for-stigcci"><a class="header" href="#mcp-tools-for-stigcci">MCP Tools for STIG/CCI</a></h2>
