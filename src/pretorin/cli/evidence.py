@@ -475,6 +475,10 @@ async def _upsert_evidence(
     from pretorin.cli.commands import require_auth
     from pretorin.cli.context import resolve_execution_context
     from pretorin.client.api import PretorianClient, PretorianClientError
+    from pretorin.evidence.audit_metadata import (
+        build_cli_metadata,
+        evidence_type_to_source_type,
+    )
     from pretorin.workflows.compliance_updates import upsert_evidence
 
     async with PretorianClient() as client:
@@ -509,6 +513,21 @@ async def _upsert_evidence(
                     if not code_commit and "code_commit_hash" in git_ctx:
                         code_context["code_commit_hash"] = git_ctx["code_commit_hash"]
 
+            # WS1b: stamp audit-trail metadata for this CLI manual write.
+            # source_uri prefers a real file ref when --code-file was supplied;
+            # falls back to a pretorin:// sentinel describing the platform context.
+            audit_source_uri = (
+                f"file://{code_context['code_file_path']}"
+                if "code_file_path" in code_context
+                else f"pretorin://systems/{system_id}/controls/{control_id}"
+            )
+            audit = build_cli_metadata(
+                body=description,
+                source_uri=audit_source_uri,
+                source_type=evidence_type_to_source_type(evidence_type),
+                source_version=code_context.get("code_commit_hash"),
+            )
+
             result = await upsert_evidence(
                 client,
                 system_id=system_id,
@@ -520,6 +539,7 @@ async def _upsert_evidence(
                 source="cli",
                 dedupe=True,
                 code_context=code_context or None,
+                audit_metadata=audit,
             )
         except ValueError as e:
             rprint(f"[red]Upsert failed: {e}[/red]")
