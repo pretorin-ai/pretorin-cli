@@ -3,8 +3,9 @@
 Phase A2 of the recipe-implementation design: the user-facing surface that
 unblocks the contributor workflow. ``pretorin recipe new`` scaffolds a recipe,
 ``pretorin recipe validate`` checks it, ``pretorin recipe list / show`` are the
-read-side surface over the registry. ``pretorin recipe run`` and the
-recipe-execution-context wiring land in Phase B.
+read-side surface over the registry. ``pretorin recipe run`` (Phase B2) is
+the local-testing entry point so a contributor can exercise their recipe
+without going through an external agent's MCP boundary.
 
 Per the design's "Extensibility — Community Contribution Surface" section,
 ``pretorin recipe new`` defaults to ``--location user`` so a contributor can
@@ -13,7 +14,11 @@ ship their first recipe without a fork.
 
 from __future__ import annotations
 
+import asyncio
+import json
+import logging
 from pathlib import Path
+from typing import Any
 
 import typer
 from rich import print as rprint
@@ -21,10 +26,12 @@ from rich.console import Console
 from rich.table import Table
 
 from pretorin.cli.output import is_json_mode, print_json
-from pretorin.recipes.errors import RecipeManifestError
+from pretorin.recipes.context import get_default_store
+from pretorin.recipes.errors import RecipeContextError, RecipeManifestError
 from pretorin.recipes.loader import load_explicit_path
 from pretorin.recipes.manifest import RecipeManifest
 from pretorin.recipes.registry import RecipeRegistry
+from pretorin.recipes.runner import RecipeScriptContext, run_script
 
 app = typer.Typer(
     name="recipe",
@@ -455,6 +462,227 @@ def recipe_validate(
     for i, msg in enumerate(issues, 1):
         rprint(f"  {i}. {msg}")
     raise typer.Exit(1)
+
+
+# =============================================================================
+# `pretorin recipe run <id>`
+# =============================================================================
+
+
+@app.command("run")
+def recipe_run(
+    recipe_id: str = typer.Argument(..., help="Recipe id to run."),
+    script: str | None = typer.Option(
+        None,
+        "--script",
+        "-s",
+        help="Script name from the recipe's scripts: map. Defaults to the only script if exactly one is declared.",
+    ),
+    params: list[str] = typer.Option(
+        None,
+        "--param",
+        "-p",
+        help="Param key=value pairs (repeatable). Values are parsed as JSON; falls back to string on parse failure.",
+    ),
+    explicit_path: Path | None = typer.Option(
+        None,
+        "--path",
+        help="Run a recipe directory by absolute path instead of by registry id.",
+    ),
+    system: str | None = typer.Option(
+        None,
+        "--system",
+        help=(
+            "System name or id. Required if the recipe needs a system; resolved against active CLI context if omitted."
+        ),
+    ),
+    framework: str | None = typer.Option(
+        None,
+        "--framework",
+        help="Framework id (e.g., nist-800-53-r5).",
+    ),
+    no_context: bool = typer.Option(
+        False,
+        "--no-context",
+        help=(
+            "Skip opening a recipe execution context. Use for pure "
+            "transformation recipes that don't write to the platform."
+        ),
+    ),
+) -> None:
+    """Run a recipe's script locally for testing.
+
+    Loads the recipe from the registry (or ``--path``), resolves its script,
+    opens a recipe execution context, calls the script, prints the result,
+    closes the context.
+
+    This is a **local testing** path. The context lives in the CLI process, so
+    writes that flow through ``ctx.api_client`` directly need explicit
+    ``audit_metadata`` (see ``docs/src/recipes/writer-tools.md``). The MCP
+    boundary stamps it automatically; this command does not.
+    """
+    asyncio.run(
+        _recipe_run(
+            recipe_id=recipe_id,
+            script=script,
+            param_specs=list(params or []),
+            explicit_path=explicit_path,
+            system=system,
+            framework=framework,
+            no_context=no_context,
+        )
+    )
+
+
+async def _recipe_run(
+    *,
+    recipe_id: str,
+    script: str | None,
+    param_specs: list[str],
+    explicit_path: Path | None,
+    system: str | None,
+    framework: str | None,
+    no_context: bool,
+) -> None:
+    if explicit_path is not None:
+        try:
+            loaded = load_explicit_path(explicit_path)
+        except RecipeManifestError as exc:
+            rprint(f"[red]Recipe failed to load from {explicit_path}: {exc}[/red]")
+            raise typer.Exit(1) from exc
+    else:
+        registry = RecipeRegistry()
+        entry = registry.get(recipe_id)
+        if entry is None:
+            rprint(f"[red]No recipe found with id {recipe_id!r}.[/red]")
+            raise typer.Exit(1)
+        loaded = entry.active
+
+    manifest = loaded.manifest
+    script_name = _resolve_script_name(manifest, script)
+    if script_name is None:
+        scripts = sorted(manifest.scripts.keys())
+        rprint(
+            f"[red]Recipe {manifest.id!r} declares {len(scripts)} script(s); "
+            f"specify one with --script. Available: {scripts}[/red]"
+        )
+        raise typer.Exit(1)
+
+    parsed_params = _parse_param_specs(param_specs)
+
+    # Resolve scope. Avoid hitting the network unless we actually need it.
+    from pretorin.client.api import PretorianClient
+
+    async with PretorianClient() as client:
+        system_id, framework_id = await _resolve_run_scope(client, system, framework)
+
+        context_id: str | None = None
+        if not no_context:
+            try:
+                ctx_record = get_default_store().start_recipe(
+                    recipe_id=manifest.id,
+                    recipe_version=manifest.version,
+                    params=parsed_params,
+                )
+                context_id = ctx_record.context_id
+            except RecipeContextError as exc:
+                rprint(f"[red]Could not open recipe context: {exc}[/red]")
+                raise typer.Exit(1) from exc
+
+        script_ctx = RecipeScriptContext(
+            system_id=system_id,
+            framework_id=framework_id,
+            api_client=client,
+            logger=logging.getLogger(f"pretorin.recipe.{manifest.id}"),
+            recipe_id=manifest.id,
+            recipe_version=manifest.version,
+            recipe_context_id=context_id,
+        )
+
+        try:
+            result = await run_script(
+                recipe=loaded,
+                script_name=script_name,
+                ctx=script_ctx,
+                params=parsed_params,
+            )
+        finally:
+            if context_id is not None:
+                try:
+                    get_default_store().end_recipe(context_id, status="pass")
+                except RecipeContextError:
+                    pass
+
+    if is_json_mode():
+        print_json(
+            {
+                "recipe_id": manifest.id,
+                "recipe_version": manifest.version,
+                "script": script_name,
+                "context_id": context_id,
+                "result": result,
+            }
+        )
+        return
+
+    rprint(f"[bold]{manifest.id}[/bold] / [bold]{script_name}[/bold]")
+    if context_id:
+        rprint(f"[dim]context_id: {context_id}[/dim]")
+    rprint("[bold]Result:[/bold]")
+    rprint(json.dumps(result, indent=2, default=str))
+
+
+def _resolve_script_name(manifest: RecipeManifest, script: str | None) -> str | None:
+    """Pick which script to run. Returns None when ambiguous and not specified."""
+    if script is not None:
+        if script not in manifest.scripts:
+            return None
+        return script
+    if len(manifest.scripts) == 1:
+        return next(iter(manifest.scripts))
+    return None
+
+
+def _parse_param_specs(specs: list[str]) -> dict[str, Any]:
+    """Parse ``--param key=value`` repetitions into a dict.
+
+    Values are JSON-parsed first (so ``--param limit=20`` lands as int 20 and
+    ``--param items='[1,2]'`` lands as a list). On JSON parse failure, the
+    value is kept as the raw string so simple ``--param target=local`` works
+    without quoting.
+    """
+    parsed: dict[str, Any] = {}
+    for spec in specs:
+        if "=" not in spec:
+            raise typer.BadParameter(f"--param must be key=value; got {spec!r}")
+        key, raw = spec.split("=", 1)
+        key = key.strip()
+        if not key:
+            raise typer.BadParameter(f"--param has empty key: {spec!r}")
+        try:
+            parsed[key] = json.loads(raw)
+        except json.JSONDecodeError:
+            parsed[key] = raw
+    return parsed
+
+
+async def _resolve_run_scope(
+    client: Any,
+    system: str | None,
+    framework: str | None,
+) -> tuple[str | None, str | None]:
+    """Resolve system + framework to ids, allowing both to be None.
+
+    Recipes that don't need a system (pure data-transformation recipes like
+    code-evidence-capture's redact_secrets) can be run with no scope at all.
+    The runner won't reach out to the platform unless the script does.
+    """
+    system_id: str | None = None
+    if system is not None:
+        from pretorin.workflows.compliance_updates import resolve_system
+
+        system_id, _ = await resolve_system(client, system)
+    return system_id, framework
 
 
 # =============================================================================

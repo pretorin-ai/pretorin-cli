@@ -65,7 +65,7 @@ STIG-style results, scaffold a recipe and drop it in
 `~/.pretorin/recipes/<id>/` (user) or `<repo>/.pretorin/recipes/<id>/` (team):
 
 ```bash
-pretorin recipe new my-scanner --user
+pretorin recipe new my-scanner --location user
 ```
 
 See the [Authoring recipes](../recipes/index.md) docs for the full contract.

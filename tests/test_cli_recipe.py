@@ -1,19 +1,21 @@
 """Tests for the ``pretorin recipe`` CLI commands.
 
-Covers ``list / show / new / validate``. ``run`` lands in Phase B2 after the
-recipe execution context is in place.
+Covers ``list / show / new / validate / run``.
 """
 
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
 from pretorin.cli.recipe import app
 from pretorin.recipes import loader as loader_module
+from pretorin.recipes.context import reset_default_store
 from pretorin.recipes.loader import clear_cache
 
 _FIXTURES = Path(__file__).parent / "recipes" / "fixtures" / "valid"
@@ -24,6 +26,7 @@ runner = CliRunner()
 @pytest.fixture(autouse=True)
 def _isolate_cache() -> None:
     clear_cache()
+    reset_default_store()
 
 
 @pytest.fixture
@@ -291,3 +294,161 @@ def test_scaffold_then_validate_passes(fake_dirs: dict[str, Path]) -> None:
     result = runner.invoke(app, ["validate", "scaffolded-recipe"])
     assert result.exit_code == 0
     assert "validates cleanly" in result.stdout
+
+
+# =============================================================================
+# `pretorin recipe run`
+# =============================================================================
+
+
+def _patched_client_ctx() -> object:
+    """Build the async-context-manager mock that wraps a fake PretorianClient.
+
+    `pretorin recipe run` uses `async with PretorianClient() as client`, so
+    patching `PretorianClient` itself isn't enough — we need the constructed
+    object to behave like an async context manager.
+    """
+    client = AsyncMock()
+    aenter = AsyncMock()
+    aenter.__aenter__ = AsyncMock(return_value=client)
+    aenter.__aexit__ = AsyncMock(return_value=None)
+    return aenter
+
+
+def test_run_unknown_id_exits_nonzero(fake_dirs: dict[str, Path]) -> None:
+    with patch("pretorin.client.api.PretorianClient", return_value=_patched_client_ctx()):
+        result = runner.invoke(app, ["run", "no-such-recipe", "--no-context"])
+    assert result.exit_code == 1
+    assert "No recipe found" in result.stdout
+
+
+def test_run_returns_script_result(fake_dirs: dict[str, Path]) -> None:
+    """End-to-end: scope param, run, see the script's return value rendered."""
+    _drop(fake_dirs["builtin"], "runnable-recipe")
+    with patch("pretorin.client.api.PretorianClient", return_value=_patched_client_ctx()):
+        result = runner.invoke(
+            app,
+            ["run", "runnable-recipe", "--param", "message=hi"],
+        )
+    assert result.exit_code == 0, result.stdout
+    assert "hello from runnable-recipe" in result.stdout
+    # message=hi is parsed as the bare string (JSON parse fails, falls back).
+    assert '"message": "hi"' in result.stdout
+    # context_id is rendered when --no-context is omitted.
+    assert "context_id" in result.stdout
+
+
+def test_run_no_context_skips_context_id(fake_dirs: dict[str, Path]) -> None:
+    _drop(fake_dirs["builtin"], "runnable-recipe")
+    with patch("pretorin.client.api.PretorianClient", return_value=_patched_client_ctx()):
+        result = runner.invoke(
+            app,
+            ["run", "runnable-recipe", "--no-context", "--param", "message=hi"],
+        )
+    assert result.exit_code == 0, result.stdout
+    assert '"recipe_context_id": null' in result.stdout
+
+
+def test_run_param_parses_json_values(fake_dirs: dict[str, Path]) -> None:
+    """`--param limit=20` → int 20, `--param items=[1,2]` → list."""
+    _drop(fake_dirs["builtin"], "runnable-recipe")
+    with patch("pretorin.client.api.PretorianClient", return_value=_patched_client_ctx()):
+        result = runner.invoke(
+            app,
+            [
+                "run",
+                "runnable-recipe",
+                "--no-context",
+                "--param",
+                "limit=20",
+                "--param",
+                "items=[1,2,3]",
+                "--param",
+                "label=hello",
+            ],
+        )
+    assert result.exit_code == 0, result.stdout
+    assert '"limit": 20' in result.stdout
+    assert '"items": [' in result.stdout
+    assert '"label": "hello"' in result.stdout
+
+
+def test_run_param_without_equals_errors(fake_dirs: dict[str, Path]) -> None:
+    _drop(fake_dirs["builtin"], "runnable-recipe")
+    with patch("pretorin.client.api.PretorianClient", return_value=_patched_client_ctx()):
+        result = runner.invoke(
+            app,
+            ["run", "runnable-recipe", "--no-context", "--param", "missing-equals"],
+        )
+    assert result.exit_code != 0
+
+
+def test_run_ambiguous_script_when_multiple(fake_dirs: dict[str, Path]) -> None:
+    """A recipe with >1 script requires --script."""
+    # Build an ad-hoc fixture with two scripts.
+    target = fake_dirs["builtin"] / "two-script-recipe"
+    target.mkdir()
+    (target / "scripts").mkdir()
+    (target / "recipe.md").write_text(
+        """---
+id: two-script-recipe
+version: 0.1.0
+name: "Two Script Recipe"
+description: "A test fixture with two scripts so the run command's ambiguity check triggers."
+use_when: "Only used by the cli run-command tests for the multi-script branch."
+produces: evidence
+author: "Test"
+license: Apache-2.0
+scripts:
+  alpha:
+    path: scripts/alpha.py
+    description: "first"
+  beta:
+    path: scripts/beta.py
+    description: "second"
+---
+
+# Two Script Recipe Body
+
+Test fixture only.
+"""
+    )
+    for name in ("alpha", "beta"):
+        (target / "scripts" / f"{name}.py").write_text(
+            "async def run(ctx, **params):\n    return {'name': '" + name + "'}\n"
+        )
+
+    with patch("pretorin.client.api.PretorianClient", return_value=_patched_client_ctx()):
+        ambiguous = runner.invoke(app, ["run", "two-script-recipe", "--no-context"])
+        chose = runner.invoke(
+            app,
+            ["run", "two-script-recipe", "--no-context", "--script", "beta"],
+        )
+
+    assert ambiguous.exit_code == 1
+    assert "specify one with --script" in ambiguous.stdout
+
+    assert chose.exit_code == 0, chose.stdout
+    assert '"name": "beta"' in chose.stdout
+
+
+def test_run_json_mode(fake_dirs: dict[str, Path]) -> None:
+    """JSON mode emits a structured payload the test can `json.loads`."""
+    from pretorin.cli.output import set_json_mode
+
+    _drop(fake_dirs["builtin"], "runnable-recipe")
+    set_json_mode(True)
+    try:
+        with patch("pretorin.client.api.PretorianClient", return_value=_patched_client_ctx()):
+            result = runner.invoke(
+                app,
+                ["run", "runnable-recipe", "--no-context"],
+            )
+    finally:
+        set_json_mode(False)
+    assert result.exit_code == 0, result.stdout
+    payload = json.loads(result.stdout)
+    assert payload["recipe_id"] == "runnable-recipe"
+    assert payload["script"] == "echo"
+    assert payload["context_id"] is None
+    assert payload["result"]["greeting"] == "hello from runnable-recipe"

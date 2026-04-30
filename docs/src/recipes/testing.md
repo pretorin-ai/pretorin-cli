@@ -132,6 +132,29 @@ at your recipe's directory:
 monkeypatch.setattr(loader_module, "_user_recipes_root", lambda: my_recipe_parent)
 ```
 
+## Run It Locally
+
+Before wiring the recipe into an agent, exercise it directly:
+
+```bash
+pretorin recipe run my-recipe --param key=value --param limit=20
+```
+
+`pretorin recipe run` loads the recipe through the registry (or `--path` for
+a not-yet-registered directory), opens a recipe execution context, calls the
+script, prints the return value, and closes the context. It bypasses the MCP
+boundary, so:
+
+- Use it for fast iteration on the script itself.
+- Pure transformation recipes (return data, don't write to the platform)
+  work end-to-end.
+- Recipes that *do* write through `ctx.api_client` need explicit
+  `audit_metadata` on each call — the MCP boundary stamps automatically;
+  this command does not. See [Writer tools](./writer-tools.md).
+
+`--no-context` skips opening the execution context for recipes that don't
+need it.
+
 ## Validate as a Smoke Test
 
 `pretorin recipe validate <id>` runs the manifest schema check, the script

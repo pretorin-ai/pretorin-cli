@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-8aadf47a.js";
+            window.path_to_searchindex_js = "../searchindex-d0384e34.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-818f5f0b.js"></script>
@@ -218,14 +218,21 @@ $EDITOR ~/.pretorin/recipes/my-first-recipe/scripts/main.py
 
 # 5. Validate.
 pretorin recipe validate my-first-recipe
+
+# 6. Run it locally to test (no agent / MCP boundary involved).
+pretorin recipe run my-first-recipe --param key=value
 </code></pre>
-<p>If validate passes, the recipe is in the registry. Restart your MCP client
-and the agent can use it on the next task.</p>
+<p>If validate passes and run prints the result you expect, the recipe is in the
+registry. Restart your MCP client and the agent can use it on the next task.</p>
+<p><code>pretorin recipe run</code> is a <strong>local-testing</strong> path: writes go through your
+authenticated <code>PretorianClient</code> directly, so audit-metadata stamping requires
+explicit <code>audit_metadata</code> on each <code>create_evidence</code> call (see <a href="./writer-tools.html">Writer
+tools</a>). The agent path through MCP stamps automatically.</p>
 <h2 id="what-ships-in-v1"><a class="header" href="#what-ships-in-v1">What Ships in v1</a></h2>
 <ul>
 <li><strong>Four loader paths</strong> with clear precedence: explicit &gt; project &gt; user &gt; built-in.
 See <a href="#loader-paths">Loader paths</a> below.</li>
-<li><strong><code>pretorin recipe list / show / new / validate</code></strong> CLI commands.</li>
+<li><strong><code>pretorin recipe list / show / new / validate / run</code></strong> CLI commands.</li>
 <li><strong><code>pretorin_list_recipes</code> / <code>pretorin_get_recipe</code></strong> MCP discovery tools.</li>
 <li><strong>Per-script MCP tools</strong> auto-registered as
 <code>pretorin_recipe_&lt;safe_id&gt;__&lt;script_name&gt;</code>.</li>

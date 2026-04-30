@@ -42,16 +42,24 @@ $EDITOR ~/.pretorin/recipes/my-first-recipe/scripts/main.py
 
 # 5. Validate.
 pretorin recipe validate my-first-recipe
+
+# 6. Run it locally to test (no agent / MCP boundary involved).
+pretorin recipe run my-first-recipe --param key=value
 ```
 
-If validate passes, the recipe is in the registry. Restart your MCP client
-and the agent can use it on the next task.
+If validate passes and run prints the result you expect, the recipe is in the
+registry. Restart your MCP client and the agent can use it on the next task.
+
+`pretorin recipe run` is a **local-testing** path: writes go through your
+authenticated `PretorianClient` directly, so audit-metadata stamping requires
+explicit `audit_metadata` on each `create_evidence` call (see [Writer
+tools](./writer-tools.md)). The agent path through MCP stamps automatically.
 
 ## What Ships in v1
 
 - **Four loader paths** with clear precedence: explicit > project > user > built-in.
   See [Loader paths](#loader-paths) below.
-- **`pretorin recipe list / show / new / validate`** CLI commands.
+- **`pretorin recipe list / show / new / validate / run`** CLI commands.
 - **`pretorin_list_recipes` / `pretorin_get_recipe`** MCP discovery tools.
 - **Per-script MCP tools** auto-registered as
   `pretorin_recipe_<safe_id>__<script_name>`.

@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-8aadf47a.js";
+            window.path_to_searchindex_js = "searchindex-d0384e34.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-818f5f0b.js"></script>
@@ -1282,7 +1282,7 @@ this to figure out which rules apply before running a scan.</p>
 <p>Scanner recipes are just recipes. If you have an internal tool that produces
 STIG-style results, scaffold a recipe and drop it in
 <code>~/.pretorin/recipes/&lt;id&gt;/</code> (user) or <code>&lt;repo&gt;/.pretorin/recipes/&lt;id&gt;/</code> (team):</p>
-<pre><code class="language-bash">pretorin recipe new my-scanner --user
+<pre><code class="language-bash">pretorin recipe new my-scanner --location user
 </code></pre>
 <p>See the <a href="#authoring-recipes">Authoring recipes</a> docs for the full contract.</p>
 <h2 id="submitting-results-manually"><a class="header" href="#submitting-results-manually">Submitting Results Manually</a></h2>
@@ -3146,14 +3146,21 @@ $EDITOR ~/.pretorin/recipes/my-first-recipe/scripts/main.py
 
 # 5. Validate.
 pretorin recipe validate my-first-recipe
+
+# 6. Run it locally to test (no agent / MCP boundary involved).
+pretorin recipe run my-first-recipe --param key=value
 </code></pre>
-<p>If validate passes, the recipe is in the registry. Restart your MCP client
-and the agent can use it on the next task.</p>
+<p>If validate passes and run prints the result you expect, the recipe is in the
+registry. Restart your MCP client and the agent can use it on the next task.</p>
+<p><code>pretorin recipe run</code> is a <strong>local-testing</strong> path: writes go through your
+authenticated <code>PretorianClient</code> directly, so audit-metadata stamping requires
+explicit <code>audit_metadata</code> on each <code>create_evidence</code> call (see <a href="#writer-tools">Writer
+tools</a>). The agent path through MCP stamps automatically.</p>
 <h2 id="what-ships-in-v1"><a class="header" href="#what-ships-in-v1">What Ships in v1</a></h2>
 <ul>
 <li><strong>Four loader paths</strong> with clear precedence: explicit &gt; project &gt; user &gt; built-in.
 See <a href="#loader-paths">Loader paths</a> below.</li>
-<li><strong><code>pretorin recipe list / show / new / validate</code></strong> CLI commands.</li>
+<li><strong><code>pretorin recipe list / show / new / validate / run</code></strong> CLI commands.</li>
 <li><strong><code>pretorin_list_recipes</code> / <code>pretorin_get_recipe</code></strong> MCP discovery tools.</li>
 <li><strong>Per-script MCP tools</strong> auto-registered as
 <code>pretorin_recipe_&lt;safe_id&gt;__&lt;script_name&gt;</code>.</li>
@@ -3806,6 +3813,24 @@ async def test_my_recipe_end_to_end() -&gt; None:
 at your recipe’s directory:</p>
 <pre><code class="language-python">monkeypatch.setattr(loader_module, "_user_recipes_root", lambda: my_recipe_parent)
 </code></pre>
+<h2 id="run-it-locally"><a class="header" href="#run-it-locally">Run It Locally</a></h2>
+<p>Before wiring the recipe into an agent, exercise it directly:</p>
+<pre><code class="language-bash">pretorin recipe run my-recipe --param key=value --param limit=20
+</code></pre>
+<p><code>pretorin recipe run</code> loads the recipe through the registry (or <code>--path</code> for
+a not-yet-registered directory), opens a recipe execution context, calls the
+script, prints the return value, and closes the context. It bypasses the MCP
+boundary, so:</p>
+<ul>
+<li>Use it for fast iteration on the script itself.</li>
+<li>Pure transformation recipes (return data, don’t write to the platform)
+work end-to-end.</li>
+<li>Recipes that <em>do</em> write through <code>ctx.api_client</code> need explicit
+<code>audit_metadata</code> on each call — the MCP boundary stamps automatically;
+this command does not. See <a href="#writer-tools">Writer tools</a>.</li>
+</ul>
+<p><code>--no-context</code> skips opening the execution context for recipes that don’t
+need it.</p>
 <h2 id="validate-as-a-smoke-test"><a class="header" href="#validate-as-a-smoke-test">Validate as a Smoke Test</a></h2>
 <p><code>pretorin recipe validate &lt;id&gt;</code> runs the manifest schema check, the script
 existence check, and the description-quality check. Add it to your CI as

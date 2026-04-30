@@ -206,7 +206,17 @@ Recipes available out of the box (always check `pretorin_list_recipes` for the c
 
 ## Recipe Authoring
 
-When the user wants to **write** a recipe (rather than use one), point them at the authoring docs in `docs/src/recipes/` (or `https://docs.pretorin.com/recipes/` once published). The fast path is `pretorin recipe new <id>`; full reference at `docs/src/recipes/index.md`.
+When the user wants to **write** a recipe (rather than use one), point them at the authoring docs in `docs/src/recipes/` (or `https://docs.pretorin.com/recipes/` once published). The fast path is:
+
+```bash
+pretorin recipe new my-recipe         # scaffold under ~/.pretorin/recipes/
+$EDITOR ~/.pretorin/recipes/my-recipe/recipe.md
+$EDITOR ~/.pretorin/recipes/my-recipe/scripts/example.py
+pretorin recipe validate my-recipe    # check manifest + scripts + descriptions
+pretorin recipe run my-recipe         # exercise locally before invoking via MCP
+```
+
+Full reference at `docs/src/recipes/index.md`.
 
 ## Campaign Workflow
 
