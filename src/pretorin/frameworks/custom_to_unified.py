@@ -323,9 +323,7 @@ def convert_control_themes_format(data: dict[str, Any], framework_id: str) -> di
             "controls": [],
         }
 
-    theme_name_to_id = {
-        t.get("theme_name", "").lower(): t.get("theme_id", "") for t in data.get("control_themes", [])
-    }
+    theme_name_to_id = {t.get("theme_name", "").lower(): t.get("theme_id", "") for t in data.get("control_themes", [])}
 
     for ctrl in data.get("controls", []):
         theme_name = ctrl.get("control_theme", "").lower()
@@ -879,15 +877,12 @@ def convert(data: dict[str, Any], framework_id: str) -> dict[str, Any]:
     Raises UnknownCustomFormatError if the input shape isn't recognized.
     """
     if is_oscal_format(data):
-        raise UnknownCustomFormatError(
-            "Input is OSCAL format; use pretorin.frameworks.oscal_to_unified instead."
-        )
+        raise UnknownCustomFormatError("Input is OSCAL format; use pretorin.frameworks.oscal_to_unified instead.")
 
     format_type = detect_custom_format(data)
     if format_type is None:
         raise UnknownCustomFormatError(
-            "Unrecognized custom catalog shape. Supported shapes: "
-            + ", ".join(sorted(CONVERTERS.keys()))
+            "Unrecognized custom catalog shape. Supported shapes: " + ", ".join(sorted(CONVERTERS.keys()))
         )
 
     converter = CONVERTERS[format_type]

@@ -739,3 +739,62 @@ def submit_artifact(
                 raise typer.Exit(1)
 
     asyncio.run(do_submit())
+
+
+# =============================================================================
+# Custom Framework Authoring (RFC: GH #90)
+#
+# The canonical upload artifact is `unified.json`. `_index.json` is NOT an
+# upload format — the platform's revision lifecycle expects the full unified
+# artifact. These commands build, validate, and ship that artifact.
+# =============================================================================
+
+
+@app.command("init-custom")
+def init_custom(
+    framework_id: str = typer.Argument(..., help="New framework ID (e.g., acme-soc2-tailored)"),
+    title: str | None = typer.Option(None, "--title", "-t", help="Human-readable title"),
+    output: Path = typer.Option(
+        Path("unified.json"),
+        "--output",
+        "-o",
+        help="Output path for the scaffolded unified.json",
+    ),
+    force: bool = typer.Option(False, "--force", "-f", help="Overwrite output if it exists"),
+) -> None:
+    """Scaffold a minimal valid unified.json for a new custom framework.
+
+    Writes a small, schema-valid template with one sample family and one
+    sample control. Edit the output, run `validate-custom` to verify, then
+    `upload-custom` to push to the platform.
+
+    Examples:
+        pretorin frameworks init-custom acme-soc2-tailored
+        pretorin frameworks init-custom acme-iso27001 -t "Acme ISO 27001" -o acme.json
+    """
+    from pretorin.frameworks.templates import minimal_unified
+
+    if output.exists() and not force:
+        rprint(f"[#EAB536]\\[°︵°][/#EAB536] {output} already exists. Use --force to overwrite.")
+        raise typer.Exit(1)
+
+    artifact = minimal_unified(framework_id, title)
+    output.write_text(json.dumps(artifact, indent=2) + "\n")
+
+    if is_json_mode():
+        print_json({"output": str(output), "framework_id": framework_id})
+        return
+
+    rprint(
+        Panel(
+            f"[bold]Output:[/bold] {output}\n"
+            f"[bold]Framework ID:[/bold] {framework_id}\n"
+            f"[bold]Format:[/bold] unified.json\n\n"
+            "[dim]Next steps:[/dim]\n"
+            f"  [dim]1. Edit {output} — fill in metadata, families, and controls[/dim]\n"
+            f"  [dim]2. [bold]pretorin frameworks validate-custom {output}[/bold][/dim]\n"
+            f"  [dim]3. [bold]pretorin frameworks upload-custom {output}[/bold][/dim]",
+            title="[#95D7E0]Scaffolded custom framework[/#95D7E0]",
+            border_style="#95D7E0",
+        )
+    )
