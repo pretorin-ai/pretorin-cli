@@ -798,3 +798,173 @@ def init_custom(
             border_style="#95D7E0",
         )
     )
+
+
+@app.command("validate-custom")
+def validate_custom(
+    file_path: Path = typer.Argument(
+        ...,
+        help="Path to a unified.json artifact",
+        exists=True,
+        readable=True,
+    ),
+) -> None:
+    """Validate a unified.json artifact against the bundled JSON Schema.
+
+    Local pre-flight check — the platform runs the authoritative validator
+    on upload. Use this to catch structural issues fast before paying the
+    network round-trip.
+
+    Examples:
+        pretorin frameworks validate-custom unified.json
+        pretorin --json frameworks validate-custom unified.json
+    """
+    from pretorin.frameworks.validate import validate_unified_file
+
+    result = validate_unified_file(file_path)
+
+    if is_json_mode():
+        print_json(
+            {
+                "valid": result.valid,
+                "errors": [{"path": e.path, "message": e.message} for e in result.errors],
+            }
+        )
+        if not result.valid:
+            raise typer.Exit(1)
+        return
+
+    if result.valid:
+        rprint(
+            Panel(
+                f"[bold]File:[/bold] {file_path}\n"
+                "[#95D7E0]✓[/#95D7E0] Schema validation passed.\n\n"
+                "[dim]Note: this is a local pre-flight check. The platform runs the[/dim]\n"
+                "[dim]authoritative validator on upload — additional issues may surface there.[/dim]",
+                title="[#95D7E0]Valid unified.json[/#95D7E0]",
+                border_style="#95D7E0",
+            )
+        )
+        return
+
+    rprint(f"[#FF9010]✗[/#FF9010] Schema validation failed: [bold]{file_path}[/bold]\n")
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Path", style="cyan", max_width=40)
+    table.add_column("Issue")
+    for err in result.errors[:50]:
+        table.add_row(err.path or "(root)", err.message)
+    console.print(table)
+    if len(result.errors) > 50:
+        rprint(f"\n[dim]... and {len(result.errors) - 50} more[/dim]")
+    raise typer.Exit(1)
+
+
+@app.command("build-custom")
+def build_custom(
+    input_path: Path = typer.Argument(
+        ...,
+        help="Path to source catalog (unified.json, OSCAL, or known custom format)",
+        exists=True,
+        readable=True,
+    ),
+    framework_id: str = typer.Option(
+        ...,
+        "--framework-id",
+        "-f",
+        help="Framework ID for the resulting unified.json",
+    ),
+    output: Path = typer.Option(
+        Path("unified.json"),
+        "--output",
+        "-o",
+        help="Output path for the resulting unified.json",
+    ),
+    force: bool = typer.Option(False, "--force", help="Overwrite output if it exists"),
+) -> None:
+    """Normalize a source catalog into uploadable unified.json.
+
+    Auto-detects the input shape:
+
+    \b
+    - Already a unified.json → passthrough (re-tagged with --framework-id)
+    - OSCAL catalog → converted via oscal_to_unified
+    - Known custom catalog → converted via custom_to_unified
+
+    Examples:
+        pretorin frameworks build-custom catalog.json -f acme-soc2 -o unified.json
+        pretorin frameworks build-custom oscal-catalog.json -f acme-iso27001
+    """
+    from pretorin.frameworks import custom_to_unified, oscal_to_unified
+    from pretorin.frameworks.validate import validate_unified
+
+    if output.exists() and not force:
+        rprint(f"[#EAB536]\\[°︵°][/#EAB536] {output} already exists. Use --force to overwrite.")
+        raise typer.Exit(1)
+
+    try:
+        raw = json.loads(input_path.read_text())
+    except json.JSONDecodeError as e:
+        rprint(f"[#EAB536]\\[°︵°][/#EAB536] Invalid JSON in {input_path}: {e}")
+        raise typer.Exit(1)
+
+    # Detect input shape
+    if oscal_to_unified.is_oscal_format(raw):
+        unified = oscal_to_unified.convert(raw, framework_id)
+        source = "OSCAL catalog"
+    elif raw.get("source_format") in ("oscal", "custom") and "framework_id" in raw and "families" in raw:
+        # Already unified — passthrough but re-tag with the requested framework_id
+        unified = dict(raw)
+        unified["framework_id"] = framework_id
+        source = "unified.json (passthrough)"
+    else:
+        try:
+            unified = custom_to_unified.convert(raw, framework_id)
+        except custom_to_unified.UnknownCustomFormatError as e:
+            rprint(f"[#FF9010]→[/#FF9010] {e}")
+            rprint("[dim]Supported sources: unified.json, OSCAL catalog, or a known custom catalog shape.[/dim]")
+            raise typer.Exit(1)
+        source = f"custom catalog ({unified.get('custom_format_type', 'unknown')})"
+
+    # Local validate before writing — surface issues early
+    result = validate_unified(unified)
+    output.write_text(json.dumps(unified, indent=2) + "\n")
+
+    if is_json_mode():
+        print_json(
+            {
+                "output": str(output),
+                "framework_id": framework_id,
+                "source": source,
+                "valid": result.valid,
+                "errors": [{"path": e.path, "message": e.message} for e in result.errors],
+            }
+        )
+        if not result.valid:
+            raise typer.Exit(1)
+        return
+
+    family_count = len(unified.get("families", []))
+    control_count = sum(len(fam.get("controls", [])) for fam in unified.get("families", []))
+
+    border = "#95D7E0" if result.valid else "#FF9010"
+    status = "[#95D7E0]✓ valid[/#95D7E0]" if result.valid else "[#FF9010]✗ invalid (see below)[/#FF9010]"
+
+    rprint(
+        Panel(
+            f"[bold]Output:[/bold] {output}\n"
+            f"[bold]Framework ID:[/bold] {framework_id}\n"
+            f"[bold]Source:[/bold] {source}\n"
+            f"[bold]Families:[/bold] {family_count}\n"
+            f"[bold]Controls:[/bold] {control_count}\n"
+            f"[bold]Schema:[/bold] {status}",
+            title="[#95D7E0]Built unified.json[/#95D7E0]",
+            border_style=border,
+        )
+    )
+
+    if not result.valid:
+        for err in result.errors[:20]:
+            rprint(f"  [#FF9010]•[/#FF9010] {err}")
+        if len(result.errors) > 20:
+            rprint(f"  [dim]... and {len(result.errors) - 20} more[/dim]")
+        raise typer.Exit(1)
