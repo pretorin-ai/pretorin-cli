@@ -7,16 +7,19 @@ description: >
   policy/scope questionnaires, or wants to perform a compliance gap analysis,
   generate compliance artifacts, map controls across frameworks, run bulk
   compliance workflows, manage vendor responsibility, scan for STIG compliance,
-  or check what documents are needed for certification. Trigger phrases include
-  "list frameworks", "show controls", "what documents do I need", "compliance check",
-  "control requirements", "gap analysis", "audit my code", "run campaign",
-  "vendor inheritance", "STIG rules", "CCI chain", and "scan compliance".
-version: 0.14.0
+  capture code or attestation evidence, or check what documents are needed for
+  certification. Trigger phrases include "list frameworks", "show controls",
+  "what documents do I need", "compliance check", "control requirements",
+  "gap analysis", "audit my code", "run campaign", "vendor inheritance",
+  "STIG rules", "CCI chain", "scan compliance", and "use a recipe".
+version: 0.15.0
 ---
 
 # Pretorin Compliance Skill
 
 Query authoritative compliance framework data via the Pretorin MCP server. Access controls, families, document requirements, implementation guidance, STIG/CCI traceability, vendor inheritance, and campaign-based bulk workflows across NIST 800-53, NIST 800-171, FedRAMP (Low/Moderate/High), and CMMC (Level 1/2/3).
+
+For repeatable evidence-capture and scanning procedures, prefer **recipes** (see [Recipes](#recipes) below) over freelancing — recipes are pretorin's curated playbooks, and writes inside a recipe context get audit metadata stamped automatically.
 
 ## Prerequisites
 
@@ -169,6 +172,41 @@ Campaigns enable bulk compliance operations across multiple controls, policies, 
 - **`pretorin_infer_stigs`** — AI-infer applicable STIGs from system profile.
 - **`pretorin_get_test_manifest`** — Fetch test manifest for a system.
 - **`pretorin_submit_test_results`** — Upload STIG scan results.
+
+### Recipes
+
+Recipes are markdown-plus-Python playbooks for repeatable compliance work — capturing code as evidence, running scanners, collecting attestations. Pick a recipe over freelancing whenever one's `use_when` matches the task. Writes inside a recipe context get `producer_kind="recipe"` audit metadata stamped automatically.
+
+- **`pretorin_list_recipes`** — List available recipes (built-in + project + user). Returns `id`, `name`, `description`, `use_when`, `tier`, `produces` for each. Start here to scan the menu.
+- **`pretorin_get_recipe`** — Get full recipe detail including the markdown body and per-script tool names. Pass `recipe_id`. Read the body to understand what the recipe does before invoking it.
+- **`pretorin_start_recipe`** — Open a recipe execution context. Pass `recipe_id`, `recipe_version`, and any required `params`. Returns a `context_id` that the agent forwards on subsequent writes (`recipe_context_id=...`) so audit metadata stamps correctly. Contexts auto-expire after 1 hour idle.
+- **`pretorin_end_recipe`** — Close the recipe context. Pass `context_id` and `status` (`pass` / `fail` / `needs_input`). Returns a `RecipeResult` summary with evidence/narrative counts.
+- **`pretorin_recipe_<safe_id>__<script>`** — Each recipe's scripts are auto-registered as MCP tools using this name pattern (hyphens in `recipe_id` become underscores). Inspect the recipe via `pretorin_get_recipe` to discover the tool names and per-script param schemas.
+
+## Recipe Workflow
+
+For any compliance task that fits a recipe (evidence capture, scanning, attestation), follow this lifecycle:
+
+1. List the available recipes: `pretorin_list_recipes`.
+2. Pick the one whose `description` and `use_when` match the task. Prefer `tier: official` over `community` when both fit, but read the descriptions — a community recipe with a precise match beats an official one with a vague match.
+3. Read the recipe body: `pretorin_get_recipe`. The body is the prompt the recipe author wrote for you.
+4. Open the context: `pretorin_start_recipe(recipe_id, recipe_version, params)` → returns `context_id`.
+5. Invoke the recipe's scripts as MCP tools (`pretorin_recipe_<safe_id>__<script>`). Read each return value before deciding the next step.
+6. Submit the results through the platform write tools (`pretorin_create_evidence`, `pretorin_submit_test_results`, `pretorin_update_narrative`) **inside** the same MCP session. Pass `recipe_context_id=<context_id>` so audit metadata stamps correctly.
+7. Close the context: `pretorin_end_recipe(context_id, status)`.
+
+Recipes available out of the box (always check `pretorin_list_recipes` for the current set):
+
+- `code-evidence-capture` — Pull a snippet from a source file, redact secrets, compose audit-grade markdown.
+- `inspec-baseline` — Run a Chef InSpec scan against a STIG and submit per-rule results.
+- `openscap-baseline` — Same as above, with OpenSCAP.
+- `cloud-aws-baseline` — AWS-cloud STIG checks against the configured account.
+- `cloud-azure-baseline` — Azure-cloud STIG checks against the configured tenant/subscription.
+- `manual-attestation` — Capture per-rule human attestations for STIGs that have no automated coverage.
+
+## Recipe Authoring
+
+When the user wants to **write** a recipe (rather than use one), point them at the authoring docs in `docs/src/recipes/` (or `https://docs.pretorin.com/recipes/` once published). The fast path is `pretorin recipe new <id>`; full reference at `docs/src/recipes/index.md`.
 
 ## Campaign Workflow
 
