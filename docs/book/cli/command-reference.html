@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-62c2f507.js";
+            window.path_to_searchindex_js = "../searchindex-b9cb0ee1.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-9dfb40f5.js"></script>
+        <script src="../toc-0194fc74.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -477,22 +477,24 @@
 </tbody>
 </table>
 </div>
-<h2 id="scan-commands"><a class="header" href="#scan-commands">Scan Commands</a></h2>
+<h2 id="scanning"><a class="header" href="#scanning">Scanning</a></h2>
+<p>The legacy <code>pretorin scan</code> command was removed when the recipes system landed.
+Scanning now happens through built-in recipes that the calling AI agent invokes
+via MCP. See <a href="./scanning.html">STIG Scanning</a> for the recipe-based workflow.</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Command</th><th>Description</th></tr>
+<tr><th>Recipe ID</th><th>Wraps</th><th>CLI requirement</th></tr>
 </thead>
 <tbody>
-<tr><td><code>pretorin scan doctor</code></td><td>Check which scanner tools are installed and available</td></tr>
-<tr><td><code>pretorin scan manifest</code></td><td>Show test manifest for the active system (<code>--system/-s</code>, <code>--stig</code>)</td></tr>
-<tr><td><code>pretorin scan run</code></td><td>Run STIG compliance scans (<code>--system/-s</code>, <code>--stig</code>, <code>--tool/-t</code>, <code>--dry-run</code>)</td></tr>
-<tr><td><code>pretorin scan results</code></td><td>Show CCI-level test results (<code>--system/-s</code>, <code>--control/-c</code>)</td></tr>
+<tr><td><code>inspec-baseline</code></td><td>Chef InSpec</td><td><code>inspec</code></td></tr>
+<tr><td><code>openscap-baseline</code></td><td>OpenSCAP</td><td><code>oscap</code></td></tr>
+<tr><td><code>cloud-aws-baseline</code></td><td>AWS APIs</td><td><code>aws</code></td></tr>
+<tr><td><code>cloud-azure-baseline</code></td><td>Azure APIs</td><td><code>az</code></td></tr>
+<tr><td><code>manual-attestation</code></td><td>Human attestation</td><td>—</td></tr>
 </tbody>
 </table>
 </div>
-<h3 id="supported-scanners"><a class="header" href="#supported-scanners">Supported Scanners</a></h3>
-<p><code>OpenSCAP</code>, <code>InSpec</code>, <code>AWS Cloud Scanner</code>, <code>Azure Cloud Scanner</code>, <code>Manual</code></p>
 <h2 id="deprecated-commands"><a class="header" href="#deprecated-commands">Deprecated Commands</a></h2>
 <div class="table-wrapper">
 <table>

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from mcp.types import Tool
 
 from pretorin.mcp.helpers import (
@@ -17,7 +19,20 @@ from pretorin.mcp.helpers import (
 
 
 async def list_tools() -> list[Tool]:
-    """List available MCP tools."""
+    """List available MCP tools.
+
+    Static tools are declared inline; per-recipe-script tools are appended
+    dynamically from the recipe registry (Phase C). Each script in each loaded
+    recipe contributes one MCP tool named ``pretorin_recipe_<safe_id>__<tool>``
+    with ``inputSchema`` derived from the script's ``ScriptDecl.params``.
+    """
+    static_tools = _static_tools()
+    dynamic_tools = _recipe_script_tools()
+    return static_tools + dynamic_tools
+
+
+def _static_tools() -> list[Tool]:
+    """Return the always-present built-in MCP tools."""
     return [
         # === Framework / Control Reference Tools ===
         Tool(
@@ -294,6 +309,15 @@ async def list_tools() -> list[Tool]:
                         "description": "Whether to reuse exact-matching org evidence before creating",
                         "default": True,
                     },
+                    "recipe_context_id": {
+                        "type": "string",
+                        "description": (
+                            "Optional. When supplied (caller has an active recipe execution context "
+                            "from pretorin_start_recipe), the resulting evidence is stamped "
+                            "producer_kind='recipe' with the context's recipe id and version "
+                            "automatically. Without it, evidence is stamped producer_kind='agent'."
+                        ),
+                    },
                     "allow_scope_override": allow_scope_override_property(),
                     "allow_unverified_sources": allow_unverified_sources_property(),
                 },
@@ -339,6 +363,15 @@ async def list_tools() -> list[Tool]:
                             },
                             "required": ["name", "description", "control_id", "evidence_type"],
                         },
+                    },
+                    "recipe_context_id": {
+                        "type": "string",
+                        "description": (
+                            "Optional. When supplied (caller has an active recipe execution context "
+                            "from pretorin_start_recipe), every item in the batch is stamped "
+                            "producer_kind='recipe'. All items share the same context — per-item "
+                            "context variation is not supported in v1."
+                        ),
                     },
                     "allow_scope_override": allow_scope_override_property(),
                     "allow_unverified_sources": allow_unverified_sources_property(),
@@ -1828,4 +1861,306 @@ async def list_tools() -> list[Tool]:
                 "required": ["system_id"],
             },
         ),
+        # Recipe execution context lifecycle (recipe-implementation WS2 Phase B)
+        Tool(
+            name="pretorin_start_recipe",
+            description=(
+                "Open a recipe execution context. Returns a context_id the caller passes "
+                "on subsequent platform-API write tool calls so audit metadata is stamped "
+                "with producer_kind='recipe' automatically. One recipe per session at a "
+                "time (nesting forbidden in v1). Contexts auto-expire after 1 hour of "
+                "inactivity."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "recipe_id": {
+                        "type": "string",
+                        "description": "Recipe id (must be loadable from the registry)",
+                    },
+                    "recipe_version": {
+                        "type": "string",
+                        "description": (
+                            "Recipe version the caller intends to run. Cross-checked "
+                            "against the loaded recipe; mismatch is an error."
+                        ),
+                    },
+                    "params": {
+                        "type": "object",
+                        "description": (
+                            "Inputs the calling agent supplies, validated against the recipe's params schema."
+                        ),
+                    },
+                    "selection": {
+                        "type": "object",
+                        "description": (
+                            "Structured RecipeSelection record from the engagement layer. "
+                            "Stored on the context for the eventual RecipeResult."
+                        ),
+                    },
+                },
+                "required": ["recipe_id", "recipe_version"],
+            },
+        ),
+        Tool(
+            name="pretorin_end_recipe",
+            description=(
+                "Close a recipe execution context and return the RecipeResult summary "
+                "(status, evidence and narrative counts, errors, elapsed time). "
+                "Must be called once the recipe's work is complete; failure to call "
+                "leaves the context in place until the 1-hour expiry sweep."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "context_id": {
+                        "type": "string",
+                        "description": "Context id returned by pretorin_start_recipe",
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": ["pass", "fail", "needs_input"],
+                        "description": "Caller-supplied disposition (defaults to 'pass')",
+                        "default": "pass",
+                    },
+                },
+                "required": ["context_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_list_recipes",
+            description=(
+                "List loaded recipes with their summary metadata (id, name, tier, "
+                "description, use_when, produces). Filter by tier and/or produces. "
+                "Use this to discover which recipes are available, then call "
+                "pretorin_get_recipe(id) to read the full body."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tier": {
+                        "type": "string",
+                        "enum": ["official", "partner", "community"],
+                        "description": "Filter to one tier",
+                    },
+                    "produces": {
+                        "type": "string",
+                        "enum": ["evidence", "narrative", "both", "answers"],
+                        "description": "Filter by what the recipe produces",
+                    },
+                },
+            },
+        ),
+        Tool(
+            name="pretorin_get_recipe",
+            description=(
+                "Return one recipe's full manifest and body. The body is the markdown "
+                "playbook the calling agent reads to understand the procedure."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "recipe_id": {
+                        "type": "string",
+                        "description": "Recipe id to fetch",
+                    },
+                },
+                "required": ["recipe_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_list_workflows",
+            description=(
+                "List loaded workflow playbooks (single-control, scope-question, "
+                "policy-question, campaign). Each workflow describes how to iterate "
+                "items in its domain and which recipes to pick per item. Use this "
+                "before picking a recipe so the agent works at the right granularity."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "iterates_over": {
+                        "type": "string",
+                        "enum": [
+                            "single_control",
+                            "scope_questions",
+                            "policy_questions",
+                            "campaign_items",
+                        ],
+                        "description": "Filter to one item-iteration shape",
+                    },
+                },
+            },
+        ),
+        Tool(
+            name="pretorin_get_workflow",
+            description=(
+                "Return one workflow's full manifest and body. The body is the markdown "
+                "playbook the calling agent reads to know how to iterate items and "
+                "pick recipes per item in this workflow's domain."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "workflow_id": {
+                        "type": "string",
+                        "description": "Workflow id to fetch",
+                    },
+                },
+                "required": ["workflow_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_start_task",
+            description=(
+                "Route a user prompt to the right workflow. Call this FIRST whenever "
+                "the user references compliance work (a control, system, framework, "
+                "questionnaire, or campaign). The calling agent extracts entities "
+                "from the user prompt and supplies them as structured args; pretorin "
+                "applies deterministic rules to pick a workflow and bundles the "
+                "platform read-state (workflow_state, compliance_status, pending "
+                "items) into the response. The agent then reads the selected "
+                "workflow's body via pretorin_get_workflow and follows it."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "entities": {
+                        "type": "object",
+                        "description": (
+                            "Structured entities extracted from the user prompt. "
+                            "intent_verb and raw_prompt are required; everything "
+                            "else is optional and only populated when the user "
+                            "actually named it."
+                        ),
+                        "properties": {
+                            "intent_verb": {
+                                "type": "string",
+                                "enum": [
+                                    "work_on",
+                                    "collect_evidence",
+                                    "draft_narrative",
+                                    "answer",
+                                    "campaign",
+                                    "inspect_status",
+                                ],
+                                "description": ("What the user wants to do at a high level."),
+                            },
+                            "raw_prompt": {
+                                "type": "string",
+                                "description": "Original user prompt verbatim, for audit.",
+                            },
+                            "system_id": {
+                                "type": "string",
+                                "description": ("System name or id the user named (None if absent)."),
+                            },
+                            "framework_id": {
+                                "type": "string",
+                                "description": ("Framework id the user named, e.g. 'nist-800-53-r5'."),
+                            },
+                            "control_ids": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": (
+                                    "Explicit control ids the user mentioned, "
+                                    "lowercase normalized (e.g., ['ac-2', 'ac-3'])."
+                                ),
+                            },
+                            "scope_question_ids": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Specific scope question ids if named.",
+                            },
+                            "policy_question_ids": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Specific policy question ids if named.",
+                            },
+                        },
+                        "required": ["intent_verb", "raw_prompt"],
+                    },
+                    "active_system_id": {
+                        "type": "string",
+                        "description": (
+                            "The user's active CLI context system_id, if any. "
+                            "Used to detect cross-system writes — when the resolved "
+                            "system doesn't match this, the response is ambiguous."
+                        ),
+                    },
+                    "skip_inspect": {
+                        "type": "boolean",
+                        "description": (
+                            "Skip the server-side platform reads. Use when the calling agent already has fresh state."
+                        ),
+                        "default": False,
+                    },
+                },
+                "required": ["entities"],
+            },
+        ),
     ]
+
+
+def _recipe_script_tools() -> list[Tool]:
+    """Generate one MCP Tool per script across every loaded recipe.
+
+    Per Phase C: each ``ScriptDecl`` in each recipe's manifest becomes a
+    callable MCP tool named ``pretorin_recipe_<safe_id>__<tool_name>`` with
+    ``inputSchema`` built from the script's declared params.
+
+    Tools are listed regardless of whether a recipe context is currently
+    active — calling one without an active matching context returns a clear
+    error from ``handle_run_recipe_script``.
+    """
+    # Local import: this module is imported at MCP startup but the recipe
+    # registry walks the filesystem, which we don't want at import time.
+    from pretorin.recipes.registry import RecipeRegistry, script_tool_name
+
+    tools: list[Tool] = []
+    registry = RecipeRegistry()
+    for entry in registry.entries():
+        manifest = entry.active.manifest
+        for script_name, script_decl in manifest.scripts.items():
+            tool_name = script_tool_name(manifest.id, script_name)
+            input_schema = _params_to_input_schema(script_decl.params)
+            tools.append(
+                Tool(
+                    name=tool_name,
+                    description=(
+                        f"[Recipe {manifest.id} ({manifest.tier})] {script_decl.description}\n\n"
+                        "Requires an active recipe execution context for this recipe "
+                        "(call pretorin_start_recipe first)."
+                    ),
+                    inputSchema=input_schema,
+                )
+            )
+    return tools
+
+
+def _params_to_input_schema(params: dict[str, Any]) -> dict[str, Any]:
+    """Convert a ``ScriptDecl.params`` mapping to a JSON Schema inputSchema.
+
+    Each ``RecipeParam`` declares ``type`` (string / array / boolean / integer
+    / number), an optional ``items`` for arrays, ``description``, ``default``,
+    and ``required``. The MCP ``inputSchema`` mirrors that.
+    """
+    properties: dict[str, dict[str, Any]] = {}
+    required: list[str] = []
+    for name, param in params.items():
+        # ``param`` is a RecipeParam pydantic model; serialise to dict for
+        # JSON Schema. Drop None-valued optional keys for cleanliness.
+        param_dict = param.model_dump() if hasattr(param, "model_dump") else dict(param)
+        prop: dict[str, Any] = {"type": param_dict["type"]}
+        if param_dict.get("items"):
+            prop["items"] = param_dict["items"]
+        if param_dict.get("description"):
+            prop["description"] = param_dict["description"]
+        if param_dict.get("default") is not None:
+            prop["default"] = param_dict["default"]
+        properties[name] = prop
+        if param_dict.get("required"):
+            required.append(name)
+    schema: dict[str, Any] = {"type": "object", "properties": properties}
+    if required:
+        schema["required"] = required
+    return schema

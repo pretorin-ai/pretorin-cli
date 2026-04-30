@@ -8,7 +8,12 @@ from typing import Any
 from mcp.types import CallToolResult, TextContent
 
 from pretorin.client import PretorianClient
-from pretorin.client.models import EvidenceBatchItemCreate
+from pretorin.client.models import EvidenceAuditMetadata, EvidenceBatchItemCreate
+from pretorin.evidence.audit_metadata import (
+    build_agent_metadata,
+    build_recipe_metadata_from_context,
+    evidence_type_to_source_type,
+)
 from pretorin.evidence.types import normalize_evidence_type
 from pretorin.mcp.helpers import (
     format_error,
@@ -17,6 +22,8 @@ from pretorin.mcp.helpers import (
     resolve_execution_scope,
     safe_args,
 )
+from pretorin.recipes.context import ExecutionContext, get_default_store
+from pretorin.recipes.errors import RecipeContextError
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.compliance_updates import upsert_evidence
 
@@ -24,6 +31,62 @@ logger = logging.getLogger(__name__)
 
 # Alias for backward compatibility within this module.
 _safe_args = safe_args
+
+# Producer id for writes coming through the MCP server. The actual calling agent
+# (Claude Code, Codex CLI, custom client) is not directly observable from inside
+# the MCP handler today; "mcp-agent" identifies the channel rather than a specific
+# agent. v1.5+ may extend this once MCP exposes calling-agent metadata.
+_MCP_AGENT_ID = "mcp-agent"
+
+
+def _resolve_recipe_context(arguments: dict[str, Any]) -> ExecutionContext | None:
+    """Look up the active recipe execution context from arguments.
+
+    Returns the context if ``recipe_context_id`` was supplied and resolves cleanly.
+    Returns None if not supplied. Raises ``RecipeContextError`` on expired/
+    cross-session/unknown id — the calling handler converts the raise to a
+    standard MCP error response so callers see the failure mode clearly.
+    """
+    context_id = arguments.get("recipe_context_id")
+    if not context_id:
+        return None
+    return get_default_store().get(str(context_id))
+
+
+def _build_audit_metadata_for_write(
+    *,
+    body: str,
+    evidence_type: str,
+    source_uri: str,
+    source_version: str | None,
+    recipe_context: ExecutionContext | None,
+) -> EvidenceAuditMetadata:
+    """Pick the right audit-metadata builder based on whether a recipe is active.
+
+    With a recipe context: stamps producer_kind="recipe" + recipe id/version
+    from the context, and bumps the context's evidence_count tally.
+    Without: stamps producer_kind="agent" + producer_id="mcp-agent".
+
+    Single source for the recipe-vs-agent decision so handle_create_evidence
+    and handle_create_evidence_batch don't drift on the stamping rule.
+    """
+    source_type = evidence_type_to_source_type(evidence_type)
+    if recipe_context is not None:
+        get_default_store().record_evidence_write(recipe_context.context_id)
+        return build_recipe_metadata_from_context(
+            context=recipe_context,
+            body=body,
+            source_uri=source_uri,
+            source_type=source_type,
+            source_version=source_version,
+        )
+    return build_agent_metadata(
+        body=body,
+        source_uri=source_uri,
+        source_type=source_type,
+        agent_id=_MCP_AGENT_ID,
+        source_version=source_version,
+    )
 
 
 async def handle_search_evidence(
@@ -85,18 +148,46 @@ async def handle_create_evidence(
         if val:
             code_context[key] = val
 
+    description = arguments.get("description", "")
+    # source_uri prefers code_file_path when supplied; falls back to a
+    # pretorin:// sentinel for the platform context the agent had loaded.
+    audit_source_uri = (
+        f"file://{code_context['code_file_path']}"
+        if "code_file_path" in code_context
+        else (
+            f"pretorin://systems/{system_id}/controls/{normalized_control_id}"
+            if normalized_control_id
+            else f"pretorin://systems/{system_id}/untargeted"
+        )
+    )
+    # WS2 Phase B: when a recipe execution context is active (recipe_context_id
+    # was supplied), stamp producer_kind="recipe" instead of "agent".
+    try:
+        recipe_context = _resolve_recipe_context(arguments)
+    except RecipeContextError as exc:
+        return format_error(str(exc))
+
+    audit = _build_audit_metadata_for_write(
+        body=description,
+        evidence_type=evidence_type,
+        source_uri=audit_source_uri,
+        source_version=code_context.get("code_commit_hash"),
+        recipe_context=recipe_context,
+    )
+
     try:
         result = await upsert_evidence(
             client,
             system_id=system_id,
             name=arguments.get("name", ""),
-            description=arguments.get("description", ""),
+            description=description,
             evidence_type=evidence_type,
             control_id=normalized_control_id,
             framework_id=framework_id,
             source="cli",
             dedupe=bool(dedupe),
             code_context=code_context or None,
+            audit_metadata=audit,
         )
     except ValueError as e:
         return format_error(str(e))
@@ -120,6 +211,15 @@ async def handle_create_evidence_batch(
         arguments,
         enforce_active_context=True,
     )
+    # WS2 Phase B: same recipe-context resolution as the single-write path.
+    # All items in the batch inherit the recipe context if one is active —
+    # batches are conceptually one logical write so per-item context_id
+    # variation isn't supported in v1.
+    try:
+        recipe_context = _resolve_recipe_context(arguments)
+    except RecipeContextError as exc:
+        return format_error(str(exc))
+
     items = arguments.get("items", [])
     payload_items = []
     for item in items:
@@ -127,11 +227,24 @@ async def handle_create_evidence_batch(
         # and typos -> canonical; unknown or missing -> "other"). Pydantic
         # then enum-validates as the last-line defense.
         evidence_type = normalize_evidence_type(item.get("evidence_type")).value
+        item_control_id = normalize_control_id(item["control_id"])
+        item_audit_source_uri = (
+            f"file://{item['code_file_path']}"
+            if item.get("code_file_path")
+            else f"pretorin://systems/{system_id}/controls/{item_control_id}"
+        )
+        item_audit = _build_audit_metadata_for_write(
+            body=item["description"],
+            evidence_type=evidence_type,
+            source_uri=item_audit_source_uri,
+            source_version=item.get("code_commit_hash"),
+            recipe_context=recipe_context,
+        )
         payload_items.append(
             EvidenceBatchItemCreate(
                 name=item["name"],
                 description=item["description"],
-                control_id=normalize_control_id(item["control_id"]),
+                control_id=item_control_id,
                 evidence_type=evidence_type,
                 relevance_notes=item.get("relevance_notes"),
                 code_file_path=item.get("code_file_path"),
@@ -139,6 +252,7 @@ async def handle_create_evidence_batch(
                 code_snippet=item.get("code_snippet"),
                 code_repository=item.get("code_repository"),
                 code_commit_hash=item.get("code_commit_hash"),
+                audit_metadata=item_audit,
             )
         )
 

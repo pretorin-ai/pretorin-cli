@@ -35,10 +35,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-62c2f507.js";
+            window.path_to_searchindex_js = "searchindex-b9cb0ee1.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-9dfb40f5.js"></script>
+        <script src="toc-0194fc74.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -198,15 +198,18 @@
 <p>Pretorin is usually used in one of these modes:</p>
 <ol>
 <li>
-<p><strong>Pretorin-hosted model mode</strong> — Run <code>pretorin agent run</code> to route model calls through Pretorin’s <code>/v1</code> endpoints. Pretorin manages the AI runtime.</p>
+<p><strong>Bring-your-own-agent mode</strong> — Run <code>pretorin mcp-serve</code> and connect the MCP server to your existing AI tool (Claude Code, Codex CLI, Cursor, Windsurf, etc.). Your agent gets compliance tools without changing your workflow. Pair with <code>pretorin skill install</code> to give your agent explicit guidance for using pretorin (see “Bundled skill” below).</p>
 </li>
 <li>
-<p><strong>Bring-your-own-agent mode</strong> — Run <code>pretorin mcp-serve</code> and connect the MCP server to your existing AI tool (Claude Code, Codex CLI, Cursor, Windsurf, etc.). Your agent gets compliance tools without changing your workflow.</p>
+<p><strong>Pretorin-hosted agent mode</strong> — Run <code>pretorin agent run</code> to use Pretorin’s built-in agent runtime when you don’t have your own local agent. Pretorin manages the AI runtime; you supply prompts.</p>
 </li>
 <li>
-<p><strong>Direct CLI mode</strong> — Use <code>pretorin</code> subcommands directly for browsing frameworks, managing context, authoring evidence, updating narratives, and running scans.</p>
+<p><strong>Direct CLI mode</strong> — Use <code>pretorin</code> subcommands directly for browsing frameworks, managing context, authoring evidence, updating narratives, and running scans. No agent involved.</p>
 </li>
 </ol>
+<p><strong>Important architectural detail.</strong> The vast majority of the CLI and the entire MCP server are thin wrappers over the platform API — <em>no LLM runs in pretorin in those paths</em>. When you use mode 1 (your own agent via MCP), your local agent does all the reasoning. Pretorin is the tool surface. The only place pretorin runs its own LLM is <code>pretorin agent run</code> (mode 2), provided as a fallback for users without a local agent.</p>
+<h3 id="bundled-skill-pretorin-skill-install"><a class="header" href="#bundled-skill-pretorin-skill-install">Bundled skill (<code>pretorin skill install</code>)</a></h3>
+<p><code>pretorin skill install</code> copies a bundled skill into <code>~/.claude/skills/pretorin/</code> (or <code>~/.codex/skills/pretorin/</code>). The skill is markdown + scripts that tell your agent how to use pretorin’s MCP tools effectively — which to call first, how to scope by system + framework, how to handle evidence and narrative writes. Highly recommended when using mode 1.</p>
 <h2 id="what-you-can-do"><a class="header" href="#what-you-can-do">What You Can Do</a></h2>
 <ul>
 <li><strong>Browse compliance frameworks</strong> — Query controls, families, and document requirements from authoritative sources</li>
@@ -230,34 +233,53 @@
 <li><a href="./workflows/narrative-evidence.html">Workflows</a> for end-to-end compliance tasks</li>
 </ul>
 <h2 id="architecture"><a class="header" href="#architecture">Architecture</a></h2>
-<pre><code>┌─────────────────────────────────────────────┐
-│                 Developer                    │
-│                                             │
-│   ┌──────────┐        ┌──────────────────┐  │
-│   │ CLI      │        │ AI Agent         │  │
-│   │ pretorin │        │ (Claude, Codex,  │  │
-│   │ commands │        │  Cursor, etc.)   │  │
-│   └────┬─────┘        └────────┬─────────┘  │
-│        │                       │             │
-│        │              ┌────────┴─────────┐   │
-│        │              │  MCP Server      │   │
-│        │              │  pretorin        │   │
-│        │              │  mcp-serve       │   │
-│        │              └────────┬─────────┘   │
-│        │                       │             │
-│        └───────────┬───────────┘             │
-│                    │                         │
-│           ┌────────┴─────────┐               │
-│           │  Pretorin API    │               │
-│           │  Client          │               │
-│           └────────┬─────────┘               │
-└────────────────────┼─────────────────────────┘
-                     │
-            ┌────────┴─────────┐
-            │  Pretorin        │
-            │  Platform        │
-            └──────────────────┘
+<p>Pretorin CLI is three things, with one shared API client at the bottom:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────────────┐
+│                            Developer                                  │
+│                                                                       │
+│   ┌──────────┐       ┌──────────────────┐      ┌──────────────────┐  │
+│   │ Terminal │       │ Local AI Agent   │      │ pretorin agent   │  │
+│   │ (direct  │       │ (Claude Code,    │      │ run              │  │
+│   │  pretorin│       │  Codex CLI,      │      │ (Pretorin's own  │  │
+│   │  cmds)   │       │  Cursor, ...)    │      │  CodexAgent — for│  │
+│   │          │       │                  │      │  users w/o local │  │
+│   │          │       │ + bundled        │      │  agent)          │  │
+│   │          │       │   pretorin       │      │                  │  │
+│   │          │       │   skill          │      │                  │  │
+│   │          │       │   (optional)     │      │                  │  │
+│   └────┬─────┘       └────────┬─────────┘      └────────┬─────────┘  │
+│        │                      │                          │            │
+│        │                      │ stdio                    │            │
+│        │             ┌────────┴─────────┐                │            │
+│        │             │  MCP Server      │                │            │
+│        │             │  pretorin        │                │            │
+│        │             │  mcp-serve       │                │            │
+│        │             │                  │                │            │
+│        │             │  Tool surface    │                │            │
+│        │             │  (no LLM here)   │                │            │
+│        │             └────────┬─────────┘                │            │
+│        │                      │                          │            │
+│        └──────────────┬───────┴──────────┬───────────────┘            │
+│                       │                  │                            │
+│              ┌────────┴──────────────────┴─────────┐                  │
+│              │  Pretorin API Client                │                  │
+│              │  (shared — only place that talks    │                  │
+│              │   to the platform)                  │                  │
+│              └────────────────┬────────────────────┘                  │
+└───────────────────────────────┼───────────────────────────────────────┘
+                                │
+                       ┌────────┴─────────┐
+                       │  Pretorin        │
+                       │  Platform API    │
+                       └──────────────────┘
 </code></pre>
+<p>Three things, one client:</p>
+<ol>
+<li><strong>Direct CLI</strong> — <code>pretorin &lt;command&gt;</code> runs synchronously, talks to the platform via the shared client. No LLM.</li>
+<li><strong>MCP server</strong> — <code>pretorin mcp-serve</code> exposes the same platform features as MCP tools. The local agent does all the reasoning; pretorin is the tool surface. <strong>No LLM runs in pretorin in this path.</strong></li>
+<li><strong><code>pretorin agent run</code></strong> — Pretorin’s own LLM, used when the user doesn’t have a local agent. Calls the same platform-API tools as the MCP server, just over a Python in-process boundary.</li>
+</ol>
+<p>The bundled skill (<code>pretorin skill install</code>) is content delivered to the local agent’s skill directory; it’s not a fourth path, it’s a way to give path 2 better instructions.</p>
 <h2 id="links"><a class="header" href="#links">Links</a></h2>
 <ul>
 <li><a href="https://github.com/pretorin-ai/pretorin-cli">GitHub Repository</a></li>

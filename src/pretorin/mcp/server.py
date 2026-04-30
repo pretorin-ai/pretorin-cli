@@ -29,6 +29,21 @@ server = Server(
     instructions=(
         "Pretorin is currently in BETA. Framework and control reference tools "
         "(list_frameworks, get_control, etc.) are available to authenticated users. "
+        "\n\n"
+        "ROUTING — IMPORTANT: When the user references pretorin work (a control, "
+        "system, framework, questionnaire, or campaign), the FIRST tool to call "
+        "is pretorin_start_task. Extract entities (intent_verb, system_id, "
+        "framework_id, control_ids, scope_question_ids, policy_question_ids) "
+        "from the user prompt and pass them in. Pretorin runs deterministic "
+        "rules to pick a workflow and bundles the relevant platform state into "
+        "the response. Then read the selected workflow's body via "
+        "pretorin_get_workflow and follow it. Do NOT call evidence/narrative "
+        "write tools before pretorin_start_task has resolved the workflow and "
+        "scope — that path produces wrong-framework writes and breaks the "
+        "audit chain. The one exception is when the user is asking pure "
+        "reference questions ('show me AC-2', 'list frameworks'); those go "
+        "directly to the read-side tools without start_task. "
+        "\n\n"
         "Creating a system requires a beta code — systems can only be created on "
         "the Pretorin platform (https://platform.pretorin.com), not through the CLI "
         "or MCP. Without a system, platform write features (evidence, narratives, "
@@ -78,9 +93,16 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent] |
 
             if handler:
                 return await handler(client, arguments)
-            else:
-                logger.warning("Unknown tool requested: %s", name)
-                return format_error(f"Unknown tool: {name}")
+            # Phase C: per-recipe-script tools (pretorin_recipe_<id>__<tool>) are
+            # not in the static TOOL_HANDLERS table — they're registered dynamically
+            # from the recipe registry. Dispatch the catch-all here when the name
+            # matches the prefix.
+            if name.startswith("pretorin_recipe_") and "__" in name[len("pretorin_recipe_") :]:
+                from pretorin.mcp.handlers.recipe import handle_run_recipe_script
+
+                return await handle_run_recipe_script(client, arguments, tool_name=name)
+            logger.warning("Unknown tool requested: %s", name)
+            return format_error(f"Unknown tool: {name}")
 
     except AuthenticationError as e:
         logger.warning("Authentication error during tool %s: %s", name, e.message)

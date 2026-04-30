@@ -24,6 +24,7 @@ from pretorin.mcp.handlers.compliance import (
     handle_update_control_status,
     handle_update_narrative,
 )
+from pretorin.mcp.handlers.engagement import handle_start_task
 from pretorin.mcp.handlers.evidence import (
     handle_create_evidence,
     handle_create_evidence_batch,
@@ -42,6 +43,12 @@ from pretorin.mcp.handlers.frameworks import (
     handle_list_control_families,
     handle_list_controls,
     handle_list_frameworks,
+)
+from pretorin.mcp.handlers.recipe import (
+    handle_end_recipe,
+    handle_get_recipe,
+    handle_list_recipes,
+    handle_start_recipe,
 )
 from pretorin.mcp.handlers.stig import (
     handle_get_cci,
@@ -108,6 +115,10 @@ from pretorin.mcp.handlers.workflow import (
     handle_trigger_policy_review,
     handle_trigger_scope_generation,
     handle_trigger_scope_review,
+)
+from pretorin.mcp.handlers.workflow_lib import (
+    handle_get_workflow_lib,
+    handle_list_workflows,
 )
 
 ToolHandler = Callable[[PretorianClient, dict[str, Any]], Awaitable[list[TextContent] | CallToolResult]]
@@ -203,4 +214,15 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pretorin_get_stig_applicability": handle_get_stig_applicability,
     "pretorin_get_cci_status": handle_get_cci_status,
     "pretorin_infer_stigs": handle_infer_stigs,
+    # Recipe execution context lifecycle (recipe-implementation WS2 Phase B)
+    "pretorin_start_recipe": handle_start_recipe,
+    "pretorin_end_recipe": handle_end_recipe,
+    # Recipe discovery (recipe-implementation WS2 Phase C)
+    "pretorin_list_recipes": handle_list_recipes,
+    "pretorin_get_recipe": handle_get_recipe,
+    # Workflow playbook discovery (recipe-implementation WS5)
+    "pretorin_list_workflows": handle_list_workflows,
+    "pretorin_get_workflow": handle_get_workflow_lib,
+    # Engagement layer (recipe-implementation WS0) — routes prompts to workflows
+    "pretorin_start_task": handle_start_task,
 }

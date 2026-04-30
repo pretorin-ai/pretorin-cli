@@ -198,18 +198,19 @@
 | `pretorin cci show <cci_id>` | Show CCI detail with linked SRGs and STIG rules (e.g., `CCI-000015`) |
 | `pretorin cci chain <control_id>` | Full traceability chain: Control -> CCIs -> SRGs -> STIG rules (`--system/-s`) |
 
-## Scan Commands
+## Scanning
 
-| Command | Description |
-|---------|-------------|
-| `pretorin scan doctor` | Check which scanner tools are installed and available |
-| `pretorin scan manifest` | Show test manifest for the active system (`--system/-s`, `--stig`) |
-| `pretorin scan run` | Run STIG compliance scans (`--system/-s`, `--stig`, `--tool/-t`, `--dry-run`) |
-| `pretorin scan results` | Show CCI-level test results (`--system/-s`, `--control/-c`) |
+The legacy `pretorin scan` command was removed when the recipes system landed.
+Scanning now happens through built-in recipes that the calling AI agent invokes
+via MCP. See [STIG Scanning](./scanning.md) for the recipe-based workflow.
 
-### Supported Scanners
-
-`OpenSCAP`, `InSpec`, `AWS Cloud Scanner`, `Azure Cloud Scanner`, `Manual`
+| Recipe ID | Wraps | CLI requirement |
+|-----------|-------|-----------------|
+| `inspec-baseline` | Chef InSpec | `inspec` |
+| `openscap-baseline` | OpenSCAP | `oscap` |
+| `cloud-aws-baseline` | AWS APIs | `aws` |
+| `cloud-azure-baseline` | Azure APIs | `az` |
+| `manual-attestation` | Human attestation | — |
 
 ## Deprecated Commands
 

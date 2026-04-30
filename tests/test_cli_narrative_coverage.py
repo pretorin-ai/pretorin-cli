@@ -537,9 +537,7 @@ def test_narrative_list_with_framework_filter() -> None:
     """narrative list --framework filters results."""
     with patch("pretorin.narrative.writer.NarrativeWriter") as mock_writer_cls:
         mock_writer_cls.return_value.list_local.return_value = []
-        result = runner.invoke(
-            app, ["narrative", "list", "--framework", "fedramp-moderate"]
-        )
+        result = runner.invoke(app, ["narrative", "list", "--framework", "fedramp-moderate"])
 
     mock_writer_cls.return_value.list_local.assert_called_once_with("fedramp-moderate")
     assert result.exit_code == 0

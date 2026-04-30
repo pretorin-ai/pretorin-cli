@@ -38,6 +38,18 @@
 - [Skills](./agent/skills.md)
 - [Runtime Management](./agent/runtime.md)
 
+# Authoring Recipes
+
+- [Overview](./recipes/index.md)
+- [Manifest Reference](./recipes/manifest-reference.md)
+- [Script Contract](./recipes/script-contract.md)
+- [Writer Tools](./recipes/writer-tools.md)
+- [Testing](./recipes/testing.md)
+- [Publishing](./recipes/publishing.md)
+- [Workflows](./recipes/workflows.md)
+- [Engagement Layer](./recipes/engagement.md)
+- [Worked Example](./recipes/example/index.md)
+
 # Compliance Frameworks
 
 - [Supported Frameworks](./frameworks/supported.md)

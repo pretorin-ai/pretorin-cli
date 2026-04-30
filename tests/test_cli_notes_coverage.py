@@ -649,9 +649,7 @@ def test_notes_list_local_with_framework_filter() -> None:
     """notes list --local --framework filters results."""
     with patch("pretorin.notes.writer.NotesWriter") as mock_writer_cls:
         mock_writer_cls.return_value.list_local.return_value = []
-        result = runner.invoke(
-            app, ["notes", "list", "--local", "--framework", "fedramp-moderate"]
-        )
+        result = runner.invoke(app, ["notes", "list", "--local", "--framework", "fedramp-moderate"])
 
     mock_writer_cls.return_value.list_local.assert_called_once_with("fedramp-moderate")
     assert result.exit_code == 0

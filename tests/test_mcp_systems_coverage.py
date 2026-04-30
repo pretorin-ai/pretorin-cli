@@ -213,9 +213,7 @@ class TestHandleGetSourceManifest:
             patch("pretorin.attestation.load_manifest", return_value=None),
         ):
             mock_config_cls.return_value.active_system_id = "default-sys"
-            result = await handle_get_source_manifest(
-                None, {"system_id": "explicit-sys"}
-            )
+            result = await handle_get_source_manifest(None, {"system_id": "explicit-sys"})
 
         text = result[0].text
         parsed = json.loads(text)

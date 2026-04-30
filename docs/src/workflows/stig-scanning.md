@@ -42,48 +42,43 @@ pretorin stig rules <stig_id> --severity cat_i
 
 ## Scanning Workflow
 
-### 1. Check Scanner Availability
+Scanning is driven by **recipes** that the calling AI agent invokes through MCP.
+Each scanner ships as a built-in recipe (`inspec-baseline`, `openscap-baseline`,
+`cloud-aws-baseline`, `cloud-azure-baseline`, `manual-attestation`).
+
+### 1. Discover Available Recipes
 
 ```bash
-pretorin scan doctor
+pretorin recipe list
+pretorin recipe show inspec-baseline
 ```
-
-Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Manual.
 
 ### 2. Review Test Manifest
 
-```bash
-pretorin scan manifest --system "My System"
-```
-
-Shows which STIGs, rules, and scanners apply to the system.
-
-### 3. Run Scans
+The agent uses `pretorin_get_test_manifest` (MCP) to see which STIGs and rules
+apply to a system before running a scan. From the CLI you can browse the
+relationships directly:
 
 ```bash
-# Run all applicable scans
-pretorin scan run --system "My System"
-
-# Dry run first
-pretorin scan run --system "My System" --dry-run
-
-# Target specific STIG or tool
-pretorin scan run --stig <stig_id> --tool openscap
+pretorin stig applicable --system "My System"
+pretorin cci chain ac-2 --system "My System"
 ```
 
-### 4. Review Results
+### 3. Ask the Agent to Run the Scan
 
-```bash
-# All results
-pretorin scan results --system "My System"
+Inside Claude Code, Codex CLI, or `pretorin agent run`, ask:
 
-# Filter by control
-pretorin scan results --system "My System" --control ac-2
-```
+> "Run an inspec-baseline scan against `RHEL_9_STIG` on this system."
 
-### 5. Submit Results to Platform
+The agent will open a recipe context, call the recipe's `run_scan` script,
+and submit results through `pretorin_submit_test_results`. There is no
+direct CLI command for executing a scan — the recipe layer is the
+contract surface.
 
-Results are automatically submitted when scanning with an active system context. For manual submission via MCP:
+### 4. Submit Results Manually
+
+If you have raw scanner output and want to upload it without running through
+a recipe, push it directly via MCP:
 
 ```
 pretorin_submit_test_results(system_id, results)

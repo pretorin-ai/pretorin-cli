@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from pretorin.agent.skills import SKILLS, _WORKFLOW_GUARDRAILS
+from pretorin.agent.skills import _WORKFLOW_GUARDRAILS, SKILLS
 from pretorin.agent.tools import create_platform_tools
 from pretorin.mcp.helpers import VALID_EVIDENCE_TYPES
 from pretorin.workflows.ai_generation import _build_generation_task
@@ -49,6 +49,5 @@ def test_skill_tool_names_reference_existing_agent_tools() -> None:
     for skill_name, skill in SKILLS.items():
         for tool_name in skill.tool_names:
             assert tool_name in defined_names, (
-                f"Skill {skill_name!r} references tool {tool_name!r} "
-                f"which does not exist in agent/tools.py"
+                f"Skill {skill_name!r} references tool {tool_name!r} which does not exist in agent/tools.py"
             )

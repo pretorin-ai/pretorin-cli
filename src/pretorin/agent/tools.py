@@ -13,10 +13,15 @@ from typing import Any
 from pretorin.cli.context import resolve_execution_context
 from pretorin.client.api import PretorianClient
 from pretorin.client.models import EvidenceBatchItemCreate
+from pretorin.evidence.audit_metadata import build_agent_metadata, evidence_type_to_source_type
 from pretorin.evidence.types import normalize_evidence_type
 from pretorin.scope import ExecutionScope
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.compliance_updates import upsert_evidence
+
+# Producer id for pretorin's built-in CodexAgent runtime, used when its tools write
+# evidence/narrative records. Surfaced in audit metadata via `producer_id`.
+_AGENT_ID = "codex-agent"
 
 
 @dataclass
@@ -296,6 +301,18 @@ def create_platform_tools(
                 await client.get_control(resolved_framework_id, normalized_control_id)
             # Issue #79: normalize AI-drift evidence_type values before upsert.
             normalized_type = normalize_evidence_type(evidence_type).value
+            # WS1b: stamp agent-driven audit metadata. Source URI describes the
+            # platform context the agent had loaded when emitting this record.
+            audit = build_agent_metadata(
+                body=description,
+                source_uri=(
+                    f"pretorin://systems/{resolved_system_id}/controls/{normalized_control_id}"
+                    if normalized_control_id
+                    else f"pretorin://systems/{resolved_system_id}/untargeted"
+                ),
+                source_type=evidence_type_to_source_type(normalized_type),
+                agent_id=_AGENT_ID,
+            )
             result = await upsert_evidence(
                 client,
                 system_id=resolved_system_id,
@@ -306,6 +323,7 @@ def create_platform_tools(
                 framework_id=resolved_framework_id,
                 source="cli",
                 dedupe=dedupe,
+                audit_metadata=audit,
             )
         except ValueError as e:
             return json.dumps({"error": str(e)}, default=str)
@@ -363,17 +381,28 @@ def create_platform_tools(
             enforce_active_context=True,
             allow_scope_override=allow_scope_override,
         )
+
         # Issue #79: normalize AI-drift evidence_type per item before pydantic.
-        payload_items = [
-            EvidenceBatchItemCreate(
+        # WS1b: each batch item gets its own agent-stamped audit metadata.
+        def _item_payload(item: dict[str, Any]) -> EvidenceBatchItemCreate:
+            normalized_control_id = _normalize(str(item["control_id"])) or str(item["control_id"])
+            normalized_evidence_type = normalize_evidence_type(item.get("evidence_type")).value
+            audit = build_agent_metadata(
+                body=item["description"],
+                source_uri=f"pretorin://systems/{resolved_system_id}/controls/{normalized_control_id}",
+                source_type=evidence_type_to_source_type(normalized_evidence_type),
+                agent_id=_AGENT_ID,
+            )
+            return EvidenceBatchItemCreate(
                 name=item["name"],
                 description=item["description"],
-                control_id=_normalize(str(item["control_id"])) or str(item["control_id"]),
-                evidence_type=normalize_evidence_type(item.get("evidence_type")).value,
+                control_id=normalized_control_id,
+                evidence_type=normalized_evidence_type,
                 relevance_notes=item.get("relevance_notes"),
+                audit_metadata=audit,
             )
-            for item in items
-        ]
+
+        payload_items = [_item_payload(item) for item in items]
         for item in payload_items:
             await client.get_control(resolved_framework_id, item.control_id)
         result = await client.create_evidence_batch(

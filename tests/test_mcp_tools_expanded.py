@@ -86,9 +86,24 @@ class TestToolListing:
             "pretorin_get_stig_applicability",
             "pretorin_get_cci_status",
             "pretorin_infer_stigs",
+            # Recipe execution context lifecycle (recipe-implementation WS2 Phase B)
+            "pretorin_start_recipe",
+            "pretorin_end_recipe",
+            # Recipe discovery (recipe-implementation WS2 Phase C)
+            "pretorin_list_recipes",
+            "pretorin_get_recipe",
+            # Workflow playbook discovery (recipe-implementation WS5)
+            "pretorin_list_workflows",
+            "pretorin_get_workflow",
+            # Engagement layer (recipe-implementation WS0)
+            "pretorin_start_task",
         ]
 
-        assert len(tools) == 87
+        # Static tool count is 94 — per-recipe-script tools added dynamically
+        # by list_tools() are NOT counted here (registry walk in tests would
+        # be brittle against tmp fixtures). assert >= 94 because dynamic tools
+        # may add to the total when the registry has built-in recipes loaded.
+        assert len(tools) >= 94
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 

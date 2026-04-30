@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from pretorin.client.api import PretorianClient
+from pretorin.evidence.audit_metadata import build_cli_metadata, evidence_type_to_source_type
 from pretorin.evidence.writer import EvidenceWriter, LocalEvidence, _format_frontmatter
 from pretorin.local_file import update_file_frontmatter
 from pretorin.workflows.compliance_updates import upsert_evidence
@@ -89,6 +90,21 @@ class EvidenceSync:
                 if ev.code_commit_hash:
                     code_context["code_commit_hash"] = ev.code_commit_hash
 
+                # WS1b: stamp audit-trail metadata. Source URI comes from the
+                # local evidence's code_file_path when present (the file the
+                # evidence references); else points at the platform context.
+                audit_source_uri = (
+                    f"file://{ev.code_file_path}"
+                    if ev.code_file_path
+                    else f"pretorin://systems/{self._system_id}/controls/{ev.control_id}"
+                )
+                audit = build_cli_metadata(
+                    body=ev.description,
+                    source_uri=audit_source_uri,
+                    source_type=evidence_type_to_source_type(ev.evidence_type),
+                    source_version=ev.code_commit_hash,
+                )
+
                 sync_result = await upsert_evidence(
                     client,
                     system_id=self._system_id,
@@ -99,6 +115,7 @@ class EvidenceSync:
                     control_id=ev.control_id,
                     framework_id=ev.framework_id,
                     code_context=code_context or None,
+                    audit_metadata=audit,
                 )
                 platform_id = sync_result.evidence_id
 

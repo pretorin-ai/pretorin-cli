@@ -28,8 +28,8 @@ from pretorin.cli.narrative import app as narrative_app
 from pretorin.cli.notes import app as notes_app
 from pretorin.cli.output import set_json_mode
 from pretorin.cli.policy import app as policy_app
+from pretorin.cli.recipe import app as recipe_app
 from pretorin.cli.review import app as review_app
-from pretorin.cli.scan import app as scan_app
 from pretorin.cli.scope import app as scope_app
 from pretorin.cli.skill import app as skill_app
 from pretorin.cli.stig import app as stig_app
@@ -169,10 +169,10 @@ app.add_typer(review_app, name="review", help="Review local artifacts against co
 app.add_typer(scope_app, name="scope", help="Stateful scope questionnaire workflows")
 app.add_typer(agent_app, name="agent", help="Autonomous compliance agent")
 app.add_typer(skill_app, name="skill", help="Install/manage the Pretorin skill for AI agents")
+app.add_typer(recipe_app, name="recipe", help="List, show, scaffold, and validate Pretorin recipes")
 app.add_typer(vendor_app, name="vendor", help="Vendor management and evidence linking")
 app.add_typer(stig_app, name="stig", help="Browse STIG benchmarks, rules, and applicability")
 app.add_typer(cci_app, name="cci", help="Browse CCIs and the full traceability chain")
-app.add_typer(scan_app, name="scan", help="Run STIG compliance scans and view results")
 app.add_typer(harness_app, name="harness", help="[Deprecated] AI harness wrapper")
 
 # Add auth commands directly to root

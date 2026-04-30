@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field, field_validator
@@ -305,6 +306,109 @@ class EvidenceCodeContext(TypedDict, total=False):
     code_commit_hash: str
 
 
+# =============================================================================
+# Audit-Trail Metadata (recipe-implementation WS1a)
+#
+# Per the draft RFC at docs/rfcs/draft-evidence-metadata.md.
+#
+# During WS1a/b (the migration window) audit_metadata is sent as an OPTIONAL field
+# on EvidenceCreate / EvidenceBatchItemCreate. The platform tolerates its absence.
+# WS1c flips the field to required once platform-side fields land.
+#
+# The recipe execution context (WS2) stamps producer_kind="recipe" + producer_id
+# + producer_version automatically; manual CLI writes auto-stamp producer_kind="cli"
+# via the build_*_metadata helpers in pretorin.evidence.audit_metadata.
+# =============================================================================
+
+
+SourceType = Literal[
+    "code_snippet",
+    "log_excerpt",
+    "configuration",
+    "screenshot",
+    "document",
+    "attestation",
+    "scan_result",
+]
+"""Evidence source-type enum per draft RFC §3 ('source_type')."""
+
+
+class RedactionSummary(BaseModel):
+    """Top-level schema'd redaction counts (draft RFC §6, recommendation).
+
+    Per-recipe granularity goes in `details`. The schema'd counts let the platform
+    render a consistent badge; `details` preserves recipe-level granularity for
+    downstream tooling.
+    """
+
+    secrets: int = Field(default=0, ge=0, description="Secret-pattern redactions (API keys, passwords, tokens)")
+    pii: int = Field(default=0, ge=0, description="PII redactions")
+    custom: int = Field(default=0, ge=0, description="Recipe-defined redactions outside the above categories")
+    details: dict[str, int] | None = Field(
+        default=None,
+        description="Optional per-recipe granular counts, e.g. {aws_keys: 2, github_pats: 1}",
+    )
+
+
+class EvidenceAuditMetadata(BaseModel):
+    """Audit-trail metadata stamped on every evidence/narrative write.
+
+    Required minimum (per draft RFC §'Required vs optional'): producer_kind,
+    producer_id, captured_at, source_type, source_uri, content_hash. Other fields
+    are strongly encouraged but pydantic-optional.
+
+    Drift-prevention rationale: every CLI/agent/recipe write path produces an
+    instance of this model via build_cli_metadata / build_agent_metadata /
+    build_recipe_metadata helpers in pretorin.evidence.audit_metadata. Single
+    construction surface; no path stamps fields on its own.
+    """
+
+    producer_kind: Literal["cli", "recipe", "agent", "manual_upload", "api"] = Field(
+        ..., description="Who or what created this record"
+    )
+    producer_id: str = Field(..., min_length=1, description="Producer identifier (recipe id, agent id, 'cli', etc.)")
+    producer_version: str | None = Field(
+        default=None,
+        description="Producer version (recipe version, model id, CLI version) if applicable",
+    )
+    captured_at: datetime = Field(..., description="When the underlying state was actually true (RFC3339 UTC)")
+    source_type: SourceType = Field(..., description="Kind of source the body represents")
+    source_uri: str = Field(
+        ...,
+        min_length=1,
+        description="Path / URL / ARN / git ref. Meaning depends on source_type",
+    )
+    source_version: str | None = Field(
+        default=None,
+        description="Commit SHA, S3 versionId, document revision, etc.",
+    )
+    content_hash: str = Field(
+        ...,
+        min_length=64,
+        max_length=64,
+        description="sha256 hex digest of the canonical body for tamper detection",
+    )
+    redaction_summary: RedactionSummary | None = Field(
+        default=None,
+        description="Redaction counts when the body was transformed; None when nothing was redacted",
+    )
+    recipe_selection: dict[str, Any] | None = Field(
+        default=None,
+        description=(
+            "Structured recipe-selection record populated by WS5 workflow integrations. "
+            "Shape will be tightened to a typed RecipeSelection model when WS5 ships."
+        ),
+    )
+
+    @field_validator("content_hash")
+    @classmethod
+    def _content_hash_must_be_lowercase_hex(cls, value: str) -> str:
+        """sha256 hex digest is 64 lowercase hex chars by convention."""
+        if not all(c in "0123456789abcdef" for c in value):
+            raise ValueError("content_hash must be a lowercase hex sha256 digest (64 chars, 0-9a-f)")
+        return value
+
+
 class EvidenceCreate(BaseModel):
     """Data for creating evidence on the platform.
 
@@ -325,6 +429,13 @@ class EvidenceCreate(BaseModel):
     code_line_numbers: str | None = Field(default=None, description="Line range (e.g., '10-25')")
     code_repository: str | None = Field(default=None, description="Git repository URL")
     code_commit_hash: str | None = Field(default=None, description="Git commit hash")
+    audit_metadata: EvidenceAuditMetadata | None = Field(
+        default=None,
+        description=(
+            "Audit-trail metadata (recipe-implementation WS1a). Optional during "
+            "the migration window; will be required after WS1c lands platform-side."
+        ),
+    )
 
     @field_validator("evidence_type")
     @classmethod
@@ -351,6 +462,13 @@ class EvidenceBatchItemCreate(BaseModel):
     code_line_numbers: str | None = None
     code_repository: str | None = None
     code_commit_hash: str | None = None
+    audit_metadata: EvidenceAuditMetadata | None = Field(
+        default=None,
+        description=(
+            "Audit-trail metadata (recipe-implementation WS1a). Optional during "
+            "the migration window; will be required after WS1c lands platform-side."
+        ),
+    )
 
     @field_validator("evidence_type")
     @classmethod

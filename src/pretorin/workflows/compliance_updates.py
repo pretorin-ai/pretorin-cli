@@ -10,7 +10,7 @@ from typing import Any
 
 from pretorin.client.api import PretorianClient, PretorianClientError
 from pretorin.client.config import Config
-from pretorin.client.models import EvidenceCreate, EvidenceItemResponse
+from pretorin.client.models import EvidenceAuditMetadata, EvidenceCreate, EvidenceItemResponse
 from pretorin.scope import ExecutionScope
 from pretorin.utils import normalize_control_id
 from pretorin.workflows.markdown_quality import ensure_audit_markdown
@@ -139,6 +139,7 @@ async def upsert_evidence(
     dedupe: bool = True,
     search_limit: int = 200,
     code_context: dict[str, Any] | None = None,
+    audit_metadata: EvidenceAuditMetadata | None = None,
 ) -> EvidenceUpsertResult:
     """Find-or-create scoped evidence and ensure system/control link.
 
@@ -146,6 +147,12 @@ async def upsert_evidence(
     receive a possibly-AI-generated value should run
     `pretorin.evidence.types.normalize_evidence_type()` first; the CLI
     entry points hard-error when the user omits `-t/--type`.
+
+    WS1b (recipe-implementation): callers pass ``audit_metadata`` built via
+    ``pretorin.evidence.audit_metadata.build_cli_metadata`` /
+    ``build_agent_metadata`` / ``build_recipe_metadata``. During the
+    WS1a/b migration window the parameter is optional; WS1c will require it
+    once the platform-side fields land.
     """
     ensure_audit_markdown(description, artifact_type="evidence_description")
 
@@ -202,6 +209,7 @@ async def upsert_evidence(
             source=source,
             control_id=normalized_control_id,
             framework_id=framework_id,
+            audit_metadata=audit_metadata,
             **(code_context or {}),
         )
         platform_response = await client.create_evidence(system_id, payload)

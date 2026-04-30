@@ -7,7 +7,6 @@ list-docs — in both normal and JSON modes plus validation/error handling.
 from __future__ import annotations
 
 import json
-import os
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -94,9 +93,7 @@ def test_vendor_create_normal_mode() -> None:
     client = _base_client()
     client.create_vendor = AsyncMock(return_value={"id": "v-1", "name": "AWS"})
 
-    result = _run_with_mock_client(
-        ["vendor", "create", "AWS", "--type", "csp"], client
-    )
+    result = _run_with_mock_client(["vendor", "create", "AWS", "--type", "csp"], client)
 
     assert result.exit_code == 0, result.output
     assert "Vendor created" in result.output
@@ -108,9 +105,7 @@ def test_vendor_create_json_mode() -> None:
     client = _base_client()
     client.create_vendor = AsyncMock(return_value={"id": "v-1", "name": "AWS"})
 
-    result = _run_with_mock_client(
-        ["--json", "vendor", "create", "AWS", "--type", "csp"], client
-    )
+    result = _run_with_mock_client(["--json", "vendor", "create", "AWS", "--type", "csp"], client)
 
     assert result.exit_code == 0, result.output
     payload = json.loads(result.stdout)
@@ -121,9 +116,7 @@ def test_vendor_create_invalid_type() -> None:
     """vendor create rejects invalid provider type."""
     client = _base_client()
 
-    result = _run_with_mock_client(
-        ["vendor", "create", "AWS", "--type", "invalid"], client
-    )
+    result = _run_with_mock_client(["vendor", "create", "AWS", "--type", "invalid"], client)
 
     assert result.exit_code == 1
     assert "Invalid provider type" in result.output
@@ -226,9 +219,7 @@ def test_vendor_update_normal_mode() -> None:
     client = _base_client()
     client.update_vendor = AsyncMock(return_value={"name": "AWS Updated"})
 
-    result = _run_with_mock_client(
-        ["vendor", "update", "v-1", "--name", "AWS Updated"], client
-    )
+    result = _run_with_mock_client(["vendor", "update", "v-1", "--name", "AWS Updated"], client)
 
     assert result.exit_code == 0, result.output
     assert "Vendor updated" in result.output
@@ -239,9 +230,7 @@ def test_vendor_update_json_mode() -> None:
     client = _base_client()
     client.update_vendor = AsyncMock(return_value={"name": "AWS Updated"})
 
-    result = _run_with_mock_client(
-        ["--json", "vendor", "update", "v-1", "--name", "AWS Updated"], client
-    )
+    result = _run_with_mock_client(["--json", "vendor", "update", "v-1", "--name", "AWS Updated"], client)
 
     assert result.exit_code == 0, result.output
     payload = json.loads(result.stdout)
@@ -262,9 +251,7 @@ def test_vendor_update_invalid_provider_type() -> None:
     """vendor update rejects invalid provider type."""
     client = _base_client()
 
-    result = _run_with_mock_client(
-        ["vendor", "update", "v-1", "--type", "bogus"], client
-    )
+    result = _run_with_mock_client(["vendor", "update", "v-1", "--type", "bogus"], client)
 
     assert result.exit_code == 1
     assert "Invalid provider type" in result.output
@@ -280,9 +267,7 @@ def test_vendor_delete_with_force() -> None:
     client = _base_client()
     client.delete_vendor = AsyncMock(return_value=None)
 
-    result = _run_with_mock_client(
-        ["vendor", "delete", "v-1", "--force"], client
-    )
+    result = _run_with_mock_client(["vendor", "delete", "v-1", "--force"], client)
 
     assert result.exit_code == 0, result.output
     assert "deleted" in result.output
@@ -298,9 +283,7 @@ def test_vendor_upload_doc_file_not_found() -> None:
     """vendor upload-doc exits 1 when file doesn't exist."""
     client = _base_client()
 
-    result = _run_with_mock_client(
-        ["vendor", "upload-doc", "v-1", "/nonexistent/path.pdf"], client
-    )
+    result = _run_with_mock_client(["vendor", "upload-doc", "v-1", "/nonexistent/path.pdf"], client)
 
     assert result.exit_code == 1
     assert "File not found" in result.output
@@ -332,13 +315,9 @@ def test_vendor_upload_doc_success(tmp_path) -> None:
     test_file.write_text("test content")
 
     client = _base_client()
-    client.upload_vendor_document = AsyncMock(
-        return_value={"id": "doc-1", "name": "doc.pdf"}
-    )
+    client.upload_vendor_document = AsyncMock(return_value={"id": "doc-1", "name": "doc.pdf"})
 
-    result = _run_with_mock_client(
-        ["vendor", "upload-doc", "v-1", str(test_file)], client
-    )
+    result = _run_with_mock_client(["vendor", "upload-doc", "v-1", str(test_file)], client)
 
     assert result.exit_code == 0, result.output
     assert "Document uploaded" in result.output
@@ -350,13 +329,9 @@ def test_vendor_upload_doc_json_mode(tmp_path) -> None:
     test_file.write_text("test content")
 
     client = _base_client()
-    client.upload_vendor_document = AsyncMock(
-        return_value={"id": "doc-1", "name": "doc.pdf"}
-    )
+    client.upload_vendor_document = AsyncMock(return_value={"id": "doc-1", "name": "doc.pdf"})
 
-    result = _run_with_mock_client(
-        ["--json", "vendor", "upload-doc", "v-1", str(test_file)], client
-    )
+    result = _run_with_mock_client(["--json", "vendor", "upload-doc", "v-1", str(test_file)], client)
 
     assert result.exit_code == 0, result.output
     payload = json.loads(result.stdout)
@@ -373,7 +348,12 @@ def test_vendor_list_docs_normal_with_items() -> None:
     client = _base_client()
     client.list_vendor_documents = AsyncMock(
         return_value=[
-            {"id": "doc-1", "name": "SOC 2 Report", "evidence_type": "report", "attestation_type": "third_party_attestation"},
+            {
+                "id": "doc-1",
+                "name": "SOC 2 Report",
+                "evidence_type": "report",
+                "attestation_type": "third_party_attestation",
+            },
         ]
     )
 
