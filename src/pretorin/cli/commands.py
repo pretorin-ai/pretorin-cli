@@ -1260,3 +1260,64 @@ def revisions_list(
                 raise typer.Exit(1)
 
     asyncio.run(do_list())
+
+
+@app.command("export-oscal")
+def export_oscal(
+    file_path: Path = typer.Argument(
+        ...,
+        help="Path to a unified.json artifact",
+        exists=True,
+        readable=True,
+    ),
+    output: Path = typer.Option(
+        Path("catalog.json"),
+        "--output",
+        "-o",
+        help="Output path for the regenerated OSCAL catalog",
+    ),
+    force: bool = typer.Option(False, "--force", help="Overwrite output if it exists"),
+) -> None:
+    """Regenerate an OSCAL catalog from a unified.json artifact.
+
+    Useful when downstream consumers need OSCAL or you want to round-trip
+    OSCAL → unified → OSCAL. If the unified.json was originally converted
+    from OSCAL the regeneration is lossless via the preserved _oscal blocks.
+
+    Examples:
+        pretorin frameworks export-oscal unified.json
+        pretorin frameworks export-oscal unified.json -o catalog.json
+    """
+    from pretorin.frameworks import unified_to_oscal
+
+    if output.exists() and not force:
+        rprint(f"[#EAB536]\\[°︵°][/#EAB536] {output} already exists. Use --force to overwrite.")
+        raise typer.Exit(1)
+
+    try:
+        unified = json.loads(file_path.read_text())
+    except json.JSONDecodeError as e:
+        rprint(f"[#EAB536]\\[°︵°][/#EAB536] Invalid JSON in {file_path}: {e}")
+        raise typer.Exit(1)
+
+    oscal = unified_to_oscal.convert(unified)
+    output.write_text(json.dumps(oscal, indent=2) + "\n")
+
+    if is_json_mode():
+        print_json({"output": str(output), "framework_id": unified.get("framework_id")})
+        return
+
+    catalog = oscal["catalog"]
+    group_count = len(catalog.get("groups", []))
+    control_count = sum(len(g.get("controls", [])) for g in catalog.get("groups", []))
+
+    rprint(
+        Panel(
+            f"[bold]Output:[/bold] {output}\n"
+            f"[bold]Framework:[/bold] {unified.get('framework_id', '?')}\n"
+            f"[bold]Groups:[/bold] {group_count}\n"
+            f"[bold]Controls:[/bold] {control_count}",
+            title="[#95D7E0]OSCAL catalog exported[/#95D7E0]",
+            border_style="#95D7E0",
+        )
+    )
