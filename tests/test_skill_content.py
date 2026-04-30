@@ -70,7 +70,7 @@ def test_skill_documents_per_script_tool_pattern(skill_text: str) -> None:
 
 
 def test_skill_lists_each_builtin_recipe_id(skill_text: str) -> None:
-    """The six recipes shipped with pretorin should all appear by id."""
+    """The eight recipes shipped with pretorin should all appear by id."""
     for recipe_id in (
         "code-evidence-capture",
         "inspec-baseline",
@@ -78,8 +78,21 @@ def test_skill_lists_each_builtin_recipe_id(skill_text: str) -> None:
         "cloud-aws-baseline",
         "cloud-azure-baseline",
         "manual-attestation",
+        "scope-q-answer",
+        "policy-q-answer",
     ):
         assert recipe_id in skill_text, f"SKILL.md should mention built-in recipe: {recipe_id}"
+
+
+def test_skill_documents_workflow_lifecycle(skill_text: str) -> None:
+    """The workflow discovery tools must be documented for the agent to find them."""
+    for tool_name in ("pretorin_list_workflows", "pretorin_get_workflow"):
+        assert tool_name in skill_text, f"SKILL.md should document MCP tool: {tool_name}"
+
+
+def test_skill_lists_each_builtin_workflow_id(skill_text: str) -> None:
+    for workflow_id in ("single-control", "scope-question", "policy-question", "campaign"):
+        assert workflow_id in skill_text, f"SKILL.md should mention built-in workflow: {workflow_id}"
 
 
 def test_skill_contains_recipe_workflow_section(skill_text: str) -> None:

@@ -67,6 +67,10 @@ tools](./writer-tools.md)). The agent path through MCP stamps automatically.
   context with `pretorin_start_recipe(...)`; every platform write inside the
   context is stamped with `producer_kind="recipe"`, the recipe id, and the
   recipe version. The platform records the full chain.
+- **Workflow playbooks** (`pretorin_list_workflows` / `pretorin_get_workflow`)
+  for the four item-iteration shapes: single-control, scope-question,
+  policy-question, campaign. Workflows describe *how* to iterate; recipes
+  describe *what* to do per item.
 
 ## Loader Paths
 
@@ -101,4 +105,5 @@ is signal, not a permission gate.
 - [Writer tools](./writer-tools.md) — the platform-API tools your scripts call, and how audit metadata gets stamped.
 - [Testing](./testing.md) — pytest fixtures and patterns.
 - [Publishing](./publishing.md) — how to share a community recipe or PR an official one.
+- [Workflows](./workflows.md) — the layer above recipes: how the calling agent picks a workflow, then picks recipes per item.
 - [Worked example](./example/index.md) — a community recipe walked through end-to-end.

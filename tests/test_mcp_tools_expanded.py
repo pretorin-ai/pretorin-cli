@@ -92,13 +92,16 @@ class TestToolListing:
             # Recipe discovery (recipe-implementation WS2 Phase C)
             "pretorin_list_recipes",
             "pretorin_get_recipe",
+            # Workflow playbook discovery (recipe-implementation WS5)
+            "pretorin_list_workflows",
+            "pretorin_get_workflow",
         ]
 
-        # Static tool count is 91 — per-recipe-script tools added dynamically
+        # Static tool count is 93 — per-recipe-script tools added dynamically
         # by list_tools() are NOT counted here (registry walk in tests would
-        # be brittle against tmp fixtures). assert >= 91 because dynamic tools
+        # be brittle against tmp fixtures). assert >= 93 because dynamic tools
         # may add to the total when the registry has built-in recipes loaded.
-        assert len(tools) >= 91
+        assert len(tools) >= 93
         for name in expected:
             assert name in tool_names, f"Missing tool: {name}"
 

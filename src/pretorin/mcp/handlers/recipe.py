@@ -163,7 +163,7 @@ async def handle_list_recipes(
     """Enumerate loaded recipes for the calling agent.
 
     Optional filters: ``tier`` (one of "official", "partner", "community") and
-    ``produces`` (one of "evidence", "narrative", "both"). Returns a list of
+    ``produces`` (one of "evidence", "narrative", "both", "answers"). Returns a list of
     summary dicts the agent can scan to pick a recipe — id, name, tier,
     description, use_when, produces, version, author, source.
 

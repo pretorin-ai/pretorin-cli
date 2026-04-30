@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-d0384e34.js";
+            window.path_to_searchindex_js = "../searchindex-a1aeef7d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-818f5f0b.js"></script>
+        <script src="../toc-8013f0a0.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -240,6 +240,10 @@ See <a href="#loader-paths">Loader paths</a> below.</li>
 context with <code>pretorin_start_recipe(...)</code>; every platform write inside the
 context is stamped with <code>producer_kind="recipe"</code>, the recipe id, and the
 recipe version. The platform records the full chain.</li>
+<li><strong>Workflow playbooks</strong> (<code>pretorin_list_workflows</code> / <code>pretorin_get_workflow</code>)
+for the four item-iteration shapes: single-control, scope-question,
+policy-question, campaign. Workflows describe <em>how</em> to iterate; recipes
+describe <em>what</em> to do per item.</li>
 </ul>
 <h2 id="loader-paths"><a class="header" href="#loader-paths">Loader Paths</a></h2>
 <div class="table-wrapper">
@@ -276,6 +280,7 @@ is signal, not a permission gate.</p>
 <li><a href="./writer-tools.html">Writer tools</a> — the platform-API tools your scripts call, and how audit metadata gets stamped.</li>
 <li><a href="./testing.html">Testing</a> — pytest fixtures and patterns.</li>
 <li><a href="./publishing.html">Publishing</a> — how to share a community recipe or PR an official one.</li>
+<li><a href="./workflows.html">Workflows</a> — the layer above recipes: how the calling agent picks a workflow, then picks recipes per item.</li>
 <li><a href="./example/index.html">Worked example</a> — a community recipe walked through end-to-end.</li>
 </ul>
 

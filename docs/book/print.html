@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-d0384e34.js";
+            window.path_to_searchindex_js = "searchindex-a1aeef7d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-818f5f0b.js"></script>
+        <script src="toc-8013f0a0.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -3168,6 +3168,10 @@ See <a href="#loader-paths">Loader paths</a> below.</li>
 context with <code>pretorin_start_recipe(...)</code>; every platform write inside the
 context is stamped with <code>producer_kind="recipe"</code>, the recipe id, and the
 recipe version. The platform records the full chain.</li>
+<li><strong>Workflow playbooks</strong> (<code>pretorin_list_workflows</code> / <code>pretorin_get_workflow</code>)
+for the four item-iteration shapes: single-control, scope-question,
+policy-question, campaign. Workflows describe <em>how</em> to iterate; recipes
+describe <em>what</em> to do per item.</li>
 </ul>
 <h2 id="loader-paths"><a class="header" href="#loader-paths">Loader Paths</a></h2>
 <div class="table-wrapper">
@@ -3204,6 +3208,7 @@ is signal, not a permission gate.</p>
 <li><a href="#writer-tools">Writer tools</a> — the platform-API tools your scripts call, and how audit metadata gets stamped.</li>
 <li><a href="#testing-recipes">Testing</a> — pytest fixtures and patterns.</li>
 <li><a href="#publishing-recipes">Publishing</a> — how to share a community recipe or PR an official one.</li>
+<li><a href="#workflows">Workflows</a> — the layer above recipes: how the calling agent picks a workflow, then picks recipes per item.</li>
 <li><a href="#worked-example-a-community-recipe">Worked example</a> — a community recipe walked through end-to-end.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
@@ -3998,6 +4003,111 @@ trail reflects “results from a different procedure.”</p>
 <p><code>recipe_schema_version</code> is independent — it tracks the frontmatter shape,
 not the recipe’s behavior. Most recipes pin this to <code>"1.0"</code> and never
 touch it.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="workflows"><a class="header" href="#workflows">Workflows</a></h1>
+<p>Workflows sit one layer above recipes. A workflow is a <strong>playbook</strong> the
+calling agent reads to learn how to iterate items in a domain (one
+control, all pending scope questions, the entire campaign). Recipes
+describe what to do per item; workflows describe how to walk the items.</p>
+<p>Three-layer routing model:</p>
+<pre><code>engagement (deterministic Python rules)
+  → workflow (markdown playbook the calling agent reads)
+    → recipe (calling agent picks per item from the menu)
+</code></pre>
+<p>The engagement layer (<code>pretorin_start_task</code>) lands later — see the
+roadmap. v1 ships the workflow registry and the per-workflow playbook
+markdown so the agent can navigate manually.</p>
+<h2 id="what-ships-in-v1-1"><a class="header" href="#what-ships-in-v1-1">What Ships in v1</a></h2>
+<p>Four built-in workflows:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>ID</th><th>Iterates over</th><th>Pick when</th></tr>
+</thead>
+<tbody>
+<tr><td><code>single-control</code></td><td>one control</td><td>The user names exactly one control id and the work fits in a single focused pass.</td></tr>
+<tr><td><code>scope-question</code></td><td>scope questionnaire items</td><td>The user references the scope questionnaire or scope is the active workflow-state blocker.</td></tr>
+<tr><td><code>policy-question</code></td><td>policy questionnaire items</td><td>The user references an org policy questionnaire or policy is the active blocker.</td></tr>
+<tr><td><code>campaign</code></td><td>many controls (server-side)</td><td>Bulk control work — drafting narratives or capturing evidence for a family or framework.</td></tr>
+</tbody>
+</table>
+</div>
+<p>Browse them:</p>
+<pre><code class="language-bash">pretorin recipe list  # for recipes (CLI)
+</code></pre>
+<p>There’s no <code>pretorin workflow list</code> CLI yet — workflows are discovered
+through MCP only:</p>
+<ul>
+<li><code>pretorin_list_workflows</code> — summary metadata for every loaded workflow.</li>
+<li><code>pretorin_get_workflow(workflow_id)</code> — full manifest plus the markdown body.</li>
+</ul>
+<h2 id="how-a-workflows-body-looks"><a class="header" href="#how-a-workflows-body-looks">How a Workflow’s Body Looks</a></h2>
+<p>Every workflow body has the same shape: a brief intent statement, a
+description of the iteration shape, a step-by-step block, and a “what
+to avoid” closing section. Read one of the built-ins as a template:</p>
+<pre><code class="language-bash">cat src/pretorin/workflows_lib/_workflows/single-control/workflow.md
+</code></pre>
+<p>The frontmatter declares:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td><code>id</code></td><td>kebab-case, globally unique</td></tr>
+<tr><td><code>version</code></td><td>SemVer-ish</td></tr>
+<tr><td><code>name</code></td><td>display name</td></tr>
+<tr><td><code>description</code></td><td>≥ 50 chars, what the engagement layer matches against</td></tr>
+<tr><td><code>use_when</code></td><td>≥ 30 chars, explicit trigger guidance</td></tr>
+<tr><td><code>produces</code></td><td><code>evidence</code> / <code>narrative</code> / <code>answers</code> / <code>mixed</code></td></tr>
+<tr><td><code>iterates_over</code></td><td><code>single_control</code> / <code>scope_questions</code> / <code>policy_questions</code> / <code>campaign_items</code></td></tr>
+<tr><td><code>recipes_commonly_used</code></td><td>hint list of recipe ids the agent often picks</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="why-workflows-matter"><a class="header" href="#why-workflows-matter">Why Workflows Matter</a></h2>
+<p>Without workflows, the calling agent would freelance the iteration
+pattern for every task. That’s drift-prone — different agents hit the
+same questionnaire and follow different orders, producing inconsistent
+audit trails. The workflow body fixes the pattern: load pending items,
+filter, iterate, pick a recipe per item, submit through the audit
+boundary, optionally trigger review.</p>
+<p><code>recipes_commonly_used</code> is a hint, not a binding. The agent reads
+<code>pretorin_list_recipes</code> at runtime and picks per-item by matching
+<code>use_when</code> strings, then falls back to freelance only when no recipe
+fits.</p>
+<h2 id="server-side-vs-calling-agent-iteration"><a class="header" href="#server-side-vs-calling-agent-iteration">Server-Side vs Calling-Agent Iteration</a></h2>
+<p>Three of the four workflows are <strong>calling-agent iteration</strong>: the agent
+loops items in its own context window, calling MCP tools per item. Fine
+for small sets (one control, ~50 questionnaire items).</p>
+<p><code>campaign</code> is <strong>server-side iteration</strong>: pretorin’s own CodexAgent walks
+items inside pretorin, calling the same recipe surface. The calling
+agent kicks off the campaign and observes status — it doesn’t iterate
+items in its own context. This is what makes thousand-control campaigns
+tractable without overwhelming the calling agent’s context window.</p>
+<h2 id="authoring-a-new-workflow"><a class="header" href="#authoring-a-new-workflow">Authoring a New Workflow</a></h2>
+<p>v1 doesn’t ship a workflow scaffolder — workflows are first-party only.
+If you need a new iteration shape, open an issue describing:</p>
+<ul>
+<li>What domain it iterates (controls? questions? something else?).</li>
+<li>Why the existing four don’t fit.</li>
+<li>The recipes the workflow would commonly use.</li>
+</ul>
+<p>Community workflows land in v1.5 once the engagement layer is in place
+and the routing rules can include community contributions safely.</p>
+<h2 id="roadmap"><a class="header" href="#roadmap">Roadmap</a></h2>
+<ul>
+<li><strong>WS0 engagement layer</strong> — <code>pretorin_start_task</code> with deterministic
+routing rules (control ids, intent verb, pending items) → workflow
+selection. Currently the calling agent picks the workflow manually
+via <code>pretorin_list_workflows</code>.</li>
+<li><strong>Recipe-aware campaign hot site</strong> — modifying the per-item generation
+call in <code>workflows/ai_generation.py</code> so server-side iteration consults
+the recipe registry before falling back to freelance prose. Tracked
+separately from this v1 substrate.</li>
+<li><strong>Community workflows</strong> — third loader path, scaffolder, validator.
+v1.5.</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="worked-example-a-community-recipe"><a class="header" href="#worked-example-a-community-recipe">Worked Example: a Community Recipe</a></h1>
 <p>This walkthrough builds a community recipe end-to-end, the same way you

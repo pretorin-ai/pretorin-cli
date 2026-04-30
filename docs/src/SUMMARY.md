@@ -46,6 +46,7 @@
 - [Writer Tools](./recipes/writer-tools.md)
 - [Testing](./recipes/testing.md)
 - [Publishing](./recipes/publishing.md)
+- [Workflows](./recipes/workflows.md)
 - [Worked Example](./recipes/example/index.md)
 
 # Compliance Frameworks

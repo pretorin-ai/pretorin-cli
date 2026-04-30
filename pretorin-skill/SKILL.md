@@ -12,7 +12,7 @@ description: >
   "what documents do I need", "compliance check", "control requirements",
   "gap analysis", "audit my code", "run campaign", "vendor inheritance",
   "STIG rules", "CCI chain", "scan compliance", and "use a recipe".
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Pretorin Compliance Skill
@@ -173,6 +173,19 @@ Campaigns enable bulk compliance operations across multiple controls, policies, 
 - **`pretorin_get_test_manifest`** — Fetch test manifest for a system.
 - **`pretorin_submit_test_results`** — Upload STIG scan results.
 
+### Workflow Playbooks
+
+Workflows describe **how to iterate items** in a domain (one control, scope questions, policy questions, the whole campaign). Pick a workflow first to get the right granularity, then pick recipes per item from the workflow's `recipes_commonly_used` list (or by reading `pretorin_list_recipes`).
+
+- **`pretorin_list_workflows`** — List loaded workflow playbooks with `description`, `use_when`, `iterates_over`, `recipes_commonly_used`. Filter by `iterates_over` to narrow.
+- **`pretorin_get_workflow`** — Return one workflow's full manifest and body. The body is the prose playbook the calling agent reads.
+
+Built-in workflows:
+- `single-control` — Update one control's narrative + evidence + notes for one system.
+- `scope-question` — Walk a system's scope questionnaire, one question at a time.
+- `policy-question` — Walk an org policy's questionnaire, one question at a time.
+- `campaign` — Bulk control work across many controls (server-side iteration via pretorin's CodexAgent).
+
 ### Recipes
 
 Recipes are markdown-plus-Python playbooks for repeatable compliance work — capturing code as evidence, running scanners, collecting attestations. Pick a recipe over freelancing whenever one's `use_when` matches the task. Writes inside a recipe context get `producer_kind="recipe"` audit metadata stamped automatically.
@@ -203,6 +216,8 @@ Recipes available out of the box (always check `pretorin_list_recipes` for the c
 - `cloud-aws-baseline` — AWS-cloud STIG checks against the configured account.
 - `cloud-azure-baseline` — Azure-cloud STIG checks against the configured tenant/subscription.
 - `manual-attestation` — Capture per-rule human attestations for STIGs that have no automated coverage.
+- `scope-q-answer` — Redact secrets in a candidate scope-question answer before submission (used inside the `scope-question` workflow).
+- `policy-q-answer` — Redact secrets in a candidate policy-question answer before submission (used inside the `policy-question` workflow).
 
 ## Recipe Authoring
 

@@ -123,7 +123,7 @@ class RecipeManifest(BaseModel):
         min_length=1,
         description="Explicit guidance for the agent on when to pick this recipe",
     )
-    produces: Literal["evidence", "narrative", "both"]
+    produces: Literal["evidence", "narrative", "both", "answers"]
     tier: Literal["official", "partner", "community"] = Field(
         default="community",
         description="Trust signal; overridden by loader from source path",

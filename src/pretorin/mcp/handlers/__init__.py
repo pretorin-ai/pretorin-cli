@@ -115,6 +115,10 @@ from pretorin.mcp.handlers.workflow import (
     handle_trigger_scope_generation,
     handle_trigger_scope_review,
 )
+from pretorin.mcp.handlers.workflow_lib import (
+    handle_get_workflow_lib,
+    handle_list_workflows,
+)
 
 ToolHandler = Callable[[PretorianClient, dict[str, Any]], Awaitable[list[TextContent] | CallToolResult]]
 
@@ -215,4 +219,7 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     # Recipe discovery (recipe-implementation WS2 Phase C)
     "pretorin_list_recipes": handle_list_recipes,
     "pretorin_get_recipe": handle_get_recipe,
+    # Workflow playbook discovery (recipe-implementation WS5)
+    "pretorin_list_workflows": handle_list_workflows,
+    "pretorin_get_workflow": handle_get_workflow_lib,
 }

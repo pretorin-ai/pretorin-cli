@@ -1945,7 +1945,7 @@ def _static_tools() -> list[Tool]:
                     },
                     "produces": {
                         "type": "string",
-                        "enum": ["evidence", "narrative", "both"],
+                        "enum": ["evidence", "narrative", "both", "answers"],
                         "description": "Filter by what the recipe produces",
                     },
                 },
@@ -1966,6 +1966,48 @@ def _static_tools() -> list[Tool]:
                     },
                 },
                 "required": ["recipe_id"],
+            },
+        ),
+        Tool(
+            name="pretorin_list_workflows",
+            description=(
+                "List loaded workflow playbooks (single-control, scope-question, "
+                "policy-question, campaign). Each workflow describes how to iterate "
+                "items in its domain and which recipes to pick per item. Use this "
+                "before picking a recipe so the agent works at the right granularity."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "iterates_over": {
+                        "type": "string",
+                        "enum": [
+                            "single_control",
+                            "scope_questions",
+                            "policy_questions",
+                            "campaign_items",
+                        ],
+                        "description": "Filter to one item-iteration shape",
+                    },
+                },
+            },
+        ),
+        Tool(
+            name="pretorin_get_workflow",
+            description=(
+                "Return one workflow's full manifest and body. The body is the markdown "
+                "playbook the calling agent reads to know how to iterate items and "
+                "pick recipes per item in this workflow's domain."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "workflow_id": {
+                        "type": "string",
+                        "description": "Workflow id to fetch",
+                    },
+                },
+                "required": ["workflow_id"],
             },
         ),
     ]
