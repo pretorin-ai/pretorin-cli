@@ -143,8 +143,18 @@ async def draft_control_artifacts(
     working_directory: Path | None = None,
     model: str | None = None,
 ) -> dict[str, Any]:
-    """Generate read-only narrative and evidence-gap drafts for a control."""
+    """Generate read-only narrative and evidence-gap drafts for a control.
+
+    Per recipe-implementation WS5d: before falling through to freelance
+    generation, this function consults the recipe registry for a recipe
+    whose ``attests`` entries match ``(control_id, framework_id)``. The
+    decision is recorded as a ``RecipeSelection`` on the response so the
+    audit trail captures *which* recipe (or 'no match → freelance') drove
+    each draft. v1 always falls through to freelance after recording the
+    selection — actual in-process recipe invocation lands in v1.5.
+    """
     from pretorin.agent.codex_agent import CodexAgent
+    from pretorin.recipes.selection import select_recipe_for_drafting, to_audit_dict
 
     # Pre-fetch org model setting so CodexAgent picks it up via Config
     if model is None:
@@ -157,6 +167,28 @@ async def draft_control_artifacts(
         framework=framework_id,
     )
     system_name = (await client.get_system(system_id)).name
+
+    # WS5d: record which recipe (if any) the registry suggests for this
+    # (control, framework). The audit signal is the point — v1 always
+    # continues to freelance generation after logging the selection;
+    # v1.5 will dispatch to the matched recipe in-process when available.
+    recipe_selection = select_recipe_for_drafting(
+        framework_id=resolved_framework_id,
+        control_id=normalized_control_id,
+    )
+    if recipe_selection.selected_recipe:
+        logger.info(
+            "recipe_selection event=hint_match selected_recipe=%s control=%s framework=%s",
+            recipe_selection.selected_recipe,
+            normalized_control_id,
+            resolved_framework_id,
+        )
+    else:
+        logger.info(
+            "recipe_selection event=fallback_to_freelance control=%s framework=%s",
+            normalized_control_id,
+            resolved_framework_id,
+        )
 
     try:
         agent = CodexAgent(model=model)
@@ -186,6 +218,7 @@ async def draft_control_artifacts(
         "evidence_gap_assessment": None,
         "recommended_notes": [],
         "evidence_recommendations": [],
+        "recipe_selection": to_audit_dict(recipe_selection),
     }
     if payload is None:
         return response

@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-771e8b47.js";
+            window.path_to_searchindex_js = "searchindex-b9cb0ee1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-0194fc74.js"></script>
@@ -4095,16 +4095,24 @@ If you need a new iteration shape, open an issue describing:</p>
 </ul>
 <p>Community workflows land in v1.5 once the engagement layer is in place
 and the routing rules can include community contributions safely.</p>
+<h2 id="whats-already-wired"><a class="header" href="#whats-already-wired">What’s Already Wired</a></h2>
+<ul>
+<li><strong>Engagement layer</strong> (<code>pretorin_start_task</code>) — picks the workflow
+from the user’s prompt entities. See <a href="#engagement-layer">Engagement Layer</a>.</li>
+<li><strong>Recipe selection in the campaign hot site</strong> — <code>draft_control_artifacts</code>
+consults <code>pretorin.recipes.selection.select_recipe_for_drafting</code> before
+falling through to freelance prose. The decision is recorded as a
+<code>RecipeSelection</code> record on the response and written to the audit
+trail. v1’s built-in recipes don’t cover narrative drafting, so the
+current path is “log selection → freelance”; community recipes that
+attest the matching <code>(control, framework)</code> plug in automatically.</li>
+</ul>
 <h2 id="roadmap"><a class="header" href="#roadmap">Roadmap</a></h2>
 <ul>
-<li><strong>WS0 engagement layer</strong> — <code>pretorin_start_task</code> with deterministic
-routing rules (control ids, intent verb, pending items) → workflow
-selection. Currently the calling agent picks the workflow manually
-via <code>pretorin_list_workflows</code>.</li>
-<li><strong>Recipe-aware campaign hot site</strong> — modifying the per-item generation
-call in <code>workflows/ai_generation.py</code> so server-side iteration consults
-the recipe registry before falling back to freelance prose. Tracked
-separately from this v1 substrate.</li>
+<li><strong>In-process recipe execution</strong> — when the selector finds a recipe
+match, dispatch to <code>run_script</code> in-process instead of falling
+through to freelance. v1.5; v1 records the would-have-picked
+decision so the audit trail is forward-compatible.</li>
 <li><strong>Community workflows</strong> — third loader path, scaffolder, validator.
 v1.5.</li>
 </ul>

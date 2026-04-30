@@ -101,15 +101,23 @@ If you need a new iteration shape, open an issue describing:
 Community workflows land in v1.5 once the engagement layer is in place
 and the routing rules can include community contributions safely.
 
+## What's Already Wired
+
+- **Engagement layer** (`pretorin_start_task`) — picks the workflow
+  from the user's prompt entities. See [Engagement Layer](./engagement.md).
+- **Recipe selection in the campaign hot site** — `draft_control_artifacts`
+  consults `pretorin.recipes.selection.select_recipe_for_drafting` before
+  falling through to freelance prose. The decision is recorded as a
+  `RecipeSelection` record on the response and written to the audit
+  trail. v1's built-in recipes don't cover narrative drafting, so the
+  current path is "log selection → freelance"; community recipes that
+  attest the matching `(control, framework)` plug in automatically.
+
 ## Roadmap
 
-- **WS0 engagement layer** — `pretorin_start_task` with deterministic
-  routing rules (control ids, intent verb, pending items) → workflow
-  selection. Currently the calling agent picks the workflow manually
-  via `pretorin_list_workflows`.
-- **Recipe-aware campaign hot site** — modifying the per-item generation
-  call in `workflows/ai_generation.py` so server-side iteration consults
-  the recipe registry before falling back to freelance prose. Tracked
-  separately from this v1 substrate.
+- **In-process recipe execution** — when the selector finds a recipe
+  match, dispatch to `run_script` in-process instead of falling
+  through to freelance. v1.5; v1 records the would-have-picked
+  decision so the audit trail is forward-compatible.
 - **Community workflows** — third loader path, scaffolder, validator.
   v1.5.

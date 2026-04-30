@@ -211,6 +211,10 @@ async def test_draft_control_artifacts_success() -> None:
     assert result["evidence_gap_assessment"] == "gap text"
     assert result["recommended_notes"] == ["note1"]
     assert len(result["evidence_recommendations"]) == 1
+    # WS5d: every drafting call records the recipe-selection decision so the
+    # audit trail captures whether a recipe drove the draft or freelance did.
+    assert "recipe_selection" in result
+    assert "fallback_to_freelance" in result["recipe_selection"]
 
 
 @pytest.mark.asyncio
