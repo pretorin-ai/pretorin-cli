@@ -968,3 +968,295 @@ def build_custom(
         if len(result.errors) > 20:
             rprint(f"  [dim]... and {len(result.errors) - 20} more[/dim]")
         raise typer.Exit(1)
+
+
+def _render_validation_report(report: dict[str, Any]) -> None:
+    """Render the platform's validation_report (returned on 400 from /drafts/custom)."""
+    errors = report.get("errors") or []
+    if not errors:
+        rprint("[dim]Platform returned a validation failure with no error details.[/dim]")
+        return
+
+    rprint("\n[bold]Platform validation errors:[/bold]")
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Path", style="cyan", max_width=40)
+    table.add_column("Issue")
+    for err in errors[:50]:
+        if isinstance(err, dict):
+            path = err.get("path") or err.get("location") or ""
+            message = err.get("message") or err.get("detail") or str(err)
+        else:
+            path = ""
+            message = str(err)
+        table.add_row(path or "(root)", message)
+    console.print(table)
+    if len(errors) > 50:
+        rprint(f"\n[dim]... and {len(errors) - 50} more[/dim]")
+
+
+@app.command("upload-custom")
+def upload_custom(
+    file_path: Path = typer.Argument(
+        ...,
+        help="Path to a unified.json artifact",
+        exists=True,
+        readable=True,
+    ),
+    framework_id: str | None = typer.Option(
+        None,
+        "--framework-id",
+        "-f",
+        help="Framework ID (defaults to artifact's framework_id field)",
+    ),
+    version_label: str | None = typer.Option(None, "--version-label", "-v", help="Optional version label"),
+    publish: bool = typer.Option(False, "--publish", help="Publish the draft immediately after upload"),
+) -> None:
+    """Upload a unified.json artifact as a draft custom-framework revision.
+
+    The platform validates synchronously and stores the draft. Pass --publish
+    to immediately promote the draft to published. The upload format is the
+    full unified.json artifact — _index.json is NOT an upload format.
+
+    Examples:
+        pretorin frameworks upload-custom unified.json
+        pretorin frameworks upload-custom unified.json --publish
+        pretorin frameworks upload-custom unified.json -v v1.2 --publish
+    """
+    try:
+        artifact = json.loads(file_path.read_text())
+    except json.JSONDecodeError as e:
+        rprint(f"[#EAB536]\\[°︵°][/#EAB536] Invalid JSON in {file_path}: {e}")
+        raise typer.Exit(1)
+
+    resolved_id = framework_id or artifact.get("framework_id")
+    if not resolved_id:
+        rprint("[#FF9010]→[/#FF9010] No framework_id in artifact and none provided via --framework-id.")
+        raise typer.Exit(1)
+
+    async def do_upload() -> None:
+        async with PretorianClient() as client:
+            require_auth(client)
+
+            try:
+                if is_json_mode():
+                    draft = await client.create_custom_draft(resolved_id, artifact, version_label)
+                    if publish:
+                        published = await client.publish_draft(resolved_id, draft["revision_id"])
+                        print_json(published)
+                    else:
+                        print_json(draft)
+                    return
+
+                with animated_status("Uploading custom framework draft...", AnimationTheme.MARCHING):
+                    draft = await client.create_custom_draft(resolved_id, artifact, version_label)
+
+                rprint(
+                    Panel(
+                        f"[bold]Framework:[/bold] {resolved_id}\n"
+                        f"[bold]Revision:[/bold] {draft.get('revision_id', '?')}\n"
+                        f"[bold]State:[/bold] {draft.get('lifecycle_state', '?')}\n"
+                        f"[bold]Validation:[/bold] {draft.get('validation_status', '?')}",
+                        title="[#95D7E0]Draft uploaded[/#95D7E0]",
+                        border_style="#95D7E0",
+                    )
+                )
+
+                if publish:
+                    with animated_status("Publishing draft...", AnimationTheme.MARCHING):
+                        published = await client.publish_draft(resolved_id, draft["revision_id"])
+                    rprint(
+                        Panel(
+                            f"[bold]Framework:[/bold] {resolved_id}\n"
+                            f"[bold]Revision:[/bold] {published.get('revision_id', draft.get('revision_id', '?'))}\n"
+                            f"[bold]State:[/bold] {published.get('lifecycle_state', 'published')}",
+                            title="[#95D7E0]Published[/#95D7E0]",
+                            border_style="#95D7E0",
+                        )
+                    )
+                else:
+                    rprint(
+                        f"\n[dim]Draft is not yet published. Run [bold]pretorin frameworks "
+                        f"upload-custom {file_path} --publish[/bold] to ship it.[/dim]"
+                    )
+
+            except AuthenticationError as e:
+                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
+                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
+                raise typer.Exit(1)
+            except PretorianClientError as e:
+                rprint(f"[#FF9010]✗[/#FF9010] Upload failed: {e.message}")
+                report = e.details.get("validation_report") if isinstance(e.details, dict) else None
+                if report:
+                    _render_validation_report(report)
+                raise typer.Exit(1)
+
+    asyncio.run(do_upload())
+
+
+@app.command("fork-framework")
+def fork_framework_cmd(
+    source_framework_id: str = typer.Argument(..., help="Upstream framework to fork (e.g., nist-800-53-r5)"),
+    new_framework_id: str = typer.Argument(..., help="ID for the new forked framework"),
+    version_label: str | None = typer.Option(None, "--version-label", "-v", help="Optional version label"),
+) -> None:
+    """Create a linked-fork draft from an upstream framework.
+
+    The platform copies the current upstream revision into a new draft and
+    records the lineage so you can rebase later when upstream advances.
+
+    Examples:
+        pretorin frameworks fork-framework nist-800-53-r5 acme-nist-tailored
+        pretorin frameworks fork-framework fedramp-moderate acme-fedramp-mod -v initial
+    """
+
+    async def do_fork() -> None:
+        async with PretorianClient() as client:
+            require_auth(client)
+            try:
+                if is_json_mode():
+                    result = await client.fork_framework(source_framework_id, new_framework_id, version_label)
+                    print_json(result)
+                    return
+
+                with animated_status("Creating linked fork draft...", AnimationTheme.MARCHING):
+                    result = await client.fork_framework(source_framework_id, new_framework_id, version_label)
+
+                rprint(
+                    Panel(
+                        f"[bold]Source:[/bold] {source_framework_id}\n"
+                        f"[bold]New framework:[/bold] {new_framework_id}\n"
+                        f"[bold]Revision:[/bold] {result.get('revision_id', '?')}\n"
+                        f"[bold]State:[/bold] {result.get('lifecycle_state', '?')}\n"
+                        f"[bold]Upstream base:[/bold] {result.get('upstream_base_revision_id', '?')}",
+                        title="[#95D7E0]Forked[/#95D7E0]",
+                        border_style="#95D7E0",
+                    )
+                )
+
+            except AuthenticationError as e:
+                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
+                raise typer.Exit(1)
+            except PretorianClientError as e:
+                rprint(f"[#FF9010]→[/#FF9010] {e.message}")
+                raise typer.Exit(1)
+
+    asyncio.run(do_fork())
+
+
+@app.command("rebase-fork")
+def rebase_fork_cmd(
+    framework_id: str = typer.Argument(..., help="Forked framework ID to rebase"),
+    version_label: str | None = typer.Option(None, "--version-label", "-v", help="Optional version label"),
+) -> None:
+    """Create a rebase draft for a fork against the latest upstream revision.
+
+    Use when the upstream framework has advanced and you want to bring your
+    fork forward. The platform creates a fresh draft anchored on the latest
+    upstream; you resolve any divergence by editing the draft locally.
+
+    Examples:
+        pretorin frameworks rebase-fork acme-nist-tailored
+        pretorin frameworks rebase-fork acme-fedramp-mod -v rebase-2026Q1
+    """
+
+    async def do_rebase() -> None:
+        async with PretorianClient() as client:
+            require_auth(client)
+            try:
+                if is_json_mode():
+                    result = await client.create_rebase_draft(framework_id, version_label)
+                    print_json(result)
+                    return
+
+                with animated_status("Creating rebase draft...", AnimationTheme.MARCHING):
+                    result = await client.create_rebase_draft(framework_id, version_label)
+
+                rprint(
+                    Panel(
+                        f"[bold]Framework:[/bold] {framework_id}\n"
+                        f"[bold]Revision:[/bold] {result.get('revision_id', '?')}\n"
+                        f"[bold]State:[/bold] {result.get('lifecycle_state', '?')}\n"
+                        f"[bold]Upstream base:[/bold] {result.get('upstream_base_revision_id', '?')}",
+                        title="[#95D7E0]Rebase draft created[/#95D7E0]",
+                        border_style="#95D7E0",
+                    )
+                )
+
+            except AuthenticationError as e:
+                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
+                raise typer.Exit(1)
+            except PretorianClientError as e:
+                rprint(f"[#FF9010]→[/#FF9010] {e.message}")
+                raise typer.Exit(1)
+
+    asyncio.run(do_rebase())
+
+
+@app.command("revisions")
+def revisions_list(
+    framework_id: str = typer.Argument(..., help="Framework ID"),
+) -> None:
+    """List all draft and published revisions for a framework.
+
+    Examples:
+        pretorin frameworks revisions acme-nist-tailored
+        pretorin --json frameworks revisions acme-nist-tailored
+    """
+
+    async def do_list() -> None:
+        async with PretorianClient() as client:
+            require_auth(client)
+            try:
+                if is_json_mode():
+                    revisions = await client.list_revisions(framework_id)
+                    print_json(revisions)
+                    return
+
+                with animated_status("Loading revisions...", AnimationTheme.SEARCHING):
+                    revisions = await client.list_revisions(framework_id)
+
+                if not revisions:
+                    rprint("[dim]No revisions yet.[/dim]")
+                    return
+
+                table = Table(
+                    title=f"Revisions — {framework_id}",
+                    show_header=True,
+                    header_style="bold",
+                )
+                table.add_column("Revision ID", style="cyan", no_wrap=True)
+                table.add_column("State")
+                table.add_column("Version Label")
+                table.add_column("Validation")
+                table.add_column("Published At")
+                table.add_column("Upstream Base")
+
+                state_colors = {
+                    "draft": "#EAB536",
+                    "published": "#95D7E0",
+                    "superseded": "dim",
+                }
+
+                for rev in revisions:
+                    state = rev.get("lifecycle_state", "?")
+                    color = state_colors.get(state, "white")
+                    table.add_row(
+                        str(rev.get("id", "?")),
+                        f"[{color}]{state}[/{color}]",
+                        str(rev.get("version_label", "-") or "-"),
+                        str(rev.get("validation_status", "-") or "-"),
+                        str(rev.get("published_at", "-") or "-"),
+                        str(rev.get("upstream_base_revision_id", "-") or "-"),
+                    )
+
+                console.print(table)
+                rprint(f"\n[dim]Total: {len(revisions)} revision(s)[/dim]")
+
+            except AuthenticationError as e:
+                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
+                raise typer.Exit(1)
+            except PretorianClientError as e:
+                rprint(f"[#FF9010]→[/#FF9010] {e.message}")
+                raise typer.Exit(1)
+
+    asyncio.run(do_list())
