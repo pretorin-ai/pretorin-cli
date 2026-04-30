@@ -90,6 +90,14 @@ def test_skill_documents_workflow_lifecycle(skill_text: str) -> None:
         assert tool_name in skill_text, f"SKILL.md should document MCP tool: {tool_name}"
 
 
+def test_skill_documents_engagement_entry_point(skill_text: str) -> None:
+    """pretorin_start_task is the routing entry point — without it the agent
+    freelances and breaks the audit chain."""
+    assert "pretorin_start_task" in skill_text
+    # Must be flagged as the FIRST call so the agent doesn't skip it.
+    assert "FIRST" in skill_text or "first" in skill_text
+
+
 def test_skill_lists_each_builtin_workflow_id(skill_text: str) -> None:
     for workflow_id in ("single-control", "scope-question", "policy-question", "campaign"):
         assert workflow_id in skill_text, f"SKILL.md should mention built-in workflow: {workflow_id}"

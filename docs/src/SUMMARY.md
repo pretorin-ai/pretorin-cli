@@ -47,6 +47,7 @@
 - [Testing](./recipes/testing.md)
 - [Publishing](./recipes/publishing.md)
 - [Workflows](./recipes/workflows.md)
+- [Engagement Layer](./recipes/engagement.md)
 - [Worked Example](./recipes/example/index.md)
 
 # Compliance Frameworks

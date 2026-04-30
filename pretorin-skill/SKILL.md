@@ -12,7 +12,7 @@ description: >
   "what documents do I need", "compliance check", "control requirements",
   "gap analysis", "audit my code", "run campaign", "vendor inheritance",
   "STIG rules", "CCI chain", "scan compliance", and "use a recipe".
-version: 0.16.0
+version: 0.17.0
 ---
 
 # Pretorin Compliance Skill
@@ -173,9 +173,31 @@ Campaigns enable bulk compliance operations across multiple controls, policies, 
 - **`pretorin_get_test_manifest`** — Fetch test manifest for a system.
 - **`pretorin_submit_test_results`** — Upload STIG scan results.
 
+### Engagement (Routing)
+
+**ALWAYS call `pretorin_start_task` FIRST** when the user references compliance work (a control, system, framework, questionnaire, or campaign). It picks the workflow for you so you don't have to guess.
+
+- **`pretorin_start_task`** — Extract entities from the user prompt (intent_verb, system_id, framework_id, control_ids, scope_question_ids, policy_question_ids, raw_prompt) and pass them in. Pretorin runs deterministic rules and returns an `EngagementSelection` naming the workflow plus an `inspect_summary` of platform state. If `ambiguous: true` is returned, surface the `ambiguity_reason` to the user and ask for clarification — do NOT proceed to writes.
+
+The response shape:
+
+```
+{
+  "selected_workflow": "single-control" | "scope-question" | "policy-question" | "campaign" | null,
+  "workflow_params": { ... },
+  "inspect_summary": { workflow_state, compliance_status, pending_*, ... },
+  "ambiguous": false,
+  "rule_matched": "len(control_ids) == 1"
+}
+```
+
+After `pretorin_start_task` returns a workflow, call `pretorin_get_workflow(selected_workflow)` to load the body and follow it.
+
+Reference questions ("show me AC-2", "list frameworks") skip `pretorin_start_task` and go directly to read-side tools.
+
 ### Workflow Playbooks
 
-Workflows describe **how to iterate items** in a domain (one control, scope questions, policy questions, the whole campaign). Pick a workflow first to get the right granularity, then pick recipes per item from the workflow's `recipes_commonly_used` list (or by reading `pretorin_list_recipes`).
+Workflows describe **how to iterate items** in a domain (one control, scope questions, policy questions, the whole campaign). The engagement layer (`pretorin_start_task`) picks one for you; you can also browse them manually:
 
 - **`pretorin_list_workflows`** — List loaded workflow playbooks with `description`, `use_when`, `iterates_over`, `recipes_commonly_used`. Filter by `iterates_over` to narrow.
 - **`pretorin_get_workflow`** — Return one workflow's full manifest and body. The body is the prose playbook the calling agent reads.

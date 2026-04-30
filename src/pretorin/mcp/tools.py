@@ -2010,6 +2010,94 @@ def _static_tools() -> list[Tool]:
                 "required": ["workflow_id"],
             },
         ),
+        Tool(
+            name="pretorin_start_task",
+            description=(
+                "Route a user prompt to the right workflow. Call this FIRST whenever "
+                "the user references compliance work (a control, system, framework, "
+                "questionnaire, or campaign). The calling agent extracts entities "
+                "from the user prompt and supplies them as structured args; pretorin "
+                "applies deterministic rules to pick a workflow and bundles the "
+                "platform read-state (workflow_state, compliance_status, pending "
+                "items) into the response. The agent then reads the selected "
+                "workflow's body via pretorin_get_workflow and follows it."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "entities": {
+                        "type": "object",
+                        "description": (
+                            "Structured entities extracted from the user prompt. "
+                            "intent_verb and raw_prompt are required; everything "
+                            "else is optional and only populated when the user "
+                            "actually named it."
+                        ),
+                        "properties": {
+                            "intent_verb": {
+                                "type": "string",
+                                "enum": [
+                                    "work_on",
+                                    "collect_evidence",
+                                    "draft_narrative",
+                                    "answer",
+                                    "campaign",
+                                    "inspect_status",
+                                ],
+                                "description": ("What the user wants to do at a high level."),
+                            },
+                            "raw_prompt": {
+                                "type": "string",
+                                "description": "Original user prompt verbatim, for audit.",
+                            },
+                            "system_id": {
+                                "type": "string",
+                                "description": ("System name or id the user named (None if absent)."),
+                            },
+                            "framework_id": {
+                                "type": "string",
+                                "description": ("Framework id the user named, e.g. 'nist-800-53-r5'."),
+                            },
+                            "control_ids": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": (
+                                    "Explicit control ids the user mentioned, "
+                                    "lowercase normalized (e.g., ['ac-2', 'ac-3'])."
+                                ),
+                            },
+                            "scope_question_ids": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Specific scope question ids if named.",
+                            },
+                            "policy_question_ids": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Specific policy question ids if named.",
+                            },
+                        },
+                        "required": ["intent_verb", "raw_prompt"],
+                    },
+                    "active_system_id": {
+                        "type": "string",
+                        "description": (
+                            "The user's active CLI context system_id, if any. "
+                            "Used to detect cross-system writes — when the resolved "
+                            "system doesn't match this, the response is ambiguous."
+                        ),
+                    },
+                    "skip_inspect": {
+                        "type": "boolean",
+                        "description": (
+                            "Skip the server-side platform reads. Use when the calling agent already has fresh state."
+                        ),
+                        "default": False,
+                    },
+                },
+                "required": ["entities"],
+            },
+        ),
     ]
 
 

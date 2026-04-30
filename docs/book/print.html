@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-a1aeef7d.js";
+            window.path_to_searchindex_js = "searchindex-771e8b47.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-8013f0a0.js"></script>
+        <script src="toc-0194fc74.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -4108,6 +4108,118 @@ separately from this v1 substrate.</li>
 <li><strong>Community workflows</strong> — third loader path, scaffolder, validator.
 v1.5.</li>
 </ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="engagement-layer"><a class="header" href="#engagement-layer">Engagement Layer</a></h1>
+<p>The engagement layer is pretorin’s <strong>routing boundary</strong>. When the user
+says “draft AC-2 for system X” or “answer my scope questionnaire” or
+“work through the AC family”, the calling agent’s first move is
+<code>pretorin_start_task</code>. Pretorin picks the workflow; the agent then
+loads the workflow body and follows it.</p>
+<p>This is the third layer in the routing model:</p>
+<pre><code>engagement      ← pretorin_start_task (deterministic Python rules)
+  workflow      ← pretorin_get_workflow(selected) → markdown playbook
+    recipe      ← pretorin_list_recipes / pretorin_start_recipe
+</code></pre>
+<p>Recipes are the leaf — what to do per item. Workflows are the trunk —
+how to iterate items. Engagement is the root — what <em>kind</em> of work
+we’re doing in the first place.</p>
+<h2 id="why-a-routing-layer"><a class="header" href="#why-a-routing-layer">Why a Routing Layer</a></h2>
+<p>Without engagement, the calling agent guesses. Pattern-matching on
+nouns sends the agent into evidence/narrative write tools the moment
+the user says “AC-2”, which produces wrong-framework writes when the
+user wasn’t explicit and silently-cross-system writes when the active
+context shifted. The audit chain breaks.</p>
+<p>The engagement layer fixes this with <strong>deterministic rules</strong> that run
+in pretorin (no LLM here). The calling agent extracts entities; the
+rules pick a workflow; the response carries the platform read-state
+the workflow needs. One round-trip, one routing decision, no drift.</p>
+<h2 id="what-pretorin_start_task-does"><a class="header" href="#what-pretorin_start_task-does">What <code>pretorin_start_task</code> Does</a></h2>
+<p>Three things:</p>
+<ol>
+<li><strong>Validates the entities</strong> the calling agent extracted. Hallucinated
+control ids, unknown frameworks, unresolvable system names — these
+fail loud as MCP errors. The calling agent surfaces the error and
+asks the user to clarify.</li>
+<li><strong>Cross-checks coherence</strong>. If the named control exists in some
+framework but not the one the user named, that’s an ambiguity. If
+the resolved system doesn’t match the active CLI context, that’s
+ambiguity too. The response is <code>ambiguous: true</code> with a reason —
+the calling agent surfaces it before any writes.</li>
+<li><strong>Picks a workflow</strong>. The rule cascade (in priority order):
+<ul>
+<li><code>intent_verb == "inspect_status"</code> → no workflow, just inspect output.</li>
+<li><code>intent_verb == "campaign"</code> → campaign.</li>
+<li>scope question ids OR (intent=answer AND pending scope) → scope-question.</li>
+<li>policy question ids OR (intent=answer AND pending policy) → policy-question.</li>
+<li>exactly one control id → single-control.</li>
+<li>multiple control ids → campaign with control filter.</li>
+<li>framework set, no controls → campaign over the framework.</li>
+<li>else → ambiguous; ask the user.</li>
+</ul>
+</li>
+</ol>
+<p>The <code>rule_matched</code> field on the response records <em>which</em> rule fired so
+the audit trail captures the routing decision.</p>
+<h2 id="entity-shape"><a class="header" href="#entity-shape">Entity Shape</a></h2>
+<p>The calling agent’s LLM extracts:</p>
+<pre><code class="language-python">{
+    "intent_verb": "work_on" | "collect_evidence" | "draft_narrative"
+                 | "answer" | "campaign" | "inspect_status",
+    "raw_prompt": "&lt;user's verbatim prompt&gt;",
+    "system_id": "&lt;id or name, or None&gt;",
+    "framework_id": "&lt;id, or None&gt;",
+    "control_ids": ["ac-2", "ac-3"],
+    "scope_question_ids": [],
+    "policy_question_ids": [],
+}
+</code></pre>
+<p><code>raw_prompt</code> is audit-only — pretorin doesn’t parse it. Everything
+else either resolves cleanly or fails the cross-check.</p>
+<h2 id="inspect-bundle"><a class="header" href="#inspect-bundle">Inspect Bundle</a></h2>
+<p>When the call succeeds, the response carries a bundled snapshot of the
+platform state the workflow will need:</p>
+<ul>
+<li><code>workflow_state</code> (per-system stage rollup)</li>
+<li><code>compliance_status</code> (overall posture)</li>
+<li><code>pending_families</code> (controls that still need work)</li>
+<li><code>pending_scope_questions</code> / <code>pending_policy_questions</code></li>
+<li><code>org_policies</code></li>
+</ul>
+<p>The calling agent doesn’t have to issue separate reads for each — one
+round-trip yields the routing decision plus the context the workflow
+will reference.</p>
+<p>Inspect is best-effort: if any one platform call fails, that section
+carries an <code>error</code> field but the rest of the payload still populates.
+Pass <code>skip_inspect: true</code> when you already have fresh state.</p>
+<h2 id="three-response-shapes"><a class="header" href="#three-response-shapes">Three Response Shapes</a></h2>
+<ol>
+<li><strong>MCP error</strong> — entity validation or cross-check hard failure.
+The calling agent shows the error and stops.</li>
+<li><strong><code>selected_workflow</code> set, <code>ambiguous: false</code></strong> — routed.
+Calling agent reads the workflow body and follows it.</li>
+<li><strong><code>ambiguous: true</code> with <code>ambiguity_reason</code></strong> — coherence problem.
+Calling agent surfaces the reason to the user, gets clarification,
+and retries with disambiguated entities.</li>
+</ol>
+<p>There’s no fourth shape. The router never produces a confidence score
+or alternatives — the rule either matched or didn’t.</p>
+<h2 id="active-system-context"><a class="header" href="#active-system-context">Active System Context</a></h2>
+<p>Pass <code>active_system_id</code> (the user’s CLI context system) so the cross-
+check catches cross-system writes. When the resolved system doesn’t
+match, the response is ambiguous regardless of what the rules would
+say. This is the small extra friction that eliminates the silent
+wrong-system-write class of error.</p>
+<h2 id="where-the-code-lives"><a class="header" href="#where-the-code-lives">Where the Code Lives</a></h2>
+<ul>
+<li><code>src/pretorin/engagement/entities.py</code> — <code>EngagementEntities</code> pydantic model.</li>
+<li><code>src/pretorin/engagement/selection.py</code> — <code>EngagementSelection</code> response model.</li>
+<li><code>src/pretorin/engagement/rules.py</code> — pure-function rule cascade.</li>
+<li><code>src/pretorin/engagement/cross_check.py</code> — platform-state coherence checks.</li>
+<li><code>src/pretorin/engagement/inspect.py</code> — bundles platform reads into the response.</li>
+<li><code>src/pretorin/mcp/handlers/engagement.py</code> — the <code>pretorin_start_task</code> MCP handler.</li>
+</ul>
+<p>The rule cascade is testable in pure isolation — same inputs always
+produce the same output. Drift impossible by construction.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="worked-example-a-community-recipe"><a class="header" href="#worked-example-a-community-recipe">Worked Example: a Community Recipe</a></h1>
 <p>This walkthrough builds a community recipe end-to-end, the same way you

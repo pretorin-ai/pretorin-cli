@@ -24,6 +24,7 @@ from pretorin.mcp.handlers.compliance import (
     handle_update_control_status,
     handle_update_narrative,
 )
+from pretorin.mcp.handlers.engagement import handle_start_task
 from pretorin.mcp.handlers.evidence import (
     handle_create_evidence,
     handle_create_evidence_batch,
@@ -222,4 +223,6 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     # Workflow playbook discovery (recipe-implementation WS5)
     "pretorin_list_workflows": handle_list_workflows,
     "pretorin_get_workflow": handle_get_workflow_lib,
+    # Engagement layer (recipe-implementation WS0) — routes prompts to workflows
+    "pretorin_start_task": handle_start_task,
 }
