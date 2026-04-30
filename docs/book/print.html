@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-1329692d.js";
+            window.path_to_searchindex_js = "searchindex-25750a2b.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-0194fc74.js"></script>
+        <script src="toc-400f0ae0.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -310,7 +310,7 @@ docker compose up
 <pre><code class="language-bash">pretorin version
 </code></pre>
 <p>Expected output:</p>
-<pre><code>pretorin version 0.17.0
+<pre><code>pretorin version 0.17.1
 </code></pre>
 <h2 id="updating"><a class="header" href="#updating">Updating</a></h2>
 <p>Check for and install the latest version:</p>
@@ -4726,6 +4726,96 @@ metadata itself, which is one more place for the audit trail to drift.</p>
 <h2 id="using-ai-context-for-selection"><a class="header" href="#using-ai-context-for-selection">Using AI Context for Selection</a></h2>
 <p>Call <code>pretorin_get_framework</code> (MCP) or <code>pretorin frameworks get &lt;id&gt;</code> (CLI) to get AI context including purpose, target audience, regulatory context, scope, and key concepts. This helps confirm whether a framework is the right fit.</p>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="custom-frameworks"><a class="header" href="#custom-frameworks">Custom Frameworks</a></h1>
+<p>The <code>pretorin frameworks</code> command group supports authoring, validating, and uploading <strong>custom and forked compliance frameworks</strong> through the platform’s revision-lifecycle endpoints.</p>
+<p>The canonical artifact is <code>unified.json</code>. <strong><code>_index.json</code> is not an upload format</strong> — it’s an internal index file used elsewhere in the data pipeline, but the platform’s revision lifecycle expects the full <code>unified.json</code>.</p>
+<h2 id="end-to-end-workflow"><a class="header" href="#end-to-end-workflow">End-to-end workflow</a></h2>
+<pre><code>init-custom ──► (edit) ──► validate-custom ──► upload-custom [--publish] ──► revisions
+                                                          │
+build-custom ◄────── (OSCAL or custom catalog as input) ──┘
+</code></pre>
+<h2 id="starting-from-scratch"><a class="header" href="#starting-from-scratch">Starting from scratch</a></h2>
+<p>Scaffold a minimal valid <code>unified.json</code>:</p>
+<pre><code class="language-bash">pretorin frameworks init-custom acme-soc2-tailored
+# → writes unified.json with one sample family + one sample control
+</code></pre>
+<p>Edit the file, fill in your metadata, families, and controls, then run a local pre-flight check:</p>
+<pre><code class="language-bash">pretorin frameworks validate-custom unified.json
+</code></pre>
+<p>The bundled JSON Schema validator catches structural errors fast. The platform runs the authoritative validator on upload — additional issues may surface there.</p>
+<h2 id="starting-from-oscal"><a class="header" href="#starting-from-oscal">Starting from OSCAL</a></h2>
+<p>Already have an OSCAL catalog? Convert it to <code>unified.json</code>:</p>
+<pre><code class="language-bash">pretorin frameworks build-custom my-oscal-catalog.json -f acme-iso27001 -o unified.json
+</code></pre>
+<p>The CLI auto-detects the input shape. OSCAL → unified preserves the <code>_oscal</code> blocks for lossless regeneration; you can round-trip back via <code>export-oscal</code>.</p>
+<h2 id="starting-from-a-custom-catalog"><a class="header" href="#starting-from-a-custom-catalog">Starting from a custom catalog</a></h2>
+<p>Many compliance catalogs ship in custom (non-OSCAL) JSON shapes — <code>control_families + controls</code>, CIS-style nested safeguards, ISO <code>control_themes</code>, PCI-DSS, CSA-CCM domains, NIST AI RMF governance requirements, FIPS 140-3, DISA STIG wrappers, MITRE ATLAS, and more.</p>
+<p><code>build-custom</code> recognizes 12 known custom shapes and normalizes them all to <code>unified.json</code>:</p>
+<pre><code class="language-bash">pretorin frameworks build-custom catalog.json -f acme-soc2 -o unified.json
+</code></pre>
+<p>If the input shape isn’t recognized, the CLI tells you which shapes are supported. Use <code>init-custom</code> to scaffold instead and copy your data over manually.</p>
+<h2 id="uploading"><a class="header" href="#uploading">Uploading</a></h2>
+<p>Upload a draft revision to the platform:</p>
+<pre><code class="language-bash">pretorin frameworks upload-custom unified.json
+</code></pre>
+<p>The platform validates synchronously. On a validation failure (HTTP 400) the CLI renders the platform’s structured <code>validation_report</code> as a readable table — you’ll see exact paths and messages for what to fix.</p>
+<p>To upload and publish in one step:</p>
+<pre><code class="language-bash">pretorin frameworks upload-custom unified.json --publish
+</code></pre>
+<p>You can override the framework ID baked into the artifact and add a version label:</p>
+<pre><code class="language-bash">pretorin frameworks upload-custom unified.json -f acme-soc2-v2 -v "2026-Q1"
+</code></pre>
+<h2 id="linked-forks"><a class="header" href="#linked-forks">Linked forks</a></h2>
+<p>Fork a Pretorin-managed framework into your own draft. The platform records the lineage so you can rebase later when upstream advances.</p>
+<pre><code class="language-bash">pretorin frameworks fork-framework nist-800-53-r5 acme-nist-tailored
+pretorin frameworks fork-framework fedramp-moderate acme-fedramp-mod -v initial
+</code></pre>
+<p>The fork starts as a draft anchored on the upstream’s current revision. Edit the resulting unified.json (export it from the platform UI or use <code>revisions</code> to find the draft), then re-upload via <code>upload-custom</code>.</p>
+<h3 id="rebasing-a-fork"><a class="header" href="#rebasing-a-fork">Rebasing a fork</a></h3>
+<p>When upstream has advanced and you want to bring your fork forward:</p>
+<pre><code class="language-bash">pretorin frameworks rebase-fork acme-nist-tailored
+</code></pre>
+<p>The platform creates a fresh draft anchored on the latest upstream. You resolve any divergence locally and re-upload.</p>
+<h2 id="listing-revisions"><a class="header" href="#listing-revisions">Listing revisions</a></h2>
+<p>See all drafts and published revisions for a framework:</p>
+<pre><code class="language-bash">pretorin frameworks revisions acme-nist-tailored
+</code></pre>
+<h2 id="exporting-oscal"><a class="header" href="#exporting-oscal">Exporting OSCAL</a></h2>
+<p>Regenerate an OSCAL catalog from a unified artifact:</p>
+<pre><code class="language-bash">pretorin frameworks export-oscal unified.json -o catalog.json
+</code></pre>
+<p>When the unified artifact retains the <code>_oscal</code> blocks (i.e., it was originally converted from OSCAL via <code>build-custom</code>), regeneration is lossless — props, parts, links, and back-matter are restored verbatim.</p>
+<h2 id="command-reference"><a class="header" href="#command-reference">Command reference</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Talks to platform?</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>init-custom &lt;id&gt; [-t title] [-o path] [--force]</code></td><td>No</td><td>Scaffold a minimal valid <code>unified.json</code></td></tr>
+<tr><td><code>validate-custom &lt;path&gt;</code></td><td>No</td><td>Local JSON Schema pre-flight</td></tr>
+<tr><td><code>build-custom &lt;input&gt; -f &lt;id&gt; [-o path] [--force]</code></td><td>No</td><td>Normalize OSCAL / custom catalog → <code>unified.json</code></td></tr>
+<tr><td><code>upload-custom &lt;path&gt; [-f id] [-v label] [--publish]</code></td><td>Yes</td><td>Upload draft revision; optionally publish</td></tr>
+<tr><td><code>fork-framework &lt;upstream_id&gt; &lt;new_id&gt; [-v label]</code></td><td>Yes</td><td>Create linked-fork draft</td></tr>
+<tr><td><code>rebase-fork &lt;id&gt; [-v label]</code></td><td>Yes</td><td>Create rebase draft against latest upstream</td></tr>
+<tr><td><code>revisions &lt;id&gt;</code></td><td>Yes</td><td>List drafts + published revisions</td></tr>
+<tr><td><code>export-oscal &lt;path&gt; [-o path] [--force]</code></td><td>No</td><td>Regenerate OSCAL catalog from <code>unified.json</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>All commands respect the global <code>--json</code> flag for machine-readable output.</p>
+<h2 id="notes-for-tool-authors"><a class="header" href="#notes-for-tool-authors">Notes for tool authors</a></h2>
+<p>The vendored conversion and validation primitives are exposed at <code>pretorin.frameworks</code> and can be imported directly:</p>
+<pre><code class="language-python">from pretorin.frameworks import (
+    custom_to_unified,
+    oscal_to_unified,
+    unified_to_oscal,
+)
+from pretorin.frameworks.validate import validate_unified
+from pretorin.frameworks.templates import minimal_unified
+</code></pre>
+<p>These are pure-data functions — no I/O, no platform calls. Good for embedding in CI pipelines, agent tools, or your own automation.</p>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="narrative--evidence-workflow"><a class="header" href="#narrative--evidence-workflow">Narrative &amp; Evidence Workflow</a></h1>
 <p>This is the core workflow for updating control implementations on the platform. Follow this sequence for any control update.</p>
 <h2 id="workflow-steps"><a class="header" href="#workflow-steps">Workflow Steps</a></h2>
@@ -5873,8 +5963,20 @@ ruff format src/pretorin
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>All notable changes to the Pretorin CLI are documented here. The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<h2 id="0170---2026-04-30"><a class="header" href="#0170---2026-04-30"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.3...v0.17.0">0.17.0</a> - 2026-04-30</a></h2>
+<h2 id="0171---2026-04-30"><a class="header" href="#0171---2026-04-30"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.17.0...v0.17.1">0.17.1</a> - 2026-04-30</a></h2>
 <h3 id="added"><a class="header" href="#added">Added</a></h3>
+<ul>
+<li><strong>Custom framework authoring CLI (#90)</strong>: end-to-end build / validate / upload workflow around the platform’s <code>unified.json</code> revision-lifecycle endpoints. New <code>pretorin frameworks</code> commands: <code>init-custom</code>, <code>validate-custom</code>, <code>build-custom</code>, <code>upload-custom</code> (<code>--publish</code> to ship immediately), <code>fork-framework</code>, <code>rebase-fork</code>, <code>revisions</code>, <code>export-oscal</code>.</li>
+<li><strong>Vendored unified-framework toolchain at <code>pretorin.frameworks</code></strong>: bundled JSON Schema validator, OSCAL ↔ unified converters with lossless round-trip, and the 12-format custom-catalog converter ported from the monorepo <code>data/tools/</code>.</li>
+<li><strong>Framework revision lifecycle client methods</strong> on <code>PretorianClient</code>: <code>create_custom_draft</code>, <code>publish_draft</code>, <code>fork_framework</code>, <code>create_rebase_draft</code>, <code>list_revisions</code>. Structured <code>validation_report</code> is preserved through <code>PretorianClientError.details</code> on 400.</li>
+<li><strong><code>jsonschema&gt;=4.0.0</code></strong> added as a runtime dependency.</li>
+</ul>
+<h3 id="documentation"><a class="header" href="#documentation">Documentation</a></h3>
+<ul>
+<li>New page covering the full custom-framework workflow: <a href="#custom-frameworks">Custom frameworks</a>.</li>
+</ul>
+<h2 id="0170---2026-04-30"><a class="header" href="#0170---2026-04-30"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.3...v0.17.0">0.17.0</a> - 2026-04-30</a></h2>
+<h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
 <ul>
 <li><strong>Recipe extensibility system (RFC 0001)</strong>: full implementation of the three-layer routing model — engagement → workflow → recipe. Calling AI agents now route through deterministic Python rules to a workflow playbook, then pick recipes per item from a discoverable menu instead of freelancing.</li>
 <li><strong><code>pretorin_start_task</code> MCP tool</strong>: pure-function rule cascade over agent-extracted entities. Cross-checks against platform state (hallucinated control ids → hard error; wrong-framework / cross-system writes → ambiguous response). Bundles inspect summary into the response.</li>
@@ -5909,7 +6011,7 @@ ruff format src/pretorin
 <li><strong><code>pretorin campaign controls --family</code> case-insensitive resolution (#84)</strong>: <code>--family cc6</code> now resolves to canonical <code>CC6</code> before hitting the backend. Unknown families raise a structured error listing available families and pointing at <code>pretorin frameworks families &lt;framework-id&gt;</code>. Same fix applied to <code>pretorin_prepare_campaign</code> MCP handler.</li>
 </ul>
 <h2 id="0161---2026-04-21"><a class="header" href="#0161---2026-04-21"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.0...v0.16.1">0.16.1</a> - 2026-04-21</a></h2>
-<h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
+<h3 id="added-2"><a class="header" href="#added-2">Added</a></h3>
 <ul>
 <li><strong>Gap questions for policy and scope Q&amp;A</strong>: MCP tool descriptions guide agents through answer-first workflow with structured gap questions for organizational knowledge gaps.</li>
 </ul>
@@ -5918,7 +6020,7 @@ ruff format src/pretorin
 <ul>
 <li><code>evidence_type</code> is now required on every CLI, MCP, agent, and workflow write path (#79). CLI paths hard-error when the user omits <code>-t/--type</code>; every other path runs a client-side normalizer before submission.</li>
 </ul>
-<h3 id="added-2"><a class="header" href="#added-2">Added</a></h3>
+<h3 id="added-3"><a class="header" href="#added-3">Added</a></h3>
 <ul>
 <li><strong>Evidence provenance fields</strong>: CLI sends <code>code_file_path</code>, <code>code_line_numbers</code>, <code>code_snippet</code>, <code>code_repository</code>, <code>code_commit_hash</code> on all evidence creation paths. Auditors can trace evidence to source files and commits.</li>
 <li><strong>Source verification mapping</strong>: Attested source identities mapped to platform’s <code>SourceVerificationPayload</code> with <code>source_type</code> and <code>source_role</code>.</li>
@@ -5967,7 +6069,7 @@ ruff format src/pretorin
 <li><code>pretorin update</code> now checks PyPI before running pip, skipping reinstall when already current</li>
 <li><code>pretorin update</code> verifies the installed version after pip runs, detecting silent failures in pipx/uv-managed environments</li>
 </ul>
-<h3 id="added-3"><a class="header" href="#added-3">Added</a></h3>
+<h3 id="added-4"><a class="header" href="#added-4">Added</a></h3>
 <ul>
 <li><code>pretorin update [VERSION]</code> accepts an optional version argument to install a specific release</li>
 </ul>
@@ -5979,7 +6081,7 @@ ruff format src/pretorin
 </ul>
 <hr>
 <h2 id="0151---2026-04-17"><a class="header" href="#0151---2026-04-17"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.0...v0.15.1">0.15.1</a> - 2026-04-17</a></h2>
-<h3 id="added-4"><a class="header" href="#added-4">Added</a></h3>
+<h3 id="added-5"><a class="header" href="#added-5">Added</a></h3>
 <ul>
 <li><code>pretorin evidence delete &lt;evidence-id&gt;</code> command with <code>--yes</code> flag for non-interactive workflows</li>
 <li>MCP tool <code>pretorin_delete_evidence</code> for programmatic evidence deletion within system scope</li>
@@ -5987,7 +6089,7 @@ ruff format src/pretorin
 </ul>
 <hr>
 <h2 id="0150---2026-04-16"><a class="header" href="#0150---2026-04-16"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.14.0...v0.15.0">0.15.0</a> - 2026-04-16</a></h2>
-<h3 id="added-5"><a class="header" href="#added-5">Added</a></h3>
+<h3 id="added-6"><a class="header" href="#added-6">Added</a></h3>
 <ul>
 <li>Source manifest requirement policy: declare which external sources a system expects and gate compliance writes on their presence</li>
 <li><code>pretorin context manifest</code> command for viewing the resolved manifest and evaluating it against detected sources</li>
@@ -6015,20 +6117,20 @@ ruff format src/pretorin
 <li>Stored active context and campaign checkpoints are now validated against the current API environment before campaign reads or writes proceed</li>
 <li>Control-scoped MCP and agent updates now refuse silent remaps like <code>cm-04.02</code> to a different control when the exact control does not resolve in the active framework</li>
 </ul>
-<h3 id="added-6"><a class="header" href="#added-6">Added</a></h3>
+<h3 id="added-7"><a class="header" href="#added-7">Added</a></h3>
 <ul>
 <li><code>pretorin_get_cli_status</code> and the <code>status://cli</code> MCP resource expose local CLI version, update availability, and upgrade guidance to MCP hosts and agents</li>
 </ul>
 <hr>
 <h2 id="0131---2026-04-07"><a class="header" href="#0131---2026-04-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.0...v0.13.1">0.13.1</a> - 2026-04-07</a></h2>
-<h3 id="added-7"><a class="header" href="#added-7">Added</a></h3>
+<h3 id="added-8"><a class="header" href="#added-8">Added</a></h3>
 <ul>
 <li><code>pretorin_get_stig</code> MCP tool for STIG benchmark detail</li>
 <li><code>pretorin_get_cci_chain</code> MCP tool for full Control → CCI → SRG → STIG rule traceability</li>
 </ul>
 <hr>
 <h2 id="0130---2026-04-07"><a class="header" href="#0130---2026-04-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.12.0...v0.13.0">0.13.0</a> - 2026-04-07</a></h2>
-<h3 id="added-8"><a class="header" href="#added-8">Added</a></h3>
+<h3 id="added-9"><a class="header" href="#added-9">Added</a></h3>
 <ul>
 <li>Complete STIG/CCI MCP tools: <code>list_stigs</code>, <code>get_stig</code>, <code>list_stig_rules</code>, <code>get_stig_rule</code>, <code>list_ccis</code>, <code>get_cci</code>, <code>get_cci_chain</code>, <code>get_cci_status</code>, <code>get_stig_applicability</code>, <code>infer_stigs</code>, <code>get_test_manifest</code>, <code>submit_test_results</code></li>
 <li>STIG/CCI agent tools for OpenAI Agents SDK</li>
@@ -6039,7 +6141,7 @@ ruff format src/pretorin
 </ul>
 <hr>
 <h2 id="0120---2026-04-04"><a class="header" href="#0120---2026-04-04"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.11.0...v0.12.0">0.12.0</a> - 2026-04-04</a></h2>
-<h3 id="added-9"><a class="header" href="#added-9">Added</a></h3>
+<h3 id="added-10"><a class="header" href="#added-10">Added</a></h3>
 <ul>
 <li>Vendor management CLI: <code>pretorin vendor list/create/get/update/delete/upload-doc/list-docs</code></li>
 <li>MCP vendor tools: <code>list_vendors</code>, <code>create_vendor</code>, <code>get_vendor</code>, <code>update_vendor</code>, <code>delete_vendor</code>, <code>upload_vendor_document</code>, <code>list_vendor_documents</code>, <code>link_evidence_to_vendor</code></li>
@@ -6047,7 +6149,7 @@ ruff format src/pretorin
 </ul>
 <hr>
 <h2 id="0110---2026-04-02"><a class="header" href="#0110---2026-04-02"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.10.0...v0.11.0">0.11.0</a> - 2026-04-02</a></h2>
-<h3 id="added-10"><a class="header" href="#added-10">Added</a></h3>
+<h3 id="added-11"><a class="header" href="#added-11">Added</a></h3>
 <ul>
 <li>Campaign CLI: <code>pretorin campaign controls/policy/scope/status</code></li>
 <li>Campaign MCP tools: <code>prepare_campaign</code>, <code>claim_campaign_items</code>, <code>get_campaign_item_context</code>, <code>submit_campaign_proposal</code>, <code>apply_campaign</code>, <code>get_campaign_status</code></li>
@@ -6056,7 +6158,7 @@ ruff format src/pretorin
 </ul>
 <hr>
 <h2 id="0100---2026-03-28"><a class="header" href="#0100---2026-03-28"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.9.7...v0.10.0">0.10.0</a> - 2026-03-28</a></h2>
-<h3 id="added-11"><a class="header" href="#added-11">Added</a></h3>
+<h3 id="added-12"><a class="header" href="#added-12">Added</a></h3>
 <ul>
 <li>Workflow state and analytics MCP tools: <code>get_workflow_state</code>, <code>get_analytics_summary</code>, <code>get_family_analytics</code>, <code>get_policy_analytics</code></li>
 <li>Family operations MCP tools: <code>get_pending_families</code>, <code>get_family_bundle</code>, <code>trigger_family_review</code>, <code>get_family_review_results</code></li>
@@ -6077,7 +6179,7 @@ ruff format src/pretorin
 <li>Updated CLI and MCP coverage tests to reflect the platform control status contract used by public control workflows</li>
 </ul>
 <h2 id="087---2026-03-23"><a class="header" href="#087---2026-03-23"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.6...v0.8.7">0.8.7</a> - 2026-03-23</a></h2>
-<h3 id="added-12"><a class="header" href="#added-12">Added</a></h3>
+<h3 id="added-13"><a class="header" href="#added-13">Added</a></h3>
 <ul>
 <li>MCP questionnaire tooling for scope and organization policy workflows</li>
 </ul>
@@ -6086,7 +6188,7 @@ ruff format src/pretorin
 <li>MCP documentation now reflects the full 29-tool surface, including batch evidence support</li>
 </ul>
 <h2 id="086---2026-03-23"><a class="header" href="#086---2026-03-23"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.8.5...v0.8.6">0.8.6</a> - 2026-03-23</a></h2>
-<h3 id="added-13"><a class="header" href="#added-13">Added</a></h3>
+<h3 id="added-14"><a class="header" href="#added-14">Added</a></h3>
 <ul>
 <li><code>pretorin context show --quiet</code> for compact shell-friendly context checks</li>
 <li><code>pretorin context show --check</code> to fail fast when stored scope is missing, stale, or unverified</li>
@@ -6108,7 +6210,7 @@ ruff format src/pretorin
 <li>Larger Codex subprocess line buffer for policy questionnaire responses</li>
 </ul>
 <h2 id="080---2026-03-07"><a class="header" href="#080---2026-03-07"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.7.0...v0.8.0">0.8.0</a> - 2026-03-07</a></h2>
-<h3 id="added-14"><a class="header" href="#added-14">Added</a></h3>
+<h3 id="added-15"><a class="header" href="#added-15">Added</a></h3>
 <ul>
 <li>MCP <code>pretorin_generate_control_artifacts</code> for read-only AI drafting of control narratives and evidence-gap assessments</li>
 <li>Shared AI drafting workflow helper for structured MCP/CLI parity</li>
@@ -6136,7 +6238,7 @@ ruff format src/pretorin
 <li>Added required MCP registry ownership marker for PyPI validation</li>
 </ul>
 <h2 id="060---2026-03-05"><a class="header" href="#060---2026-03-05"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.6...v0.6.0">0.6.0</a> - 2026-03-05</a></h2>
-<h3 id="added-15"><a class="header" href="#added-15">Added</a></h3>
+<h3 id="added-16"><a class="header" href="#added-16">Added</a></h3>
 <ul>
 <li>Shared markdown quality validator for auditor-readable artifacts</li>
 <li>Dedicated tests for markdown quality guardrails</li>
@@ -6153,7 +6255,7 @@ ruff format src/pretorin
 <li>Markdown image usage from narrative/evidence authoring contract (temporarily)</li>
 </ul>
 <h2 id="054---2026-03-05"><a class="header" href="#054---2026-03-05"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.5.3...v0.5.4">0.5.4</a> - 2026-03-05</a></h2>
-<h3 id="added-16"><a class="header" href="#added-16">Added</a></h3>
+<h3 id="added-17"><a class="header" href="#added-17">Added</a></h3>
 <ul>
 <li><code>pretorin narrative get</code> to read current control narratives</li>
 <li><code>pretorin notes list</code> and <code>pretorin notes add</code> for control-note management</li>
@@ -6195,7 +6297,7 @@ ruff format src/pretorin
 <li>Added <code>.pretorin/</code> and <code>evidence/</code> to <code>.gitignore</code></li>
 </ul>
 <h2 id="050---2026-02-27"><a class="header" href="#050---2026-02-27"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.3.1...v0.5.0">0.5.0</a> - 2026-02-27</a></h2>
-<h3 id="added-17"><a class="header" href="#added-17">Added</a></h3>
+<h3 id="added-18"><a class="header" href="#added-18">Added</a></h3>
 <ul>
 <li>Context management (<code>context list/set/show/clear</code>)</li>
 <li>Evidence commands (<code>evidence create/list/push/search/upsert</code>)</li>
@@ -6229,7 +6331,7 @@ ruff format src/pretorin
 <li>Connection error URL display</li>
 </ul>
 <h2 id="020---2026-02-06"><a class="header" href="#020---2026-02-06"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.1.0...v0.2.0">0.2.0</a> - 2026-02-06</a></h2>
-<h3 id="added-18"><a class="header" href="#added-18">Added</a></h3>
+<h3 id="added-19"><a class="header" href="#added-19">Added</a></h3>
 <ul>
 <li><code>--json</code> flag for machine-readable output</li>
 <li><code>pretorin frameworks family/metadata/submit-artifact</code> commands</li>
@@ -6243,7 +6345,7 @@ ruff format src/pretorin
 <li>Default controls limit changed to 0 (show all)</li>
 </ul>
 <h2 id="010---2025-02-03"><a class="header" href="#010---2025-02-03"><a href="https://github.com/pretorin-ai/pretorin-cli/releases/tag/v0.1.0">0.1.0</a> - 2025-02-03</a></h2>
-<h3 id="added-19"><a class="header" href="#added-19">Added</a></h3>
+<h3 id="added-20"><a class="header" href="#added-20">Added</a></h3>
 <ul>
 <li>Initial public release</li>
 <li>CLI commands for browsing compliance frameworks</li>
