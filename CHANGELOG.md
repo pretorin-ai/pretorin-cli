@@ -5,6 +5,34 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2026-04-30
+
+### Added
+- **Recipe extensibility system (RFC 0001)**: full implementation of the three-layer routing model — engagement → workflow → recipe. Calling AI agents (Claude Code, Codex CLI, custom MCP clients, or `pretorin agent`) now route through deterministic Python rules to a workflow playbook, then pick recipes per item from a discoverable menu instead of freelancing.
+- **`pretorin_start_task` MCP tool**: pure-function rule cascade over agent-extracted entities. Cross-checks against platform state (hallucinated control ids → hard error; wrong-framework / cross-system writes → ambiguous response). Bundles inspect summary into the response so the calling agent gets the routing decision plus the platform state in one round-trip.
+- **Workflow registry + 4 built-in playbooks**: `single-control`, `scope-question`, `policy-question`, `campaign`. Each is a markdown body the calling agent reads to know how to iterate items in its domain. `pretorin_list_workflows` and `pretorin_get_workflow` MCP tools.
+- **Recipe registry + 8 built-in recipes**:
+  - `code-evidence-capture` — pull a snippet, redact secrets, compose audit-grade markdown.
+  - `inspec-baseline`, `openscap-baseline`, `cloud-aws-baseline`, `cloud-azure-baseline`, `manual-attestation` — scanner recipes replacing the deleted `pretorin scan` command.
+  - `scope-q-answer`, `policy-q-answer` — questionnaire-answer redaction recipes for the new questionnaire workflows.
+- **Recipe authoring surface**: `pretorin recipe list / show / new / validate / run` CLI commands. Four loader paths with clear precedence: explicit > project > user > built-in. Scaffolder + validator. Per-script MCP tools auto-registered as `pretorin_recipe_<safe_id>__<script>`.
+- **Recipe execution context**: `pretorin_start_recipe` / `pretorin_end_recipe` open a server-side context; every platform write inside the context auto-stamps `producer_kind="recipe"`, the recipe id, and the recipe version on `audit_metadata`. 1-hour idle expiry, nesting forbidden.
+- **Audit-trail metadata model**: `EvidenceAuditMetadata` (producer_kind, producer_id, producer_version, captured_at, source_type, source_uri, source_version, content_hash, redaction_summary, recipe_selection) is now stamped on every CLI / agent / MCP / campaign-apply evidence write. Build helpers at `pretorin.evidence.audit_metadata` are the single construction surface.
+- **Recipe selection on every drafting call**: `draft_control_artifacts` (the campaign hot site) now consults the recipe registry for a `(control, framework)` `attests` match before falling through to freelance. The decision is recorded as a `RecipeSelection` on the response so audit can trace which recipes drove which artifacts.
+- **`pretorin.evidence.redact` + `pretorin.evidence.markdown`**: shared primitives for secret redaction and audit-grade markdown composition. Used by recipes and the campaign-apply path.
+- **Bundled `pretorin` skill v0.17.0**: teaches the calling agent about engagement → workflow → recipe routing. New "Engagement (Routing)" section flags `pretorin_start_task` as the FIRST call, "Workflow Playbooks" enumerates the four playbooks, "Recipes" enumerates the eight built-ins.
+- **MCP server `instructions` field updated**: explicit routing guidance — the calling agent must call `pretorin_start_task` first when the user references compliance work, and must NOT call evidence/narrative write tools before the workflow + scope are resolved.
+- **Authoring docs at `docs/src/recipes/`**: index, manifest reference, script contract, writer tools, testing, publishing, workflows, engagement, worked example.
+
+### Changed (BREAKING)
+- **`pretorin scan` CLI command removed.** All scanner functionality moved to recipes. Existing automation should migrate to `pretorin recipe run <recipe-id>` (e.g., `pretorin recipe run inspec-baseline --param stig_id=RHEL_9_STIG`) or invoke via MCP. The platform-side `submit_test_results` endpoint stays live; only the local CLI surface changed.
+- **`ScanOrchestrator` removed.** The manifest fetch + rule filter + result summary helpers were extracted into `pretorin.scanners.manifest` and shared across the five scanner recipes.
+
+### Removed
+- `src/pretorin/cli/scan.py` (296 lines) — the legacy `pretorin scan` typer app.
+- `src/pretorin/scanners/orchestrator.py` (281 lines) — the legacy multi-scanner dispatch loop.
+- The deprecated `rejected_invalid_type` campaign-apply telemetry counter (deprecated in 0.16.0).
+
 ## [0.16.3] - 2026-04-26
 
 ### Fixed
@@ -418,6 +446,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.15.2]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.14.0...v0.15.0
+[0.17.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.3...v0.17.0
 [0.16.3]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.2...v0.16.3
 [0.14.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.0...v0.13.1
