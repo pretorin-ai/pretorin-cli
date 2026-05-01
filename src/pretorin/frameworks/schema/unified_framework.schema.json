@@ -1,0 +1,468 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://control-data/schemas/unified_framework.schema.json",
+  "title": "Unified Framework Schema",
+  "description": "Unified schema for compliance frameworks supporting both OSCAL-native and custom formats with lossless OSCAL regeneration",
+  "type": "object",
+  "required": ["framework_id", "version", "source_format", "metadata", "families"],
+  "properties": {
+    "framework_id": {
+      "type": "string",
+      "description": "Unique identifier for the framework (e.g., 'nist-800-171', 'gdpr')"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of the unified schema format"
+    },
+    "source_format": {
+      "type": "string",
+      "enum": ["oscal", "custom"],
+      "description": "Original format type of the framework catalog"
+    },
+    "generated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when this unified format was generated"
+    },
+    "metadata": {
+      "$ref": "#/$defs/FrameworkMetadata"
+    },
+    "families": {
+      "type": "array",
+      "description": "Control families/groups containing controls",
+      "items": {
+        "$ref": "#/$defs/Family"
+      }
+    },
+    "ai_context": {
+      "type": "object",
+      "description": "AI-specific metadata for framework-level context",
+      "additionalProperties": true
+    },
+    "back_matter": {
+      "$ref": "#/$defs/BackMatter",
+      "description": "OSCAL back-matter preserved verbatim for regeneration"
+    },
+    "_oscal": {
+      "$ref": "#/$defs/OscalCatalogMetadata",
+      "description": "Preserved OSCAL catalog-level metadata for regeneration"
+    }
+  },
+  "$defs": {
+    "FrameworkMetadata": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Human-readable framework title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the framework"
+        },
+        "publisher": {
+          "type": "string",
+          "description": "Publishing organization (e.g., 'NIST', 'European Commission')"
+        },
+        "version": {
+          "type": "string",
+          "description": "Framework version (e.g., '3.0.0', '2016/679')"
+        },
+        "oscal_version": {
+          "type": "string",
+          "description": "OSCAL version if sourced from OSCAL format"
+        },
+        "published": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Publication date"
+        },
+        "last_modified": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last modification date"
+        },
+        "regulatory_authority": {
+          "type": "string",
+          "description": "Regulatory authority for custom formats"
+        }
+      }
+    },
+    "Family": {
+      "type": "object",
+      "required": ["id", "title", "controls"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Family identifier (e.g., 'access-control', 'GDPR-PRINC')"
+        },
+        "oscal_id": {
+          "type": "string",
+          "description": "Original OSCAL group ID if from OSCAL format"
+        },
+        "title": {
+          "type": "string",
+          "description": "Family title (e.g., 'Access Control')"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the control family"
+        },
+        "sort_id": {
+          "type": "string",
+          "description": "Sort order identifier"
+        },
+        "controls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Control"
+          }
+        },
+        "ai_context": {
+          "type": "object",
+          "description": "AI-specific metadata for family-level context",
+          "additionalProperties": true
+        },
+        "_oscal": {
+          "$ref": "#/$defs/OscalGroupMetadata",
+          "description": "Preserved OSCAL group metadata"
+        }
+      }
+    },
+    "Control": {
+      "type": "object",
+      "required": ["id", "title"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Control identifier (e.g., '03.01.01', 'GDPR-05.1a')"
+        },
+        "oscal_id": {
+          "type": "string",
+          "description": "Original OSCAL control ID (e.g., 'SP_800_171_03.01.01')"
+        },
+        "title": {
+          "type": "string",
+          "description": "Control title"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "withdrawn"],
+          "default": "active",
+          "description": "Control status - 'active' (default) or 'withdrawn'"
+        },
+        "implementation_level": {
+          "type": ["string", "null"],
+          "enum": ["organization", "system", "hybrid", null],
+          "description": "Implementation level - 'organization' (policy/procedure), 'system' (technical), 'hybrid' (both), or null if unspecified"
+        },
+        "family": {
+          "type": "string",
+          "description": "Family title for quick reference"
+        },
+        "family_id": {
+          "type": "string",
+          "description": "Family identifier for linking"
+        },
+        "statement": {
+          "type": "string",
+          "description": "Full control statement/requirement text"
+        },
+        "statement_parts": {
+          "type": "array",
+          "description": "Structured statement sub-items",
+          "items": {
+            "$ref": "#/$defs/StatementPart"
+          }
+        },
+        "guidance": {
+          "type": "string",
+          "description": "Implementation guidance text"
+        },
+        "assessment": {
+          "$ref": "#/$defs/Assessment",
+          "description": "Assessment objectives and methods"
+        },
+        "related_controls": {
+          "type": "array",
+          "description": "Cross-references within and across frameworks",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/RelatedControl" },
+              { "type": "string", "description": "Simple control ID reference" }
+            ]
+          }
+        },
+        "references": {
+          "type": "array",
+          "description": "External documentation links",
+          "items": {
+            "$ref": "#/$defs/Reference"
+          }
+        },
+        "parameters": {
+          "type": "array",
+          "description": "Organization-defined parameters (ODPs)",
+          "items": {
+            "$ref": "#/$defs/Parameter"
+          }
+        },
+        "enhancements": {
+          "type": "array",
+          "description": "Control enhancements aggregated from OSCAL nested controls",
+          "items": {
+            "$ref": "#/$defs/Enhancement"
+          }
+        },
+        "ai_context": {
+          "type": "object",
+          "description": "AI-specific metadata for enhanced processing",
+          "additionalProperties": true
+        },
+        "_oscal": {
+          "$ref": "#/$defs/OscalControlMetadata",
+          "description": "Preserved OSCAL control metadata for regeneration"
+        }
+      }
+    },
+    "StatementPart": {
+      "type": "object",
+      "required": ["id", "text"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Part identifier (e.g., 'a', 'b', 'a.1')"
+        },
+        "text": {
+          "type": "string",
+          "description": "Statement part text"
+        },
+        "parts": {
+          "type": "array",
+          "description": "Nested sub-parts",
+          "items": {
+            "$ref": "#/$defs/StatementPart"
+          }
+        }
+      }
+    },
+    "Assessment": {
+      "type": "object",
+      "properties": {
+        "objectives": {
+          "type": "array",
+          "description": "Assessment objectives",
+          "items": {
+            "$ref": "#/$defs/AssessmentObjective"
+          }
+        },
+        "methods": {
+          "type": "array",
+          "description": "Assessment methods (e.g., 'examine', 'interview', 'test')",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "AssessmentObjective": {
+      "type": "object",
+      "required": ["id", "text"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Objective identifier"
+        },
+        "text": {
+          "type": "string",
+          "description": "Objective text"
+        },
+        "tests_part": {
+          "type": "string",
+          "description": "Statement part ID this objective tests"
+        }
+      }
+    },
+    "RelatedControl": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Related control identifier"
+        },
+        "framework": {
+          "type": "string",
+          "description": "Framework ID if cross-framework reference"
+        },
+        "relationship": {
+          "type": "string",
+          "description": "Relationship type (e.g., 'supports', 'derived-from', 'related')"
+        }
+      }
+    },
+    "Reference": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Reference document title"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the reference"
+        },
+        "section": {
+          "type": "string",
+          "description": "Specific section reference"
+        },
+        "uuid": {
+          "type": "string",
+          "description": "OSCAL back-matter resource UUID for linking"
+        }
+      }
+    },
+    "Enhancement": {
+      "type": "object",
+      "required": ["id", "title"],
+      "description": "Control enhancement (sub-control) aggregated from OSCAL",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Enhancement identifier (e.g., 'ac-02.01')"
+        },
+        "title": {
+          "type": "string",
+          "description": "Enhancement title"
+        },
+        "implementation_level": {
+          "type": ["string", "null"],
+          "enum": ["organization", "system", "hybrid", null],
+          "description": "Implementation level for this enhancement, or null if unspecified"
+        },
+        "statement": {
+          "type": "string",
+          "description": "Enhancement requirement text"
+        },
+        "guidance": {
+          "type": "string",
+          "description": "Enhancement implementation guidance"
+        },
+        "parameters": {
+          "type": "array",
+          "description": "Organization-defined parameters for this enhancement",
+          "items": {
+            "$ref": "#/$defs/Parameter"
+          }
+        },
+        "assessment": {
+          "$ref": "#/$defs/Assessment",
+          "description": "Assessment objectives and methods for this enhancement"
+        }
+      }
+    },
+    "Parameter": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Parameter identifier (e.g., 'ODP.01')"
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable label"
+        },
+        "description": {
+          "type": "string",
+          "description": "Parameter description"
+        },
+        "usage": {
+          "type": "string",
+          "description": "Usage guidance"
+        },
+        "guidelines": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Selection guidelines"
+        },
+        "_oscal": {
+          "type": "object",
+          "description": "Preserved OSCAL param metadata"
+        }
+      }
+    },
+    "BackMatter": {
+      "type": "object",
+      "description": "OSCAL back-matter preserved verbatim",
+      "properties": {
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "OscalCatalogMetadata": {
+      "type": "object",
+      "description": "Preserved OSCAL catalog-level metadata",
+      "properties": {
+        "uuid": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Original OSCAL metadata object"
+        }
+      }
+    },
+    "OscalGroupMetadata": {
+      "type": "object",
+      "description": "Preserved OSCAL group-level metadata",
+      "properties": {
+        "class": {
+          "type": "string"
+        },
+        "props": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "OscalControlMetadata": {
+      "type": "object",
+      "description": "Preserved OSCAL control-level metadata",
+      "properties": {
+        "class": {
+          "type": "string"
+        },
+        "props": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "Original OSCAL parts structure"
+        }
+      }
+    }
+  }
+}

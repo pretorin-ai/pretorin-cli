@@ -1594,3 +1594,71 @@ class PretorianClient:
     async def infer_stigs(self, system_id: str) -> dict[str, Any]:
         """AI-infer applicable STIGs based on system profile."""
         return await self._request_dict("POST", f"/systems/{system_id}/infer-stigs")
+
+    # =========================================================================
+    # Custom Framework Revision Lifecycle (GH #90)
+    # =========================================================================
+
+    async def create_custom_draft(
+        self,
+        framework_id: str,
+        artifact: dict[str, Any],
+        version_label: str | None = None,
+    ) -> dict[str, Any]:
+        """Upload a unified.json artifact as a draft custom-framework revision.
+
+        The platform validates synchronously; on validation failure the
+        request raises PretorianClientError with details["validation_report"]
+        populated.
+
+        Returns the draft revision response (revision_id, lifecycle_state,
+        validation_status, etc.).
+        """
+        body: dict[str, Any] = {
+            "framework_id": framework_id,
+            "artifact": artifact,
+        }
+        if version_label is not None:
+            body["version_label"] = version_label
+        return await self._request_dict("POST", "/frameworks/drafts/custom", json=body)
+
+    async def publish_draft(self, framework_id: str, revision_id: str) -> dict[str, Any]:
+        """Promote a draft revision to published."""
+        return await self._request_dict(
+            "POST",
+            f"/frameworks/{framework_id}/drafts/{revision_id}/publish",
+        )
+
+    async def fork_framework(
+        self,
+        source_framework_id: str,
+        new_framework_id: str,
+        version_label: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a linked-fork draft from an upstream framework."""
+        body: dict[str, Any] = {
+            "source_framework_id": source_framework_id,
+            "new_framework_id": new_framework_id,
+        }
+        if version_label is not None:
+            body["version_label"] = version_label
+        return await self._request_dict("POST", "/frameworks/drafts/fork", json=body)
+
+    async def create_rebase_draft(
+        self,
+        framework_id: str,
+        version_label: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a rebase draft for a fork against the latest upstream."""
+        body: dict[str, Any] = {}
+        if version_label is not None:
+            body["version_label"] = version_label
+        return await self._request_dict(
+            "POST",
+            f"/frameworks/{framework_id}/rebase-drafts",
+            json=body,
+        )
+
+    async def list_revisions(self, framework_id: str) -> list[dict[str, Any]]:
+        """List all revisions (drafts + published) for a framework."""
+        return await self._request_list("GET", f"/frameworks/{framework_id}/revisions")

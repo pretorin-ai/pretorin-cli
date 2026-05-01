@@ -55,6 +55,7 @@
 - [Supported Frameworks](./frameworks/supported.md)
 - [Control ID Formats](./frameworks/control-ids.md)
 - [Framework Selection Guide](./frameworks/selection.md)
+- [Custom Frameworks](./frameworks/custom.md)
 
 # Workflows
 

@@ -2,6 +2,17 @@
 
 All notable changes to the Pretorin CLI are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.1] - 2026-04-30
+
+### Added
+- **Custom framework authoring CLI (#90)**: end-to-end build / validate / upload workflow around the platform's `unified.json` revision-lifecycle endpoints. New `pretorin frameworks` commands: `init-custom`, `validate-custom`, `build-custom`, `upload-custom` (`--publish` to ship immediately), `fork-framework`, `rebase-fork`, `revisions`, `export-oscal`.
+- **Vendored unified-framework toolchain at `pretorin.frameworks`**: bundled JSON Schema validator, OSCAL ↔ unified converters with lossless round-trip, and the 12-format custom-catalog converter ported from the monorepo `data/tools/`.
+- **Framework revision lifecycle client methods** on `PretorianClient`: `create_custom_draft`, `publish_draft`, `fork_framework`, `create_rebase_draft`, `list_revisions`. Structured `validation_report` is preserved through `PretorianClientError.details` on 400.
+- **`jsonschema>=4.0.0`** added as a runtime dependency.
+
+### Documentation
+- New page covering the full custom-framework workflow: [Custom frameworks](../frameworks/custom.md).
+
 ## [0.17.0] - 2026-04-30
 
 ### Added
@@ -387,6 +398,7 @@ All notable changes to the Pretorin CLI are documented here. The format is based
 [0.15.2]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.14.0...v0.15.0
+[0.17.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.3...v0.17.0
 [0.16.3]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.2...v0.16.3
 [0.14.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0

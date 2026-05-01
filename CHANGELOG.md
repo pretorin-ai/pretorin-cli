@@ -5,6 +5,26 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.1] - 2026-04-30
+
+### Added
+- **Custom framework authoring CLI (#90)**: end-to-end build / validate / upload workflow around the platform's `unified.json` revision-lifecycle endpoints. New commands under `pretorin frameworks`:
+  - `init-custom <id>` — scaffold a minimal valid `unified.json` template.
+  - `validate-custom <path>` — local JSON Schema pre-flight (the platform runs the authoritative validator on upload).
+  - `build-custom <input> -f <id>` — auto-detect input shape (already-unified passthrough, OSCAL catalog, or known custom catalog) and normalize to `unified.json`.
+  - `upload-custom <path> [--publish]` — POST a draft custom-framework revision; `--publish` immediately promotes the draft. Renders the platform's structured `validation_report` on 400.
+  - `fork-framework <upstream_id> <new_id>` — create a linked-fork draft anchored on the upstream revision.
+  - `rebase-fork <id>` — create a fresh rebase draft against the latest upstream.
+  - `revisions <id>` — list draft and published revisions.
+  - `export-oscal <unified.json>` — regenerate an OSCAL catalog from a unified artifact (lossless when `_oscal` blocks are preserved).
+- **Vendored unified-framework toolchain at `pretorin.frameworks`**: bundled JSON Schema + Draft 2020-12 validator, OSCAL ↔ unified converters with lossless round-trip, and the 12-format custom-catalog converter (control_families, cis_safeguards, domains, control_themes, pci_dss, process_requirement, governance_requirement, framework_catalog, crypto_validation, framework_wrapper, metadata_controls, standards_specs). Public surface: `validate.validate_unified`, `oscal_to_unified.convert`, `unified_to_oscal.convert`, `custom_to_unified.convert`, `templates.minimal_unified`.
+- **Framework revision lifecycle client methods** on `PretorianClient`: `create_custom_draft`, `publish_draft`, `fork_framework`, `create_rebase_draft`, `list_revisions`. The platform's structured `validation_report` is preserved through `PretorianClientError.details` on 400.
+- **`jsonschema>=4.0.0`** added as a runtime dependency for local artifact validation.
+
+### Documentation
+- New page `docs/src/frameworks/custom.md` walking through the end-to-end custom-framework workflow.
+- CLI reference + installation expected-output updated.
+
 ## [0.17.0] - 2026-04-30
 
 ### Added
@@ -446,6 +466,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.15.2]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.14.0...v0.15.0
+[0.17.1]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.3...v0.17.0
 [0.16.3]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.2...v0.16.3
 [0.14.0]: https://github.com/pretorin-ai/pretorin-cli/compare/v0.13.1...v0.14.0
