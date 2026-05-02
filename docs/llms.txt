@@ -19,6 +19,17 @@ High-value sections:
 - Skills: https://pretorin-ai.github.io/pretorin-cli/agent/skills.html
 - Runtime management: https://pretorin-ai.github.io/pretorin-cli/agent/runtime.html
 
+Authoring recipes:
+- Recipes overview: https://pretorin-ai.github.io/pretorin-cli/recipes/index.html
+- Manifest reference: https://pretorin-ai.github.io/pretorin-cli/recipes/manifest-reference.html
+- Script contract: https://pretorin-ai.github.io/pretorin-cli/recipes/script-contract.html
+- Writer tools: https://pretorin-ai.github.io/pretorin-cli/recipes/writer-tools.html
+- Testing recipes: https://pretorin-ai.github.io/pretorin-cli/recipes/testing.html
+- Publishing recipes: https://pretorin-ai.github.io/pretorin-cli/recipes/publishing.html
+- Workflows: https://pretorin-ai.github.io/pretorin-cli/recipes/workflows.html
+- Engagement layer: https://pretorin-ai.github.io/pretorin-cli/recipes/engagement.html
+- Worked example: https://pretorin-ai.github.io/pretorin-cli/recipes/example/index.html
+
 Key workflows:
 - Narrative and evidence workflow: https://pretorin-ai.github.io/pretorin-cli/workflows/narrative-evidence.html
 - Campaign workflows: https://pretorin-ai.github.io/pretorin-cli/workflows/campaigns.html
@@ -34,6 +45,7 @@ Reference:
 - Supported frameworks: https://pretorin-ai.github.io/pretorin-cli/frameworks/supported.html
 - Control ID formats: https://pretorin-ai.github.io/pretorin-cli/frameworks/control-ids.html
 - Framework selection guide: https://pretorin-ai.github.io/pretorin-cli/frameworks/selection.html
+- Custom frameworks: https://pretorin-ai.github.io/pretorin-cli/frameworks/custom.html
 - Environment variables: https://pretorin-ai.github.io/pretorin-cli/reference/environment.html
 - Artifact schema: https://pretorin-ai.github.io/pretorin-cli/reference/artifact-schema.html
 - Contributing: https://pretorin-ai.github.io/pretorin-cli/reference/contributing.html
