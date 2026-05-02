@@ -158,7 +158,13 @@ Restart the application to load the new MCP server.
 
 ## Available Tools
 
-The MCP server provides 87 tools organized by category.
+The MCP server provides 94 tools organized by category.
+
+### Task Routing
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_start_task` | Route a user prompt to the right workflow. Call this FIRST whenever the user references compliance work (a control, system, framework, questionnaire, or campaign). |
 
 ### Framework & Control Reference
 
@@ -311,6 +317,17 @@ The MCP server provides 87 tools organized by category.
 | `pretorin_infer_stigs` | AI-infer applicable STIGs from system profile |
 | `pretorin_get_test_manifest` | Fetch test manifest for a system |
 | `pretorin_submit_test_results` | Upload STIG scan results |
+
+### Recipes & Workflows
+
+| Tool | Description |
+|------|-------------|
+| `pretorin_list_recipes` | List loaded recipes with summary metadata; filter by tier and/or what they produce |
+| `pretorin_get_recipe` | Return one recipe's full manifest and markdown body (the playbook the agent reads) |
+| `pretorin_start_recipe` | Open a recipe execution context; returns a `context_id` to stamp audit metadata on subsequent writes |
+| `pretorin_end_recipe` | Close a recipe execution context and return the RecipeResult summary |
+| `pretorin_list_workflows` | List loaded workflow playbooks (single-control, scope-question, policy-question, campaign) |
+| `pretorin_get_workflow` | Return one workflow's full manifest and markdown body |
 
 `pretorin_generate_control_artifacts` is read-only. Use `pretorin_update_narrative`, `pretorin_create_evidence`, and `pretorin_add_control_note` to persist approved changes.
 
