@@ -252,10 +252,10 @@ class TestInstallCommand:
             patch.object(skill_mod, "_skill_source", return_value=fake_skill_source),
         ):
             result = runner.invoke(app, ["skill", "install"])
-        assert result.exit_code == 0
-        for agent in skill_mod.KNOWN_AGENTS:
-            target = skill_mod._resolve_target(agent)
-            assert (target / "SKILL.md").exists()
+            assert result.exit_code == 0
+            for agent in skill_mod.KNOWN_AGENTS:
+                target = skill_mod._resolve_target(agent)
+                assert (target / "SKILL.md").exists()
 
     def test_install_specific_agent(self, tmp_path: Path, fake_skill_source: Path) -> None:
         with (
