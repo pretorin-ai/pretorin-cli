@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-25750a2b.js";
+            window.path_to_searchindex_js = "../searchindex-04e8400d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-400f0ae0.js"></script>
@@ -213,8 +213,9 @@ pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
 <pre><code class="language-bash"># 1. Login with your Pretorin API key
 pretorin login
 
-# 2. Optional: custom/self-hosted Pretorin model endpoint
-pretorin config set model_api_base_url https://platform.pretorin.com/api/v1/public/model
+# 2. Optional: override the default model proxy endpoint
+#    (default: https://platform.pretorin.com/api/v1/public/model)
+pretorin config set model_api_base_url https://your-proxy.example.com/v1
 
 # 3. Validate runtime
 pretorin agent doctor
@@ -241,13 +242,14 @@ pretorin agent run "Assess AC-02 implementation gaps for my system"
 </ul>
 <p>Configure via <code>--base-url</code> flag or the <code>model_api_base_url</code> config key.</p>
 <h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
-<p>The agent runtime uses the Codex SDK with an isolated binary managed under <code>~/.pretorin/codex</code>. The agent:</p>
+<p>The agent runtime uses the Codex SDK with a pinned binary in <code>~/.pretorin/bin/</code> and an isolated <code>CODEX_HOME</code> at <code>~/.pretorin/codex/</code>. The agent:</p>
 <ol>
 <li>Downloads and pins a specific Codex binary version</li>
-<li>Runs in an isolated <code>CODEX_HOME</code> environment</li>
+<li>Runs in an isolated <code>CODEX_HOME</code> environment (never touches <code>~/.codex/</code>)</li>
 <li>Automatically injects the Pretorin MCP server for compliance tool access</li>
 <li>Streams events and output in real-time (unless <code>--no-stream</code> is passed)</li>
 </ol>
+<p>See <a href="./runtime.html">Agent Runtime Management</a> for the full set of <code>pretorin agent</code> lifecycle commands.</p>
 
                     </main>
 

@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-25750a2b.js";
+            window.path_to_searchindex_js = "../searchindex-04e8400d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-400f0ae0.js"></script>
@@ -190,6 +190,7 @@
 <h3 id="2-read-current-state"><a class="header" href="#2-read-current-state">2. Read Current State</a></h3>
 <p>Before making changes, understand what’s already there:</p>
 <pre><code class="language-bash"># Get full control context (requirements + current implementation)
+pretorin control context ac-02 --framework-id fedramp-moderate
 # Via MCP: pretorin_get_control_context
 
 # Get current narrative
@@ -235,7 +236,12 @@ pretorin evidence upsert ac-02 fedramp-moderate \
 # Add gap notes
 pretorin notes add ac-02 fedramp-moderate \
   --content "Gap: Missing MFA evidence..."
+
+# Update implementation status
+pretorin control status ac-02 partially_implemented \
+  --framework-id fedramp-moderate
 </code></pre>
+<p>Status values: <code>implemented</code>, <code>partially_implemented</code>, <code>planned</code>, <code>in_progress</code>, <code>ready_to_approve</code>, <code>not_started</code>, <code>not_applicable</code>, <code>inherited</code>.</p>
 <h2 id="read-only-draft-workflow"><a class="header" href="#read-only-draft-workflow">Read-Only Draft Workflow</a></h2>
 <p>When you want AI drafts before any platform writes:</p>
 <ol>

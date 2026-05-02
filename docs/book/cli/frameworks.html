@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-25750a2b.js";
+            window.path_to_searchindex_js = "../searchindex-04e8400d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-400f0ae0.js"></script>
@@ -181,7 +181,8 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="framework-browsing"><a class="header" href="#framework-browsing">Framework Browsing</a></h1>
-<p>The <code>frameworks</code> command group lets you browse compliance frameworks, control families, and individual controls. These commands are read-only and available to all authenticated users.</p>
+<p>The <code>frameworks</code> command group lets you browse compliance frameworks, control families, and individual controls. The browsing commands documented on this page are read-only and available to all authenticated users.</p>
+<p>The same command group also exposes write-side commands for <strong>authoring, validating, uploading, forking, and rebasing custom frameworks</strong> — see <a href="#custom-framework-authoring">Custom Framework Authoring</a> at the bottom of this page for a quick index, or jump directly to the <a href="../frameworks/custom.html">Custom Frameworks</a> guide for the end-to-end workflow.</p>
 <h2 id="list-all-frameworks"><a class="header" href="#list-all-frameworks">List All Frameworks</a></h2>
 <pre><code class="language-bash">$ pretorin frameworks list
 [°~°] Consulting the compliance archives...
@@ -239,21 +240,16 @@ Total: 30+ framework(s)
 <pre><code class="language-bash">pretorin frameworks family nist-800-53-r5 access-control
 </code></pre>
 <h2 id="list-controls"><a class="header" href="#list-controls">List Controls</a></h2>
-<pre><code class="language-bash">$ pretorin frameworks controls nist-800-53-r5 --family access-control --limit 10
-[°~°] Searching for controls...
-   Controls - nist-800-53-r5 (Family: access-control)
-┏━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
-┃ ID    ┃ Title                        ┃ Family         ┃
-┡━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
-│ ac-01 │ Policy and Procedures        │ ACCESS-CONTROL │
-│ ac-02 │ Account Management           │ ACCESS-CONTROL │
-│ ac-03 │ Access Enforcement           │ ACCESS-CONTROL │
-│ ...   │                              │                │
-└───────┴──────────────────────────────┴────────────────┘
+<pre><code class="language-bash"># Family filter via positional argument
+pretorin frameworks controls nist-800-53-r5 access-control
 
-Showing 10 of 25 controls. Use --limit to see more.
+# Family filter via flag (equivalent)
+pretorin frameworks controls nist-800-53-r5 --family access-control --limit 10
+
+# All controls in the framework (no family filter)
+pretorin frameworks controls fedramp-moderate
 </code></pre>
-<p>Without <code>--family</code>, all controls for the framework are listed. Without <code>--limit</code>, all matching controls are shown.</p>
+<p>The family filter is optional and may be passed as a positional argument or with <code>--family</code>/<code>-f</code>. Without <code>--limit</code> (default <code>0</code>), all matching controls are shown.</p>
 <blockquote>
 <p><strong>Important:</strong> Control IDs are zero-padded — use <code>ac-01</code>, not <code>ac-1</code>. See <a href="../frameworks/control-ids.html">Control ID Formats</a> for details.</p>
 </blockquote>
@@ -312,6 +308,26 @@ Try pretorin frameworks controls nist-800-53-r5 to see available controls.
 <pre><code class="language-bash">pretorin --json frameworks list
 pretorin --json frameworks control nist-800-53-r5 ac-02
 </code></pre>
+<h2 id="custom-framework-authoring"><a class="header" href="#custom-framework-authoring">Custom Framework Authoring</a></h2>
+<p>In addition to the read-only browsing commands above, the <code>frameworks</code> group exposes the write-side commands that drive the <a href="../frameworks/custom.html">custom-framework revision lifecycle</a>. These let you author your own catalog, validate it locally, upload it as a draft revision, and fork or rebase against an upstream Pretorin-managed framework.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin frameworks init-custom &lt;id&gt;</code></td><td>Scaffold a minimal valid <code>unified.json</code> for a new custom framework.</td></tr>
+<tr><td><code>pretorin frameworks validate-custom &lt;unified.json&gt;</code></td><td>Validate a <code>unified.json</code> artifact against the bundled JSON Schema.</td></tr>
+<tr><td><code>pretorin frameworks build-custom &lt;input&gt; -f &lt;id&gt;</code></td><td>Normalize an OSCAL or custom catalog into uploadable <code>unified.json</code>.</td></tr>
+<tr><td><code>pretorin frameworks upload-custom &lt;unified.json&gt; [--publish]</code></td><td>Upload as a draft revision, optionally publishing in one step.</td></tr>
+<tr><td><code>pretorin frameworks fork-framework &lt;upstream-id&gt;</code></td><td>Create a linked-fork draft from an upstream framework.</td></tr>
+<tr><td><code>pretorin frameworks rebase-fork &lt;fork-id&gt;</code></td><td>Create a rebase draft for a fork against the latest upstream revision.</td></tr>
+<tr><td><code>pretorin frameworks revisions &lt;framework-id&gt;</code></td><td>List all draft and published revisions for a framework.</td></tr>
+<tr><td><code>pretorin frameworks export-oscal &lt;unified.json&gt;</code></td><td>Regenerate an OSCAL catalog from a <code>unified.json</code> artifact.</td></tr>
+</tbody>
+</table>
+</div>
+<p>See the <a href="../frameworks/custom.html">Custom Frameworks</a> guide for the full end-to-end workflow, the supported input shapes recognized by <code>build-custom</code>, and the linked-fork / rebase model.</p>
 
                     </main>
 

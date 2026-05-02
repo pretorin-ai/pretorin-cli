@@ -223,16 +223,17 @@ Browse STIG benchmarks, rules, and CCIs with full traceability from NIST 800-53 
 | `pretorin cci show <id>` | Show CCI detail with linked SRGs and rules |
 | `pretorin cci chain <control_id>` | Full traceability: Control -> CCIs -> STIG rules |
 
-### STIG Scanning
+### Recipes
 
-Run STIG compliance scans using available scanner tools (OpenSCAP, InSpec, AWS/Azure Cloud Scanners).
+Recipes are agent-executable playbooks bundled with pretorin (markdown + scripts) that the calling AI agent reads, plans against, and runs. Built-in recipes include OpenSCAP, InSpec, and AWS/Azure cloud baselines, manual attestation, and code-evidence capture. Authoring docs live at [docs/src/recipes/](docs/src/recipes/) and the contract spec at [docs/rfcs/0001-recipes.md](docs/rfcs/0001-recipes.md).
 
 | Command | Purpose |
 |---------|---------|
-| `pretorin scan doctor` | Check installed scanner tools |
-| `pretorin scan manifest` | Show test manifest for active system |
-| `pretorin scan run` | Execute STIG compliance scans |
-| `pretorin scan results` | View CCI-level test results |
+| `pretorin recipe list` | List all loaded recipes (built-in + user + project) |
+| `pretorin recipe show <id>` | Show recipe detail and shadowing sources |
+| `pretorin recipe new <id>` | Scaffold a new community recipe in the user folder |
+| `pretorin recipe validate <id>` | Validate a recipe against the RFC 0001 contract |
+| `pretorin recipe run <id>` | Run a recipe end-to-end (typically invoked by an agent) |
 
 Quick context checks:
 

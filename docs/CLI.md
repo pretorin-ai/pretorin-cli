@@ -571,6 +571,8 @@ pretorin agent run "Review this codebase for AC-02 coverage" --skill security-re
 | `narrative-generation` | Generate implementation narratives for controls |
 | `evidence-collection` | Collect and map evidence from codebase to controls |
 | `security-review` | Review codebase for security controls and compliance posture |
+| `stig-scan` | Run STIG compliance scans against a system |
+| `cci-assessment` | Assess CCI compliance for a specific control |
 
 ### Agent Setup
 
@@ -774,7 +776,7 @@ $ pretorin config path
 
 ```bash
 $ pretorin version
-pretorin version 0.16.3
+pretorin version 0.17.1
 ```
 
 ### Update
@@ -919,19 +921,73 @@ pretorin cci show CCI-000015
 pretorin cci chain ac-2 --system "My System"
 ```
 
-## Scan Commands
+## Recipe Commands
 
-Run STIG compliance scans using available scanner tools.
+Recipes are agent-executable playbooks bundled with pretorin (markdown + scripts) that the calling AI agent reads, plans against, and runs. Built-in recipes include OpenSCAP, InSpec, and AWS/Azure cloud baselines, manual attestation, and code-evidence capture. STIG compliance scanning is performed by the OpenSCAP/InSpec/cloud baseline recipes — there is no separate `pretorin scan` command. Authoring docs live at [docs/src/recipes/](src/recipes/) and the contract spec at [docs/rfcs/0001-recipes.md](rfcs/0001-recipes.md).
+
+### List Recipes
 
 ```bash
-pretorin scan doctor                          # check installed scanners
-pretorin scan manifest --system "My System"   # view test manifest
-pretorin scan run --system "My System"        # execute scans
-pretorin scan run --dry-run                   # preview without executing
-pretorin scan results --control ac-2          # view CCI-level results
+pretorin recipe list
+pretorin recipe list --tier official
+pretorin recipe list --source builtin
 ```
 
-Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Manual.
+Lists all loaded recipes from the four loader paths (explicit > project > user > builtin). Recipes whose id is shadowed by another loader path are marked with `*`.
+
+### Show Recipe Detail
+
+```bash
+pretorin recipe show <id>
+pretorin recipe show <id> --sources
+```
+
+Displays the recipe's manifest, body, and (with `--sources`) every loader path the id appears at.
+
+### Scaffold a New Recipe
+
+```bash
+pretorin recipe new my-recipe
+pretorin recipe new my-recipe --location project
+pretorin recipe new my-recipe --location builtin --author "Pretorin Team"
+```
+
+Default location is the user folder (`~/.pretorin/recipes/`). Use `--location project` for team-shared recipes (`./.pretorin/recipes/`) or `--location builtin` for first-party recipes.
+
+### Validate a Recipe
+
+```bash
+pretorin recipe validate <id>
+pretorin recipe validate <id> --path /abs/path/to/recipe-dir
+```
+
+Checks the manifest against the schema, verifies every script `path` resolves to a file with an `async def run`, and enforces description-quality gates.
+
+### Run a Recipe Locally
+
+```bash
+pretorin recipe run <id>
+pretorin recipe run <id> --script <name> --param key=value
+pretorin recipe run <id> --system "My System" --framework fedramp-moderate
+pretorin recipe run <id> --no-context  # for pure transformation recipes
+```
+
+Runs a recipe's script locally for testing. Resolves system/framework against the active CLI context unless overridden.
+
+## Custom Frameworks
+
+The `frameworks` command group includes scaffolding, validation, build, and upload commands for custom frameworks.
+
+```bash
+pretorin frameworks init-custom my-framework      # scaffold a unified.json
+pretorin frameworks validate-custom unified.json  # schema-check the artifact
+pretorin frameworks build-custom catalog.yml      # normalize into unified.json
+pretorin frameworks upload-custom unified.json    # upload as draft revision
+pretorin frameworks fork-framework <upstream-id>  # linked-fork draft from upstream
+pretorin frameworks rebase-fork <fork-id>         # rebase fork to latest upstream
+pretorin frameworks revisions <fw-id>             # list draft + published revisions
+pretorin frameworks export-oscal unified.json     # regenerate OSCAL catalog
+```
 
 ## Complete Command Reference
 
@@ -952,6 +1008,14 @@ Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Ma
 | `pretorin frameworks family <fw> <family>` | Get control family details |
 | `pretorin frameworks metadata <id>` | Get per-control framework metadata |
 | `pretorin frameworks submit-artifact <file>` | Submit a compliance artifact JSON file |
+| `pretorin frameworks init-custom <id>` | Scaffold a minimal `unified.json` for a custom framework |
+| `pretorin frameworks validate-custom <file>` | Validate a `unified.json` artifact against the bundled schema |
+| `pretorin frameworks build-custom <file>` | Normalize a source catalog into uploadable `unified.json` |
+| `pretorin frameworks upload-custom <file>` | Upload a `unified.json` artifact as a draft custom-framework revision |
+| `pretorin frameworks fork-framework <id>` | Create a linked-fork draft from an upstream framework |
+| `pretorin frameworks rebase-fork <id>` | Create a rebase draft for a fork against the latest upstream revision |
+| `pretorin frameworks revisions <id>` | List all draft and published revisions for a framework |
+| `pretorin frameworks export-oscal <file>` | Regenerate an OSCAL catalog from a `unified.json` artifact |
 | `pretorin context list` | List systems and frameworks with progress |
 | `pretorin context set` | Set active system/framework context |
 | `pretorin context show` | Display and validate current active context |
@@ -1003,10 +1067,11 @@ Supported scanners: OpenSCAP, InSpec, AWS Cloud Scanner, Azure Cloud Scanner, Ma
 | `pretorin cci list` | List CCIs (`--control`, `--status`) |
 | `pretorin cci show <id>` | Show CCI detail |
 | `pretorin cci chain <ctrl>` | Full traceability chain (`--system`) |
-| `pretorin scan doctor` | Check installed scanner tools |
-| `pretorin scan manifest` | Show test manifest (`--system`, `--stig`) |
-| `pretorin scan run` | Run STIG scans (`--tool`, `--dry-run`) |
-| `pretorin scan results` | View CCI-level results (`--control`) |
+| `pretorin recipe list` | List loaded recipes (`--tier`, `--source`) |
+| `pretorin recipe show <id>` | Show recipe manifest and body (`--sources`) |
+| `pretorin recipe new <id>` | Scaffold a new recipe (`--location`, `--author`, `--name`) |
+| `pretorin recipe validate <id>` | Validate a recipe against the RFC 0001 contract (`--path`) |
+| `pretorin recipe run <id>` | Run a recipe locally (`--script`, `--param`, `--system`, `--framework`) |
 | `pretorin agent run "<task>"` | Run a compliance task with the Codex agent |
 | `pretorin agent run --skill <name>` | Run a predefined agent skill |
 | `pretorin agent doctor` | Validate Codex runtime setup |

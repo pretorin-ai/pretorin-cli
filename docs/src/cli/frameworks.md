@@ -1,6 +1,8 @@
 # Framework Browsing
 
-The `frameworks` command group lets you browse compliance frameworks, control families, and individual controls. These commands are read-only and available to all authenticated users.
+The `frameworks` command group lets you browse compliance frameworks, control families, and individual controls. The browsing commands documented on this page are read-only and available to all authenticated users.
+
+The same command group also exposes write-side commands for **authoring, validating, uploading, forking, and rebasing custom frameworks** — see [Custom Framework Authoring](#custom-framework-authoring) at the bottom of this page for a quick index, or jump directly to the [Custom Frameworks](../frameworks/custom.md) guide for the end-to-end workflow.
 
 ## List All Frameworks
 
@@ -79,22 +81,17 @@ pretorin frameworks family nist-800-53-r5 access-control
 ## List Controls
 
 ```bash
-$ pretorin frameworks controls nist-800-53-r5 --family access-control --limit 10
-[°~°] Searching for controls...
-   Controls - nist-800-53-r5 (Family: access-control)
-┏━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
-┃ ID    ┃ Title                        ┃ Family         ┃
-┡━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
-│ ac-01 │ Policy and Procedures        │ ACCESS-CONTROL │
-│ ac-02 │ Account Management           │ ACCESS-CONTROL │
-│ ac-03 │ Access Enforcement           │ ACCESS-CONTROL │
-│ ...   │                              │                │
-└───────┴──────────────────────────────┴────────────────┘
+# Family filter via positional argument
+pretorin frameworks controls nist-800-53-r5 access-control
 
-Showing 10 of 25 controls. Use --limit to see more.
+# Family filter via flag (equivalent)
+pretorin frameworks controls nist-800-53-r5 --family access-control --limit 10
+
+# All controls in the framework (no family filter)
+pretorin frameworks controls fedramp-moderate
 ```
 
-Without `--family`, all controls for the framework are listed. Without `--limit`, all matching controls are shown.
+The family filter is optional and may be passed as a positional argument or with `--family`/`-f`. Without `--limit` (default `0`), all matching controls are shown.
 
 > **Important:** Control IDs are zero-padded — use `ac-01`, not `ac-1`. See [Control ID Formats](../frameworks/control-ids.md) for details.
 
@@ -180,3 +177,20 @@ All framework commands support JSON output for scripting and AI agents:
 pretorin --json frameworks list
 pretorin --json frameworks control nist-800-53-r5 ac-02
 ```
+
+## Custom Framework Authoring
+
+In addition to the read-only browsing commands above, the `frameworks` group exposes the write-side commands that drive the [custom-framework revision lifecycle](../frameworks/custom.md). These let you author your own catalog, validate it locally, upload it as a draft revision, and fork or rebase against an upstream Pretorin-managed framework.
+
+| Command | Description |
+|---------|-------------|
+| `pretorin frameworks init-custom <id>` | Scaffold a minimal valid `unified.json` for a new custom framework. |
+| `pretorin frameworks validate-custom <unified.json>` | Validate a `unified.json` artifact against the bundled JSON Schema. |
+| `pretorin frameworks build-custom <input> -f <id>` | Normalize an OSCAL or custom catalog into uploadable `unified.json`. |
+| `pretorin frameworks upload-custom <unified.json> [--publish]` | Upload as a draft revision, optionally publishing in one step. |
+| `pretorin frameworks fork-framework <upstream-id>` | Create a linked-fork draft from an upstream framework. |
+| `pretorin frameworks rebase-fork <fork-id>` | Create a rebase draft for a fork against the latest upstream revision. |
+| `pretorin frameworks revisions <framework-id>` | List all draft and published revisions for a framework. |
+| `pretorin frameworks export-oscal <unified.json>` | Regenerate an OSCAL catalog from a `unified.json` artifact. |
+
+See the [Custom Frameworks](../frameworks/custom.md) guide for the full end-to-end workflow, the supported input shapes recognized by `build-custom`, and the linked-fork / rebase model.

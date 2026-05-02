@@ -87,6 +87,35 @@ Agent
   URL: https://pretorin-ai.github.io/pretorin-cli/agent/runtime.html
   Summary: runtime setup and operational details.
 
+Authoring Recipes
+- Recipes Overview
+  URL: https://pretorin-ai.github.io/pretorin-cli/recipes/index.html
+  Summary: introduction to recipes as markdown-plus-Python playbooks the calling agent invokes through MCP.
+- Manifest Reference
+  URL: https://pretorin-ai.github.io/pretorin-cli/recipes/manifest-reference.html
+  Summary: YAML frontmatter schema for recipe.md, frozen per pretorin minor version.
+- Script Contract
+  URL: https://pretorin-ai.github.io/pretorin-cli/recipes/script-contract.html
+  Summary: required signature and runtime contract for recipe scripts.
+- Writer Tools
+  URL: https://pretorin-ai.github.io/pretorin-cli/recipes/writer-tools.html
+  Summary: how recipe scripts call the platform API through ctx.api_client and how audit metadata is stamped.
+- Testing Recipes
+  URL: https://pretorin-ai.github.io/pretorin-cli/recipes/testing.html
+  Summary: patterns for testing recipe scripts as ordinary Python modules.
+- Publishing Recipes
+  URL: https://pretorin-ai.github.io/pretorin-cli/recipes/publishing.html
+  Summary: the three publishing tiers (official, project, user) and how the loader resolves them.
+- Workflows
+  URL: https://pretorin-ai.github.io/pretorin-cli/recipes/workflows.html
+  Summary: workflow playbooks the calling agent reads to iterate over items in a compliance domain.
+- Engagement Layer
+  URL: https://pretorin-ai.github.io/pretorin-cli/recipes/engagement.html
+  Summary: the routing boundary that maps user prompts to the right workflow and recipe combination.
+- Worked Example
+  URL: https://pretorin-ai.github.io/pretorin-cli/recipes/example/index.html
+  Summary: end-to-end community recipe walkthrough capturing audit-log entries as access-control evidence.
+
 Frameworks
 - Supported Frameworks
   URL: https://pretorin-ai.github.io/pretorin-cli/frameworks/supported.html
@@ -97,6 +126,9 @@ Frameworks
 - Framework Selection Guide
   URL: https://pretorin-ai.github.io/pretorin-cli/frameworks/selection.html
   Summary: choosing the right framework for an organization or system.
+- Custom Frameworks
+  URL: https://pretorin-ai.github.io/pretorin-cli/frameworks/custom.html
+  Summary: authoring, validating, forking, and uploading custom compliance frameworks through the platform revision lifecycle.
 
 Workflows
 - Narrative and Evidence Workflow

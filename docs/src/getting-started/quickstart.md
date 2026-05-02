@@ -76,6 +76,23 @@ claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 
 Check install status with `pretorin skill status`. See the [MCP Setup Guides](../mcp/setup.md) for other tools.
 
+## Run a Recipe
+
+Recipes are markdown-plus-scripts playbooks that the calling agent invokes through MCP for evidence capture, baseline scanning, and other procedures:
+
+```bash
+# List available recipes (built-in + user + project)
+pretorin recipe list
+
+# Show one recipe's manifest and prose body
+pretorin recipe show inspec-baseline
+
+# Scaffold a new recipe in ~/.pretorin/recipes/<id>/
+pretorin recipe new my-first-recipe
+```
+
+See [Authoring Recipes](../recipes/index.md) for the full guide.
+
 ## Browse STIGs and CCIs
 
 Look up STIG benchmarks, rules, and CCI traceability:

@@ -44,6 +44,10 @@ Cybersecurity Maturity Model Certification for defense contractors. Required by 
 
 Note: CMMC Level 3 controls are **in addition to** Level 2.
 
+### 5. None of the above fits — bring your own framework
+
+If the built-in catalog doesn't cover your obligation (e.g., an internal control set, a tailored mapping, an industry-specific regulation), you can author a custom framework or fork an existing one. See the [Custom Frameworks](./custom.md) guide for the `pretorin frameworks init-custom` / `build-custom` / `upload-custom` / `fork-framework` workflow.
+
 ## Quick Reference
 
 | Situation | Framework | ID |
@@ -54,6 +58,7 @@ Note: CMMC Level 3 controls are **in addition to** Level 2.
 | We have a DoD contract | CMMC | `cmmc-l2` |
 | We need to handle both CUI and cloud | FedRAMP + 800-171 | Start with `fedramp-moderate` |
 | We're not sure yet | Start with NIST 800-53 | `nist-800-53-r5` |
+| Our framework isn't in the catalog | Author or fork your own | See [Custom Frameworks](./custom.md) |
 
 ## Using AI Context for Selection
 

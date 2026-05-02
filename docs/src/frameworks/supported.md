@@ -81,4 +81,16 @@ Cybersecurity Maturity Model Certification for defense contractors. Required by 
 
 > **Note:** CMMC Level 3 controls are in addition to Level 2. An organization at Level 3 must also satisfy all Level 2 controls.
 
+## Custom and Forked Frameworks
+
+If your organization needs to track a framework that isn't in the built-in catalog (e.g., an internal control set, a tailored ISO/SOC 2 mapping, an industry-specific regulation), you can author one yourself or fork an existing Pretorin-managed framework. The `pretorin frameworks` group exposes the full revision lifecycle:
+
+- **Author from scratch** — `init-custom`, `validate-custom`, `upload-custom`
+- **Convert from OSCAL or 12 known custom catalog shapes** — `build-custom`
+- **Fork an existing framework** — `fork-framework`, `rebase-fork`
+- **Inspect drafts** — `revisions`
+- **Round-trip back to OSCAL** — `export-oscal`
+
+See the [Custom Frameworks](./custom.md) guide for the end-to-end workflow.
+
 See [Framework Selection Guide](./selection.md) for help choosing the right framework.

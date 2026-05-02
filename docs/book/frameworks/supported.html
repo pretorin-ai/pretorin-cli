@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-25750a2b.js";
+            window.path_to_searchindex_js = "../searchindex-04e8400d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-400f0ae0.js"></script>
@@ -264,6 +264,16 @@
 <blockquote>
 <p><strong>Note:</strong> CMMC Level 3 controls are in addition to Level 2. An organization at Level 3 must also satisfy all Level 2 controls.</p>
 </blockquote>
+<h2 id="custom-and-forked-frameworks"><a class="header" href="#custom-and-forked-frameworks">Custom and Forked Frameworks</a></h2>
+<p>If your organization needs to track a framework that isn’t in the built-in catalog (e.g., an internal control set, a tailored ISO/SOC 2 mapping, an industry-specific regulation), you can author one yourself or fork an existing Pretorin-managed framework. The <code>pretorin frameworks</code> group exposes the full revision lifecycle:</p>
+<ul>
+<li><strong>Author from scratch</strong> — <code>init-custom</code>, <code>validate-custom</code>, <code>upload-custom</code></li>
+<li><strong>Convert from OSCAL or 12 known custom catalog shapes</strong> — <code>build-custom</code></li>
+<li><strong>Fork an existing framework</strong> — <code>fork-framework</code>, <code>rebase-fork</code></li>
+<li><strong>Inspect drafts</strong> — <code>revisions</code></li>
+<li><strong>Round-trip back to OSCAL</strong> — <code>export-oscal</code></li>
+</ul>
+<p>See the <a href="./custom.html">Custom Frameworks</a> guide for the end-to-end workflow.</p>
 <p>See <a href="./selection.html">Framework Selection Guide</a> for help choosing the right framework.</p>
 
                     </main>

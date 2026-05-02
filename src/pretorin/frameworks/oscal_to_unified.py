@@ -61,7 +61,7 @@ def extract_implementation_level(control: dict[str, Any]) -> str | None:
     return None
 
 
-def extract_statement_parts(parts: list[dict[str, Any]], parent_prose: str = "") -> list[dict[str, Any]]:
+def extract_statement_parts(parts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Recursively extract OSCAL statement parts into unified format."""
     result = []
     for part in parts:

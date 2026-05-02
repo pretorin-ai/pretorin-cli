@@ -38,7 +38,8 @@ Pretorin is usually used in one of these modes:
 - **Manage implementation context** — Set an active system and framework, then track progress across controls
 - **Create and manage evidence** — Generate local evidence files, push them to the platform, and link them to controls
 - **Write implementation narratives** — Draft and push auditor-ready narratives for each control
-- **Run AI-powered compliance tasks** — Use the built-in Codex agent for gap analysis, narrative generation, evidence collection, and security review
+- **Run AI-powered compliance tasks** — Use the built-in Codex agent with bundled skills (gap-analysis, narrative-generation, evidence-collection, security-review, stig-scan, cci-assessment)
+- **Run compliance recipes** — Author or invoke recipe playbooks (markdown + scripts) that the calling agent executes for evidence capture, baseline scanning, and other procedures
 - **Review code against controls** — Analyze your codebase for control coverage
 - **Track monitoring events** — Record security scans, access reviews, configuration changes, and compliance checks
 - **Generate compliance artifacts** — Produce structured JSON artifacts documenting control implementations
@@ -53,6 +54,7 @@ Pretorin is usually used in one of these modes:
 - [Agent Overview](./agent/overview.md) for Pretorin-hosted runtime usage
 - [CLI Reference](./cli/command-reference.md) for command-level detail
 - [Workflows](./workflows/narrative-evidence.md) for end-to-end compliance tasks
+- [Authoring Recipes](./recipes/index.md) for writing or invoking compliance playbooks
 
 ## Architecture
 

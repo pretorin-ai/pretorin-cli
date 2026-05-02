@@ -33,6 +33,23 @@
 | `pretorin frameworks metadata <id>` | Get per-control framework metadata |
 | `pretorin frameworks submit-artifact <file>` | Submit a compliance artifact JSON file |
 
+### Custom Frameworks
+
+Subcommands of `pretorin frameworks` for authoring, validating, and uploading
+custom or forked frameworks. See [Custom Frameworks](../frameworks/custom.md)
+for the full authoring workflow.
+
+| Command | Description |
+|---------|-------------|
+| `pretorin frameworks init-custom <framework_id>` | Scaffold a minimal valid `unified.json` (`--title/-t`, `--output/-o`, `--force/-f`) |
+| `pretorin frameworks validate-custom <file>` | Validate a `unified.json` artifact against the bundled JSON Schema |
+| `pretorin frameworks build-custom <input>` | Normalize a source catalog (unified, OSCAL, or known custom) into uploadable `unified.json` (`--framework-id/-f` required, `--output/-o`, `--force`) |
+| `pretorin frameworks upload-custom <file>` | Upload a `unified.json` artifact as a draft revision (`--framework-id/-f`, `--version-label/-v`, `--publish`) |
+| `pretorin frameworks fork-framework <source_id> <new_id>` | Create a linked-fork draft from an upstream framework (`--version-label/-v`) |
+| `pretorin frameworks rebase-fork <framework_id>` | Create a rebase draft for a fork against the latest upstream revision (`--version-label/-v`) |
+| `pretorin frameworks revisions <framework_id>` | List all draft and published revisions for a framework |
+| `pretorin frameworks export-oscal <file>` | Regenerate an OSCAL catalog from a `unified.json` artifact (`--output/-o`, `--force`) |
+
 ## Context Commands
 
 | Command | Description |
@@ -197,6 +214,19 @@
 | `pretorin cci list` | List CCIs (`--control/-c`, `--status`, `--limit/-l`) |
 | `pretorin cci show <cci_id>` | Show CCI detail with linked SRGs and STIG rules (e.g., `CCI-000015`) |
 | `pretorin cci chain <control_id>` | Full traceability chain: Control -> CCIs -> SRGs -> STIG rules (`--system/-s`) |
+
+## Recipe Commands
+
+Recipes are markdown + script playbooks the calling AI agent executes. See
+[Recipes](../recipes/index.md) for authoring guidance.
+
+| Command | Description |
+|---------|-------------|
+| `pretorin recipe list` | List all loaded recipes with id, name, tier, author, and source path (`--tier`, `--source`) |
+| `pretorin recipe show <recipe_id>` | Display a recipe's manifest, body, and (with `--sources`) all loader paths |
+| `pretorin recipe new <recipe_id>` | Scaffold a new recipe directory (`--location` user/project/builtin, `--author`, `--name`) |
+| `pretorin recipe validate <recipe_id>` | Validate a recipe's manifest, scripts, and description quality (`--path` for path-based override) |
+| `pretorin recipe run <recipe_id>` | Run a recipe's script locally for testing (`--script/-s`, `--param/-p` repeatable, `--path`, `--system`, `--framework`, `--no-context`) |
 
 ## Scanning
 
