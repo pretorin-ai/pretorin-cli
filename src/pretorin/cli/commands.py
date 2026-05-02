@@ -29,6 +29,18 @@ def require_auth(client: PretorianClient) -> None:
         raise typer.Exit(1)
 
 
+def handle_auth_error(error: AuthenticationError, show_login_hint: bool = True) -> None:
+    """Print a standard authentication error message and exit.
+
+    Centralises the AuthenticationError handler used by every CLI command so
+    the message, hint, and exit code stay consistent.
+    """
+    rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {error.message}")
+    if show_login_hint:
+        rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
+    raise typer.Exit(1)
+
+
 # =============================================================================
 # Framework Commands
 # =============================================================================
@@ -96,9 +108,7 @@ def frameworks_list() -> None:
                 rprint(f"\n[dim]Total: {result.total} framework(s)[/dim]")
 
             except AuthenticationError as e:
-                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
-                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
-                raise typer.Exit(1)
+                handle_auth_error(e)
             except PretorianClientError as e:
                 rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
@@ -153,9 +163,7 @@ def framework_get(
                 rprint("[dim]Example: [bold]pretorin frameworks get fedramp-moderate[/bold][/dim]")
                 raise typer.Exit(1)
             except AuthenticationError as e:
-                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
-                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
-                raise typer.Exit(1)
+                handle_auth_error(e)
             except PretorianClientError as e:
                 rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
@@ -219,9 +227,7 @@ def framework_families(
                 rprint("[dim]Example: [bold]pretorin frameworks families fedramp-moderate[/bold][/dim]")
                 raise typer.Exit(1)
             except AuthenticationError as e:
-                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
-                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
-                raise typer.Exit(1)
+                handle_auth_error(e)
             except PretorianClientError as e:
                 rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
@@ -302,9 +308,7 @@ def framework_controls(
                 rprint("[dim]Example: [bold]pretorin frameworks controls fedramp-low access-control[/bold][/dim]")
                 raise typer.Exit(1)
             except AuthenticationError as e:
-                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
-                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
-                raise typer.Exit(1)
+                handle_auth_error(e)
             except PretorianClientError as e:
                 rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
@@ -426,9 +430,7 @@ def control_get(
                 rprint(f"[dim]Example: [bold]pretorin frameworks control {framework_id} ac-02[/bold][/dim]")
                 raise typer.Exit(1)
             except AuthenticationError as e:
-                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
-                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
-                raise typer.Exit(1)
+                handle_auth_error(e)
             except PretorianClientError as e:
                 rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
@@ -512,9 +514,7 @@ def framework_documents(
                 rprint("[dim]Example: [bold]pretorin frameworks documents fedramp-moderate[/bold][/dim]")
                 raise typer.Exit(1)
             except AuthenticationError as e:
-                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
-                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
-                raise typer.Exit(1)
+                handle_auth_error(e)
             except PretorianClientError as e:
                 rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
@@ -592,9 +592,7 @@ def family_get(
                 rprint(f"[dim]Example: [bold]pretorin frameworks family {framework_id} access-control[/bold][/dim]")
                 raise typer.Exit(1)
             except AuthenticationError as e:
-                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
-                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
-                raise typer.Exit(1)
+                handle_auth_error(e)
             except PretorianClientError as e:
                 rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
@@ -660,9 +658,7 @@ def framework_metadata(
                 rprint("[dim]Example: [bold]pretorin frameworks metadata fedramp-low[/bold][/dim]")
                 raise typer.Exit(1)
             except AuthenticationError as e:
-                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
-                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
-                raise typer.Exit(1)
+                handle_auth_error(e)
             except PretorianClientError as e:
                 rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
@@ -731,9 +727,7 @@ def submit_artifact(
                 )
 
             except AuthenticationError as e:
-                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
-                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
-                raise typer.Exit(1)
+                handle_auth_error(e)
             except PretorianClientError as e:
                 rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
@@ -1080,9 +1074,7 @@ def upload_custom(
                     )
 
             except AuthenticationError as e:
-                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
-                rprint("[dim]Try running [bold]pretorin login[/bold] again.[/dim]")
-                raise typer.Exit(1)
+                handle_auth_error(e)
             except PretorianClientError as e:
                 rprint(f"[#FF9010]✗[/#FF9010] Upload failed: {e.message}")
                 report = e.details.get("validation_report") if isinstance(e.details, dict) else None
@@ -1134,8 +1126,7 @@ def fork_framework_cmd(
                 )
 
             except AuthenticationError as e:
-                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
-                raise typer.Exit(1)
+                handle_auth_error(e, show_login_hint=False)
             except PretorianClientError as e:
                 rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
@@ -1183,8 +1174,7 @@ def rebase_fork_cmd(
                 )
 
             except AuthenticationError as e:
-                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
-                raise typer.Exit(1)
+                handle_auth_error(e, show_login_hint=False)
             except PretorianClientError as e:
                 rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
@@ -1253,8 +1243,7 @@ def revisions_list(
                 rprint(f"\n[dim]Total: {len(revisions)} revision(s)[/dim]")
 
             except AuthenticationError as e:
-                rprint(f"[#FF9010]→[/#FF9010] Authentication issue: {e.message}")
-                raise typer.Exit(1)
+                handle_auth_error(e, show_login_hint=False)
             except PretorianClientError as e:
                 rprint(f"[#FF9010]→[/#FF9010] {e.message}")
                 raise typer.Exit(1)
