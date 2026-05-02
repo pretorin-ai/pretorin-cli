@@ -35,8 +35,9 @@ Use this setup when you want `pretorin agent run` to call Pretorin-hosted model 
 # 1. Login with your Pretorin API key
 pretorin login
 
-# 2. Optional: custom/self-hosted Pretorin model endpoint
-pretorin config set model_api_base_url https://platform.pretorin.com/api/v1/public/model
+# 2. Optional: override the default model proxy endpoint
+#    (default: https://platform.pretorin.com/api/v1/public/model)
+pretorin config set model_api_base_url https://your-proxy.example.com/v1
 
 # 3. Validate runtime
 pretorin agent doctor
@@ -69,9 +70,11 @@ Configure via `--base-url` flag or the `model_api_base_url` config key.
 
 ## How It Works
 
-The agent runtime uses the Codex SDK with an isolated binary managed under `~/.pretorin/codex`. The agent:
+The agent runtime uses the Codex SDK with a pinned binary in `~/.pretorin/bin/` and an isolated `CODEX_HOME` at `~/.pretorin/codex/`. The agent:
 
 1. Downloads and pins a specific Codex binary version
-2. Runs in an isolated `CODEX_HOME` environment
+2. Runs in an isolated `CODEX_HOME` environment (never touches `~/.codex/`)
 3. Automatically injects the Pretorin MCP server for compliance tool access
 4. Streams events and output in real-time (unless `--no-stream` is passed)
+
+See [Agent Runtime Management](./runtime.md) for the full set of `pretorin agent` lifecycle commands.
