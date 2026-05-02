@@ -18,6 +18,7 @@ Before making changes, understand what's already there:
 
 ```bash
 # Get full control context (requirements + current implementation)
+pretorin control context ac-02 --framework-id fedramp-moderate
 # Via MCP: pretorin_get_control_context
 
 # Get current narrative
@@ -78,7 +79,13 @@ pretorin evidence upsert ac-02 fedramp-moderate \
 # Add gap notes
 pretorin notes add ac-02 fedramp-moderate \
   --content "Gap: Missing MFA evidence..."
+
+# Update implementation status
+pretorin control status ac-02 partially_implemented \
+  --framework-id fedramp-moderate
 ```
+
+Status values: `implemented`, `partially_implemented`, `planned`, `in_progress`, `ready_to_approve`, `not_started`, `not_applicable`, `inherited`.
 
 ## Read-Only Draft Workflow
 
