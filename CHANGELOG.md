@@ -5,6 +5,14 @@ All notable changes to the Pretorin CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.2] - 2026-05-02
+
+### Documentation
+- Repository-wide documentation sync to current v0.17 surfaces: README recipes table, getting-started, CLI/MCP reference, frameworks selection + custom-framework authoring, recipes/workflows, agent overview, env-vars reference, llms.txt manifests, and a fresh mdBook rebuild.
+
+### Fixed
+- Test isolation: `test_install_default_writes_to_all_known_agents` now performs filesystem assertions inside the `Path.home()` patch context so CI runs do not depend on the runner's real home directory.
+
 ## [0.17.1] - 2026-04-30
 
 ### Added
