@@ -1,6 +1,23 @@
 # MCP Tool Reference
 
-The MCP server provides 87 tools organized by category.
+The MCP server provides 94 tools organized by category.
+
+## Task Routing
+
+### pretorin_start_task
+
+Route a user prompt to the right workflow. **Call this FIRST** whenever the user references compliance work (a control, system, framework, questionnaire, or campaign). The calling agent extracts entities from the user prompt and supplies them as structured args; pretorin applies deterministic rules to pick a workflow and bundles the platform read-state (workflow_state, compliance_status, pending items) into the response. The agent then reads the selected workflow's body via `pretorin_get_workflow` and follows it.
+
+The one exception is pure reference questions ("show me AC-2", "list frameworks") — those go directly to the read-side tools without `start_task`.
+
+**Parameters:**
+- `entities` (required) — Structured entities extracted from the user prompt. Required sub-fields: `intent_verb` (one of `work_on`, `collect_evidence`, `draft_narrative`, `answer`, `campaign`, `inspect_status`) and `raw_prompt` (original verbatim text). Optional: `system_id`, `framework_id`, `control_ids`, `scope_question_ids`, `policy_question_ids`.
+- `active_system_id` (optional) — The user's active CLI context system_id, if any. Used to detect cross-system writes.
+- `skip_inspect` (optional) — Skip the server-side platform reads when the calling agent already has fresh state. Default: `false`
+
+**Returns:** Selected workflow id, resolved scope (system/framework/items), and a platform-state bundle for the agent to act on.
+
+---
 
 ## Framework & Control Reference
 
@@ -1138,3 +1155,78 @@ Upload STIG scan results to the platform.
 - `cli_version` (optional) — CLI version string
 
 **Returns:** Submission confirmation with per-result status.
+
+---
+
+## Recipes & Workflows
+
+Recipes are markdown playbooks the calling agent reads and executes; workflows describe how to iterate items in a domain and which recipes to pick per item. See [RFC 0001](https://github.com/pretorin/pretorin-cli/blob/master/docs/rfcs/0001-recipes.md) for the contract spec and `docs/src/recipes/` for authoring guides.
+
+### pretorin_list_recipes
+
+List loaded recipes with their summary metadata (id, name, tier, description, use_when, produces). Use this to discover which recipes are available, then call `pretorin_get_recipe(id)` to read the full body.
+
+**Parameters:**
+- `tier` (optional) — Filter to one tier: `official`, `partner`, or `community`
+- `produces` (optional) — Filter by what the recipe produces: `evidence`, `narrative`, `both`, or `answers`
+
+**Returns:** Recipe summaries with manifest metadata.
+
+---
+
+### pretorin_get_recipe
+
+Return one recipe's full manifest and body. The body is the markdown playbook the calling agent reads to understand the procedure.
+
+**Parameters:**
+- `recipe_id` (required) — Recipe id to fetch
+
+**Returns:** Recipe manifest plus the markdown body.
+
+---
+
+### pretorin_start_recipe
+
+Open a recipe execution context. Returns a `context_id` the caller passes on subsequent platform-API write tool calls so audit metadata is stamped with `producer_kind='recipe'` automatically. One recipe per session at a time (nesting forbidden in v1). Contexts auto-expire after 1 hour of inactivity.
+
+**Parameters:**
+- `recipe_id` (required) — Recipe id (must be loadable from the registry)
+- `recipe_version` (required) — Recipe version the caller intends to run. Cross-checked against the loaded recipe; mismatch is an error.
+- `params` (optional) — Inputs the calling agent supplies, validated against the recipe's params schema
+- `selection` (optional) — Structured `RecipeSelection` record from the engagement layer, stored on the context for the eventual `RecipeResult`
+
+**Returns:** Context id and the resolved recipe manifest snapshot.
+
+---
+
+### pretorin_end_recipe
+
+Close a recipe execution context and return the `RecipeResult` summary (status, evidence and narrative counts, errors, elapsed time). Must be called once the recipe's work is complete; failure to call leaves the context in place until the 1-hour expiry sweep.
+
+**Parameters:**
+- `context_id` (required) — Context id returned by `pretorin_start_recipe`
+- `status` (optional) — Caller-supplied disposition: `pass`, `fail`, or `needs_input`. Default: `pass`
+
+**Returns:** `RecipeResult` summary.
+
+---
+
+### pretorin_list_workflows
+
+List loaded workflow playbooks (single-control, scope-question, policy-question, campaign). Each workflow describes how to iterate items in its domain and which recipes to pick per item. Use this before picking a recipe so the agent works at the right granularity.
+
+**Parameters:**
+- `iterates_over` (optional) — Filter to one item-iteration shape: `single_control`, `scope_questions`, `policy_questions`, or `campaign_items`
+
+**Returns:** Workflow summaries with manifest metadata.
+
+---
+
+### pretorin_get_workflow
+
+Return one workflow's full manifest and body. The body is the markdown playbook the calling agent reads to know how to iterate items and pick recipes per item in this workflow's domain.
+
+**Parameters:**
+- `workflow_id` (required) — Workflow id to fetch
+
+**Returns:** Workflow manifest plus the markdown body.
