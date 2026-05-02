@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-25750a2b.js";
+            window.path_to_searchindex_js = "../searchindex-66ab15f6.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-400f0ae0.js"></script>
@@ -226,6 +226,18 @@ claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 # "What controls are in the Access Control family for FedRAMP Moderate?"
 </code></pre>
 <p>Check install status with <code>pretorin skill status</code>. See the <a href="../mcp/setup.html">MCP Setup Guides</a> for other tools.</p>
+<h2 id="run-a-recipe"><a class="header" href="#run-a-recipe">Run a Recipe</a></h2>
+<p>Recipes are markdown-plus-scripts playbooks that the calling agent invokes through MCP for evidence capture, baseline scanning, and other procedures:</p>
+<pre><code class="language-bash"># List available recipes (built-in + user + project)
+pretorin recipe list
+
+# Show one recipe's manifest and prose body
+pretorin recipe show inspec-baseline
+
+# Scaffold a new recipe in ~/.pretorin/recipes/&lt;id&gt;/
+pretorin recipe new my-first-recipe
+</code></pre>
+<p>See <a href="../recipes/index.html">Authoring Recipes</a> for the full guide.</p>
 <h2 id="browse-stigs-and-ccis"><a class="header" href="#browse-stigs-and-ccis">Browse STIGs and CCIs</a></h2>
 <p>Look up STIG benchmarks, rules, and CCI traceability:</p>
 <pre><code class="language-bash"># List available STIG benchmarks

@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-25750a2b.js";
+            window.path_to_searchindex_js = "../searchindex-66ab15f6.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-400f0ae0.js"></script>
@@ -226,6 +226,27 @@
 <tr><td><code>pretorin frameworks documents &lt;id&gt;</code></td><td>Get document requirements</td></tr>
 <tr><td><code>pretorin frameworks metadata &lt;id&gt;</code></td><td>Get per-control framework metadata</td></tr>
 <tr><td><code>pretorin frameworks submit-artifact &lt;file&gt;</code></td><td>Submit a compliance artifact JSON file</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="custom-frameworks"><a class="header" href="#custom-frameworks">Custom Frameworks</a></h3>
+<p>Subcommands of <code>pretorin frameworks</code> for authoring, validating, and uploading
+custom or forked frameworks. See <a href="../frameworks/custom.html">Custom Frameworks</a>
+for the full authoring workflow.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin frameworks init-custom &lt;framework_id&gt;</code></td><td>Scaffold a minimal valid <code>unified.json</code> (<code>--title/-t</code>, <code>--output/-o</code>, <code>--force/-f</code>)</td></tr>
+<tr><td><code>pretorin frameworks validate-custom &lt;file&gt;</code></td><td>Validate a <code>unified.json</code> artifact against the bundled JSON Schema</td></tr>
+<tr><td><code>pretorin frameworks build-custom &lt;input&gt;</code></td><td>Normalize a source catalog (unified, OSCAL, or known custom) into uploadable <code>unified.json</code> (<code>--framework-id/-f</code> required, <code>--output/-o</code>, <code>--force</code>)</td></tr>
+<tr><td><code>pretorin frameworks upload-custom &lt;file&gt;</code></td><td>Upload a <code>unified.json</code> artifact as a draft revision (<code>--framework-id/-f</code>, <code>--version-label/-v</code>, <code>--publish</code>)</td></tr>
+<tr><td><code>pretorin frameworks fork-framework &lt;source_id&gt; &lt;new_id&gt;</code></td><td>Create a linked-fork draft from an upstream framework (<code>--version-label/-v</code>)</td></tr>
+<tr><td><code>pretorin frameworks rebase-fork &lt;framework_id&gt;</code></td><td>Create a rebase draft for a fork against the latest upstream revision (<code>--version-label/-v</code>)</td></tr>
+<tr><td><code>pretorin frameworks revisions &lt;framework_id&gt;</code></td><td>List all draft and published revisions for a framework</td></tr>
+<tr><td><code>pretorin frameworks export-oscal &lt;file&gt;</code></td><td>Regenerate an OSCAL catalog from a <code>unified.json</code> artifact (<code>--output/-o</code>, <code>--force</code>)</td></tr>
 </tbody>
 </table>
 </div>
@@ -474,6 +495,23 @@
 <tr><td><code>pretorin cci list</code></td><td>List CCIs (<code>--control/-c</code>, <code>--status</code>, <code>--limit/-l</code>)</td></tr>
 <tr><td><code>pretorin cci show &lt;cci_id&gt;</code></td><td>Show CCI detail with linked SRGs and STIG rules (e.g., <code>CCI-000015</code>)</td></tr>
 <tr><td><code>pretorin cci chain &lt;control_id&gt;</code></td><td>Full traceability chain: Control -&gt; CCIs -&gt; SRGs -&gt; STIG rules (<code>--system/-s</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="recipe-commands"><a class="header" href="#recipe-commands">Recipe Commands</a></h2>
+<p>Recipes are markdown + script playbooks the calling AI agent executes. See
+<a href="../recipes/index.html">Recipes</a> for authoring guidance.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin recipe list</code></td><td>List all loaded recipes with id, name, tier, author, and source path (<code>--tier</code>, <code>--source</code>)</td></tr>
+<tr><td><code>pretorin recipe show &lt;recipe_id&gt;</code></td><td>Display a recipe’s manifest, body, and (with <code>--sources</code>) all loader paths</td></tr>
+<tr><td><code>pretorin recipe new &lt;recipe_id&gt;</code></td><td>Scaffold a new recipe directory (<code>--location</code> user/project/builtin, <code>--author</code>, <code>--name</code>)</td></tr>
+<tr><td><code>pretorin recipe validate &lt;recipe_id&gt;</code></td><td>Validate a recipe’s manifest, scripts, and description quality (<code>--path</code> for path-based override)</td></tr>
+<tr><td><code>pretorin recipe run &lt;recipe_id&gt;</code></td><td>Run a recipe’s script locally for testing (<code>--script/-s</code>, <code>--param/-p</code> repeatable, <code>--path</code>, <code>--system</code>, <code>--framework</code>, <code>--no-context</code>)</td></tr>
 </tbody>
 </table>
 </div>

@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-25750a2b.js";
+            window.path_to_searchindex_js = "searchindex-66ab15f6.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-400f0ae0.js"></script>
@@ -214,7 +214,8 @@
 <li><strong>Manage implementation context</strong> — Set an active system and framework, then track progress across controls</li>
 <li><strong>Create and manage evidence</strong> — Generate local evidence files, push them to the platform, and link them to controls</li>
 <li><strong>Write implementation narratives</strong> — Draft and push auditor-ready narratives for each control</li>
-<li><strong>Run AI-powered compliance tasks</strong> — Use the built-in Codex agent for gap analysis, narrative generation, evidence collection, and security review</li>
+<li><strong>Run AI-powered compliance tasks</strong> — Use the built-in Codex agent with bundled skills (gap-analysis, narrative-generation, evidence-collection, security-review, stig-scan, cci-assessment)</li>
+<li><strong>Run compliance recipes</strong> — Author or invoke recipe playbooks (markdown + scripts) that the calling agent executes for evidence capture, baseline scanning, and other procedures</li>
 <li><strong>Review code against controls</strong> — Analyze your codebase for control coverage</li>
 <li><strong>Track monitoring events</strong> — Record security scans, access reviews, configuration changes, and compliance checks</li>
 <li><strong>Generate compliance artifacts</strong> — Produce structured JSON artifacts documenting control implementations</li>
@@ -229,6 +230,7 @@
 <li><a href="#agent-overview">Agent Overview</a> for Pretorin-hosted runtime usage</li>
 <li><a href="#complete-command-reference">CLI Reference</a> for command-level detail</li>
 <li><a href="#narrative--evidence-workflow">Workflows</a> for end-to-end compliance tasks</li>
+<li><a href="#authoring-recipes">Authoring Recipes</a> for writing or invoking compliance playbooks</li>
 </ul>
 <h2 id="architecture"><a class="header" href="#architecture">Architecture</a></h2>
 <p>Pretorin CLI is three things, with one shared API client at the bottom:</p>
@@ -424,6 +426,18 @@ claude mcp add --transport stdio pretorin -- pretorin mcp-serve
 # "What controls are in the Access Control family for FedRAMP Moderate?"
 </code></pre>
 <p>Check install status with <code>pretorin skill status</code>. See the <a href="#mcp-setup-guides">MCP Setup Guides</a> for other tools.</p>
+<h2 id="run-a-recipe"><a class="header" href="#run-a-recipe">Run a Recipe</a></h2>
+<p>Recipes are markdown-plus-scripts playbooks that the calling agent invokes through MCP for evidence capture, baseline scanning, and other procedures:</p>
+<pre><code class="language-bash"># List available recipes (built-in + user + project)
+pretorin recipe list
+
+# Show one recipe's manifest and prose body
+pretorin recipe show inspec-baseline
+
+# Scaffold a new recipe in ~/.pretorin/recipes/&lt;id&gt;/
+pretorin recipe new my-first-recipe
+</code></pre>
+<p>See <a href="#authoring-recipes">Authoring Recipes</a> for the full guide.</p>
 <h2 id="browse-stigs-and-ccis"><a class="header" href="#browse-stigs-and-ccis">Browse STIGs and CCIs</a></h2>
 <p>Look up STIG benchmarks, rules, and CCI traceability:</p>
 <pre><code class="language-bash"># List available STIG benchmarks
@@ -441,7 +455,8 @@ pretorin cci chain &lt;cci-id&gt;
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="framework-browsing"><a class="header" href="#framework-browsing">Framework Browsing</a></h1>
-<p>The <code>frameworks</code> command group lets you browse compliance frameworks, control families, and individual controls. These commands are read-only and available to all authenticated users.</p>
+<p>The <code>frameworks</code> command group lets you browse compliance frameworks, control families, and individual controls. The browsing commands documented on this page are read-only and available to all authenticated users.</p>
+<p>The same command group also exposes write-side commands for <strong>authoring, validating, uploading, forking, and rebasing custom frameworks</strong> — see <a href="#custom-framework-authoring">Custom Framework Authoring</a> at the bottom of this page for a quick index, or jump directly to the <a href="#custom-frameworks-1">Custom Frameworks</a> guide for the end-to-end workflow.</p>
 <h2 id="list-all-frameworks"><a class="header" href="#list-all-frameworks">List All Frameworks</a></h2>
 <pre><code class="language-bash">$ pretorin frameworks list
 [°~°] Consulting the compliance archives...
@@ -499,21 +514,16 @@ Total: 30+ framework(s)
 <pre><code class="language-bash">pretorin frameworks family nist-800-53-r5 access-control
 </code></pre>
 <h2 id="list-controls"><a class="header" href="#list-controls">List Controls</a></h2>
-<pre><code class="language-bash">$ pretorin frameworks controls nist-800-53-r5 --family access-control --limit 10
-[°~°] Searching for controls...
-   Controls - nist-800-53-r5 (Family: access-control)
-┏━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
-┃ ID    ┃ Title                        ┃ Family         ┃
-┡━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
-│ ac-01 │ Policy and Procedures        │ ACCESS-CONTROL │
-│ ac-02 │ Account Management           │ ACCESS-CONTROL │
-│ ac-03 │ Access Enforcement           │ ACCESS-CONTROL │
-│ ...   │                              │                │
-└───────┴──────────────────────────────┴────────────────┘
+<pre><code class="language-bash"># Family filter via positional argument
+pretorin frameworks controls nist-800-53-r5 access-control
 
-Showing 10 of 25 controls. Use --limit to see more.
+# Family filter via flag (equivalent)
+pretorin frameworks controls nist-800-53-r5 --family access-control --limit 10
+
+# All controls in the framework (no family filter)
+pretorin frameworks controls fedramp-moderate
 </code></pre>
-<p>Without <code>--family</code>, all controls for the framework are listed. Without <code>--limit</code>, all matching controls are shown.</p>
+<p>The family filter is optional and may be passed as a positional argument or with <code>--family</code>/<code>-f</code>. Without <code>--limit</code> (default <code>0</code>), all matching controls are shown.</p>
 <blockquote>
 <p><strong>Important:</strong> Control IDs are zero-padded — use <code>ac-01</code>, not <code>ac-1</code>. See <a href="#control-id-formats">Control ID Formats</a> for details.</p>
 </blockquote>
@@ -572,6 +582,26 @@ Try pretorin frameworks controls nist-800-53-r5 to see available controls.
 <pre><code class="language-bash">pretorin --json frameworks list
 pretorin --json frameworks control nist-800-53-r5 ac-02
 </code></pre>
+<h2 id="custom-framework-authoring"><a class="header" href="#custom-framework-authoring">Custom Framework Authoring</a></h2>
+<p>In addition to the read-only browsing commands above, the <code>frameworks</code> group exposes the write-side commands that drive the <a href="#custom-frameworks-1">custom-framework revision lifecycle</a>. These let you author your own catalog, validate it locally, upload it as a draft revision, and fork or rebase against an upstream Pretorin-managed framework.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin frameworks init-custom &lt;id&gt;</code></td><td>Scaffold a minimal valid <code>unified.json</code> for a new custom framework.</td></tr>
+<tr><td><code>pretorin frameworks validate-custom &lt;unified.json&gt;</code></td><td>Validate a <code>unified.json</code> artifact against the bundled JSON Schema.</td></tr>
+<tr><td><code>pretorin frameworks build-custom &lt;input&gt; -f &lt;id&gt;</code></td><td>Normalize an OSCAL or custom catalog into uploadable <code>unified.json</code>.</td></tr>
+<tr><td><code>pretorin frameworks upload-custom &lt;unified.json&gt; [--publish]</code></td><td>Upload as a draft revision, optionally publishing in one step.</td></tr>
+<tr><td><code>pretorin frameworks fork-framework &lt;upstream-id&gt;</code></td><td>Create a linked-fork draft from an upstream framework.</td></tr>
+<tr><td><code>pretorin frameworks rebase-fork &lt;fork-id&gt;</code></td><td>Create a rebase draft for a fork against the latest upstream revision.</td></tr>
+<tr><td><code>pretorin frameworks revisions &lt;framework-id&gt;</code></td><td>List all draft and published revisions for a framework.</td></tr>
+<tr><td><code>pretorin frameworks export-oscal &lt;unified.json&gt;</code></td><td>Regenerate an OSCAL catalog from a <code>unified.json</code> artifact.</td></tr>
+</tbody>
+</table>
+</div>
+<p>See the <a href="#custom-frameworks-1">Custom Frameworks</a> guide for the full end-to-end workflow, the supported input shapes recognized by <code>build-custom</code>, and the linked-fork / rebase model.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="context-management"><a class="header" href="#context-management">Context Management</a></h1>
 <p>The <code>context</code> command group manages your active system and framework scope. Platform-backed compliance operations (evidence, narratives, notes, monitoring, control status) run inside exactly one <code>system + framework</code> pair at a time.</p>
@@ -1450,6 +1480,27 @@ Config file: /home/user/.pretorin/config.json
 </tbody>
 </table>
 </div>
+<h3 id="custom-frameworks"><a class="header" href="#custom-frameworks">Custom Frameworks</a></h3>
+<p>Subcommands of <code>pretorin frameworks</code> for authoring, validating, and uploading
+custom or forked frameworks. See <a href="#custom-frameworks-1">Custom Frameworks</a>
+for the full authoring workflow.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin frameworks init-custom &lt;framework_id&gt;</code></td><td>Scaffold a minimal valid <code>unified.json</code> (<code>--title/-t</code>, <code>--output/-o</code>, <code>--force/-f</code>)</td></tr>
+<tr><td><code>pretorin frameworks validate-custom &lt;file&gt;</code></td><td>Validate a <code>unified.json</code> artifact against the bundled JSON Schema</td></tr>
+<tr><td><code>pretorin frameworks build-custom &lt;input&gt;</code></td><td>Normalize a source catalog (unified, OSCAL, or known custom) into uploadable <code>unified.json</code> (<code>--framework-id/-f</code> required, <code>--output/-o</code>, <code>--force</code>)</td></tr>
+<tr><td><code>pretorin frameworks upload-custom &lt;file&gt;</code></td><td>Upload a <code>unified.json</code> artifact as a draft revision (<code>--framework-id/-f</code>, <code>--version-label/-v</code>, <code>--publish</code>)</td></tr>
+<tr><td><code>pretorin frameworks fork-framework &lt;source_id&gt; &lt;new_id&gt;</code></td><td>Create a linked-fork draft from an upstream framework (<code>--version-label/-v</code>)</td></tr>
+<tr><td><code>pretorin frameworks rebase-fork &lt;framework_id&gt;</code></td><td>Create a rebase draft for a fork against the latest upstream revision (<code>--version-label/-v</code>)</td></tr>
+<tr><td><code>pretorin frameworks revisions &lt;framework_id&gt;</code></td><td>List all draft and published revisions for a framework</td></tr>
+<tr><td><code>pretorin frameworks export-oscal &lt;file&gt;</code></td><td>Regenerate an OSCAL catalog from a <code>unified.json</code> artifact (<code>--output/-o</code>, <code>--force</code>)</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="context-commands"><a class="header" href="#context-commands">Context Commands</a></h2>
 <div class="table-wrapper">
 <table>
@@ -1698,6 +1749,23 @@ Config file: /home/user/.pretorin/config.json
 </tbody>
 </table>
 </div>
+<h2 id="recipe-commands"><a class="header" href="#recipe-commands">Recipe Commands</a></h2>
+<p>Recipes are markdown + script playbooks the calling AI agent executes. See
+<a href="#authoring-recipes">Recipes</a> for authoring guidance.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pretorin recipe list</code></td><td>List all loaded recipes with id, name, tier, author, and source path (<code>--tier</code>, <code>--source</code>)</td></tr>
+<tr><td><code>pretorin recipe show &lt;recipe_id&gt;</code></td><td>Display a recipe’s manifest, body, and (with <code>--sources</code>) all loader paths</td></tr>
+<tr><td><code>pretorin recipe new &lt;recipe_id&gt;</code></td><td>Scaffold a new recipe directory (<code>--location</code> user/project/builtin, <code>--author</code>, <code>--name</code>)</td></tr>
+<tr><td><code>pretorin recipe validate &lt;recipe_id&gt;</code></td><td>Validate a recipe’s manifest, scripts, and description quality (<code>--path</code> for path-based override)</td></tr>
+<tr><td><code>pretorin recipe run &lt;recipe_id&gt;</code></td><td>Run a recipe’s script locally for testing (<code>--script/-s</code>, <code>--param/-p</code> repeatable, <code>--path</code>, <code>--system</code>, <code>--framework</code>, <code>--no-context</code>)</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="scanning"><a class="header" href="#scanning">Scanning</a></h2>
 <p>The legacy <code>pretorin scan</code> command was removed when the recipes system landed.
 Scanning now happens through built-in recipes that the calling AI agent invokes
@@ -1741,7 +1809,7 @@ via MCP. See <a href="#stig-scanning">STIG Scanning</a> for the recipe-based wor
 <li><strong>Streamline workflows</strong> — No need to copy-paste control requirements or switch between tools</li>
 </ul>
 <h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
-<p>The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with <code>pretorin mcp-serve</code>, your AI tool connects and gains access to 87 compliance tools.</p>
+<p>The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with <code>pretorin mcp-serve</code>, your AI tool connects and gains access to 94 compliance tools.</p>
 <pre><code>┌──────────────┐     stdio      ┌──────────────┐     HTTPS     ┌──────────────┐
 │   AI Agent   │◄──────────────►│   Pretorin   │◄─────────────►│   Pretorin   │
 │ (Claude,     │   JSON-RPC    │   MCP Server  │              │   Platform   │
@@ -1755,26 +1823,28 @@ via MCP. See <a href="#stig-scanning">STIG Scanning</a> for the recipe-based wor
 <pre><code class="language-bash">pretorin context show --quiet --check
 </code></pre>
 <h2 id="tool-categories"><a class="header" href="#tool-categories">Tool Categories</a></h2>
-<p>The 87 MCP tools are organized into categories:</p>
+<p>The 94 MCP tools are organized into categories:</p>
 <div class="table-wrapper">
 <table>
 <thead>
 <tr><th>Category</th><th>Tools</th><th>Access</th></tr>
 </thead>
 <tbody>
+<tr><td>Task Routing</td><td>1</td><td>Read-only, all users</td></tr>
 <tr><td>Framework &amp; Control Reference</td><td>8</td><td>Read-only, all users</td></tr>
 <tr><td>Systems</td><td>5</td><td>Read-only</td></tr>
-<tr><td>Evidence Management</td><td>6</td><td>Read/Write, requires beta</td></tr>
-<tr><td>Implementation Context</td><td>10</td><td>Read/Write, requires beta</td></tr>
-<tr><td>Monitoring</td><td>1</td><td>Write, requires beta</td></tr>
+<tr><td>Evidence Management</td><td>7</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Implementation Context</td><td>11</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Compliance Updates</td><td>3</td><td>Write, requires beta</td></tr>
 <tr><td>Workflow State &amp; Analytics</td><td>4</td><td>Read-only</td></tr>
 <tr><td>Family Operations</td><td>4</td><td>Read/Write, requires beta</td></tr>
-<tr><td>Scope Workflow</td><td>7</td><td>Read/Write, requires beta</td></tr>
-<tr><td>Policy Workflow</td><td>10</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Scope Workflow</td><td>6</td><td>Read/Write, requires beta</td></tr>
+<tr><td>Policy Workflow</td><td>7</td><td>Read/Write, requires beta</td></tr>
 <tr><td>Campaign Operations</td><td>6</td><td>Read/Write, requires beta</td></tr>
 <tr><td>Vendor Management</td><td>8</td><td>Read/Write, requires beta</td></tr>
 <tr><td>Inheritance &amp; Responsibility</td><td>6</td><td>Read/Write, requires beta</td></tr>
 <tr><td>STIG &amp; CCI</td><td>12</td><td>Read-only / Write mix</td></tr>
+<tr><td>Recipes &amp; Workflows</td><td>6</td><td>Read-only</td></tr>
 </tbody>
 </table>
 </div>
@@ -1913,7 +1983,19 @@ command -v pretorin
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="mcp-tool-reference"><a class="header" href="#mcp-tool-reference">MCP Tool Reference</a></h1>
-<p>The MCP server provides 87 tools organized by category.</p>
+<p>The MCP server provides 94 tools organized by category.</p>
+<h2 id="task-routing"><a class="header" href="#task-routing">Task Routing</a></h2>
+<h3 id="pretorin_start_task"><a class="header" href="#pretorin_start_task">pretorin_start_task</a></h3>
+<p>Route a user prompt to the right workflow. <strong>Call this FIRST</strong> whenever the user references compliance work (a control, system, framework, questionnaire, or campaign). The calling agent extracts entities from the user prompt and supplies them as structured args; pretorin applies deterministic rules to pick a workflow and bundles the platform read-state (workflow_state, compliance_status, pending items) into the response. The agent then reads the selected workflow’s body via <code>pretorin_get_workflow</code> and follows it.</p>
+<p>The one exception is pure reference questions (“show me AC-2”, “list frameworks”) — those go directly to the read-side tools without <code>start_task</code>.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>entities</code> (required) — Structured entities extracted from the user prompt. Required sub-fields: <code>intent_verb</code> (one of <code>work_on</code>, <code>collect_evidence</code>, <code>draft_narrative</code>, <code>answer</code>, <code>campaign</code>, <code>inspect_status</code>) and <code>raw_prompt</code> (original verbatim text). Optional: <code>system_id</code>, <code>framework_id</code>, <code>control_ids</code>, <code>scope_question_ids</code>, <code>policy_question_ids</code>.</li>
+<li><code>active_system_id</code> (optional) — The user’s active CLI context system_id, if any. Used to detect cross-system writes.</li>
+<li><code>skip_inspect</code> (optional) — Skip the server-side platform reads when the calling agent already has fresh state. Default: <code>false</code></li>
+</ul>
+<p><strong>Returns:</strong> Selected workflow id, resolved scope (system/framework/items), and a platform-state bundle for the agent to act on.</p>
+<hr>
 <h2 id="framework--control-reference"><a class="header" href="#framework--control-reference">Framework &amp; Control Reference</a></h2>
 <p>These tools are read-only and available to all authenticated users.</p>
 <h3 id="pretorin_list_frameworks"><a class="header" href="#pretorin_list_frameworks">pretorin_list_frameworks</a></h3>
@@ -2769,6 +2851,61 @@ command -v pretorin
 <li><code>cli_version</code> (optional) — CLI version string</li>
 </ul>
 <p><strong>Returns:</strong> Submission confirmation with per-result status.</p>
+<hr>
+<h2 id="recipes--workflows"><a class="header" href="#recipes--workflows">Recipes &amp; Workflows</a></h2>
+<p>Recipes are markdown playbooks the calling agent reads and executes; workflows describe how to iterate items in a domain and which recipes to pick per item. See <a href="https://github.com/pretorin/pretorin-cli/blob/master/docs/rfcs/0001-recipes.md">RFC 0001</a> for the contract spec and <code>docs/src/recipes/</code> for authoring guides.</p>
+<h3 id="pretorin_list_recipes"><a class="header" href="#pretorin_list_recipes">pretorin_list_recipes</a></h3>
+<p>List loaded recipes with their summary metadata (id, name, tier, description, use_when, produces). Use this to discover which recipes are available, then call <code>pretorin_get_recipe(id)</code> to read the full body.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>tier</code> (optional) — Filter to one tier: <code>official</code>, <code>partner</code>, or <code>community</code></li>
+<li><code>produces</code> (optional) — Filter by what the recipe produces: <code>evidence</code>, <code>narrative</code>, <code>both</code>, or <code>answers</code></li>
+</ul>
+<p><strong>Returns:</strong> Recipe summaries with manifest metadata.</p>
+<hr>
+<h3 id="pretorin_get_recipe"><a class="header" href="#pretorin_get_recipe">pretorin_get_recipe</a></h3>
+<p>Return one recipe’s full manifest and body. The body is the markdown playbook the calling agent reads to understand the procedure.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>recipe_id</code> (required) — Recipe id to fetch</li>
+</ul>
+<p><strong>Returns:</strong> Recipe manifest plus the markdown body.</p>
+<hr>
+<h3 id="pretorin_start_recipe"><a class="header" href="#pretorin_start_recipe">pretorin_start_recipe</a></h3>
+<p>Open a recipe execution context. Returns a <code>context_id</code> the caller passes on subsequent platform-API write tool calls so audit metadata is stamped with <code>producer_kind='recipe'</code> automatically. One recipe per session at a time (nesting forbidden in v1). Contexts auto-expire after 1 hour of inactivity.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>recipe_id</code> (required) — Recipe id (must be loadable from the registry)</li>
+<li><code>recipe_version</code> (required) — Recipe version the caller intends to run. Cross-checked against the loaded recipe; mismatch is an error.</li>
+<li><code>params</code> (optional) — Inputs the calling agent supplies, validated against the recipe’s params schema</li>
+<li><code>selection</code> (optional) — Structured <code>RecipeSelection</code> record from the engagement layer, stored on the context for the eventual <code>RecipeResult</code></li>
+</ul>
+<p><strong>Returns:</strong> Context id and the resolved recipe manifest snapshot.</p>
+<hr>
+<h3 id="pretorin_end_recipe"><a class="header" href="#pretorin_end_recipe">pretorin_end_recipe</a></h3>
+<p>Close a recipe execution context and return the <code>RecipeResult</code> summary (status, evidence and narrative counts, errors, elapsed time). Must be called once the recipe’s work is complete; failure to call leaves the context in place until the 1-hour expiry sweep.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>context_id</code> (required) — Context id returned by <code>pretorin_start_recipe</code></li>
+<li><code>status</code> (optional) — Caller-supplied disposition: <code>pass</code>, <code>fail</code>, or <code>needs_input</code>. Default: <code>pass</code></li>
+</ul>
+<p><strong>Returns:</strong> <code>RecipeResult</code> summary.</p>
+<hr>
+<h3 id="pretorin_list_workflows"><a class="header" href="#pretorin_list_workflows">pretorin_list_workflows</a></h3>
+<p>List loaded workflow playbooks (single-control, scope-question, policy-question, campaign). Each workflow describes how to iterate items in its domain and which recipes to pick per item. Use this before picking a recipe so the agent works at the right granularity.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>iterates_over</code> (optional) — Filter to one item-iteration shape: <code>single_control</code>, <code>scope_questions</code>, <code>policy_questions</code>, or <code>campaign_items</code></li>
+</ul>
+<p><strong>Returns:</strong> Workflow summaries with manifest metadata.</p>
+<hr>
+<h3 id="pretorin_get_workflow"><a class="header" href="#pretorin_get_workflow">pretorin_get_workflow</a></h3>
+<p>Return one workflow’s full manifest and body. The body is the markdown playbook the calling agent reads to know how to iterate items and pick recipes per item in this workflow’s domain.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>workflow_id</code> (required) — Workflow id to fetch</li>
+</ul>
+<p><strong>Returns:</strong> Workflow manifest plus the markdown body.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="mcp-resources"><a class="header" href="#mcp-resources">MCP Resources</a></h1>
 <p>The MCP server exposes read-only resources across three URI schemes: <code>analysis://</code>, <code>status://</code>, and <code>workflow://</code>.</p>
@@ -2921,8 +3058,9 @@ pretorin agent run --skill gap-analysis "Analyze my system compliance gaps"
 <pre><code class="language-bash"># 1. Login with your Pretorin API key
 pretorin login
 
-# 2. Optional: custom/self-hosted Pretorin model endpoint
-pretorin config set model_api_base_url https://platform.pretorin.com/api/v1/public/model
+# 2. Optional: override the default model proxy endpoint
+#    (default: https://platform.pretorin.com/api/v1/public/model)
+pretorin config set model_api_base_url https://your-proxy.example.com/v1
 
 # 3. Validate runtime
 pretorin agent doctor
@@ -2949,13 +3087,14 @@ pretorin agent run "Assess AC-02 implementation gaps for my system"
 </ul>
 <p>Configure via <code>--base-url</code> flag or the <code>model_api_base_url</code> config key.</p>
 <h2 id="how-it-works-1"><a class="header" href="#how-it-works-1">How It Works</a></h2>
-<p>The agent runtime uses the Codex SDK with an isolated binary managed under <code>~/.pretorin/codex</code>. The agent:</p>
+<p>The agent runtime uses the Codex SDK with a pinned binary in <code>~/.pretorin/bin/</code> and an isolated <code>CODEX_HOME</code> at <code>~/.pretorin/codex/</code>. The agent:</p>
 <ol>
 <li>Downloads and pins a specific Codex binary version</li>
-<li>Runs in an isolated <code>CODEX_HOME</code> environment</li>
+<li>Runs in an isolated <code>CODEX_HOME</code> environment (never touches <code>~/.codex/</code>)</li>
 <li>Automatically injects the Pretorin MCP server for compliance tool access</li>
 <li>Streams events and output in real-time (unless <code>--no-stream</code> is passed)</li>
 </ol>
+<p>See <a href="#agent-runtime-management">Agent Runtime Management</a> for the full set of <code>pretorin agent</code> lifecycle commands.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="agent-skills"><a class="header" href="#agent-skills">Agent Skills</a></h1>
 <p>Skills are predefined task templates that guide the agent through specific compliance workflows.</p>
@@ -4529,6 +4668,16 @@ metadata itself, which is one more place for the audit trail to drift.</p>
 <blockquote>
 <p><strong>Note:</strong> CMMC Level 3 controls are in addition to Level 2. An organization at Level 3 must also satisfy all Level 2 controls.</p>
 </blockquote>
+<h2 id="custom-and-forked-frameworks"><a class="header" href="#custom-and-forked-frameworks">Custom and Forked Frameworks</a></h2>
+<p>If your organization needs to track a framework that isn’t in the built-in catalog (e.g., an internal control set, a tailored ISO/SOC 2 mapping, an industry-specific regulation), you can author one yourself or fork an existing Pretorin-managed framework. The <code>pretorin frameworks</code> group exposes the full revision lifecycle:</p>
+<ul>
+<li><strong>Author from scratch</strong> — <code>init-custom</code>, <code>validate-custom</code>, <code>upload-custom</code></li>
+<li><strong>Convert from OSCAL or 12 known custom catalog shapes</strong> — <code>build-custom</code></li>
+<li><strong>Fork an existing framework</strong> — <code>fork-framework</code>, <code>rebase-fork</code></li>
+<li><strong>Inspect drafts</strong> — <code>revisions</code></li>
+<li><strong>Round-trip back to OSCAL</strong> — <code>export-oscal</code></li>
+</ul>
+<p>See the <a href="#custom-frameworks-1">Custom Frameworks</a> guide for the end-to-end workflow.</p>
 <p>See <a href="#framework-selection-guide">Framework Selection Guide</a> for help choosing the right framework.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="control-id-formats"><a class="header" href="#control-id-formats">Control ID Formats</a></h1>
@@ -4707,6 +4856,8 @@ metadata itself, which is one more place for the audit trail to drift.</p>
 </table>
 </div>
 <p>Note: CMMC Level 3 controls are <strong>in addition to</strong> Level 2.</p>
+<h3 id="5-none-of-the-above-fits--bring-your-own-framework"><a class="header" href="#5-none-of-the-above-fits--bring-your-own-framework">5. None of the above fits — bring your own framework</a></h3>
+<p>If the built-in catalog doesn’t cover your obligation (e.g., an internal control set, a tailored mapping, an industry-specific regulation), you can author a custom framework or fork an existing one. See the <a href="#custom-frameworks-1">Custom Frameworks</a> guide for the <code>pretorin frameworks init-custom</code> / <code>build-custom</code> / <code>upload-custom</code> / <code>fork-framework</code> workflow.</p>
 <h2 id="quick-reference-1"><a class="header" href="#quick-reference-1">Quick Reference</a></h2>
 <div class="table-wrapper">
 <table>
@@ -4720,13 +4871,14 @@ metadata itself, which is one more place for the audit trail to drift.</p>
 <tr><td>We have a DoD contract</td><td>CMMC</td><td><code>cmmc-l2</code></td></tr>
 <tr><td>We need to handle both CUI and cloud</td><td>FedRAMP + 800-171</td><td>Start with <code>fedramp-moderate</code></td></tr>
 <tr><td>We’re not sure yet</td><td>Start with NIST 800-53</td><td><code>nist-800-53-r5</code></td></tr>
+<tr><td>Our framework isn’t in the catalog</td><td>Author or fork your own</td><td>See <a href="#custom-frameworks-1">Custom Frameworks</a></td></tr>
 </tbody>
 </table>
 </div>
 <h2 id="using-ai-context-for-selection"><a class="header" href="#using-ai-context-for-selection">Using AI Context for Selection</a></h2>
 <p>Call <code>pretorin_get_framework</code> (MCP) or <code>pretorin frameworks get &lt;id&gt;</code> (CLI) to get AI context including purpose, target audience, regulatory context, scope, and key concepts. This helps confirm whether a framework is the right fit.</p>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="custom-frameworks"><a class="header" href="#custom-frameworks">Custom Frameworks</a></h1>
+<h1 id="custom-frameworks-1"><a class="header" href="#custom-frameworks-1">Custom Frameworks</a></h1>
 <p>The <code>pretorin frameworks</code> command group supports authoring, validating, and uploading <strong>custom and forked compliance frameworks</strong> through the platform’s revision-lifecycle endpoints.</p>
 <p>The canonical artifact is <code>unified.json</code>. <strong><code>_index.json</code> is not an upload format</strong> — it’s an internal index file used elsewhere in the data pipeline, but the platform’s revision lifecycle expects the full <code>unified.json</code>.</p>
 <h2 id="end-to-end-workflow"><a class="header" href="#end-to-end-workflow">End-to-end workflow</a></h2>
@@ -4826,6 +4978,7 @@ from pretorin.frameworks.templates import minimal_unified
 <h3 id="2-read-current-state"><a class="header" href="#2-read-current-state">2. Read Current State</a></h3>
 <p>Before making changes, understand what’s already there:</p>
 <pre><code class="language-bash"># Get full control context (requirements + current implementation)
+pretorin control context ac-02 --framework-id fedramp-moderate
 # Via MCP: pretorin_get_control_context
 
 # Get current narrative
@@ -4871,7 +5024,12 @@ pretorin evidence upsert ac-02 fedramp-moderate \
 # Add gap notes
 pretorin notes add ac-02 fedramp-moderate \
   --content "Gap: Missing MFA evidence..."
+
+# Update implementation status
+pretorin control status ac-02 partially_implemented \
+  --framework-id fedramp-moderate
 </code></pre>
+<p>Status values: <code>implemented</code>, <code>partially_implemented</code>, <code>planned</code>, <code>in_progress</code>, <code>ready_to_approve</code>, <code>not_started</code>, <code>not_applicable</code>, <code>inherited</code>.</p>
 <h2 id="read-only-draft-workflow"><a class="header" href="#read-only-draft-workflow">Read-Only Draft Workflow</a></h2>
 <p>When you want AI drafts before any platform writes:</p>
 <ol>
@@ -5973,7 +6131,7 @@ ruff format src/pretorin
 </ul>
 <h3 id="documentation"><a class="header" href="#documentation">Documentation</a></h3>
 <ul>
-<li>New page covering the full custom-framework workflow: <a href="#custom-frameworks">Custom frameworks</a>.</li>
+<li>New page covering the full custom-framework workflow: <a href="#custom-frameworks-1">Custom frameworks</a>.</li>
 </ul>
 <h2 id="0170---2026-04-30"><a class="header" href="#0170---2026-04-30"><a href="https://github.com/pretorin-ai/pretorin-cli/compare/v0.16.3...v0.17.0">0.17.0</a> - 2026-04-30</a></h2>
 <h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
