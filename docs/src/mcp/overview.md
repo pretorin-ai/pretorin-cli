@@ -13,7 +13,7 @@ The Model Context Protocol allows AI assistants to:
 
 ## How It Works
 
-The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with `pretorin mcp-serve`, your AI tool connects and gains access to 87 compliance tools.
+The MCP server communicates via stdio (standard input/output) using JSON-RPC messages. When you start it with `pretorin mcp-serve`, your AI tool connects and gains access to 94 compliance tools.
 
 ```
 ┌──────────────┐     stdio      ┌──────────────┐     HTTPS     ┌──────────────┐
@@ -36,23 +36,25 @@ pretorin context show --quiet --check
 
 ## Tool Categories
 
-The 87 MCP tools are organized into categories:
+The 94 MCP tools are organized into categories:
 
 | Category | Tools | Access |
 |----------|-------|--------|
+| Task Routing | 1 | Read-only, all users |
 | Framework & Control Reference | 8 | Read-only, all users |
 | Systems | 5 | Read-only |
-| Evidence Management | 6 | Read/Write, requires beta |
-| Implementation Context | 10 | Read/Write, requires beta |
-| Monitoring | 1 | Write, requires beta |
+| Evidence Management | 7 | Read/Write, requires beta |
+| Implementation Context | 11 | Read/Write, requires beta |
+| Compliance Updates | 3 | Write, requires beta |
 | Workflow State & Analytics | 4 | Read-only |
 | Family Operations | 4 | Read/Write, requires beta |
-| Scope Workflow | 7 | Read/Write, requires beta |
-| Policy Workflow | 10 | Read/Write, requires beta |
+| Scope Workflow | 6 | Read/Write, requires beta |
+| Policy Workflow | 7 | Read/Write, requires beta |
 | Campaign Operations | 6 | Read/Write, requires beta |
 | Vendor Management | 8 | Read/Write, requires beta |
 | Inheritance & Responsibility | 6 | Read/Write, requires beta |
 | STIG & CCI | 12 | Read-only / Write mix |
+| Recipes & Workflows | 6 | Read-only |
 
 See [Tool Reference](./tools.md) for the complete list.
 
