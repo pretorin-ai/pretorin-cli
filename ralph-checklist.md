@@ -9,7 +9,7 @@ Automated codebase maintenance and documentation sync for pretorin-cli.
 - [x] **A1. CI Health Check** - Review recent GitHub Actions runs, identify existing failures to fix
 - [x] **A2. Lint Fixes** - Run ruff check + format, auto-fix what's possible, document remaining issues
 - [x] **A3. Type Check Fixes** - Run mypy, fix type errors in critical paths (client, MCP handlers, CLI)
-- [ ] **A4. TODO/FIXME Audit** - Catalog all TODO/FIXME comments, resolve quick ones, create issues for complex ones
+- [x] **A4. TODO/FIXME Audit** - Catalog all TODO/FIXME comments, resolve quick ones, create issues for complex ones
 
 ### Test Quality
 
@@ -72,3 +72,4 @@ Automated codebase maintenance and documentation sync for pretorin-cli.
 - 2026-05-02 — A1 CI Health Check: reviewed last 15 GitHub Actions runs. All recent runs on `master`, release tags (`v0.17.0`, `v0.17.1`), and active feature branches passed. One historical failure on `feat/recipes-v1` (2026-04-30T06:15:37Z) was followed by a successful retry on the same branch, so it was already addressed before merge. No outstanding CI failures to fix. (no commit — observation-only task)
 - 2026-05-02 — A2 Lint Fixes: ran `uv run ruff check .` and `uv run ruff format --check .` across the whole repo. All checks passed; 249 files already formatted. No remaining issues to document. (checklist-only commit)
 - 2026-05-02 — A3 Type Check Fixes: ran `uv run mypy src/pretorin`. Result: "Success: no issues found in 119 source files". Type checking is clean across client, MCP handlers, CLI, and all other modules. No fixes required. (checklist-only commit)
+- 2026-05-02 — A4 TODO/FIXME Audit: grep across `src/pretorin/` and `tests/` for `TODO|FIXME|XXX|HACK`. All matches fall into two intentional categories: (1) scaffolder template strings in `frameworks/templates.py` (init-custom output) and `cli/recipe.py` (`pretorin recipe new` output) — placeholders meant for end users to fill in, not code TODOs; (2) `[[PRETORIN_TODO]]` markers used by the narrative/evidence system to denote audit gaps (agent prompts, runner, narrative display, tests). Zero actual code TODO/FIXME comments to resolve. No code changes required. (checklist-only commit)
